@@ -10,27 +10,36 @@ part of 'app_router.dart';
 // ignore_for_file: type=lint, type=warning
 /// Root application router.
 ///
-/// Routes are expanded in later stories (1.6 tab shell, 1.7 macOS layout,
-/// 1.8 auth). For now a single placeholder route at '/' keeps the app
-/// navigable without referencing yet-to-be-built screens.
+/// Uses [StatefulShellRoute.indexedStack] (go_router ≥ 7.x, currently 15.1.x)
+/// to preserve each tab's navigation state independently.
+///
+/// Tab branches: Now (/now), Today (/today), Add (/add — stub), Lists (/lists)
+/// The Add branch is a stub; [AppShell] intercepts the tap before any navigation
+/// occurs and opens [AddTabSheet] instead.
 
 @ProviderFor(appRouter)
 final appRouterProvider = AppRouterProvider._();
 
 /// Root application router.
 ///
-/// Routes are expanded in later stories (1.6 tab shell, 1.7 macOS layout,
-/// 1.8 auth). For now a single placeholder route at '/' keeps the app
-/// navigable without referencing yet-to-be-built screens.
+/// Uses [StatefulShellRoute.indexedStack] (go_router ≥ 7.x, currently 15.1.x)
+/// to preserve each tab's navigation state independently.
+///
+/// Tab branches: Now (/now), Today (/today), Add (/add — stub), Lists (/lists)
+/// The Add branch is a stub; [AppShell] intercepts the tap before any navigation
+/// occurs and opens [AddTabSheet] instead.
 
 final class AppRouterProvider
     extends $FunctionalProvider<GoRouter, GoRouter, GoRouter>
     with $Provider<GoRouter> {
   /// Root application router.
   ///
-  /// Routes are expanded in later stories (1.6 tab shell, 1.7 macOS layout,
-  /// 1.8 auth). For now a single placeholder route at '/' keeps the app
-  /// navigable without referencing yet-to-be-built screens.
+  /// Uses [StatefulShellRoute.indexedStack] (go_router ≥ 7.x, currently 15.1.x)
+  /// to preserve each tab's navigation state independently.
+  ///
+  /// Tab branches: Now (/now), Today (/today), Add (/add — stub), Lists (/lists)
+  /// The Add branch is a stub; [AppShell] intercepts the tap before any navigation
+  /// occurs and opens [AddTabSheet] instead.
   AppRouterProvider._()
     : super(
         from: null,
@@ -64,4 +73,4 @@ final class AppRouterProvider
   }
 }
 
-String _$appRouterHash() => r'5174a444e795da9963b04ad7ef04397c53028a2e';
+String _$appRouterHash() => r'9e90a14dfa1d0a612978abb2952e5cfda966417d';

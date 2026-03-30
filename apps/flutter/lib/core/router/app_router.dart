@@ -3,24 +3,64 @@ import 'package:go_router/go_router.dart';
 import 'package:riverpod/riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../../features/lists/presentation/lists_screen.dart';
+import '../../features/now/presentation/now_screen.dart';
+import '../../features/shell/presentation/app_shell.dart';
+import '../../features/today/presentation/today_screen.dart';
+
 part 'app_router.g.dart';
 
 /// Root application router.
 ///
-/// Routes are expanded in later stories (1.6 tab shell, 1.7 macOS layout,
-/// 1.8 auth). For now a single placeholder route at '/' keeps the app
-/// navigable without referencing yet-to-be-built screens.
+/// Uses [StatefulShellRoute.indexedStack] (go_router ≥ 7.x, currently 15.1.x)
+/// to preserve each tab's navigation state independently.
+///
+/// Tab branches: Now (/now), Today (/today), Add (/add — stub), Lists (/lists)
+/// The Add branch is a stub; [AppShell] intercepts the tap before any navigation
+/// occurs and opens [AddTabSheet] instead.
 @riverpod
 GoRouter appRouter(Ref ref) {
   return GoRouter(
-    initialLocation: '/',
+    initialLocation: '/now',
     routes: [
-      GoRoute(
-        path: '/',
-        // Placeholder widget — replaced in Story 1.6 (tab bar navigation shell).
-        builder: (context, state) => const Scaffold(
-          body: Center(child: Text('OnTask')),
-        ),
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) =>
+            AppShell(navigationShell: navigationShell),
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/now',
+                builder: (context, state) => const NowScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/today',
+                builder: (context, state) => const TodayScreen(),
+              ),
+            ],
+          ),
+          // Add branch — stub; AppShell intercepts tap before navigation occurs
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/add',
+                builder: (context, state) => const SizedBox.shrink(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/lists',
+                builder: (context, state) => const ListsScreen(),
+              ),
+            ],
+          ),
+        ],
       ),
     ],
   );
