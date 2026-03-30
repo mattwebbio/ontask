@@ -36,6 +36,9 @@ dependencies:
   # Preferences / auth token placeholder
   shared_preferences: ^2.3.3
 
+  # Skeleton loading animations
+  shimmer: ^3.0.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

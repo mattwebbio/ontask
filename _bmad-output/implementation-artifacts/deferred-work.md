@@ -23,3 +23,7 @@
 - **`AuthInterceptor` retries through the same `Dio` instance** — Retry requests re-enter the full interceptor pipeline including `AuthInterceptor` again. The `kRetryHeader` guards against infinite loops but the tight coupling is architecturally fragile. Consider using a separate Dio instance for token refresh in Story 1.8.
 - **`onRequest` does not attach `Authorization` header** — All initial requests go out unauthenticated; the 401 refresh cycle is the only path to auth. Story 1.8 will implement proper token attachment on outgoing requests.
 - **No test for refresh-succeeds → retry-succeeds happy path** — `_tryRefreshToken()` is intentionally stubbed in Story 1.4. Story 1.8 must add tests for the successful token refresh and retry flow.
+
+## Deferred from: code review of 1-6-ios-navigation-shell-loading-states (2026-03-30)
+
+- **`nowEmptySubtitleTemplate` constant is never used** — `AppStrings.nowEmptySubtitleTemplate` is defined in `strings.dart` but `NowEmptyState` uses inline interpolation `'Next: $nextTaskHint'` directly instead of the template. No functional impact today. Clean up or consume the constant when real task data arrives in Story 1.8+. [apps/flutter/lib/core/l10n/strings.dart:10]
