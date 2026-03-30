@@ -2,31 +2,60 @@ import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:posthog_flutter/posthog_flutter.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
 
+import 'core/config/app_config.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_provider.dart';
 import 'features/auth/presentation/auth_provider.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  // ARCH-31: SentryFlutter.init must be the outermost wrapper so crashes
+  // during initialization are also captured. Do NOT call
+  // WidgetsFlutterBinding.ensureInitialized() before this — Sentry calls it
+  // internally. The appRunner callback replaces the direct runApp() call.
+  await SentryFlutter.init(
+    (options) {
+      options.dsn = AppConfig.glitchtipDsn;
+      options.environment = AppConfig.environment;
+      // Version matches pubspec.yaml version field.
+      options.release = 'ontask@1.0.0+1';
+      // Disable performance tracing in v1 — only crash/error reporting needed.
+      options.tracesSampleRate = 0.0;
+    },
+    appRunner: () async {
+      WidgetsFlutterBinding.ensureInitialized();
 
-  // Pre-warm SharedPreferences so AuthStateNotifier.build() can read the
-  // 'auth_was_authenticated' flag synchronously on first access.
-  final prefs = await SharedPreferences.getInstance();
-  AuthStateNotifier.prewarmPrefs(prefs);
+      // Pre-warm SharedPreferences so AuthStateNotifier.build() can read the
+      // 'auth_was_authenticated' flag synchronously on first access.
+      final prefs = await SharedPreferences.getInstance();
+      AuthStateNotifier.prewarmPrefs(prefs);
 
-  if (Platform.isMacOS) {
-    await windowManager.ensureInitialized();
-    const windowOptions = WindowOptions(
-      minimumSize: Size(900, 600),
-    );
-    await windowManager.waitUntilReadyToShow(windowOptions);
-    await windowManager.show();
-  }
-  runApp(const ProviderScope(child: OnTaskApp()));
+      if (Platform.isMacOS) {
+        await windowManager.ensureInitialized();
+        const windowOptions = WindowOptions(
+          minimumSize: Size(900, 600),
+        );
+        await windowManager.waitUntilReadyToShow(windowOptions);
+        await windowManager.show();
+      }
+
+      // ARCH-30: Initialize PostHog only when API key is provided.
+      // Do NOT identify user at launch — set identity only after successful
+      // login to avoid PII at startup.
+      if (AppConfig.posthogApiKey.isNotEmpty) {
+        final posthogConfig = PostHogConfig(AppConfig.posthogApiKey)
+          ..host = AppConfig.posthogHost;
+        await Posthog().setup(posthogConfig);
+      }
+
+      runApp(const ProviderScope(child: OnTaskApp()));
+    },
+  );
 }
 
 /// Root application widget.

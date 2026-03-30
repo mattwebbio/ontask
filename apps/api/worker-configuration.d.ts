@@ -8,6 +8,12 @@ declare namespace Cloudflare {
 	interface StagingEnv {}
 	interface Env {
 		DATABASE_URL?: "postgresql://placeholder";
+		/** Deployment environment identifier (e.g. 'production', 'staging'). */
+		ENVIRONMENT?: string;
+		/** GlitchTip DSN for Sentry-compatible error reporting (ARCH-31). Empty string disables reporting. */
+		GLITCHTIP_DSN?: string;
+		/** PostHog API key for product analytics and feature flags (ARCH-30). Empty string disables analytics. */
+		POSTHOG_API_KEY?: string;
 	}
 }
 interface CloudflareBindings extends Cloudflare.Env {}
