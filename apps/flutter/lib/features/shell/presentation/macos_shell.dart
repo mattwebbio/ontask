@@ -156,15 +156,15 @@ class _MacosShellState extends ConsumerState<MacosShell> {
     required bool disableAnimations,
     required OnTaskColors colors,
   }) {
-    return Row(
-      children: [
-        // Sidebar pane — focus traversal order: 1
-        FocusTraversalGroup(
-          policy: OrderedTraversalPolicy(),
-          child: SizedBox(
-            width: _sidebarWidth,
-            child: FocusTraversalOrder(
-              order: const NumericFocusOrder(1),
+    return FocusTraversalGroup(
+      policy: OrderedTraversalPolicy(),
+      child: Row(
+        children: [
+          // Sidebar pane — focus traversal order: 1
+          FocusTraversalOrder(
+            order: const NumericFocusOrder(1),
+            child: SizedBox(
+              width: _sidebarWidth,
               child: Focus(
                 child: MacosSidebar(
                   selectedIndex: _selectedIndex,
@@ -174,19 +174,16 @@ class _MacosShellState extends ConsumerState<MacosShell> {
               ),
             ),
           ),
-        ),
-        // Detail panel — focus traversal order: 2; collapses in two-pane mode
-        FocusTraversalGroup(
-          policy: OrderedTraversalPolicy(),
-          child: AnimatedContainer(
-            duration: disableAnimations
-                ? Duration.zero
-                : const Duration(milliseconds: 200),
-            width: isTwoPane ? 0.0 : _detailMinWidth,
-            child: Offstage(
-              offstage: isTwoPane,
-              child: FocusTraversalOrder(
-                order: const NumericFocusOrder(2),
+          // Detail panel — focus traversal order: 2; collapses in two-pane mode
+          FocusTraversalOrder(
+            order: const NumericFocusOrder(2),
+            child: AnimatedContainer(
+              duration: disableAnimations
+                  ? Duration.zero
+                  : const Duration(milliseconds: 200),
+              width: isTwoPane ? 0.0 : _detailMinWidth,
+              child: Offstage(
+                offstage: isTwoPane,
                 child: Focus(
                   child: Container(
                     decoration: BoxDecoration(
@@ -215,11 +212,8 @@ class _MacosShellState extends ConsumerState<MacosShell> {
               ),
             ),
           ),
-        ),
-        // Main content area — focus traversal order: 3
-        Expanded(
-          child: FocusTraversalGroup(
-            policy: OrderedTraversalPolicy(),
+          // Main content area — focus traversal order: 3
+          Expanded(
             child: FocusTraversalOrder(
               order: const NumericFocusOrder(3),
               child: Focus(
@@ -227,8 +221,8 @@ class _MacosShellState extends ConsumerState<MacosShell> {
               ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

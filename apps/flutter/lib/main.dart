@@ -16,6 +16,7 @@ void main() async {
       minimumSize: Size(900, 600),
     );
     await windowManager.waitUntilReadyToShow(windowOptions);
+    await windowManager.show();
   }
   runApp(const ProviderScope(child: OnTaskApp()));
 }
