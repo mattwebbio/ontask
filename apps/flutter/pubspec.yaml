@@ -33,8 +33,15 @@ dependencies:
   freezed_annotation: ^3.0.0
   json_annotation: ^4.9.0
 
-  # Preferences / auth token placeholder
+  # Preferences / non-sensitive settings only
   shared_preferences: ^2.3.3
+
+  # Authentication
+  sign_in_with_apple: ^6.1.2
+  google_sign_in: ^6.2.2
+
+  # Secure token storage (iOS Keychain / macOS Keychain)
+  flutter_secure_storage: ^9.2.2
 
   # Skeleton loading animations
   shimmer: ^3.0.0

@@ -1,8 +1,9 @@
 import 'package:dio/dio.dart';
-import 'package:riverpod/riverpod.dart';
+import 'package:flutter/foundation.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../config/app_config.dart';
+import '../../features/auth/presentation/auth_provider.dart';
 import 'interceptors/auth_interceptor.dart';
 import 'interceptors/logging_interceptor.dart';
 
@@ -13,9 +14,10 @@ part 'api_client.g.dart';
 /// ARCH RULE: [ApiClient] is ALWAYS injected via Riverpod — never instantiated
 /// as a singleton. This keeps it testable via [ProviderContainer] overrides.
 class ApiClient {
-  ApiClient({required String baseUrl}) : _dio = Dio(BaseOptions(baseUrl: baseUrl)) {
+  ApiClient({required String baseUrl, VoidCallback? onSignOut})
+      : _dio = Dio(BaseOptions(baseUrl: baseUrl)) {
     _dio.interceptors.addAll([
-      AuthInterceptor(dio: _dio),
+      AuthInterceptor(dio: _dio, onSignOut: onSignOut),
       LoggingInterceptor(),
     ]);
   }
@@ -30,7 +32,14 @@ class ApiClient {
 ///
 /// Every repository must receive this via `ref.watch(apiClientProvider)`.
 /// Do NOT call `ApiClient(...)` directly — that breaks test overrides.
+///
+/// The [onSignOut] callback is wired to [AuthStateNotifier.setUnauthenticated]
+/// so that when the 401 interceptor forces sign-out, the GoRouter redirect fires.
 @riverpod
 ApiClient apiClient(Ref ref) {
-  return ApiClient(baseUrl: AppConfig.apiUrl);
+  final notifier = ref.read(authStateProvider.notifier);
+  return ApiClient(
+    baseUrl: AppConfig.apiUrl,
+    onSignOut: notifier.setUnauthenticated,
+  );
 }

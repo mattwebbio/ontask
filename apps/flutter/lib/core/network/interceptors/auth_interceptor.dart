@@ -1,8 +1,10 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
-/// Shared-preferences key for the access token.
+import '../../../features/auth/data/token_storage.dart';
+
+/// Documented constants — kept for readability and test reference.
+/// Tokens are now stored in [TokenStorage] (Keychain-backed), NOT [SharedPreferences].
 const kAccessToken = 'access_token';
 const kRefreshToken = 'refresh_token';
 
@@ -21,10 +23,23 @@ const kRetryHeader = 'X-Retry-401';
 ///
 /// The end-user NEVER sees a raw 401 error — all 401s are either silently
 /// recovered or converted into a sign-out navigation action.
+///
+/// [onSignOut] is injected by [ApiClient] and calls
+/// [AuthStateNotifier.setUnauthenticated] to trigger router redirect.
+/// This callback pattern avoids a circular dependency between
+/// [AuthInterceptor] and [AuthStateNotifier].
 class AuthInterceptor extends Interceptor {
-  AuthInterceptor({Dio? dio}) : _dio = dio ?? Dio();
+  AuthInterceptor({Dio? dio, TokenStorage? tokenStorage, this.onSignOut})
+      : _dio = dio ?? Dio(),
+        _tokenStorage = tokenStorage ?? const TokenStorage();
 
   final Dio _dio;
+  final TokenStorage _tokenStorage;
+
+  /// Called after tokens are cleared on sign-out.
+  /// Injects the auth state notifier's [setUnauthenticated] so the router
+  /// can react without a direct Riverpod dependency in this interceptor.
+  final VoidCallback? onSignOut;
 
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
@@ -78,8 +93,7 @@ class AuthInterceptor extends Interceptor {
     try {
       final retryOptions = err.requestOptions
         ..headers[kRetryHeader] = '1';
-      final prefs = await SharedPreferences.getInstance();
-      final accessToken = prefs.getString(kAccessToken);
+      final accessToken = await _tokenStorage.getAccessToken();
       if (accessToken != null) {
         retryOptions.headers['Authorization'] = 'Bearer $accessToken';
       }
@@ -104,14 +118,29 @@ class AuthInterceptor extends Interceptor {
 
   Future<bool> _tryRefreshToken() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final refreshToken = prefs.getString(kRefreshToken);
+      final refreshToken = await _tokenStorage.getRefreshToken();
       if (refreshToken == null || refreshToken.isEmpty) return false;
 
-      // TODO(story-1.8): Replace with real refresh endpoint once auth API is
-      // wired up. For now returns false (no real endpoint yet) so callers
-      // exercise the force-logout path.
-      return false;
+      // POST /v1/auth/refresh with the stored refresh token.
+      // On success, persist the new access and refresh tokens.
+      // The old refresh token is immediately invalidated by the server (NFR-S5).
+      final response = await _dio.post<Map<String, dynamic>>(
+        '/v1/auth/refresh',
+        data: {'refreshToken': refreshToken},
+      );
+
+      final data = response.data?['data'] as Map<String, dynamic>?;
+      final newAccessToken = data?['accessToken'] as String?;
+      final newRefreshToken = data?['refreshToken'] as String?;
+
+      if (newAccessToken == null || newRefreshToken == null) return false;
+
+      await _tokenStorage.saveTokens(
+        accessToken: newAccessToken,
+        refreshToken: newRefreshToken,
+      );
+
+      return true;
     } catch (e) {
       debugPrint('[AuthInterceptor] _tryRefreshToken error: $e');
       return false;
@@ -120,11 +149,10 @@ class AuthInterceptor extends Interceptor {
 
   Future<void> _forceSignOut() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(kAccessToken);
-      await prefs.remove(kRefreshToken);
-      // TODO(story-1.8): Dispatch a sign-out navigation event via Riverpod
-      // once the auth provider exists.
+      await _tokenStorage.clearTokens();
+      // Notify the auth state notifier to reset to unauthenticated,
+      // triggering the GoRouter redirect to /auth/sign-in.
+      onSignOut?.call();
       debugPrint('[AuthInterceptor] Sign-out: tokens cleared');
     } catch (e) {
       debugPrint('[AuthInterceptor] _forceSignOut error: $e');

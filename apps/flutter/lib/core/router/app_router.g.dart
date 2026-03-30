@@ -16,6 +16,9 @@ part of 'app_router.dart';
 /// Tab branches: Now (/now), Today (/today), Add (/add — stub), Lists (/lists)
 /// The Add branch is a stub; [AppShell] intercepts the tap before any navigation
 /// occurs and opens [AddTabSheet] instead.
+///
+/// The `/auth/sign-in` route is a TOP-LEVEL route — NOT inside [StatefulShellRoute].
+/// This ensures the auth screen renders without the shell (no tab bar, no sidebar).
 
 @ProviderFor(appRouter)
 final appRouterProvider = AppRouterProvider._();
@@ -28,6 +31,9 @@ final appRouterProvider = AppRouterProvider._();
 /// Tab branches: Now (/now), Today (/today), Add (/add — stub), Lists (/lists)
 /// The Add branch is a stub; [AppShell] intercepts the tap before any navigation
 /// occurs and opens [AddTabSheet] instead.
+///
+/// The `/auth/sign-in` route is a TOP-LEVEL route — NOT inside [StatefulShellRoute].
+/// This ensures the auth screen renders without the shell (no tab bar, no sidebar).
 
 final class AppRouterProvider
     extends $FunctionalProvider<GoRouter, GoRouter, GoRouter>
@@ -40,6 +46,9 @@ final class AppRouterProvider
   /// Tab branches: Now (/now), Today (/today), Add (/add — stub), Lists (/lists)
   /// The Add branch is a stub; [AppShell] intercepts the tap before any navigation
   /// occurs and opens [AddTabSheet] instead.
+  ///
+  /// The `/auth/sign-in` route is a TOP-LEVEL route — NOT inside [StatefulShellRoute].
+  /// This ensures the auth screen renders without the shell (no tab bar, no sidebar).
   AppRouterProvider._()
     : super(
         from: null,
@@ -73,4 +82,4 @@ final class AppRouterProvider
   }
 }
 
-String _$appRouterHash() => r'26216590a324357e254aee8ca71512feb3913afe';
+String _$appRouterHash() => r'c9cd1fe9fef3711333038a3c4899f584801b06d7';

@@ -1,6 +1,6 @@
 # Story 1.4: Flutter Architecture Foundation
 
-Status: in-progress
+Status: done
 
 ## Story
 
