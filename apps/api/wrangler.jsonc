@@ -16,10 +16,14 @@
         }
       ]
     }
+  },
+
+  // ── Bindings ───────────────────────────────────────────────────────────────
+  // DATABASE_URL placeholder — real value set in Cloudflare dashboard (never committed).
+  "vars": {
+    "DATABASE_URL": "postgresql://placeholder"
   }
 
-  // ── Bindings (configured per-story as features land) ──────────────────────
-  // "vars": {},
   // "kv_namespaces": [],
   // "r2_buckets": [],
   // "d1_databases": [],
