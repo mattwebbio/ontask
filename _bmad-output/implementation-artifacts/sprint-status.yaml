@@ -50,7 +50,7 @@ development_status:
   1-1-monorepo-project-scaffold: done
   1-2-cicd-pipeline-staging-environments: done
   1-3-api-foundation-database-response-standards: ready-for-dev
-  1-4-flutter-architecture-foundation: backlog
+  1-4-flutter-architecture-foundation: review
   1-5-design-system-theme-implementation: backlog
   1-6-ios-navigation-shell-loading-states: backlog
   1-7-macos-layout-keyboard-navigation: backlog

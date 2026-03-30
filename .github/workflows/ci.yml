@@ -70,6 +70,10 @@ jobs:
           flutter-version: '3.41.0'
           channel: 'stable'
 
+      - name: Install Flutter dependencies
+        working-directory: apps/flutter
+        run: flutter pub get
+
       - name: Run Flutter tests
         working-directory: apps/flutter
         run: flutter test
