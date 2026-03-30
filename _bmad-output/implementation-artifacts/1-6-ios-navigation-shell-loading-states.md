@@ -677,6 +677,14 @@ claude-sonnet-4-6
 - 102 total tests pass (69 pre-existing + 33 new); no regressions.
 - `build_runner` run; `app_router.g.dart` regenerated after router changes.
 
+### Review Findings
+
+- [x] [Review][Decision] Today empty state uses `textTheme.bodyLarge` — switched to `textTheme.bodyMedium` per D1 decision (confirmed 17pt per test suite, matches AC 8 "SF Pro 17pt"). Both nudge title and Add CTA updated. [apps/flutter/lib/features/today/presentation/widgets/today_empty_state.dart]
+- [x] [Review][Patch] Hardcoded `fontSize: 22` in `NowEmptyState` — replaced with `Theme.of(context).textTheme.displaySmall?.copyWith(fontFamily: serifFamily, ...)` (`displaySmall` = `AppTextStyles.sectionHeading` = 22pt). [apps/flutter/lib/features/now/presentation/widgets/now_empty_state.dart]
+- [x] [Review][Patch] `FutureBuilder` future re-created on every parent rebuild — converted `NowScreen` and `TodayScreen` to `StatefulWidget` (`ConsumerStatefulWidget` for Today); `Future.delayed(800ms)` stored in `initState`. [apps/flutter/lib/features/now/presentation/now_screen.dart, apps/flutter/lib/features/today/presentation/today_screen.dart]
+- [x] [Review][Patch] `TodayEmptyState` Add CTA not wired to Add sheet in production — added `OpenAddSheetRequest` Riverpod notifier in `shell_providers.dart`; `TodayScreen` calls `ref.read(openAddSheetRequestProvider.notifier).increment()`; `AppShell` watches via `ref.listen` and calls `_openAddSheet()`. [apps/flutter/lib/features/shell/presentation/shell_providers.dart, app_shell.dart, today_screen.dart]
+- [x] [Review][Defer] `nowEmptySubtitleTemplate` constant is never used — `AppStrings.nowEmptySubtitleTemplate` is defined in `strings.dart` but the widget uses inline interpolation `'Next: $nextTaskHint'` instead. No functional impact; clean up or use the constant when real task data arrives (Story 1.8+). [apps/flutter/lib/core/l10n/strings.dart:10] — deferred, pre-existing design choice
+
 ### File List
 
 - apps/flutter/pubspec.yaml (modified — added shimmer ^3.0.0)

@@ -31,13 +31,10 @@ class NowEmptyState extends StatelessWidget {
           children: [
             Text(
               AppStrings.nowEmptyTitle,
-              style: TextStyle(
-                fontFamily: serifFamily,
-                fontSize: 22,
-                fontWeight: FontWeight.w400,
-                height: 1.3,
-                color: colors.textSecondary,
-              ),
+              style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                    fontFamily: serifFamily,
+                    color: colors.textSecondary,
+                  ),
               textAlign: TextAlign.center,
             ),
             if (nextTaskHint != null) ...[

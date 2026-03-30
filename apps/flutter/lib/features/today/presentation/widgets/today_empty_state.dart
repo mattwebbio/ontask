@@ -26,7 +26,7 @@ class TodayEmptyState extends StatelessWidget {
           children: [
             Text(
               AppStrings.todayEmptyTitle,
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: colors.textSecondary,
                   ),
               textAlign: TextAlign.center,
@@ -36,7 +36,7 @@ class TodayEmptyState extends StatelessWidget {
               onTap: onAddTapped,
               child: Text(
                 AppStrings.todayEmptyAddCta,
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: colors.accentPrimary,
                       decoration: TextDecoration.underline,
                     ),

@@ -40,19 +40,6 @@ class TodaySkeleton extends StatelessWidget {
   }
 }
 
-/// A single skeleton task row.
-@visibleForTesting
-class SkeletonRow extends StatelessWidget {
-  final OnTaskColors colors;
-
-  const SkeletonRow({required this.colors, super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return _SkeletonRow(colors: colors);
-  }
-}
-
 class _SkeletonRow extends StatelessWidget {
   final OnTaskColors colors;
 

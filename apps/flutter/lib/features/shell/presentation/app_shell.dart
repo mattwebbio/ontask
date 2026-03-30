@@ -1,9 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_theme.dart';
 import 'add_tab_sheet.dart';
+import 'shell_providers.dart';
 
 /// The main navigation shell hosting the four-tab Cupertino tab bar.
 ///
@@ -13,17 +15,21 @@ import 'add_tab_sheet.dart';
 /// a modal bottom sheet. It does NOT become a persistent navigation destination.
 /// [StatefulNavigationShell.goBranch] is never called with index 2.
 ///
+/// The Add sheet can also be triggered from within a tab screen (e.g. from
+/// [TodayEmptyState]) via [openAddSheetRequestProvider] — [AppShell] watches
+/// the provider and responds to counter increments.
+///
 /// [navigationShell] is provided by go_router's [StatefulShellRoute.indexedStack].
-class AppShell extends StatefulWidget {
+class AppShell extends ConsumerStatefulWidget {
   final StatefulNavigationShell navigationShell;
 
   const AppShell({required this.navigationShell, super.key});
 
   @override
-  State<AppShell> createState() => _AppShellState();
+  ConsumerState<AppShell> createState() => _AppShellState();
 }
 
-class _AppShellState extends State<AppShell> {
+class _AppShellState extends ConsumerState<AppShell> {
   late final CupertinoTabController _tabController;
 
   @override
@@ -41,6 +47,15 @@ class _AppShellState extends State<AppShell> {
     super.dispose();
   }
 
+  void _openAddSheet() {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const AddTabSheet(),
+    );
+  }
+
   /// Handles tab bar taps.
   ///
   /// If index == 2 (Add), opens the modal sheet and resets the controller back
@@ -52,13 +67,7 @@ class _AppShellState extends State<AppShell> {
       // the Add tab is never a real destination
       _tabController.index = widget.navigationShell.currentIndex;
 
-      // Show the add sheet
-      showModalBottomSheet<void>(
-        context: context,
-        isScrollControlled: true,
-        backgroundColor: Colors.transparent,
-        builder: (_) => const AddTabSheet(),
-      );
+      _openAddSheet();
       return; // critical: do not call goBranch(2)
     }
     widget.navigationShell.goBranch(
@@ -70,6 +79,14 @@ class _AppShellState extends State<AppShell> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<OnTaskColors>()!;
+
+    // Watch the Add sheet request signal from within-tab CTAs (e.g. TodayEmptyState).
+    // Any change in value triggers the sheet to open.
+    ref.listen<int>(openAddSheetRequestProvider, (previous, next) {
+      if (previous != null && next > previous) {
+        _openAddSheet();
+      }
+    });
 
     return CupertinoTabScaffold(
       controller: _tabController,
