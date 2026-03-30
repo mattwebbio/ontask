@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../core/network/api_client.dart';
 import '../data/auth_repository.dart';
 import '../data/token_storage.dart';
 import '../domain/auth_result.dart';
@@ -13,6 +14,13 @@ part 'auth_provider.g.dart';
 /// Allows [AuthStateNotifier.build] to return a synchronous initial state
 /// without waiting for the Keychain, eliminating the flash-to-sign-in race.
 const kAuthWasAuthenticated = 'auth_was_authenticated';
+
+/// SharedPreferences key for onboarding completion state.
+///
+/// Set to `true` when the user completes or skips the onboarding flow.
+/// Read synchronously in [AuthStateNotifier.build] so the router can gate
+/// unauthenticated users to the onboarding flow without a flash.
+const kOnboardingCompleted = 'onboarding_completed';
 
 /// Manages the current authentication state of the app.
 ///
@@ -42,6 +50,15 @@ class AuthStateNotifier extends _$AuthStateNotifier {
   static void prewarmPrefs(SharedPreferences prefs) {
     _prefs = prefs;
   }
+
+  /// Reads [kOnboardingCompleted] synchronously from the pre-warmed static
+  /// [_prefs] instance.
+  ///
+  /// This static accessor allows the router redirect to check onboarding
+  /// completion even when [authStateProvider] is overridden with a value
+  /// (e.g. in widget tests) and the notifier instance is not accessible.
+  static bool get isOnboardingCompletedFromPrefs =>
+      _prefs?.getBool(kOnboardingCompleted) ?? false;
 
   @override
   AuthResult build() {
@@ -93,5 +110,39 @@ class AuthStateNotifier extends _$AuthStateNotifier {
   Future<void> signOut() async {
     await ref.read(authRepositoryProvider.notifier).signOut();
     await setUnauthenticated();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Onboarding state
+  // ---------------------------------------------------------------------------
+
+  /// Returns whether the user has completed or skipped onboarding.
+  ///
+  /// Reads synchronously from the pre-warmed [_prefs] instance — same pattern
+  /// as [kAuthWasAuthenticated].  Falls back to `false` when preferences are
+  /// not yet loaded (treated as onboarding not completed).
+  bool get isOnboardingCompleted => _prefs?.getBool(kOnboardingCompleted) ?? false;
+
+  /// Marks onboarding as completed both locally and server-side.
+  ///
+  /// The local [SharedPreferences] write is the source of truth for preventing
+  /// the onboarding flow from restarting on re-launch.  The API call is
+  /// belt-and-suspenders for multi-device scenarios and is non-fatal — a
+  /// network failure must never block the user from reaching the app.
+  Future<void> completeOnboarding() async {
+    await _prefs?.setBool(kOnboardingCompleted, true);
+    // API call: PATCH /v1/users/me with onboardingCompleted: true
+    // Use ref.read(apiClientProvider) — never new ApiClient()
+    try {
+      final client = ref.read(apiClientProvider);
+      await client.dio.patch<void>(
+        '/v1/users/me',
+        data: {'onboardingCompleted': true},
+      );
+    } catch (_) {
+      // Non-fatal: local state is source of truth for re-launch guard;
+      // server-side flag is a belt-and-suspenders for multi-device scenarios.
+      // Log silently — do not surface error to user (onboarding UX must be frictionless).
+    }
   }
 }

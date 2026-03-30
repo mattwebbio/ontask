@@ -7,6 +7,7 @@ import '../../features/auth/presentation/auth_provider.dart';
 import '../../features/auth/presentation/auth_screen.dart';
 import '../../features/lists/presentation/lists_screen.dart';
 import '../../features/now/presentation/now_screen.dart';
+import '../../features/onboarding/presentation/onboarding_flow.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/shell/presentation/app_shell.dart';
 import '../../features/today/presentation/today_screen.dart';
@@ -37,9 +38,34 @@ GoRouter appRouter(Ref ref) {
       final authState = ref.read(authStateProvider);
       final isAuthenticated = authState is Authenticated;
       final isOnAuthRoute = state.matchedLocation.startsWith('/auth');
+      final isOnOnboardingRoute = state.matchedLocation.startsWith('/onboarding');
 
       if (!isAuthenticated && !isOnAuthRoute) return '/auth/sign-in';
       if (isAuthenticated && isOnAuthRoute) return '/now';
+
+      // Onboarding gate (only for authenticated users):
+      // isOnboardingCompleted is read from the notifier.  In test environments
+      // where authStateProvider is overridden with a plain value (not a notifier),
+      // the .notifier accessor will throw — fall back to the static prefs accessor
+      // which reads directly from the pre-warmed SharedPreferences instance.
+      bool onboardingCompleted;
+      try {
+        onboardingCompleted = ref.read(authStateProvider.notifier).isOnboardingCompleted;
+      } catch (_) {
+        // Value override in tests: fall back to static prefs read.
+        // Tests that want to bypass the onboarding gate must either:
+        //   a) Use the real notifier with prewarmPrefs({'onboarding_completed': true}), or
+        //   b) Set SharedPreferences.setMockInitialValues({'onboarding_completed': true})
+        //      and call AuthStateNotifier.prewarmPrefs(prefs) in setUp.
+        onboardingCompleted = AuthStateNotifier.isOnboardingCompletedFromPrefs;
+      }
+      if (isAuthenticated && !onboardingCompleted && !isOnOnboardingRoute) {
+        return '/onboarding';
+      }
+      if (isAuthenticated && onboardingCompleted && isOnOnboardingRoute) {
+        return '/now';
+      }
+
       return null;
     },
     routes: [
@@ -47,6 +73,13 @@ GoRouter appRouter(Ref ref) {
       GoRoute(
         path: '/auth/sign-in',
         builder: (context, state) => const AuthScreen(),
+      ),
+
+      // Onboarding route — outside StatefulShellRoute so no shell renders over it.
+      // Same pattern as /auth/sign-in (Story 1.8).
+      GoRoute(
+        path: '/onboarding',
+        builder: (context, state) => const OnboardingFlow(),
       ),
 
       // Main app shell — all authenticated routes live inside here.

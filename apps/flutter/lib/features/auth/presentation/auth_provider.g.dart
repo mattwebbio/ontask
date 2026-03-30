@@ -10,22 +10,52 @@ part of 'auth_provider.dart';
 // ignore_for_file: type=lint, type=warning
 /// Manages the current authentication state of the app.
 ///
-/// Initialises synchronously from a pre-loaded SharedPreferences hint
-/// (auth_was_authenticated) so the router never briefly redirects a
-/// returning user to the sign-in screen.
+/// Initialises synchronously from a pre-loaded [SharedPreferences] hint
+/// (`auth_was_authenticated`) so the router never briefly redirects a
+/// returning user to the sign-in screen.  [_initFromStorage] then validates
+/// the actual Keychain token asynchronously and corrects state if the token
+/// is missing or expired.
 ///
 /// [AuthInterceptor._forceSignOut] calls [setUnauthenticated] via the callback
 /// injected into [ApiClient] when token refresh fails irreversibly.
 ///
-/// keepAlive: prevents the disposed-notifier problem where ApiClient holds a
-/// stale setUnauthenticated reference after auto-dispose recreates the provider.
+/// keepAlive: prevents the disposed-notifier problem where [ApiClient] holds a
+/// stale [setUnauthenticated] reference after auto-dispose recreates the
+/// provider.
 
 @ProviderFor(AuthStateNotifier)
 final authStateProvider = AuthStateNotifierProvider._();
 
 /// Manages the current authentication state of the app.
+///
+/// Initialises synchronously from a pre-loaded [SharedPreferences] hint
+/// (`auth_was_authenticated`) so the router never briefly redirects a
+/// returning user to the sign-in screen.  [_initFromStorage] then validates
+/// the actual Keychain token asynchronously and corrects state if the token
+/// is missing or expired.
+///
+/// [AuthInterceptor._forceSignOut] calls [setUnauthenticated] via the callback
+/// injected into [ApiClient] when token refresh fails irreversibly.
+///
+/// keepAlive: prevents the disposed-notifier problem where [ApiClient] holds a
+/// stale [setUnauthenticated] reference after auto-dispose recreates the
+/// provider.
 final class AuthStateNotifierProvider
     extends $NotifierProvider<AuthStateNotifier, AuthResult> {
+  /// Manages the current authentication state of the app.
+  ///
+  /// Initialises synchronously from a pre-loaded [SharedPreferences] hint
+  /// (`auth_was_authenticated`) so the router never briefly redirects a
+  /// returning user to the sign-in screen.  [_initFromStorage] then validates
+  /// the actual Keychain token asynchronously and corrects state if the token
+  /// is missing or expired.
+  ///
+  /// [AuthInterceptor._forceSignOut] calls [setUnauthenticated] via the callback
+  /// injected into [ApiClient] when token refresh fails irreversibly.
+  ///
+  /// keepAlive: prevents the disposed-notifier problem where [ApiClient] holds a
+  /// stale [setUnauthenticated] reference after auto-dispose recreates the
+  /// provider.
   AuthStateNotifierProvider._()
     : super(
         from: null,
@@ -53,7 +83,22 @@ final class AuthStateNotifierProvider
   }
 }
 
-String _$authStateNotifierHash() => r'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0';
+String _$authStateNotifierHash() => r'6d1f11cb30c8ba2e7d6bacc6dd2c8faad0465761';
+
+/// Manages the current authentication state of the app.
+///
+/// Initialises synchronously from a pre-loaded [SharedPreferences] hint
+/// (`auth_was_authenticated`) so the router never briefly redirects a
+/// returning user to the sign-in screen.  [_initFromStorage] then validates
+/// the actual Keychain token asynchronously and corrects state if the token
+/// is missing or expired.
+///
+/// [AuthInterceptor._forceSignOut] calls [setUnauthenticated] via the callback
+/// injected into [ApiClient] when token refresh fails irreversibly.
+///
+/// keepAlive: prevents the disposed-notifier problem where [ApiClient] holds a
+/// stale [setUnauthenticated] reference after auto-dispose recreates the
+/// provider.
 
 abstract class _$AuthStateNotifier extends $Notifier<AuthResult> {
   AuthResult build();

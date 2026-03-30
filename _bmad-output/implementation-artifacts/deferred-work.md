@@ -27,3 +27,8 @@
 ## Deferred from: code review of 1-6-ios-navigation-shell-loading-states (2026-03-30)
 
 - **`nowEmptySubtitleTemplate` constant is never used** — `AppStrings.nowEmptySubtitleTemplate` is defined in `strings.dart` but `NowEmptyState` uses inline interpolation `'Next: $nextTaskHint'` directly instead of the template. No functional impact today. Clean up or consume the constant when real task data arrives in Story 1.8+. [apps/flutter/lib/core/l10n/strings.dart:10]
+
+## Deferred from: code review of 1-9-onboarding-flow-sample-schedule (2026-03-30)
+
+- **Fragile serif font resolution in SampleScheduleStep** — `serifFamily` is read from `textTheme.displayLarge?.fontFamily` and then applied to `displaySmall`. If those two slots are ever assigned different font families in the theme, the wrong font silently applies. Pre-existing pattern from `NowEmptyState`. [apps/flutter/lib/features/onboarding/presentation/steps/sample_schedule_step.dart:35]
+- **TimeOfDay formatting duplicated across 3 files** — Identical `padLeft(2, '0')` hour/minute formatting logic exists in `SampleScheduleStep._DemoTaskCard`, `EnergyPreferencesStep._formatTime()`, and `WorkingHoursStep._formatTime()`. No shared utility exists. Not blocking; extract to a shared helper when the next story touches these files. [apps/flutter/lib/features/onboarding/presentation/steps/]
