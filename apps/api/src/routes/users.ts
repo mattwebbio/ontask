@@ -1,6 +1,6 @@
 import { OpenAPIHono, createRoute } from '@hono/zod-openapi'
 import { z } from 'zod'
-import { ok } from '../lib/response.js'
+import { ok, err } from '../lib/response.js'
 
 // ── Users router ───────────────────────────────────────────────────────────────
 // Covers: FR60, FR61, FR64, FR65, FR81, FR85, FR87
@@ -21,6 +21,13 @@ const UserMeResponseSchema = z.object({
   data: z.object({
     userId: z.string().openapi({ example: 'stub_user_id' }),
     onboardingCompleted: z.boolean().openapi({ example: true }),
+  }),
+})
+
+const UserErrorSchema = z.object({
+  error: z.object({
+    code: z.string().openapi({ example: 'INVALID_REQUEST' }),
+    message: z.string().openapi({ example: 'Request body is invalid.' }),
   }),
 })
 
@@ -47,6 +54,10 @@ const patchUserMeRoute = createRoute({
       content: { 'application/json': { schema: UserMeResponseSchema } },
       description: 'User record updated successfully',
     },
+    422: {
+      content: { 'application/json': { schema: UserErrorSchema } },
+      description: 'Request body failed validation',
+    },
   },
 })
 
@@ -55,6 +66,9 @@ app.openapi(patchUserMeRoute, async (c) => {
   // Identify user from the validated JWT bearer token.
   // Example: await db.update(users).set({ onboardingCompleted: body.onboardingCompleted }).where(eq(users.id, userId))
   const _body = c.req.valid('json')
+  // WARNING(stub): Response is hardcoded — onboardingCompleted is always true
+  // regardless of the request body value. When real Drizzle impl lands, derive
+  // the response fields from the actual upserted user record, not the request body.
   return c.json(
     ok({
       userId: 'stub_user_id',

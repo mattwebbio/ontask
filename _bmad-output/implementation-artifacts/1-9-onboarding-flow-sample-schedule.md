@@ -414,6 +414,17 @@ claude-sonnet-4-6
 - `apps/flutter/test/widget_test.dart`
 - `_bmad-output/implementation-artifacts/sprint-status.yaml`
 
+### Review Findings
+
+- [x] [Review][Decision] SharedPreferences.getInstance() used in EnergyPreferencesStep and WorkingHoursStep save methods — **Dismissed (ID 2, 2026-03-30)**: Prohibition was scoped to completeOnboarding() in AuthStateNotifier only. getInstance() is acceptable for non-auth preference widgets — SharedPreferences caches the instance. [`apps/flutter/lib/features/onboarding/presentation/steps/energy_preferences_step.dart:212`, `working_hours_step.dart:45`]
+- [x] [Review][Patch] Inline string literals not in AppStrings: 'Calendar connected!' (calendar_connection_step.dart:93), 'Continue' (line 101), 'Save & continue' (energy_preferences_step.dart:202), 'Done' (energy_preferences_step.dart:105, working_hours_step.dart:86) — **Fixed (2026-03-30)**: Added onboardingCalendarConnected, onboardingCalendarContinue, onboardingEnergySaveButton, onboardingTimePickerDone to AppStrings; all four sites patched to use constants. [`apps/flutter/lib/features/onboarding/presentation/steps/`]
+- [x] [Review][Patch] err() not imported in users.ts; no error response path defined — **Fixed (2026-03-30)**: Imported err() from response.ts; added UserErrorSchema and 422 response entry to patchUserMeRoute. [`apps/api/src/routes/users.ts`]
+- [x] [Review][Patch] CalendarConnectionStep _connected=true state drops 'Set this up later' affordance — **Fixed (2026-03-30)**: Restored onboardingCalendarSkip button in the success state; wired to widget.onSkipAll so AC #2 is satisfied on every step state. [`apps/flutter/lib/features/onboarding/presentation/steps/calendar_connection_step.dart`]
+- [x] [Review][Patch] Stub PATCH /v1/users/me always returns onboardingCompleted: true regardless of request body — **Fixed (2026-03-30)**: Added WARNING(stub) comment explaining the hardcoded response and directing future devs to derive values from the upserted record. [`apps/api/src/routes/users.ts:69`]
+- [x] [Review][Defer] Fragile serif font resolution: serifFamily read from displayLarge then applied to displaySmall [sample_schedule_step.dart:35] — deferred, pre-existing pattern from NowEmptyState
+- [x] [Review][Defer] TimeOfDay formatting duplicated across 3 files — no shared utility [sample_schedule_step.dart, energy_preferences_step.dart, working_hours_step.dart] — deferred, pre-existing gap
+
 ## Change Log
 
 - 2026-03-30: Story 1.9 implemented — Onboarding Flow & Sample Schedule. Added static demo fixture, 4-step onboarding flow with "Set this up later" affordances on each step, onboarding gate in router, `PATCH /v1/users/me` API stub, and 23 new tests. All 152 tests pass.
+- 2026-03-30: Code review fixes — ID 2 dismissed (SharedPreferences.getInstance() in non-auth pref widgets is acceptable). Applied 4 patches: (1) inline string literals extracted to AppStrings constants, (2) err() imported and 422 error schema added to users.ts, (3) "Set this up later" affordance restored in CalendarConnectionStep connected state, (4) WARNING(stub) comment added to hardcoded PATCH /v1/users/me response. All 152 tests pass.

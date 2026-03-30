@@ -102,7 +102,7 @@ class _EnergyPreferencesStepState extends State<EnergyPreferencesStep> {
               ),
             ),
             CupertinoButton(
-              child: const Text('Done'),
+              child: Text(AppStrings.onboardingTimePickerDone),
               onPressed: () {
                 onChanged(selected);
                 Navigator.of(ctx).pop();
@@ -199,7 +199,7 @@ class _EnergyPreferencesStepState extends State<EnergyPreferencesStep> {
                       ? const CupertinoActivityIndicator(
                           color: CupertinoColors.white,
                         )
-                      : const Text('Save & continue'),
+                      : Text(AppStrings.onboardingEnergySaveButton),
                 ),
               ),
               const SizedBox(height: AppSpacing.sm),

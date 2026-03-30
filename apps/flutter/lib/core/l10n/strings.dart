@@ -90,6 +90,18 @@ class AppStrings {
   /// Final onboarding CTA — routes to the main app.
   static const String onboardingDoneButton = "Done — show me my plan";
 
+  /// Confirmation message shown after Google Calendar is successfully connected (stub).
+  static const String onboardingCalendarConnected = "Calendar connected!";
+
+  /// Button label to advance past the calendar-connected confirmation screen.
+  static const String onboardingCalendarContinue = "Continue";
+
+  /// Primary CTA on the energy preferences step — saves selections and advances.
+  static const String onboardingEnergySaveButton = "Save & continue";
+
+  /// "Done" label on time picker dismiss button inside modal popups.
+  static const String onboardingTimePickerDone = "Done";
+
   // ── macOS shell ──────────────────────────────────────────────────────────────
   static const String macosNewTask = "New Task";
   static const String macosNavNow = "Now";

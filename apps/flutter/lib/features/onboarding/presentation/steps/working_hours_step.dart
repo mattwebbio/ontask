@@ -83,7 +83,7 @@ class _WorkingHoursStepState extends State<WorkingHoursStep> {
               ),
             ),
             CupertinoButton(
-              child: const Text('Done'),
+              child: Text(AppStrings.onboardingTimePickerDone),
               onPressed: () {
                 onChanged(selected);
                 Navigator.of(ctx).pop();

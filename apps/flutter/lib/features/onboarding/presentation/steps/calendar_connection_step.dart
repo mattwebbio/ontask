@@ -79,30 +79,47 @@ class _CalendarConnectionStepState extends State<CalendarConnectionStep> {
               ),
               const Spacer(),
               if (_connected)
-                Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        CupertinoIcons.checkmark_circle_fill,
-                        size: 48,
-                        color: colors.accentCompletion,
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            CupertinoIcons.checkmark_circle_fill,
+                            size: 48,
+                            color: colors.accentCompletion,
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+                          Text(
+                            AppStrings.onboardingCalendarConnected,
+                            style: Theme.of(context).textTheme.bodyLarge,
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: AppSpacing.sm),
-                      Text(
-                        'Calendar connected!',
-                        style: Theme.of(context).textTheme.bodyLarge,
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
+                    SizedBox(
+                      width: double.infinity,
+                      child: CupertinoButton.filled(
+                        onPressed: widget.onNext,
+                        child: Text(AppStrings.onboardingCalendarContinue),
                       ),
-                      const SizedBox(height: AppSpacing.xl),
-                      SizedBox(
-                        width: double.infinity,
-                        child: CupertinoButton.filled(
-                          onPressed: widget.onNext,
-                          child: const Text('Continue'),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    // "Set this up later" must be present on every onboarding step (AC #2).
+                    SizedBox(
+                      width: double.infinity,
+                      child: CupertinoButton(
+                        onPressed: widget.onSkipAll,
+                        child: Text(
+                          AppStrings.onboardingCalendarSkip,
+                          style: TextStyle(color: colors.textSecondary),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 )
               else ...[
                 // CTA — Connect Google Calendar
