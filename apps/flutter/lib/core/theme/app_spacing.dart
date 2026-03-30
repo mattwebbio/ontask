@@ -26,6 +26,6 @@ class AppSpacing {
   /// 48pt
   static const double xxxl = 48.0;
 
-  /// 64pt
-  static const double max = 64.0;
+  /// 64pt — named `huge` rather than `max` to avoid shadowing `dart:math.max`
+  static const double huge = 64.0;
 }

@@ -31,7 +31,9 @@ Future<FontConfig> fontConfig(Ref ref) async {
 ///
 /// Defaults to [ThemeVariant.clay] if no preference has been stored.
 /// The Settings UI (Story 1.10) writes the `theme_variant` key to update this.
-@riverpod
+///
+/// keepAlive: prevents repeated SharedPreferences reads on every widget rebuild.
+@Riverpod(keepAlive: true)
 Future<ThemeVariant> themeVariant(Ref ref) async {
   final prefs = await SharedPreferences.getInstance();
   final stored = prefs.getString('theme_variant');

@@ -66,7 +66,7 @@ class AppTheme {
       scaffoldBackgroundColor: colors.surfacePrimary,
       textTheme: textTheme,
       extensions: [
-        _OnTaskColors(
+        OnTaskColors(
           surfacePrimary: colors.surfacePrimary,
           surfaceSecondary: colors.surfaceSecondary,
           accentPrimary: colors.accentPrimary,
@@ -222,12 +222,13 @@ class _ThemeColors {
 // ─── ThemeExtension for OnTask-specific tokens ───────────────────────────────
 
 /// A [ThemeExtension] that exposes OnTask design tokens beyond standard
-/// Material [ColorScheme] — available via [Theme.of(context).extension<_OnTaskColors>()].
+/// Material [ColorScheme] — available via [Theme.of(context).extension<OnTaskColors>()].
 ///
-/// Not exported publicly; access through [Theme.of(context).colorScheme] for
-/// standard tokens. This extension carries the full OnTask palette.
+/// Access from any widget: `Theme.of(context).extension<OnTaskColors>()!`
+/// This extension carries the full OnTask palette including stake zone and
+/// schedule health colours that have no Material equivalent.
 @immutable
-class _OnTaskColors extends ThemeExtension<_OnTaskColors> {
+class OnTaskColors extends ThemeExtension<OnTaskColors> {
   final Color surfacePrimary;
   final Color surfaceSecondary;
   final Color accentPrimary;
@@ -242,7 +243,7 @@ class _OnTaskColors extends ThemeExtension<_OnTaskColors> {
   final Color scheduleAtRisk;
   final Color scheduleCritical;
 
-  const _OnTaskColors({
+  const OnTaskColors({
     required this.surfacePrimary,
     required this.surfaceSecondary,
     required this.accentPrimary,
@@ -259,7 +260,7 @@ class _OnTaskColors extends ThemeExtension<_OnTaskColors> {
   });
 
   @override
-  _OnTaskColors copyWith({
+  OnTaskColors copyWith({
     Color? surfacePrimary,
     Color? surfaceSecondary,
     Color? accentPrimary,
@@ -274,7 +275,7 @@ class _OnTaskColors extends ThemeExtension<_OnTaskColors> {
     Color? scheduleAtRisk,
     Color? scheduleCritical,
   }) {
-    return _OnTaskColors(
+    return OnTaskColors(
       surfacePrimary: surfacePrimary ?? this.surfacePrimary,
       surfaceSecondary: surfaceSecondary ?? this.surfaceSecondary,
       accentPrimary: accentPrimary ?? this.accentPrimary,
@@ -292,9 +293,9 @@ class _OnTaskColors extends ThemeExtension<_OnTaskColors> {
   }
 
   @override
-  _OnTaskColors lerp(_OnTaskColors? other, double t) {
+  OnTaskColors lerp(OnTaskColors? other, double t) {
     if (other == null) return this;
-    return _OnTaskColors(
+    return OnTaskColors(
       surfacePrimary: Color.lerp(surfacePrimary, other.surfacePrimary, t)!,
       surfaceSecondary:
           Color.lerp(surfaceSecondary, other.surfaceSecondary, t)!,

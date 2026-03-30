@@ -55,13 +55,15 @@ final class FontConfigProvider
   }
 }
 
-String _$fontConfigHash() => r'552fa38bd5575f7bf5eb4ac3d4f1b81f184299e1';
+String _$fontConfigHash() => r'73c0ce9495a80bb0c9c75c0c453c8ab4277d466d';
 
 /// Async provider that loads the user's saved [ThemeVariant] from
 /// [SharedPreferences].
 ///
 /// Defaults to [ThemeVariant.clay] if no preference has been stored.
 /// The Settings UI (Story 1.10) writes the `theme_variant` key to update this.
+///
+/// keepAlive: prevents repeated SharedPreferences reads on every widget rebuild.
 
 @ProviderFor(themeVariant)
 final themeVariantProvider = ThemeVariantProvider._();
@@ -71,6 +73,8 @@ final themeVariantProvider = ThemeVariantProvider._();
 ///
 /// Defaults to [ThemeVariant.clay] if no preference has been stored.
 /// The Settings UI (Story 1.10) writes the `theme_variant` key to update this.
+///
+/// keepAlive: prevents repeated SharedPreferences reads on every widget rebuild.
 
 final class ThemeVariantProvider
     extends
@@ -85,13 +89,15 @@ final class ThemeVariantProvider
   ///
   /// Defaults to [ThemeVariant.clay] if no preference has been stored.
   /// The Settings UI (Story 1.10) writes the `theme_variant` key to update this.
+  ///
+  /// keepAlive: prevents repeated SharedPreferences reads on every widget rebuild.
   ThemeVariantProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
         name: r'themeVariantProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -111,4 +117,4 @@ final class ThemeVariantProvider
   }
 }
 
-String _$themeVariantHash() => r'97fb861b6c5295203bc43d4c585f6cf9a31bb734';
+String _$themeVariantHash() => r'867a7e8bc9ee9f4382aaa9d22ea2b1709d4e56e8';
