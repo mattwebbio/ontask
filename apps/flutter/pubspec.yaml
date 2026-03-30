@@ -49,6 +49,10 @@ dependencies:
   # Desktop window management (macOS minimum size enforcement)
   window_manager: ^0.3.9
 
+  # Network connectivity status — used by SyncManager to trigger offline queue
+  # processing on reconnect (FR94).
+  connectivity_plus: ^6.1.4
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

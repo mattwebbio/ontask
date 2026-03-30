@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../settings/presentation/settings_screen.dart';
 import 'add_tab_sheet.dart';
 import 'macos_shell.dart';
 import 'shell_providers.dart';
@@ -122,9 +123,28 @@ class _AppShellState extends ConsumerState<AppShell> {
         ],
       ),
       tabBuilder: (context, index) {
-        // Delegate screen rendering to go_router's navigation shell.
-        // The shell manages the IndexedStack of the four branches.
-        return widget.navigationShell;
+        // Wrap the navigation shell in a scaffold that includes a persistent
+        // navigation header with the settings (profile) icon (UX spec: "Settings
+        // accessible via profile/account icon in the navigation header").
+        return CupertinoPageScaffold(
+          navigationBar: CupertinoNavigationBar(
+            backgroundColor: colors.surfacePrimary,
+            middle: const Text('On Task'),
+            trailing: CupertinoButton(
+              padding: EdgeInsets.zero,
+              onPressed: () => Navigator.of(context).push(
+                CupertinoPageRoute<void>(
+                  builder: (_) => const SettingsScreen(),
+                ),
+              ),
+              child: Icon(
+                CupertinoIcons.person_crop_circle,
+                color: colors.accentPrimary,
+              ),
+            ),
+          ),
+          child: widget.navigationShell,
+        );
       },
     );
   }

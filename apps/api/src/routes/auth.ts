@@ -218,4 +218,124 @@ app.openapi(refreshRoute, async (c) => {
   )
 })
 
+// ── GET /v1/auth/sessions ──────────────────────────────────────────────────
+
+const SessionSchema = z.object({
+  sessionId: z.string().openapi({ example: 'sess_01HZABC123' }),
+  deviceName: z.string().openapi({ example: 'iPhone 16 Pro' }),
+  location: z.string().openapi({ example: 'London, UK' }),
+  lastActiveAt: z.string().openapi({ example: '2026-03-30T10:00:00.000Z' }),
+  isCurrentDevice: z.boolean().openapi({ example: true }),
+})
+
+const SessionListSchema = z.object({
+  data: z.array(SessionSchema),
+})
+
+const UserErrorSchema = z.object({
+  error: z.object({
+    code: z.string().openapi({ example: 'FORBIDDEN' }),
+    message: z.string().openapi({ example: 'You cannot revoke your current session.' }),
+  }),
+})
+
+const getSessionsRoute = createRoute({
+  method: 'get',
+  path: '/v1/auth/sessions',
+  tags: ['Auth'],
+  summary: 'List active sessions',
+  description:
+    'Returns all active sessions (refresh token slots) for the authenticated user. ' +
+    'Each session includes the device name (from User-Agent), approximate location, ' +
+    'last-active timestamp, and whether it is the current session. ' +
+    'Covers FR91 (session management).',
+  responses: {
+    200: {
+      content: { 'application/json': { schema: SessionListSchema } },
+      description: 'List of active sessions for the authenticated user',
+    },
+    401: {
+      content: { 'application/json': { schema: AuthErrorSchema } },
+      description: 'Unauthenticated — valid access token required',
+    },
+  },
+})
+
+app.openapi(getSessionsRoute, async (c) => {
+  // TODO(impl): Query refresh_tokens table via Drizzle, join with users,
+  // determine isCurrentDevice by comparing session ID in JWT claim.
+  // Stub response — returns fixture data for development.
+  return c.json(
+    ok([
+      {
+        sessionId: 'sess_01_current',
+        deviceName: 'iPhone 16 Pro',
+        location: 'Unknown location',
+        lastActiveAt: new Date().toISOString(),
+        isCurrentDevice: true,
+      },
+      {
+        sessionId: 'sess_02_other',
+        deviceName: 'iPad Pro',
+        location: 'Unknown location',
+        lastActiveAt: new Date(Date.now() - 86_400_000).toISOString(),
+        isCurrentDevice: false,
+      },
+    ]),
+    200,
+  )
+})
+
+// ── DELETE /v1/auth/sessions/:sessionId ───────────────────────────────────
+
+const DeleteSessionParamsSchema = z.object({
+  sessionId: z.string().openapi({ example: 'sess_01HZABC123' }),
+})
+
+const deleteSessionRoute = createRoute({
+  method: 'delete',
+  path: '/v1/auth/sessions/{sessionId}',
+  tags: ['Auth'],
+  summary: 'Revoke a session',
+  description:
+    'Invalidates (deletes) the refresh token for the given session. ' +
+    'The signed-out device will receive a 401 on its next API call and be forced ' +
+    'to re-authenticate. Returns 403 if attempting to revoke the current session ' +
+    '(prevents self-lockout). Covers FR91, NFR-S5.',
+  request: {
+    params: DeleteSessionParamsSchema,
+  },
+  responses: {
+    204: {
+      description: 'Session successfully revoked — no content returned',
+    },
+    401: {
+      content: { 'application/json': { schema: AuthErrorSchema } },
+      description: 'Unauthenticated — valid access token required',
+    },
+    403: {
+      content: { 'application/json': { schema: UserErrorSchema } },
+      description: 'Cannot revoke current session (self-lockout prevention)',
+    },
+    404: {
+      content: { 'application/json': { schema: UserErrorSchema } },
+      description: 'Session not found for this user',
+    },
+  },
+})
+
+app.openapi(deleteSessionRoute, async (c) => {
+  // TODO(impl): Look up session by sessionId in refresh_tokens table via Drizzle.
+  // Compare sessionId against the session ID encoded in the JWT claim (current session).
+  // If match → return 403 FORBIDDEN (self-lockout prevention).
+  // If not found → return 404 NOT_FOUND.
+  // If found and not current → delete row from refresh_tokens table → return 204.
+  const { sessionId } = c.req.valid('param')
+
+  // Stub: return 204 for all valid-looking revocations.
+  // In production, check sessionId against JWT and DB.
+  void sessionId // suppress unused-variable lint in stub
+  return new Response(null, { status: 204 })
+})
+
 export { app as authRouter }
