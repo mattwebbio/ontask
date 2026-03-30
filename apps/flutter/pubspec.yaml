@@ -58,3 +58,11 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/fonts/playfair_display/
+  fonts:
+    - family: PlayfairDisplay
+      fonts:
+        - asset: assets/fonts/playfair_display/PlayfairDisplay-Regular.ttf
+        - asset: assets/fonts/playfair_display/PlayfairDisplay-Italic.ttf
+          style: italic
