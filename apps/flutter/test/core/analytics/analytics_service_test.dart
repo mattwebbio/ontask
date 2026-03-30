@@ -1,43 +1,27 @@
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ontask/core/analytics/analytics_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Captured method channel calls for assertion.
-final List<MethodCall> _capturedCalls = [];
-
-/// Sets up a method channel mock for the 'posthog_flutter' channel.
-///
-/// All calls are recorded in [_capturedCalls]. Pass [returnValue] for methods
-/// that need a specific return value (e.g. isFeatureEnabled → true/false).
-void _setupPosthogChannelMock({dynamic returnValue}) {
-  TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-      .setMockMethodCallHandler(
-    const MethodChannel('posthog_flutter'),
-    (MethodCall methodCall) async {
-      _capturedCalls.add(methodCall);
-      return returnValue;
-    },
-  );
-}
-
-void _clearPosthogChannelMock() {
-  TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-      .setMockMethodCallHandler(const MethodChannel('posthog_flutter'), null);
-  _capturedCalls.clear();
-}
-
 // ---------------------------------------------------------------------------
-// Test-only subclass that bypasses AppConfig.posthogApiKey guard so we can
-// test the actual PostHog call path without dart-defines.
+// Fake PosthogClient — records calls synchronously without any platform channel.
+// Avoids MissingPluginException on Linux CI where posthog_flutter has no
+// platform implementation.
 // ---------------------------------------------------------------------------
-class _EnabledAnalyticsService extends AnalyticsService {
-  const _EnabledAnalyticsService();
+class _FakePosthogClient implements PosthogClient {
+  final List<Map<String, dynamic>> calls = [];
 
   @override
-  bool get isEnabled => true;
+  void capture(String eventName, Map<String, Object> properties) =>
+      calls.add({'method': 'capture', 'eventName': eventName, 'properties': properties});
+
+  @override
+  void identify(String userId) =>
+      calls.add({'method': 'identify', 'userId': userId});
+
+  @override
+  void reset() => calls.add({'method': 'reset'});
 }
 
 void main() {
@@ -46,11 +30,6 @@ void main() {
   setUp(() {
     FlutterSecureStorage.setMockInitialValues({});
     SharedPreferences.setMockInitialValues({});
-    _capturedCalls.clear();
-  });
-
-  tearDown(() {
-    _clearPosthogChannelMock();
   });
 
   group('AnalyticsService — provider instantiation', () {
@@ -74,96 +53,90 @@ void main() {
 
   group('AnalyticsService — no-ops when posthogApiKey is empty (default)', () {
     // In tests POSTHOG_API_KEY dart-define is not set, so AppConfig.posthogApiKey == ''.
-    // All methods must be silent no-ops — no platform channel calls.
+    // All methods must be silent no-ops — no client calls made.
+
+    late _FakePosthogClient fakeClient;
 
     setUp(() {
-      _setupPosthogChannelMock();
+      fakeClient = _FakePosthogClient();
     });
 
     test('isEnabled returns false when posthogApiKey is empty', () {
-      const service = AnalyticsService();
+      final service = AnalyticsService(client: fakeClient);
       expect(service.isEnabled, isFalse);
     });
 
     test('track() does NOT call PostHog capture when key is empty', () {
-      const service = AnalyticsService();
+      final service = AnalyticsService(client: fakeClient);
       service.track('test_event', properties: {'foo': 'bar'});
 
-      expect(_capturedCalls, isEmpty);
+      expect(fakeClient.calls, isEmpty);
     });
 
     test('identify() does NOT call PostHog identify when key is empty', () {
-      const service = AnalyticsService();
+      final service = AnalyticsService(client: fakeClient);
       service.identify('user-uuid-1234');
 
-      expect(_capturedCalls, isEmpty);
+      expect(fakeClient.calls, isEmpty);
     });
 
     test('reset() does NOT call PostHog reset when key is empty', () {
-      const service = AnalyticsService();
+      final service = AnalyticsService(client: fakeClient);
       service.reset();
 
-      expect(_capturedCalls, isEmpty);
+      expect(fakeClient.calls, isEmpty);
     });
   });
 
-  group('AnalyticsService — PII contract (via _EnabledAnalyticsService)', () {
-    // Tests the actual PostHog call path using the test subclass that bypasses
-    // the posthogApiKey guard.
+  group('AnalyticsService — PII contract (isEnabled: true)', () {
+    // Tests the actual client call path with isEnabled forced true so we can
+    // verify behaviour without dart-defines.
+
+    late _FakePosthogClient fakeClient;
+    late AnalyticsService service;
 
     setUp(() {
-      _setupPosthogChannelMock();
+      fakeClient = _FakePosthogClient();
+      service = AnalyticsService(client: fakeClient, isEnabled: true);
     });
 
-    test('identify() passes only userId — no email, name, or extra properties', () async {
-      const service = _EnabledAnalyticsService();
+    test('identify() passes only userId — no email, name, or extra properties', () {
       service.identify('user-uuid-5678');
 
-      // Allow the async method channel call to complete.
-      await Future<void>.delayed(Duration.zero);
-
-      final identifyCall = _capturedCalls.firstWhere(
-        (c) => c.method == 'identify',
+      final identifyCall = fakeClient.calls.firstWhere(
+        (c) => c['method'] == 'identify',
         orElse: () => throw TestFailure('No identify call captured'),
       );
 
-      final args = identifyCall.arguments as Map;
-      expect(args['userId'], equals('user-uuid-5678'),
+      expect(identifyCall['userId'], equals('user-uuid-5678'),
           reason: 'userId must be the provided UUID');
       // No email, name, or payment fields must be present.
-      expect(args.containsKey('email'), isFalse,
+      expect(identifyCall.containsKey('email'), isFalse,
           reason: 'email must NOT be passed to identify()');
-      expect(args.containsKey('name'), isFalse,
+      expect(identifyCall.containsKey('name'), isFalse,
           reason: 'name must NOT be passed to identify()');
     });
 
-    test('track() forwards event name to PostHog capture', () async {
-      const service = _EnabledAnalyticsService();
+    test('track() forwards event name to PostHog capture', () {
       service.track('task_completed', properties: {'task_id': 'abc-123'});
 
-      await Future<void>.delayed(Duration.zero);
-
-      final captureCall = _capturedCalls.firstWhere(
-        (c) => c.method == 'capture',
+      final captureCall = fakeClient.calls.firstWhere(
+        (c) => c['method'] == 'capture',
         orElse: () => throw TestFailure('No capture call captured'),
       );
 
-      final args = captureCall.arguments as Map;
-      expect(args['eventName'], equals('task_completed'));
+      expect(captureCall['eventName'], equals('task_completed'));
     });
 
-    test('reset() calls PostHog reset method', () async {
-      const service = _EnabledAnalyticsService();
+    test('reset() calls PostHog reset method', () {
       service.reset();
 
-      await Future<void>.delayed(Duration.zero);
-
-      final resetCall = _capturedCalls.firstWhere(
-        (c) => c.method == 'reset',
+      final resetCall = fakeClient.calls.firstWhere(
+        (c) => c['method'] == 'reset',
         orElse: () => throw TestFailure('No reset call captured'),
       );
 
-      expect(resetCall.method, equals('reset'));
+      expect(resetCall['method'], equals('reset'));
     });
   });
 }

@@ -6,6 +6,31 @@ import '../config/app_config.dart';
 
 part 'analytics_service.g.dart';
 
+/// Abstraction over PostHog so the real SDK can be swapped out in tests.
+///
+/// posthog_flutter has no Linux platform implementation, so tests running on
+/// Linux CI would otherwise silently no-op or throw MissingPluginException.
+/// Injecting a [PosthogClient] lets tests supply a fake synchronously.
+abstract class PosthogClient {
+  void capture(String eventName, Map<String, Object> properties);
+  void identify(String userId);
+  void reset();
+}
+
+class _RealPosthogClient implements PosthogClient {
+  const _RealPosthogClient();
+
+  @override
+  void capture(String eventName, Map<String, Object> properties) =>
+      Posthog().capture(eventName: eventName, properties: properties);
+
+  @override
+  void identify(String userId) => Posthog().identify(userId: userId);
+
+  @override
+  void reset() => Posthog().reset();
+}
+
 /// Thin wrapper over the PostHog Flutter SDK that enforces a PII-free event
 /// contract (ARCH-30, NFR-S1, AC #3).
 ///
@@ -18,11 +43,16 @@ part 'analytics_service.g.dart';
 /// event-specific metadata (e.g. stake_amount_cents, task_id), app version,
 /// platform.
 class AnalyticsService {
-  const AnalyticsService();
+  const AnalyticsService({PosthogClient? client, bool? isEnabled})
+      : _client = client ?? const _RealPosthogClient(),
+        _isEnabledOverride = isEnabled;
+
+  final PosthogClient _client;
+  final bool? _isEnabledOverride;
 
   /// Whether analytics calls are active. Exposed for testing only.
   @visibleForTesting
-  bool get isEnabled => AppConfig.posthogApiKey.isNotEmpty;
+  bool get isEnabled => _isEnabledOverride ?? AppConfig.posthogApiKey.isNotEmpty;
 
   /// Capture a business event with optional PII-free properties.
   ///
@@ -30,7 +60,7 @@ class AnalyticsService {
   /// [properties] — must not include name, email, or payment details.
   void track(String event, {Map<String, Object> properties = const {}}) {
     if (!isEnabled) return;
-    Posthog().capture(eventName: event, properties: properties);
+    _client.capture(event, properties);
   }
 
   /// Associate the current session with a user UUID (no PII).
@@ -40,14 +70,14 @@ class AnalyticsService {
   void identify(String userId) {
     if (!isEnabled) return;
     // Pass only userId — no email, no name, no payment details.
-    Posthog().identify(userId: userId);
+    _client.identify(userId);
   }
 
   /// Reset the current PostHog session. Call on sign-out so session data
   /// is not mixed across users.
   void reset() {
     if (!isEnabled) return;
-    Posthog().reset();
+    _client.reset();
   }
 }
 
