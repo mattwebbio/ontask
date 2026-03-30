@@ -106,6 +106,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         break;
       case AuthError(:final message):
         setState(() => _errorMessage = message);
+      case TwoFactorRequired(:final tempToken):
+        // Email login returned a 2FA challenge — transition state so the router
+        // redirects to /auth/2fa-verify. The temp token travels via auth state.
+        ref.read(authStateProvider.notifier).setTwoFactorRequired(tempToken);
     }
   }
 

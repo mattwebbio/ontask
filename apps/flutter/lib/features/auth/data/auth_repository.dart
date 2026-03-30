@@ -126,6 +126,8 @@ class AuthRepository extends _$AuthRepository {
   /// Authenticates the user with email and password.
   ///
   /// On success, stores tokens in the Keychain and returns [AuthResult.authenticated].
+  /// When 2FA is enabled, the server returns `{ status: 'totp_required', tempToken }` —
+  /// this method returns [AuthResult.twoFactorRequired] with the temp token in that case.
   /// On invalid credentials, returns [AuthResult.error] with a plain-language message.
   Future<AuthResult> signInWithEmail(String email, String password) async {
     try {
@@ -135,11 +137,68 @@ class AuthRepository extends _$AuthRepository {
         data: {'email': email, 'password': password},
       );
 
+      // Handle 2FA challenge: { status: 'totp_required', tempToken }
+      final responseData = response.data?['data'] as Map<String, dynamic>?;
+      final status = responseData?['status'] as String?;
+      if (status == 'totp_required') {
+        final tempToken = responseData?['tempToken'] as String?;
+        if (tempToken != null && tempToken.isNotEmpty) {
+          return AuthResult.twoFactorRequired(tempToken: tempToken);
+        }
+        return const AuthResult.error(
+          message: 'Something went wrong. Please try again.',
+        );
+      }
+
       return _handleTokenResponse(response.data);
     } on DioException catch (e) {
       return _handleDioError(e);
     } catch (e) {
       debugPrint('[AuthRepository] signInWithEmail unexpected error: $e');
+      return const AuthResult.error(
+        message: 'Something went wrong. Please try again.',
+      );
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Two-factor authentication
+  // ---------------------------------------------------------------------------
+
+  /// Completes the 2FA login step by verifying the TOTP code or backup code.
+  ///
+  /// [tempToken] is the short-lived token returned by [POST /v1/auth/email] when
+  /// 2FA is enabled. [totpCode] is the 6-digit TOTP code or a one-time backup code.
+  ///
+  /// On success, stores full access + refresh tokens and returns [AuthResult.authenticated].
+  /// On invalid code, returns [AuthResult.error] (FR92, AC #3).
+  Future<AuthResult> verify2FA(String tempToken, String totpCode) async {
+    try {
+      final dio = ref.read(apiClientProvider).dio;
+      final response = await dio.post<Map<String, dynamic>>(
+        '/v1/auth/2fa/verify',
+        data: {'tempToken': tempToken, 'code': totpCode},
+      );
+
+      return _handleTokenResponse(response.data);
+    } on DioException catch (e) {
+      final responseData = e.response?.data;
+      if (responseData is Map<String, dynamic>) {
+        final errorData = responseData['error'] as Map<String, dynamic>?;
+        final code = errorData?['code'] as String?;
+        if (code == 'INVALID_TOTP_CODE') {
+          return const AuthResult.error(
+            message:
+                "That code isn't right. Check your authenticator app and try again.",
+          );
+        }
+      }
+      debugPrint('[AuthRepository] verify2FA DioException: ${e.message}');
+      return const AuthResult.error(
+        message: 'Something went wrong. Please try again.',
+      );
+    } catch (e) {
+      debugPrint('[AuthRepository] verify2FA unexpected error: $e');
       return const AuthResult.error(
         message: 'Something went wrong. Please try again.',
       );

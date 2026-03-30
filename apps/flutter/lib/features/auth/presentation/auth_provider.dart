@@ -106,6 +106,15 @@ class AuthStateNotifier extends _$AuthStateNotifier {
     state = const AuthResult.unauthenticated();
   }
 
+  /// Called when email/password login returns a 2FA challenge.
+  ///
+  /// Transitions state to [AuthResult.twoFactorRequired] so the router redirects
+  /// to the 2FA verify screen. The [tempToken] is forwarded to the verify screen
+  /// via router extra data (FR92, AC #3).
+  void setTwoFactorRequired(String tempToken) {
+    state = AuthResult.twoFactorRequired(tempToken: tempToken);
+  }
+
   /// Signs out the current user: clears tokens and resets state.
   Future<void> signOut() async {
     await ref.read(authRepositoryProvider.notifier).signOut();

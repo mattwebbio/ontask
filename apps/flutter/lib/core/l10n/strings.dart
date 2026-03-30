@@ -150,4 +150,77 @@ class AppStrings {
   // ── Sync / conflict resolution ───────────────────────────────────────────────
   static const String syncConflictResolvedMessage =
       "Some changes were updated to match what's on the server.";
+
+  // ── Account settings ─────────────────────────────────────────────────────────
+  static const String accountTitle = "Account";
+  static const String accountExportData = "Export My Data";
+  static const String accountDeleteAccount = "Delete Account";
+  static const String accountTwoFactorAuth = "Two-Factor Authentication";
+
+  // ── Export data ──────────────────────────────────────────────────────────────
+  static const String exportDataTitle = "Export My Data";
+  static const String exportDataDescription =
+      "Download a copy of everything you've built here — your tasks, lists, and plans — as a ZIP archive with CSV and Markdown files.";
+  static const String exportDataButton = "Export My Data";
+  static const String exportDataSuccess =
+      "Your export is ready. Choose where to save it.";
+  static const String exportDataError =
+      "Something went wrong preparing your export. Please try again.";
+  static const String exportDataProgressMessage = "Preparing your data…";
+
+  // ── Delete account ───────────────────────────────────────────────────────────
+  static const String deleteAccountTitle = "Delete Account";
+  static const String deleteAccountWarning =
+      "Deleting your account is permanent and cannot be undone. All your tasks, lists, and preferences will be removed.";
+  static const String deleteAccountContractsNote =
+      "Any active commitment contracts will continue to their deadlines.";
+  static const String deleteAccountIrreversibleNote =
+      "Once deleted, your account cannot be recovered.";
+  static const String deleteAccountConfirmPlaceholder = "delete my account";
+  static const String deleteAccountConfirmHint =
+      "Type 'delete my account' to confirm";
+  static const String deleteAccountButton = "Delete My Account";
+
+  /// Exact confirmation string — case-sensitive match required (FR60, AC #2).
+  static const String deleteAccountConfirmMatch = "delete my account";
+
+  // ── Farewell screen ──────────────────────────────────────────────────────────
+  static const String farewellTitle = "Take care.";
+  static const String farewellBody =
+      "Your account has been deleted. We hope On Task helped you show up for the things that mattered. Wherever you're headed next, your past self is proud.";
+  static const String farewellDoneButton = "Done";
+
+  // ── Two-factor authentication — setup ────────────────────────────────────────
+  static const String twoFactorSetupTitle = "Two-Factor Authentication";
+  static const String twoFactorSetupInstructions =
+      "Add a second layer of security to your account. You'll need an authenticator app like 1Password, Authy, or Google Authenticator.";
+  static const String twoFactorQrInstructions =
+      "Scan this QR code with your authenticator app:";
+  static const String twoFactorManualEntryLabel = "Or enter this code manually:";
+  static const String twoFactorBackupCodesTitle = "Save your backup codes";
+  static const String twoFactorBackupCodesInstructions =
+      "Store these somewhere safe. Each code can be used once if you lose access to your authenticator app.";
+  static const String twoFactorConfirmCodeLabel =
+      "Enter the 6-digit code from your authenticator app to confirm setup:";
+  static const String twoFactorConfirmButton = "Enable Two-Factor Authentication";
+  static const String twoFactorSetupSuccess =
+      "Two-factor authentication is now enabled on your account.";
+  static const String twoFactorSetupError =
+      "That code doesn't match. Check your authenticator app and try again.";
+
+  // ── Two-factor authentication — verify (login) ───────────────────────────────
+  static const String twoFactorVerifyTitle = "Two-Factor Authentication";
+  static const String twoFactorVerifyInstructions =
+      "Enter the 6-digit code from your authenticator app to complete sign in.";
+  static const String twoFactorVerifyCodeLabel = "Authentication code";
+  static const String twoFactorVerifyButton = "Verify";
+  static const String twoFactorVerifyError =
+      "That code isn't right. Check your authenticator app and try again.";
+  static const String twoFactorUseBackupCode = "Use a backup code instead";
+
+  // ── Two-factor authentication — disable ──────────────────────────────────────
+  static const String twoFactorDisableTitle = "Disable Two-Factor Authentication";
+  static const String twoFactorDisableInstructions =
+      "Enter your current authenticator code to disable two-factor authentication.";
+  static const String twoFactorDisableButton = "Disable Two-Factor Authentication";
 }
