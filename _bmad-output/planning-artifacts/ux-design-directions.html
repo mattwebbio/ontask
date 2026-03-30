@@ -1,0 +1,3820 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>On Task — Design Directions</title>
+<style>
+/* ============================================================
+   DESIGN TOKENS
+   ============================================================ */
+:root {
+  /* Clay Light */
+  --clay-s1: #FDF6EE;
+  --clay-s2: #F5EDE2;
+  --clay-s3: #EDE0D0;
+  --clay-accent: #C4623A;
+  --clay-lock: #231A14;
+  --clay-done: #C98A2E;
+  --clay-t1: #1C1410;
+  --clay-t2: #6B5242;
+  --clay-t3: #9B7A6A;
+  --stake-lo: #6B9E78;
+  --stake-mid: #C98A2E;
+  --stake-hi: #C4623A;
+
+  /* Clay Dark */
+  --cdark-s1: #1C1410;
+  --cdark-s2: #261B14;
+  --cdark-accent: #D4724A;
+  --cdark-t1: #F5EDE4;
+  --cdark-t2: #B89880;
+
+  /* Dusk */
+  --dusk-s1: #F5F3FF;
+  --dusk-s2: #EDE8FF;
+  --dusk-accent: #5B4FBF;
+  --dusk-t1: #1A1535;
+  --dusk-t2: #5A5280;
+
+  /* Forge */
+  --forge-s1: #1E1E22;
+  --forge-s2: #2C2C30;
+  --forge-accent: #C9A84C;
+  --forge-t1: #F0EDE8;
+  --forge-t2: #9A9490;
+
+  --ui: -apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+  --voice: Georgia, 'Times New Roman', serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--ui);
+  background: #110D0A;
+  color: #F0E8E0;
+  min-height: 100vh;
+}
+
+/* ============================================================
+   PAGE HEADER
+   ============================================================ */
+.page-header {
+  padding: 48px 56px 36px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+
+.brand { display: flex; flex-direction: column; gap: 6px; }
+
+.brand-name {
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.8px;
+  color: var(--clay-accent);
+}
+
+.brand-sub {
+  font-size: 14px;
+  color: rgba(240,232,224,0.4);
+  font-weight: 400;
+  letter-spacing: 0.3px;
+}
+
+.step-badge {
+  padding: 8px 20px;
+  background: rgba(196,98,58,0.12);
+  border: 1px solid rgba(196,98,58,0.25);
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--clay-accent);
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+/* ============================================================
+   DIRECTION NAV
+   ============================================================ */
+.dir-nav {
+  display: flex;
+  gap: 4px;
+  padding: 20px 56px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.015);
+}
+.dir-nav::-webkit-scrollbar { display: none; }
+
+.dir-btn {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 18px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  min-width: 130px;
+  transition: all 0.18s ease;
+  color: inherit;
+  font-family: var(--ui);
+}
+.dir-btn:hover {
+  background: rgba(255,255,255,0.07);
+  border-color: rgba(196,98,58,0.25);
+}
+.dir-btn.active {
+  background: rgba(196,98,58,0.14);
+  border-color: rgba(196,98,58,0.5);
+}
+.dir-btn .num {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: rgba(240,232,224,0.3);
+}
+.dir-btn.active .num { color: var(--clay-accent); }
+.dir-btn .name {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(240,232,224,0.85);
+}
+.dir-btn .mood {
+  font-size: 10px;
+  color: rgba(240,232,224,0.3);
+  font-style: italic;
+}
+
+/* ============================================================
+   MAIN LAYOUT
+   ============================================================ */
+.main { padding: 44px 56px; }
+
+.dir-section { display: none; }
+.dir-section.active { display: block; }
+
+.dir-header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 40px;
+  align-items: start;
+  margin-bottom: 44px;
+}
+
+.dir-title {
+  font-size: 36px;
+  font-weight: 700;
+  letter-spacing: -1px;
+  margin-bottom: 8px;
+}
+
+.dir-tagline {
+  font-family: var(--voice);
+  font-size: 17px;
+  font-style: italic;
+  color: rgba(240,232,224,0.45);
+  margin-bottom: 18px;
+  line-height: 1.5;
+}
+
+.dir-traits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.trait {
+  padding: 4px 12px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(240,232,224,0.55);
+}
+
+.dir-desc {
+  max-width: 360px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: rgba(240,232,224,0.45);
+  text-align: right;
+}
+
+/* ============================================================
+   PHONE FRAME
+   ============================================================ */
+.phones-row {
+  display: flex;
+  gap: 28px;
+  align-items: flex-start;
+  justify-content: center;
+  margin-bottom: 44px;
+}
+
+.phone-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.phone-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: rgba(240,232,224,0.25);
+}
+
+.phone {
+  width: 236px;
+  height: 512px;
+  background: #090604;
+  border-radius: 46px;
+  padding: 5px;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.1),
+    inset 0 0 0 1px rgba(255,255,255,0.04),
+    0 24px 64px rgba(0,0,0,0.65),
+    0 6px 16px rgba(0,0,0,0.4);
+  flex-shrink: 0;
+}
+
+.phone-inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 41px;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Dynamic Island */
+.di {
+  position: absolute;
+  top: 9px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 88px;
+  height: 24px;
+  background: #000;
+  border-radius: 100px;
+  z-index: 20;
+}
+
+/* Status bar */
+.sb {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 50px 20px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 5;
+}
+
+.sb-time { font-size: 14px; }
+
+.sb-icons {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  font-size: 10px;
+}
+
+/* Tab bar */
+.tb {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 8px 0 18px;
+  flex-shrink: 0;
+  border-top: 1px solid;
+}
+
+.ti {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-size: 9px;
+  font-weight: 500;
+  padding: 4px 10px;
+  min-width: 44px;
+}
+
+.ti-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+/* Screen content */
+.sc {
+  flex: 1;
+  padding: 4px 16px 0;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ============================================================
+   REUSABLE MICRO-COMPONENTS
+   ============================================================ */
+.screen-heading {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  margin-bottom: 4px;
+}
+
+.screen-date {
+  font-size: 11px;
+  font-weight: 500;
+  margin-bottom: 14px;
+}
+
+.task-card {
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 8px;
+}
+
+.task-title { font-size: 15px; font-weight: 600; line-height: 1.3; }
+.task-meta { font-size: 11px; margin-top: 4px; }
+
+.stake-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 100px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.cta-btn {
+  width: 100%;
+  padding: 13px;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.health-strip {
+  height: 4px;
+  border-radius: 100px;
+  margin-bottom: 12px;
+}
+
+/* ============================================================
+   EVALUATION PANEL
+   ============================================================ */
+.eval {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 16px;
+  padding: 28px 32px;
+}
+
+.eval-head {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: rgba(240,232,224,0.3);
+  margin-bottom: 20px;
+}
+
+.eval-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 20px;
+}
+
+.eval-item h4 {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--clay-accent);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.eval-item p {
+  font-size: 12px;
+  color: rgba(240,232,224,0.5);
+  line-height: 1.5;
+}
+
+/* ============================================================
+   DIRECTION 1: THE ORACLE
+   Clay light · Centered · New York dominant · Sacred space
+   ============================================================ */
+.d1 .phone-inner { background: var(--clay-s1); }
+.d1 .sb, .d1 .sb-icons { color: var(--clay-t2); }
+.d1 .tb { border-top-color: rgba(28,20,16,0.07); background: rgba(253,246,238,0.96); }
+.d1 .ti { color: var(--clay-t3); }
+.d1 .ti.on { color: var(--clay-accent); }
+
+.d1-sc {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  height: 100%;
+  padding: 0 16px;
+  gap: 0;
+}
+
+.d1-eye {
+  font-family: var(--voice);
+  font-size: 11px;
+  font-style: italic;
+  color: var(--clay-t3);
+  margin-bottom: 22px;
+  letter-spacing: 0.3px;
+}
+
+.d1-task {
+  font-family: var(--voice);
+  font-size: 24px;
+  font-weight: 400;
+  color: var(--clay-t1);
+  line-height: 1.25;
+  margin-bottom: 14px;
+  letter-spacing: -0.3px;
+}
+
+.d1-attr {
+  font-family: var(--voice);
+  font-size: 11px;
+  font-style: italic;
+  color: var(--clay-t3);
+  margin-bottom: 24px;
+}
+
+.d1-lock {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 14px;
+  background: rgba(35,26,20,0.07);
+  border: 1px solid rgba(35,26,20,0.1);
+  border-radius: 100px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--clay-t1);
+  margin-bottom: 28px;
+  letter-spacing: 0.3px;
+}
+
+.d1-cta {
+  background: var(--clay-accent);
+  color: white;
+  width: 100%;
+}
+
+.d1-timer {
+  margin-top: 10px;
+  font-size: 11px;
+  color: var(--clay-t3);
+}
+
+/* D1 Lock screen */
+.d1-lock-sc {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 4px 0 0;
+}
+
+.d1-input-area {
+  background: var(--clay-s2);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+}
+
+.d1-input-label {
+  font-family: var(--voice);
+  font-size: 11px;
+  font-style: italic;
+  color: var(--clay-t3);
+  margin-bottom: 6px;
+}
+
+.d1-input-text {
+  font-family: var(--voice);
+  font-size: 15px;
+  color: var(--clay-t1);
+  line-height: 1.3;
+}
+
+.d1-make-real {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-top: 1px solid rgba(28,20,16,0.08);
+  margin-bottom: 8px;
+}
+
+.d1-make-real-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--clay-t1);
+}
+
+.d1-toggle {
+  width: 36px;
+  height: 20px;
+  background: var(--clay-accent);
+  border-radius: 100px;
+  position: relative;
+}
+.d1-toggle::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 16px;
+  height: 16px;
+  background: white;
+  border-radius: 50%;
+}
+
+.d1-slider-row {
+  margin-bottom: 10px;
+}
+
+.d1-slider-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--clay-t2);
+  margin-bottom: 5px;
+}
+
+.d1-slider-track {
+  height: 6px;
+  background: linear-gradient(to right, var(--stake-lo) 0%, var(--stake-mid) 50%, var(--stake-hi) 100%);
+  border-radius: 100px;
+  position: relative;
+}
+
+.d1-slider-thumb {
+  position: absolute;
+  top: 50%;
+  left: 45%;
+  transform: translate(-50%, -50%);
+  width: 18px;
+  height: 18px;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  border: 2px solid var(--stake-mid);
+}
+
+.d1-stake-val {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--stake-mid);
+  text-align: center;
+  margin: 8px 0;
+}
+
+.d1-charity {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  background: var(--clay-s2);
+  border-radius: 10px;
+  margin-bottom: 8px;
+}
+
+.d1-charity-icon {
+  width: 24px;
+  height: 24px;
+  background: var(--clay-accent);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+}
+
+.d1-charity-text {
+  font-size: 11px;
+  color: var(--clay-t2);
+}
+
+.d1-lock-btn {
+  background: var(--clay-lock);
+  color: var(--clay-s1);
+  font-family: var(--voice);
+  font-style: italic;
+}
+
+.d1-voice-below {
+  text-align: center;
+  font-family: var(--voice);
+  font-size: 10px;
+  font-style: italic;
+  color: var(--clay-t3);
+  margin-top: 6px;
+}
+
+/* D1 Today */
+.d1-today-sc { display: flex; flex-direction: column; height: 100%; }
+
+.d1-hs {
+  height: 3px;
+  background: linear-gradient(to right, var(--stake-lo) 0%, var(--stake-lo) 70%, var(--stake-mid) 70%);
+  border-radius: 100px;
+  margin-bottom: 12px;
+}
+
+.d1-today-card {
+  display: flex;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid rgba(28,20,16,0.07);
+  align-items: flex-start;
+}
+
+.d1-time-col {
+  width: 36px;
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--clay-t3);
+  text-align: right;
+  padding-top: 2px;
+  flex-shrink: 0;
+}
+
+.d1-task-col { flex: 1; }
+
+.d1-today-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--clay-t1);
+  line-height: 1.3;
+}
+
+.d1-today-meta { font-size: 10px; color: var(--clay-t3); margin-top: 2px; }
+
+.d1-cal-card {
+  display: flex;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid rgba(28,20,16,0.07);
+  align-items: center;
+}
+
+.d1-cal-dot {
+  width: 6px;
+  height: 6px;
+  background: #5E7CE2;
+  border-radius: 50%;
+  margin: 0 15px 0 7px;
+  flex-shrink: 0;
+}
+
+.d1-cal-title { font-size: 13px; color: var(--clay-t2); }
+.d1-cal-meta { font-size: 10px; color: var(--clay-t3); }
+
+/* ============================================================
+   DIRECTION 2: WARM ARCHITECTURE
+   Structured cards · Terracotta headers · Systematic
+   ============================================================ */
+.d2 .phone-inner { background: var(--clay-s2); }
+.d2 .sb, .d2 .sb-icons { color: var(--clay-t2); }
+.d2 .tb { border-top-color: rgba(28,20,16,0.08); background: var(--clay-s1); }
+.d2 .ti { color: var(--clay-t3); }
+.d2 .ti.on { color: var(--clay-accent); }
+
+.d2-nav-header {
+  background: var(--clay-accent);
+  margin: -4px -16px 12px;
+  padding: 10px 16px 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.d2-nav-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: white;
+  letter-spacing: -0.3px;
+}
+
+.d2-nav-badge {
+  background: rgba(255,255,255,0.25);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 100px;
+}
+
+.d2-section-head {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--clay-t3);
+  margin-bottom: 6px;
+}
+
+.d2-card {
+  background: var(--clay-s1);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 6px;
+  box-shadow: 0 1px 3px rgba(28,20,16,0.08);
+}
+
+.d2-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.d2-card-title { font-size: 14px; font-weight: 600; color: var(--clay-t1); line-height: 1.3; }
+
+.d2-lock-chip {
+  background: var(--clay-lock);
+  color: var(--clay-s1);
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 100px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-left: 6px;
+}
+
+.d2-card-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.d2-pill {
+  background: var(--clay-s2);
+  border-radius: 100px;
+  padding: 2px 8px;
+  font-size: 10px;
+  color: var(--clay-t2);
+}
+
+.d2-timer-pill {
+  background: rgba(196,98,58,0.1);
+  color: var(--clay-accent);
+  border-radius: 100px;
+  padding: 2px 8px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.d2-cta {
+  background: var(--clay-accent);
+  color: white;
+  border-radius: 12px;
+  padding: 10px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.d2-cal-card {
+  background: rgba(94,124,226,0.08);
+  border: 1px solid rgba(94,124,226,0.15);
+  border-radius: 10px;
+  padding: 8px 12px;
+  margin-bottom: 6px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.d2-cal-left {
+  width: 3px;
+  height: 36px;
+  background: #5E7CE2;
+  border-radius: 100px;
+  flex-shrink: 0;
+}
+
+.d2-cal-title { font-size: 12px; font-weight: 500; color: var(--clay-t2); }
+.d2-cal-meta { font-size: 10px; color: var(--clay-t3); }
+
+/* D2 Lock */
+.d2-lock-header {
+  background: var(--clay-accent);
+  margin: -4px -16px 12px;
+  padding: 10px 16px;
+}
+
+.d2-lh-title { font-size: 14px; font-weight: 600; color: white; }
+.d2-lh-sub { font-size: 11px; color: rgba(255,255,255,0.7); margin-top: 2px; }
+
+.d2-stake-section {
+  background: var(--clay-s1);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 8px;
+}
+
+.d2-ss-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--clay-t2);
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.d2-zones {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.d2-zone {
+  flex: 1;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.d2-zone.lo { background: rgba(107,158,120,0.2); color: var(--stake-lo); }
+.d2-zone.mid { background: rgba(201,138,46,0.25); color: var(--stake-mid); border: 2px solid var(--stake-mid); }
+.d2-zone.hi { background: rgba(196,98,58,0.15); color: var(--stake-hi); }
+
+.d2-amount {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--stake-mid);
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+.d2-amount-sub {
+  font-size: 10px;
+  text-align: center;
+  color: var(--clay-t3);
+  margin-bottom: 8px;
+}
+
+.d2-slider-track {
+  height: 6px;
+  background: linear-gradient(to right, var(--stake-lo), var(--stake-mid), var(--stake-hi));
+  border-radius: 100px;
+  position: relative;
+  margin-bottom: 12px;
+}
+
+.d2-slider-thumb {
+  position: absolute;
+  top: 50%;
+  left: 40%;
+  transform: translate(-50%, -50%);
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+  border: 2.5px solid var(--stake-mid);
+}
+
+.d2-lock-cta {
+  background: var(--clay-lock);
+  color: var(--clay-s1);
+}
+
+/* D2 Today */
+.d2-forecast {
+  background: rgba(196,98,58,0.08);
+  border: 1px solid rgba(196,98,58,0.15);
+  border-radius: 10px;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.d2-fc-label { font-size: 11px; font-weight: 600; color: var(--clay-accent); }
+.d2-fc-val { font-size: 11px; color: var(--clay-t2); }
+
+.d2-today-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 7px 0;
+  border-bottom: 1px solid rgba(28,20,16,0.06);
+}
+
+.d2-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+.d2-row-title { font-size: 12px; font-weight: 500; color: var(--clay-t1); }
+.d2-row-meta { font-size: 10px; color: var(--clay-t3); margin-top: 1px; }
+
+/* ============================================================
+   DIRECTION 3: EDITORIAL
+   Big typography · Generous whitespace · Magazine-feel
+   ============================================================ */
+.d3 .phone-inner { background: var(--clay-s1); }
+.d3 .sb, .d3 .sb-icons { color: var(--clay-t3); }
+.d3 .tb { border-top-color: rgba(28,20,16,0.07); background: var(--clay-s1); }
+.d3 .ti { color: var(--clay-t3); }
+.d3 .ti.on { color: var(--clay-t1); font-weight: 700; }
+
+.d3-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 6px;
+}
+
+.d3-heading {
+  font-size: 44px;
+  font-weight: 700;
+  letter-spacing: -2px;
+  color: var(--clay-t1);
+  line-height: 1;
+}
+
+.d3-date-block {
+  text-align: right;
+}
+
+.d3-date-day {
+  font-size: 28px;
+  font-weight: 300;
+  color: var(--clay-t1);
+  line-height: 1;
+  letter-spacing: -1px;
+}
+
+.d3-date-sub {
+  font-size: 9px;
+  color: var(--clay-t3);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.d3-divider {
+  height: 1px;
+  background: var(--clay-t1);
+  margin-bottom: 16px;
+}
+
+.d3-task-block { margin-bottom: 18px; }
+
+.d3-task-eyebrow {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--clay-accent);
+  margin-bottom: 6px;
+}
+
+.d3-task-title {
+  font-family: var(--voice);
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--clay-t1);
+  line-height: 1.2;
+  margin-bottom: 6px;
+  letter-spacing: -0.3px;
+}
+
+.d3-task-meta {
+  font-size: 11px;
+  color: var(--clay-t3);
+  display: flex;
+  gap: 12px;
+}
+
+.d3-accent-line {
+  width: 32px;
+  height: 2px;
+  background: var(--clay-accent);
+  border-radius: 100px;
+  margin: 10px 0;
+}
+
+.d3-next-up {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--clay-t3);
+  margin-bottom: 8px;
+}
+
+.d3-small-task {
+  display: flex;
+  justify-content: space-between;
+  padding: 7px 0;
+  border-bottom: 1px solid rgba(28,20,16,0.07);
+}
+
+.d3-st-title { font-size: 12px; color: var(--clay-t1); }
+.d3-st-time { font-size: 10px; color: var(--clay-t3); }
+
+.d3-cta {
+  background: var(--clay-t1);
+  color: var(--clay-s1);
+}
+
+/* D3 Lock */
+.d3-lock-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.d3-lock-eyebrow {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--clay-accent);
+  margin-bottom: 10px;
+}
+
+.d3-lock-title {
+  font-family: var(--voice);
+  font-size: 20px;
+  color: var(--clay-t1);
+  margin-bottom: 4px;
+  line-height: 1.25;
+}
+
+.d3-lock-meta { font-size: 11px; color: var(--clay-t3); margin-bottom: 16px; }
+
+.d3-divider-sm {
+  height: 1px;
+  background: rgba(28,20,16,0.12);
+  margin-bottom: 16px;
+}
+
+.d3-voice-copy {
+  font-family: var(--voice);
+  font-size: 14px;
+  font-style: italic;
+  color: var(--clay-t2);
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+
+.d3-slider-area { margin-bottom: 14px; }
+
+.d3-slider-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  color: var(--clay-t3);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.d3-slider-track {
+  height: 8px;
+  background: linear-gradient(to right, var(--stake-lo), var(--stake-mid), var(--stake-hi));
+  border-radius: 100px;
+  position: relative;
+}
+
+.d3-slider-thumb {
+  position: absolute;
+  top: 50%;
+  left: 55%;
+  transform: translate(-50%, -50%);
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  border: 2px solid var(--stake-hi);
+}
+
+.d3-big-amount {
+  font-size: 36px;
+  font-weight: 700;
+  letter-spacing: -1px;
+  color: var(--clay-accent);
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+.d3-charity-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-top: 1px solid rgba(28,20,16,0.08);
+  font-size: 11px;
+  color: var(--clay-t2);
+  margin-bottom: 12px;
+}
+
+.d3-lock-cta {
+  background: var(--clay-t1);
+  color: var(--clay-s1);
+  font-family: var(--voice);
+  font-style: italic;
+  font-size: 15px;
+}
+
+.d3-below {
+  font-family: var(--voice);
+  font-size: 10px;
+  font-style: italic;
+  text-align: center;
+  color: var(--clay-t3);
+  margin-top: 6px;
+}
+
+/* D3 Today */
+.d3-today-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 10px;
+}
+
+.d3-today-title {
+  font-size: 36px;
+  font-weight: 700;
+  letter-spacing: -1.5px;
+  color: var(--clay-t1);
+  line-height: 1;
+}
+
+.d3-today-meta { font-size: 10px; color: var(--clay-t3); }
+
+.d3-hs-row {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.d3-hs-seg {
+  flex: 1;
+  height: 3px;
+  border-radius: 100px;
+  background: var(--stake-lo);
+}
+
+.d3-hs-seg.risk { background: var(--stake-mid); }
+
+.d3-t-row {
+  display: flex;
+  gap: 0;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(28,20,16,0.07);
+  align-items: flex-start;
+}
+
+.d3-t-num {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--clay-t3);
+  width: 40px;
+  flex-shrink: 0;
+  padding-top: 1px;
+}
+
+.d3-t-body { flex: 1; }
+.d3-t-title { font-size: 13px; color: var(--clay-t1); line-height: 1.3; }
+.d3-t-meta { font-size: 10px; color: var(--clay-t3); }
+.d3-t-locked { font-size: 9px; font-weight: 700; color: var(--clay-lock); margin-left: 4px; }
+
+/* ============================================================
+   DIRECTION 4: DEEP CLAY (Dark / Immersive)
+   Terracotta surfaces · Cream text · Premium dark feel
+   ============================================================ */
+.d4 .phone-inner { background: var(--cdark-s1); }
+.d4 .sb, .d4 .sb-icons { color: var(--cdark-t2); }
+.d4 .tb { border-top-color: rgba(245,237,228,0.06); background: var(--cdark-s2); }
+.d4 .ti { color: rgba(184,152,128,0.6); }
+.d4 .ti.on { color: var(--cdark-accent); }
+
+.d4-now-sc {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.d4-now-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: rgba(184,152,128,0.5);
+  margin-bottom: 16px;
+}
+
+.d4-big-task {
+  flex: 1;
+  background: rgba(212,114,74,0.08);
+  border: 1px solid rgba(212,114,74,0.15);
+  border-radius: 18px;
+  padding: 18px 16px;
+  margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.d4-task-eye {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--cdark-accent);
+  margin-bottom: 10px;
+}
+
+.d4-task-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--cdark-t1);
+  line-height: 1.25;
+  letter-spacing: -0.3px;
+  margin-bottom: 8px;
+}
+
+.d4-task-attr {
+  font-family: var(--voice);
+  font-size: 11px;
+  font-style: italic;
+  color: var(--cdark-t2);
+  margin-bottom: 12px;
+}
+
+.d4-stake-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  background: rgba(212,114,74,0.15);
+  border-radius: 100px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--cdark-accent);
+  margin-bottom: 14px;
+}
+
+.d4-timer {
+  font-size: 26px;
+  font-weight: 300;
+  color: var(--cdark-t1);
+  letter-spacing: -1px;
+  margin-bottom: 4px;
+}
+
+.d4-timer-sub { font-size: 10px; color: var(--cdark-t2); }
+
+.d4-cta {
+  background: var(--cdark-accent);
+  color: var(--cdark-s1);
+  border-radius: 14px;
+  padding: 12px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.d4-secondary-cta {
+  background: rgba(245,237,228,0.06);
+  color: var(--cdark-t2);
+  border-radius: 12px;
+  padding: 9px;
+  text-align: center;
+  font-size: 12px;
+}
+
+/* D4 Lock */
+.d4-lock-sc { display: flex; flex-direction: column; height: 100%; }
+
+.d4-lhead {
+  margin-bottom: 10px;
+}
+
+.d4-lhead-eye {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--cdark-accent);
+  margin-bottom: 6px;
+}
+
+.d4-lhead-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--cdark-t1);
+  line-height: 1.25;
+  margin-bottom: 4px;
+}
+
+.d4-lhead-meta { font-size: 11px; color: var(--cdark-t2); }
+
+.d4-stake-card {
+  background: rgba(245,237,228,0.04);
+  border: 1px solid rgba(245,237,228,0.07);
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 8px;
+}
+
+.d4-sc-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.d4-sc-label { font-size: 12px; font-weight: 600; color: var(--cdark-t1); }
+
+.d4-sc-amount {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--cdark-accent);
+}
+
+.d4-slider-dark {
+  height: 6px;
+  background: linear-gradient(to right, var(--stake-lo), var(--stake-mid), var(--stake-hi));
+  border-radius: 100px;
+  position: relative;
+  margin-bottom: 6px;
+}
+
+.d4-slider-thumb {
+  position: absolute;
+  top: 50%;
+  left: 48%;
+  transform: translate(-50%, -50%);
+  width: 18px;
+  height: 18px;
+  background: var(--cdark-t1);
+  border-radius: 50%;
+  border: 2px solid var(--stake-mid);
+}
+
+.d4-zones-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  color: var(--cdark-t2);
+}
+
+.d4-voice {
+  font-family: var(--voice);
+  font-size: 12px;
+  font-style: italic;
+  color: var(--cdark-t2);
+  text-align: center;
+  padding: 8px 0;
+  border-top: 1px solid rgba(245,237,228,0.07);
+  margin-bottom: 8px;
+}
+
+.d4-lock-cta {
+  background: var(--cdark-t1);
+  color: var(--cdark-s1);
+  border-radius: 14px;
+  padding: 13px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* D4 Today */
+.d4-today-sc { display: flex; flex-direction: column; height: 100%; }
+
+.d4-today-head {
+  margin-bottom: 10px;
+}
+
+.d4-today-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: rgba(184,152,128,0.5);
+  margin-bottom: 2px;
+}
+
+.d4-today-date { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; color: var(--cdark-t1); }
+
+.d4-hs-bar {
+  height: 4px;
+  background: linear-gradient(to right, rgba(107,158,120,0.8) 0%, rgba(107,158,120,0.8) 68%, rgba(201,138,46,0.8) 68%);
+  border-radius: 100px;
+  margin-bottom: 12px;
+}
+
+.d4-time-block {
+  background: rgba(245,237,228,0.04);
+  border: 1px solid rgba(245,237,228,0.06);
+  border-radius: 12px;
+  padding: 10px 12px;
+  margin-bottom: 6px;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.d4-tb-time {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--cdark-t2);
+  width: 32px;
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+
+.d4-tb-title { font-size: 13px; font-weight: 500; color: var(--cdark-t1); line-height: 1.3; }
+.d4-tb-meta { font-size: 10px; color: var(--cdark-t2); margin-top: 2px; }
+
+.d4-locked-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--cdark-accent);
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 4px;
+  margin-left: auto;
+}
+
+.d4-cal-block {
+  background: rgba(94,124,226,0.08);
+  border: 1px solid rgba(94,124,226,0.12);
+  border-radius: 10px;
+  padding: 8px 12px;
+  margin-bottom: 6px;
+  display: flex;
+  gap: 8px;
+}
+
+.d4-cal-bar {
+  width: 3px;
+  background: rgba(94,124,226,0.6);
+  border-radius: 100px;
+  flex-shrink: 0;
+}
+
+.d4-cal-title { font-size: 12px; color: rgba(184,152,128,0.7); }
+.d4-cal-meta { font-size: 10px; color: var(--cdark-t2); }
+
+/* ============================================================
+   DIRECTION 5: SPATIAL TIMELINE
+   Vertical time axis · Tasks in space · Tiimo-inspired
+   ============================================================ */
+.d5 .phone-inner { background: var(--clay-s1); }
+.d5 .sb, .d5 .sb-icons { color: var(--clay-t3); }
+.d5 .tb { border-top-color: rgba(28,20,16,0.07); background: var(--clay-s1); }
+.d5 .ti { color: var(--clay-t3); }
+.d5 .ti.on { color: var(--clay-accent); }
+
+.d5-sc { display: flex; gap: 0; height: 100%; }
+
+.d5-time-axis {
+  width: 32px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  padding-right: 8px;
+  position: relative;
+}
+
+.d5-axis-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 8px;
+  width: 1px;
+  background: rgba(28,20,16,0.08);
+}
+
+.d5-hour-label {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--clay-t3);
+  line-height: 1;
+  position: relative;
+  z-index: 1;
+  background: var(--clay-s1);
+  padding: 1px 0;
+}
+
+.d5-events-col {
+  flex: 1;
+  position: relative;
+  padding-left: 8px;
+}
+
+.d5-now-indicator {
+  position: absolute;
+  top: 80px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--clay-accent);
+  border-radius: 100px;
+  z-index: 10;
+}
+
+.d5-now-dot {
+  position: absolute;
+  left: -5px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 10px;
+  height: 10px;
+  background: var(--clay-accent);
+  border-radius: 50%;
+  border: 2px solid var(--clay-s1);
+}
+
+.d5-event-block {
+  position: absolute;
+  left: 0;
+  right: 4px;
+  border-radius: 8px;
+  padding: 5px 8px;
+  font-size: 11px;
+}
+
+.d5-event-title { font-weight: 600; line-height: 1.2; }
+.d5-event-meta { font-size: 9px; opacity: 0.7; margin-top: 1px; }
+
+.d5-hero-event {
+  background: rgba(196,98,58,0.12);
+  border: 1px solid rgba(196,98,58,0.2);
+  color: var(--clay-t1);
+  top: 55px;
+  height: 52px;
+}
+
+.d5-cal-event {
+  background: rgba(94,124,226,0.1);
+  border: 1px solid rgba(94,124,226,0.15);
+  color: var(--clay-t2);
+  top: 120px;
+  height: 36px;
+}
+
+.d5-task-event {
+  background: rgba(107,158,120,0.1);
+  border: 1px solid rgba(107,158,120,0.15);
+  color: var(--clay-t2);
+  top: 168px;
+  height: 30px;
+}
+
+.d5-task-event2 {
+  background: var(--clay-s2);
+  border: 1px solid rgba(28,20,16,0.1);
+  color: var(--clay-t2);
+  top: 210px;
+  height: 24px;
+}
+
+.d5-top-now {
+  margin-bottom: 10px;
+}
+
+.d5-now-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--clay-accent);
+  margin-bottom: 2px;
+}
+
+.d5-now-time {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--clay-t2);
+}
+
+/* D5 lock */
+.d5-lock-sc { height: 100%; display: flex; flex-direction: column; }
+
+.d5-lock-context {
+  background: var(--clay-s2);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 10px;
+}
+
+.d5-lc-eye {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--clay-t3);
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.d5-lc-task { font-size: 14px; font-weight: 600; color: var(--clay-t1); }
+.d5-lc-meta { font-size: 11px; color: var(--clay-t3); margin-top: 3px; }
+
+.d5-lock-cta-area { margin-top: auto; }
+
+/* D5 Today */
+.d5-today-sc { display: flex; gap: 0; height: 100%; }
+
+/* ============================================================
+   DIRECTION 6: THE RITUAL
+   Commitment lock as hero · Ceremonial · Weighty
+   ============================================================ */
+.d6 .phone-inner { background: var(--clay-s1); }
+.d6 .sb, .d6 .sb-icons { color: var(--clay-t3); }
+.d6 .tb { border-top-color: rgba(28,20,16,0.07); background: var(--clay-s1); }
+.d6 .ti { color: var(--clay-t3); }
+.d6 .ti.on { color: var(--clay-accent); }
+
+/* D6 Now */
+.d6-now-sc { display: flex; flex-direction: column; height: 100%; }
+
+.d6-tab-head {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--clay-t3);
+  margin-bottom: 12px;
+}
+
+.d6-ceremony-card {
+  background: var(--clay-lock);
+  border-radius: 18px;
+  padding: 20px 16px;
+  margin-bottom: 10px;
+  position: relative;
+  overflow: hidden;
+}
+
+.d6-ceremony-card::before {
+  content: '';
+  position: absolute;
+  top: -20px;
+  right: -20px;
+  width: 80px;
+  height: 80px;
+  background: rgba(253,246,238,0.03);
+  border-radius: 50%;
+}
+
+.d6-cc-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: rgba(245,237,228,0.4);
+  margin-bottom: 10px;
+}
+
+.d6-cc-title {
+  font-family: var(--voice);
+  font-size: 20px;
+  font-weight: 400;
+  color: var(--clay-s1);
+  line-height: 1.25;
+  margin-bottom: 12px;
+  letter-spacing: -0.2px;
+}
+
+.d6-cc-stake {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.d6-lock-icon-big {
+  width: 28px;
+  height: 28px;
+  background: rgba(245,237,228,0.1);
+  border: 1px solid rgba(245,237,228,0.15);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.d6-stake-label {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--clay-done);
+  letter-spacing: -0.5px;
+}
+
+.d6-stake-sub { font-size: 11px; color: rgba(245,237,228,0.4); margin-top: -2px; }
+
+.d6-timer-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid rgba(245,237,228,0.08);
+  padding-top: 10px;
+}
+
+.d6-elapsed { font-size: 11px; color: rgba(245,237,228,0.5); }
+.d6-deadline { font-size: 11px; font-weight: 600; color: var(--clay-s1); }
+
+.d6-cta {
+  background: var(--clay-accent);
+  color: white;
+}
+
+.d6-next-card {
+  background: var(--clay-s2);
+  border-radius: 12px;
+  padding: 10px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.d6-next-title { font-size: 12px; color: var(--clay-t1); }
+.d6-next-meta { font-size: 10px; color: var(--clay-t3); }
+.d6-next-time { font-size: 11px; font-weight: 600; color: var(--clay-t2); }
+
+/* D6 Lock - THE HERO */
+.d6-lock-sc { display: flex; flex-direction: column; height: 100%; }
+
+.d6-ritual-frame {
+  border: 1.5px solid rgba(35,26,20,0.15);
+  border-radius: 18px;
+  padding: 16px;
+  margin-bottom: 10px;
+  position: relative;
+}
+
+.d6-ritual-corners {
+  position: absolute;
+  top: -2px; left: -2px; right: -2px; bottom: -2px;
+  border-radius: 19px;
+  pointer-events: none;
+}
+
+.d6-ritual-task {
+  font-family: var(--voice);
+  font-size: 17px;
+  color: var(--clay-t1);
+  line-height: 1.3;
+  margin-bottom: 4px;
+}
+
+.d6-ritual-meta { font-size: 11px; color: var(--clay-t3); margin-bottom: 14px; }
+
+.d6-ritual-divider {
+  height: 1px;
+  background: rgba(35,26,20,0.1);
+  margin-bottom: 14px;
+}
+
+.d6-ritual-voice {
+  font-family: var(--voice);
+  font-size: 12px;
+  font-style: italic;
+  color: var(--clay-t2);
+  text-align: center;
+  margin-bottom: 14px;
+  line-height: 1.5;
+}
+
+.d6-big-slider {
+  margin-bottom: 10px;
+}
+
+.d6-bs-amount {
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -1px;
+  color: var(--clay-accent);
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.d6-bs-track {
+  height: 10px;
+  background: linear-gradient(to right, var(--stake-lo), var(--stake-mid), var(--stake-hi));
+  border-radius: 100px;
+  position: relative;
+  margin-bottom: 8px;
+}
+
+.d6-bs-thumb {
+  position: absolute;
+  top: 50%;
+  left: 52%;
+  transform: translate(-50%, -50%);
+  width: 24px;
+  height: 24px;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+  border: 3px solid var(--stake-hi);
+}
+
+.d6-bs-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  color: var(--clay-t3);
+}
+
+.d6-lock-cta {
+  background: var(--clay-lock);
+  color: var(--clay-s1);
+  font-size: 14px;
+  font-weight: 700;
+  font-family: var(--voice);
+  font-style: italic;
+  letter-spacing: 0.2px;
+}
+
+/* D6 Today */
+.d6-today-sc { display: flex; flex-direction: column; height: 100%; }
+
+.d6-today-locked {
+  background: rgba(35,26,20,0.04);
+  border: 1px solid rgba(35,26,20,0.08);
+  border-radius: 12px;
+  padding: 10px 12px;
+  margin-bottom: 6px;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.d6-tl-lock {
+  font-size: 12px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.d6-tl-title { font-size: 13px; font-weight: 600; color: var(--clay-t1); }
+.d6-tl-meta { font-size: 10px; color: var(--clay-t3); margin-top: 2px; }
+
+.d6-today-task {
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(28,20,16,0.07);
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.d6-tt-check {
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid rgba(28,20,16,0.2);
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.d6-tt-title { font-size: 13px; color: var(--clay-t1); }
+.d6-tt-meta { font-size: 10px; color: var(--clay-t3); }
+
+/* ============================================================
+   DIRECTION 7: SIGNAL
+   Schedule health dominant · Data-forward · Efficiency
+   ============================================================ */
+.d7 .phone-inner { background: var(--clay-s2); }
+.d7 .sb, .d7 .sb-icons { color: var(--clay-t2); }
+.d7 .tb { border-top-color: rgba(28,20,16,0.08); background: var(--clay-s1); }
+.d7 .ti { color: var(--clay-t3); }
+.d7 .ti.on { color: var(--clay-accent); }
+
+.d7-health-bar {
+  background: var(--clay-s1);
+  border-radius: 12px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.d7-hb-icon {
+  width: 28px;
+  height: 28px;
+  background: rgba(107,158,120,0.15);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.d7-hb-main { flex: 1; }
+.d7-hb-label { font-size: 10px; font-weight: 700; color: var(--stake-lo); text-transform: uppercase; letter-spacing: 0.5px; }
+.d7-hb-detail { font-size: 11px; color: var(--clay-t2); margin-top: 1px; }
+
+.d7-hb-pct { font-size: 18px; font-weight: 700; color: var(--stake-lo); }
+
+.d7-now-task {
+  background: var(--clay-s1);
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  border-left: 3px solid var(--clay-accent);
+}
+
+.d7-nt-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--clay-accent);
+  margin-bottom: 4px;
+}
+
+.d7-nt-title { font-size: 16px; font-weight: 600; color: var(--clay-t1); line-height: 1.2; margin-bottom: 6px; }
+
+.d7-nt-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.d7-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
+  border-radius: 100px;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.d7-chip.timer { background: rgba(196,98,58,0.1); color: var(--clay-accent); }
+.d7-chip.lock { background: rgba(35,26,20,0.08); color: var(--clay-t1); }
+.d7-chip.list { background: var(--clay-s3); color: var(--clay-t2); }
+
+.d7-cta {
+  background: var(--clay-accent);
+  color: white;
+}
+
+.d7-next-block {
+  background: var(--clay-s1);
+  border-radius: 12px;
+  padding: 10px 12px;
+  margin-bottom: 6px;
+}
+
+.d7-nb-label { font-size: 9px; font-weight: 700; color: var(--clay-t3); letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 6px; }
+
+.d7-nb-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(28,20,16,0.06);
+}
+
+.d7-nb-row:last-child { border-bottom: none; }
+.d7-nb-title { font-size: 12px; color: var(--clay-t1); }
+.d7-nb-time { font-size: 11px; font-weight: 600; color: var(--clay-t2); }
+
+/* D7 Lock */
+.d7-lock-sc { display: flex; flex-direction: column; height: 100%; }
+
+.d7-lock-info {
+  background: var(--clay-s1);
+  border-radius: 12px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+
+.d7-li-title { font-size: 14px; font-weight: 600; color: var(--clay-t1); margin-bottom: 2px; }
+.d7-li-meta { font-size: 11px; color: var(--clay-t3); }
+
+.d7-stake-widget {
+  background: var(--clay-s1);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+}
+
+.d7-sw-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.d7-sw-label { font-size: 12px; font-weight: 600; color: var(--clay-t1); }
+.d7-sw-toggle { font-size: 11px; color: var(--clay-accent); font-weight: 600; }
+
+.d7-sw-zones {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.d7-sw-zone {
+  border-radius: 8px;
+  padding: 6px 4px;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.d7-sw-zone.lo { background: rgba(107,158,120,0.12); color: var(--stake-lo); }
+.d7-sw-zone.mid { background: rgba(201,138,46,0.15); color: var(--stake-mid); border: 1.5px solid var(--stake-mid); }
+.d7-sw-zone.hi { background: rgba(196,98,58,0.1); color: var(--stake-hi); }
+
+.d7-sw-zone-label { font-size: 9px; opacity: 0.7; margin-top: 1px; }
+
+.d7-sw-amount { font-size: 26px; font-weight: 700; color: var(--stake-mid); text-align: center; margin-bottom: 8px; }
+
+.d7-sw-track {
+  height: 6px;
+  background: linear-gradient(to right, var(--stake-lo), var(--stake-mid), var(--stake-hi));
+  border-radius: 100px;
+  position: relative;
+  margin-bottom: 4px;
+}
+
+.d7-sw-thumb {
+  position: absolute;
+  top: 50%;
+  left: 42%;
+  transform: translate(-50%, -50%);
+  width: 18px;
+  height: 18px;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  border: 2px solid var(--stake-mid);
+}
+
+.d7-forecast-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.d7-fr-item {
+  flex: 1;
+  background: var(--clay-s1);
+  border-radius: 10px;
+  padding: 8px;
+  text-align: center;
+}
+
+.d7-fr-val { font-size: 14px; font-weight: 700; color: var(--clay-t1); }
+.d7-fr-label { font-size: 9px; color: var(--clay-t3); margin-top: 1px; }
+
+/* D7 Today */
+.d7-today-sc { display: flex; flex-direction: column; height: 100%; }
+
+.d7-today-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.d7-th-date { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; color: var(--clay-t1); }
+.d7-th-meta { font-size: 11px; color: var(--clay-t3); margin-top: 2px; }
+.d7-th-forecast { font-size: 11px; font-weight: 600; color: var(--stake-lo); }
+
+.d7-hs-track {
+  height: 5px;
+  background: linear-gradient(to right, var(--stake-lo) 0%, var(--stake-lo) 72%, var(--stake-mid) 72%);
+  border-radius: 100px;
+  margin-bottom: 3px;
+}
+
+.d7-hs-label { font-size: 9px; color: var(--clay-t3); margin-bottom: 10px; }
+
+.d7-grouped-row {
+  background: var(--clay-s1);
+  border-radius: 12px;
+  margin-bottom: 6px;
+  overflow: hidden;
+}
+
+.d7-gr-head {
+  padding: 7px 10px;
+  border-bottom: 1px solid rgba(28,20,16,0.06);
+  display: flex;
+  justify-content: space-between;
+}
+
+.d7-gr-head-label { font-size: 10px; font-weight: 700; color: var(--clay-t3); text-transform: uppercase; letter-spacing: 0.5px; }
+.d7-gr-head-time { font-size: 10px; color: var(--clay-t3); }
+
+.d7-gr-task {
+  padding: 7px 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(28,20,16,0.04);
+}
+
+.d7-gr-task:last-child { border-bottom: none; }
+.d7-gr-title { font-size: 12px; color: var(--clay-t1); }
+.d7-gr-lock { font-size: 10px; }
+
+/* ============================================================
+   COMPARISON TOOL
+   ============================================================ */
+.compare-bar {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
+  padding: 16px 24px;
+  margin-bottom: 28px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.compare-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: rgba(240,232,224,0.35);
+  flex-shrink: 0;
+}
+
+.compare-btns {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.cmp-btn {
+  padding: 5px 12px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(240,232,224,0.6);
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: var(--ui);
+}
+
+.cmp-btn:hover { background: rgba(255,255,255,0.09); color: rgba(240,232,224,0.9); }
+.cmp-btn.active { background: rgba(196,98,58,0.15); border-color: rgba(196,98,58,0.4); color: var(--clay-accent); }
+
+/* ============================================================
+   SELECTION PANEL
+   ============================================================ */
+.selection-panel {
+  background: rgba(196,98,58,0.06);
+  border: 1px solid rgba(196,98,58,0.2);
+  border-radius: 16px;
+  padding: 32px;
+  margin-top: 48px;
+}
+
+.sp-head {
+  font-size: 18px;
+  font-weight: 700;
+  color: #F0E8E0;
+  margin-bottom: 6px;
+}
+
+.sp-sub {
+  font-size: 13px;
+  color: rgba(240,232,224,0.45);
+  margin-bottom: 28px;
+  font-style: italic;
+  font-family: var(--voice);
+}
+
+.sp-questions {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.sp-q {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 12px;
+  padding: 16px 20px;
+}
+
+.sp-q h4 {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--clay-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.sp-q ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sp-q li {
+  font-size: 12px;
+  color: rgba(240,232,224,0.5);
+  padding-left: 12px;
+  position: relative;
+  line-height: 1.5;
+}
+
+.sp-q li::before {
+  content: '→';
+  position: absolute;
+  left: 0;
+  color: rgba(196,98,58,0.5);
+  font-size: 10px;
+  top: 2px;
+}
+
+/* ============================================================
+   UTILITIES
+   ============================================================ */
+.mt4 { margin-top: 4px; }
+.mt8 { margin-top: 8px; }
+.mt12 { margin-top: 12px; }
+.flex { display: flex; }
+.flex-between { display: flex; justify-content: space-between; align-items: center; }
+
+@media (max-width: 1200px) {
+  .page-header, .dir-nav, .main { padding-left: 32px; padding-right: 32px; }
+  .eval-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 900px) {
+  .phones-row { flex-wrap: wrap; }
+  .dir-header { grid-template-columns: 1fr; }
+  .dir-desc { text-align: left; }
+  .sp-questions { grid-template-columns: 1fr; }
+  .eval-grid { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     PAGE HEADER
+     ============================================================ -->
+<header class="page-header">
+  <div class="brand">
+    <div class="brand-name">On Task</div>
+    <div class="brand-sub">UX Design Directions · Step 9 of 10</div>
+  </div>
+  <div class="step-badge">Design Exploration</div>
+</header>
+
+<!-- ============================================================
+     DIRECTION NAV
+     ============================================================ -->
+<nav class="dir-nav">
+  <button class="dir-btn active" onclick="showDir(1)">
+    <span class="num">01</span>
+    <span class="name">The Oracle</span>
+    <span class="mood">sacred · minimal</span>
+  </button>
+  <button class="dir-btn" onclick="showDir(2)">
+    <span class="num">02</span>
+    <span class="name">Warm Architecture</span>
+    <span class="mood">structured · systematic</span>
+  </button>
+  <button class="dir-btn" onclick="showDir(3)">
+    <span class="num">03</span>
+    <span class="name">Editorial</span>
+    <span class="mood">typographic · magazine</span>
+  </button>
+  <button class="dir-btn" onclick="showDir(4)">
+    <span class="num">04</span>
+    <span class="name">Deep Clay</span>
+    <span class="mood">immersive · dark-forward</span>
+  </button>
+  <button class="dir-btn" onclick="showDir(5)">
+    <span class="num">05</span>
+    <span class="name">Spatial Timeline</span>
+    <span class="mood">temporal · spatial</span>
+  </button>
+  <button class="dir-btn" onclick="showDir(6)">
+    <span class="num">06</span>
+    <span class="name">The Ritual</span>
+    <span class="mood">ceremonial · lock-forward</span>
+  </button>
+  <button class="dir-btn" onclick="showDir(7)">
+    <span class="num">07</span>
+    <span class="name">Signal</span>
+    <span class="mood">data-forward · efficient</span>
+  </button>
+</nav>
+
+<!-- ============================================================
+     MAIN
+     ============================================================ -->
+<main class="main">
+
+<!-- ============================
+     DIRECTION 1: THE ORACLE
+     ============================ -->
+<section class="dir-section active" id="dir-1">
+  <div class="dir-header">
+    <div>
+      <div class="dir-title">The Oracle</div>
+      <div class="dir-tagline">"One thing. One voice. No decisions."</div>
+      <div class="dir-traits">
+        <span class="trait">New York serif dominant</span>
+        <span class="trait">Centered layout</span>
+        <span class="trait">Maximum breathing room</span>
+        <span class="trait">Past self voice literal</span>
+        <span class="trait">Near-zero chrome</span>
+      </div>
+    </div>
+    <div class="dir-desc">
+      The Now tab becomes a sacred space. One task, centered, rendered in New York. The past self voice appears literally as the eyebrow. Navigation recedes entirely — only the task exists. Commitment lock is minimal and elegant. Best for users who need the starkest reduction of decision.
+    </div>
+  </div>
+
+  <div class="phones-row">
+
+    <!-- Now Tab -->
+    <div class="phone-wrap">
+      <div class="phone-label">Now Tab</div>
+      <div class="phone d1">
+        <div class="phone-inner">
+          <div class="di"></div>
+          <div class="sb d1-status">
+            <span class="sb-time">9:41</span>
+            <span class="sb-icons d1-status-icons">▲▲▲ 🔋</span>
+          </div>
+          <div class="sc" style="padding: 0 16px;">
+            <div class="d1-sc">
+              <div class="d1-eye">Your past self, this morning</div>
+              <div class="d1-task">Finish quarterly budget review</div>
+              <div class="d1-attr">planned for 10:00 · 45 min</div>
+              <div class="d1-lock">🔒 $50 · ACLU</div>
+              <div class="cta-btn d1-cta">Done</div>
+              <div class="d1-timer">0:08:34 elapsed · Start timer</div>
+            </div>
+          </div>
+          <div class="tb d1-tab">
+            <div class="ti d1-tab-item on"><div class="ti-icon">◉</div>Now</div>
+            <div class="ti d1-tab-item"><div class="ti-icon">○</div>Today</div>
+            <div class="ti d1-tab-item"><div class="ti-icon">+</div>Add</div>
+            <div class="ti d1-tab-item"><div class="ti-icon">☰</div>Lists</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Commitment Lock -->
+    <div class="phone-wrap">
+      <div class="phone-label">Commitment Lock</div>
+      <div class="phone d1">
+        <div class="phone-inner">
+          <div class="di"></div>
+          <div class="sb d1-status">
+            <span class="sb-time">9:41</span>
+            <span class="sb-icons d1-status-icons">▲▲▲ 🔋</span>
+          </div>
+          <div class="sc">
+            <div class="d1-lock-sc">
+              <div class="d1-input-area">
+                <div class="d1-input-label">What does your future self need to do?</div>
+                <div class="d1-input-text">Finish quarterly budget review with full variance analysis</div>
+              </div>
+              <div class="d1-make-real">
+                <div class="d1-make-real-label">Make this real?</div>
+                <div class="d1-toggle"></div>
+              </div>
+              <div class="d1-slider-row">
+                <div class="d1-slider-label">
+                  <span>Low signal</span>
+                  <span>Real cost</span>
+                </div>
+                <div class="d1-slider-track">
+                  <div class="d1-slider-thumb"></div>
+                </div>
+              </div>
+              <div class="d1-stake-val">$40</div>
+              <div class="d1-charity">
+                <div class="d1-charity-icon">♥</div>
+                <div class="d1-charity-text">ACLU · change</div>
+              </div>
+              <div class="cta-btn d1-lock-btn">Lock it in.</div>
+              <div class="d1-voice-below">Your future self is counting on you.</div>
+            </div>
+          </div>
+          <div class="tb d1-tab">
+            <div class="ti d1-tab-item"><div class="ti-icon">◉</div>Now</div>
+            <div class="ti d1-tab-item"><div class="ti-icon">○</div>Today</div>
+            <div class="ti d1-tab-item on"><div class="ti-icon">+</div>Add</div>
+            <div class="ti d1-tab-item"><div class="ti-icon">☰</div>Lists</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Today Tab -->
+    <div class="phone-wrap">
+      <div class="phone-label">Today Tab</div>
+      <div class="phone d1">
+        <div class="phone-inner">
+          <div class="di"></div>
+          <div class="sb d1-status">
+            <span class="sb-time">9:41</span>
+            <span class="sb-icons d1-status-icons">▲▲▲ 🔋</span>
+          </div>
+          <div class="sc">
+            <div class="d1-today-sc">
+              <div class="screen-heading" style="color: var(--clay-t1); margin-bottom: 2px;">Today</div>
+              <div class="screen-date" style="color: var(--clay-t3); margin-bottom: 10px;">Sunday, March 29</div>
+              <div class="d1-hs"></div>
+              <div class="d1-today-card">
+                <div class="d1-time-col">10:00</div>
+                <div class="d1-task-col">
+                  <div class="d1-today-title">Finish quarterly budget review</div>
+                  <div class="d1-today-meta">45 min · 🔒 $50</div>
+                </div>
+              </div>
+              <div class="d1-cal-card">
+                <div class="d1-cal-dot"></div>
+                <div>
+                  <div class="d1-cal-title">Team standup</div>
+                  <div class="d1-cal-meta">11:00 · 30 min · Calendar</div>
+                </div>
+              </div>
+              <div class="d1-today-card">
+                <div class="d1-time-col">11:30</div>
+                <div class="d1-task-col">
+                  <div class="d1-today-title">Review PR #48 from Maya</div>
+                  <div class="d1-today-meta">20 min · Work</div>
+                </div>
+              </div>
+              <div class="d1-today-card">
+                <div class="d1-time-col">2:00</div>
+                <div class="d1-task-col">
+                  <div class="d1-today-title">Call mom</div>
+                  <div class="d1-today-meta">30 min · Personal</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="tb d1-tab">
+            <div class="ti d1-tab-item"><div class="ti-icon">◉</div>Now</div>
+            <div class="ti d1-tab-item on"><div class="ti-icon">○</div>Today</div>
+            <div class="ti d1-tab-item"><div class="ti-icon">+</div>Add</div>
+            <div class="ti d1-tab-item"><div class="ti-icon">☰</div>Lists</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="eval">
+    <div class="eval-head">Evaluation Criteria</div>
+    <div class="eval-grid">
+      <div class="eval-item"><h4>Layout</h4><p>Centered single-focus — most radical expression of "one task" principle</p></div>
+      <div class="eval-item"><h4>Interaction</h4><p>Minimal touch surface; swipe + single CTA; low friction</p></div>
+      <div class="eval-item"><h4>Visual Weight</h4><p>Ultra-light; New York on cream; almost no colour</p></div>
+      <div class="eval-item"><h4>Navigation</h4><p>Tab bar nearly invisible; content is everything</p></div>
+      <div class="eval-item"><h4>Components</h4><p>Custom — no standard card patterns; everything bespoke</p></div>
+      <div class="eval-item"><h4>Brand Fit</h4><p>Highest expression of past/future self voice; very strong emotional register</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================
+     DIRECTION 2: WARM ARCHITECTURE
+     ============================ -->
+<section class="dir-section" id="dir-2">
+  <div class="dir-header">
+    <div>
+      <div class="dir-title">Warm Architecture</div>
+      <div class="dir-tagline">"Clear structure. Warm heart."</div>
+      <div class="dir-traits">
+        <span class="trait">Terracotta section headers</span>
+        <span class="trait">Card elevation system</span>
+        <span class="trait">Systematic hierarchy</span>
+        <span class="trait">Medium density</span>
+        <span class="trait">Cupertino-adjacent</span>
+      </div>
+    </div>
+    <div class="dir-desc">
+      Structure and warmth in balance. Terracotta headers anchor each section; white cards elevate on cream backgrounds; commitment lock gets a clear visual hierarchy. Feels familiar to iOS users but unmistakably On Task. Best for users who want clarity and a sense of trust through order.
+    </div>
+  </div>
+
+  <div class="phones-row">
+
+    <!-- Now Tab -->
+    <div class="phone-wrap">
+      <div class="phone-label">Now Tab</div>
+      <div class="phone d2">
+        <div class="phone-inner">
+          <div class="di"></div>
+          <div class="sb">
+            <span class="sb-time" style="color: var(--clay-t2);">9:41</span>
+            <span class="sb-icons" style="color: var(--clay-t2);">▲▲▲ 🔋</span>
+          </div>
+          <div class="sc" style="padding-top: 0;">
+            <div class="d2-nav-header">
+              <span class="d2-nav-title">Now</span>
+              <span class="d2-nav-badge">1 active</span>
+            </div>
+            <div class="d2-section-head">CURRENT TASK</div>
+            <div class="d2-card">
+              <div class="d2-card-top">
+                <div class="d2-card-title">Finish quarterly budget review</div>
+                <div class="d2-lock-chip">🔒 $50</div>
+              </div>
+              <div class="d2-card-row">
+                <div class="d2-pill">Work</div>
+                <div class="d2-pill">45 min</div>
+                <div class="d2-timer-pill">▶ 0:08</div>
+              </div>
+              <div style="margin-top: 10px;">
+                <div class="d2-cta">Mark Done</div>
+              </div>
+            </div>
+            <div class="d2-section-head" style="margin-top: 4px;">UP NEXT</div>
+            <div class="d2-cal-card">
+              <div class="d2-cal-left"></div>
+              <div>
+                <div class="d2-cal-title">Team standup</div>
+                <div class="d2-cal-meta">11:00 · 30 min</div>
+              </div>
+            </div>
+            <div class="d2-card" style="padding: 10px 12px;">
+              <div class="d2-card-top" style="margin-bottom: 4px;">
+                <div class="d2-card-title" style="font-size: 13px;">Review PR #48 from Maya</div>
+              </div>
+              <div class="d2-card-row">
+                <div class="d2-pill">11:30</div>
+                <div class="d2-pill">20 min</div>
+              </div>
+            </div>
+          </div>
+          <div class="tb" style="border-top-color: rgba(28,20,16,0.08); background: var(--clay-s1);">
+            <div class="ti" style="color: var(--clay-accent);"><div class="ti-icon">◉</div>Now</div>
+            <div class="ti" style="color: var(--clay-t3);"><div class="ti-icon">○</div>Today</div>
+            <div class="ti" style="color: var(--clay-t3);"><div class="ti-icon">+</div>Add</div>
+            <div class="ti" style="color: var(--clay-t3);"><div class="ti-icon">☰</div>Lists</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Commitment Lock -->
+    <div class="phone-wrap">
+      <div class="phone-label">Commitment Lock</div>
+      <div class="phone d2">
+        <div class="phone-inner">
+          <div class="di"></div>
+          <div class="sb">
+            <span class="sb-time" style="color: var(--clay-t2);">9:41</span>
+            <span class="sb-icons" style="color: var(--clay-t2);">▲▲▲ 🔋</span>
+          </div>
+          <div class="sc" style="padding-top: 0;">
+            <div class="d2-lock-header">
+              <div class="d2-lh-title">Quarterly budget review</div>
+              <div class="d2-lh-sub">Work · 45 min · due today 5pm</div>
+            </div>
+            <div class="d2-stake-section">
+              <div class="d2-ss-label">Stake Amount</div>
+              <div class="d2-zones">
+                <div class="d2-zone lo">Low<br><small>$5–$20</small></div>
+                <div class="d2-zone mid">Mid<br><small>$25–$75</small></div>
+                <div class="d2-zone hi">High<br><small>$100+</small></div>
+              </div>
+              <div class="d2-amount">$40</div>
+              <div class="d2-amount-sub">Moderate signal · ACLU</div>
+              <div class="d2-slider-track">
+                <div class="d2-slider-thumb"></div>
+              </div>
+            </div>
+            <div class="d2-card" style="padding: 10px 12px; margin-bottom: 8px;">
+              <div style="font-size: 11px; color: var(--clay-t2); margin-bottom: 2px;">Charity</div>
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="font-size: 13px; font-weight: 600; color: var(--clay-t1);">ACLU</div>
+                <div style="font-size: 11px; color: var(--clay-accent);">Change →</div>
+              </div>
+            </div>
+            <div class="d2-lock-cta cta-btn" style="border-radius: 13px; padding: 12px; background: var(--clay-lock); color: var(--clay-s1); font-size: 14px; font-weight: 700;">Lock it in</div>
+          </div>
+          <div class="tb" style="border-top-color: rgba(28,20,16,0.08); background: var(--clay-s1);">
+            <div class="ti" style="color: var(--clay-t3);"><div class="ti-icon">◉</div>Now</div>
+            <div class="ti" style="color: var(--clay-t3);"><div class="ti-icon">○</div>Today</div>
+            <div class="ti" style="color: var(--clay-accent);"><div class="ti-icon">+</div>Add</div>
+            <div class="ti" style="color: var(--clay-t3);"><div class="ti-icon">☰</div>Lists</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Today Tab -->
+    <div class="phone-wrap">
+      <div class="phone-label">Today Tab</div>
+      <div class="phone d2">
+        <div class="phone-inner">
+          <div class="di"></div>
+          <div class="sb">
+            <span class="sb-time" style="color: var(--clay-t2);">9:41</span>
+            <span class="sb-icons" style="color: var(--clay-t2);">▲▲▲ 🔋</span>
+          </div>
+          <div class="sc" style="padding-top: 0;">
+            <div class="d2-nav-header">
+              <span class="d2-nav-title">Today</span>
+              <span class="d2-nav-badge">7 tasks</span>
+            </div>
+            <div class="d2-forecast">
+              <div>
+                <div class="d2-fc-label">Schedule Health</div>
+                <div class="d2-fc-val">7.2 hrs planned · 8h available</div>
+              </div>
+              <div style="font-size: 10px; font-weight: 700; color: var(--stake-lo);">87%</div>
+            </div>
+            <div class="d2-section-head">MORNING</div>
+            <div class="d2-today-row">
+              <div class="d2-dot" style="background: var(--clay-accent);"></div>
+              <div>
+                <div class="d2-row-title">Budget review <span style="font-size: 9px; background: rgba(35,26,20,0.08); padding: 1px 5px; border-radius: 4px; font-weight: 700;">🔒</span></div>
+                <div class="d2-row-meta">10:00 · 45 min</div>
+              </div>
+            </div>
+            <div class="d2-today-row">
+              <div class="d2-dot" style="background: #5E7CE2;"></div>
+              <div>
+                <div class="d2-row-title">Team standup</div>
+                <div class="d2-row-meta">11:00 · Calendar event</div>
+              </div>
+            </div>
+            <div class="d2-today-row">
+              <div class="d2-dot" style="background: var(--clay-s3); border: 1px solid rgba(28,20,16,0.15);"></div>
+              <div>
+                <div class="d2-row-title">Review PR #48</div>
+                <div class="d2-row-meta">11:30 · 20 min · Work</div>
+              </div>
+            </div>
+            <div class="d2-section-head" style="margin-top: 8px;">AFTERNOON</div>
+            <div class="d2-today-row">
+              <div class="d2-dot" style="background: var(--stake-lo);"></div>
+              <div>
+                <div class="d2-row-title">Call mom</div>
+                <div class="d2-row-meta">2:00 · 30 min · Personal</div>
+              </div>
+            </div>
+          </div>
+          <div class="tb" style="border-top-color: rgba(28,20,16,0.08); background: var(--clay-s1);">
+            <div class="ti" style="color: var(--clay-t3);"><div class="ti-icon">◉</div>Now</div>
+            <div class="ti" style="color: var(--clay-accent);"><div class="ti-icon">○</div>Today</div>
+            <div class="ti" style="color: var(--clay-t3);"><div class="ti-icon">+</div>Add</div>
+            <div class="ti" style="color: var(--clay-t3);"><div class="ti-icon">☰</div>Lists</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="eval">
+    <div class="eval-head">Evaluation Criteria</div>
+    <div class="eval-grid">
+      <div class="eval-item"><h4>Layout</h4><p>Section headers + cards — familiar and scannable; most iOS-native feeling</p></div>
+      <div class="eval-item"><h4>Interaction</h4><p>Standard card tap patterns; lower novelty, higher learnability</p></div>
+      <div class="eval-item"><h4>Visual Weight</h4><p>Medium — clear hierarchy, not sparse; terracotta used confidently</p></div>
+      <div class="eval-item"><h4>Navigation</h4><p>Coloured header bar provides strong location cue per tab</p></div>
+      <div class="eval-item"><h4>Components</h4><p>Closest to standard Cupertino — lower implementation risk</p></div>
+      <div class="eval-item"><h4>Brand Fit</h4><p>Warm and trustworthy; less emotionally distinctive than Oracle</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================
+     DIRECTION 3: EDITORIAL
+     ============================ -->
+<section class="dir-section" id="dir-3">
+  <div class="dir-header">
+    <div>
+      <div class="dir-title">Editorial</div>
+      <div class="dir-tagline">"Typography as the design system."</div>
+      <div class="dir-traits">
+        <span class="trait">Display-scale type</span>
+        <span class="trait">Horizontal rules</span>
+        <span class="trait">New York for voice</span>
+        <span class="trait">Magazine structure</span>
+        <span class="trait">Accent used sparingly</span>
+      </div>
+    </div>
+    <div class="dir-desc">
+      Typography carries the full weight of the design. "Now" at 44pt creates a bold anchor. The divider rule gives editorial structure. Terracotta used only for the single most important accent — commitment status. The past self voice feels like a byline. Best for users who respond to craft and considered design.
+    </div>
+  </div>
+
+  <div class="phones-row">
+
+    <!-- Now Tab -->
+    <div class="phone-wrap">
+      <div class="phone-label">Now Tab</div>
+      <div class="phone d3">
+        <div class="phone-inner">
+          <div class="di"></div>
+          <div class="sb" style="color: var(--clay-t3);">
+            <span class="sb-time">9:41</span>
+            <span class="sb-icons">▲▲▲ 🔋</span>
+          </div>
+          <div class="sc">
+            <div class="d3-top">
+              <div class="d3-heading">Now</div>
+              <div class="d3-date-block">
+                <div class="d3-date-day">Sun</div>
+                <div class="d3-date-sub">Mar 29</div>
+              </div>
+            </div>
+            <div class="d3-divider"></div>
+            <div class="d3-task-block">
+              <div class="d3-task-eyebrow">Your past self · 8:30am</div>
+              <div class="d3-task-title">Finish quarterly budget review</div>
+              <div class="d3-task-meta">
+                <span>45 min</span>
+                <span>Work</span>
+                <span style="color: var(--clay-accent); font-weight: 700;">🔒 $50</span>
+              </div>
+            </div>
+            <div class="d3-accent-line"></div>
+            <div class="cta-btn" style="background: var(--clay-t1); color: var(--clay-s1); font-size: 14px; font-weight: 600; border-radius: 12px; margin-bottom: 10px; padding: 12px;">Mark complete</div>
+            <div class="d3-next-up">Next up</div>
+            <div class="d3-small-task">
+              <div class="d3-st-title">Team standup · Cal</div>
+              <div class="d3-st-time">11:00</div>
+            </div>
+            <div class="d3-small-task">
+              <div class="d3-st-title">Review PR #48</div>
+              <div class="d3-st-time">11:30</div>
+            </div>
+          </div>
+          <div class="tb" style="border-top-color: rgba(28,20,16,0.08); background: var(--clay-s1);">
+            <div class="ti" style="color: var(--clay-t1); font-weight: 700;"><div class="ti-icon">◉</div>Now</div>
+            <div class="ti" style="color: var(--clay-t3);"><div class="ti-icon">○</div>Today</div>
+            <div class="ti" style="color: var(--clay-t3);"><div class="ti-icon">+</div>Add</div>
+            <div class="ti" style="color: var(--clay-t3);"><div class="ti-icon">☰</div>Lists</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Commitment Lock -->
+    <div class="phone-wrap">
+      <div class="phone-label">Commitment Lock</div>
+      <div class="phone d3">
+        <div class="phone-inner">
+          <div class="di"></div>
+          <div class="sb" style="color: var(--clay-t3);">
+            <span class="sb-time">9:41</span>
+            <span class="sb-icons">▲▲▲ 🔋</span>
+          </div>
+          <div class="sc">
+            <div class="d3-lock-page">
+              <div class="d3-lock-eyebrow">New task</div>
+              <div class="d3-lock-title">Finish quarterly budget review</div>
+              <div class="d3-lock-meta">Work · 45 min · today 5pm</div>
+              <div class="d3-divider-sm"></div>
+              <div class="d3-voice-copy">"Make this real? A small cost now creates the clarity your future self needs."</div>
+              <div class="d3-slider-area">
+                <div class="d3-slider-labels">
+                  <span>Soft</span>
+                  <span>Real</span>
+                  <span>Serious</span>
+                </div>
+                <div class="d3-slider-track">
+                  <div class="d3-slider-thumb"></div>
+                </div>
+              </div>
+              <div class="d3-big-amount">$55</div>
+              <div class="d3-charity-row">
+                <span>→ ACLU</span>
+                <span style="color: var(--clay-accent);">Change</span>
+              </div>
+              <div class="cta-btn d3-lock-cta">Lock it in.</div>
+              <div class="d3-below">Your future self is counting on you.</div>
+            </div>
+          </div>
+          <div class="tb" style="border-top-color: rgba(28,20,16,0.08); background: var(--clay-s1);">
+            <div class="ti" style="color: var(--clay-t3);"><div class="ti-icon">◉</div>Now</div>
+            <div class="ti" style="color: var(--clay-t3);"><div class="ti-icon">○</div>Today</div>
+            <div class="ti" style="color: var(--clay-t1); font-weight: 700;"><div class="ti-icon">+</div>Add</div>
+            <div class="ti" style="color: var(--clay-t3);"><div class="ti-icon">☰</div>Lists</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Today Tab -->
+    <div class="phone-wrap">
+      <div class="phone-label">Today Tab</div>
+      <div class="phone d3">
+        <div class="phone-inner">
+          <div class="di"></div>
+          <div class="sb" style="color: var(--clay-t3);">
+            <span class="sb-time">9:41</span>
+            <span class="sb-icons">▲▲▲ 🔋</span>
+          </div>
+          <div class="sc">
+            <div class="d3-today-head">
+              <div class="d3-today-title">Today</div>
+              <div class="d3-today-meta">7 tasks<br><span style="color: var(--stake-lo); font-weight: 700;">87% clear</span></div>
+            </div>
+            <div class="d3-hs-row">
+              <div class="d3-hs-seg"></div>
+              <div class="d3-hs-seg"></div>
+              <div class="d3-hs-seg"></div>
+              <div class="d3-hs-seg"></div>
+              <div class="d3-hs-seg risk"></div>
+              <div class="d3-hs-seg" style="background: rgba(28,20,16,0.08);"></div>
+            </div>
+            <div style="height: 1px; background: var(--clay-t1); margin-bottom: 10px;"></div>
+            <div class="d3-t-row">
+              <div class="d3-t-num">10:00</div>
+              <div class="d3-t-body">
+                <div class="d3-t-title">Quarterly budget review<span class="d3-t-locked">🔒</span></div>
+                <div class="d3-t-meta">45 min · Work</div>
+              </div>
+            </div>
+            <div class="d3-t-row" style="opacity: 0.55;">
+              <div class="d3-t-num">11:00</div>
+              <div class="d3-t-body">
+                <div class="d3-t-title" style="color: #5E7CE2;">Team standup</div>
+                <div class="d3-t-meta">30 min · Calendar</div>
+              </div>
+            </div>
+            <div class="d3-t-row">
+              <div class="d3-t-num">11:30</div>
+              <div class="d3-t-body">
+                <div class="d3-t-title">Review PR #48 from Maya</div>
+                <div class="d3-t-meta">20 min · Work</div>
+              </div>
+            </div>
+            <div class="d3-t-row">
+              <div class="d3-t-num">2:00</div>
+              <div class="d3-t-body">
+                <div class="d3-t-title">Call mom</div>
+                <div class="d3-t-meta">30 min · Personal</div>
+              </div>
+            </div>
+          </div>
+          <div class="tb" style="border-top-color: rgba(28,20,16,0.08); background: var(--clay-s1);">
+            <div class="ti" style="color: var(--clay-t3);"><div class="ti-icon">◉</div>Now</div>
+            <div class="ti" style="color: var(--clay-t1); font-weight: 700;"><div class="ti-icon">○</div>Today</div>
+            <div class="ti" style="color: var(--clay-t3);"><div class="ti-icon">+</div>Add</div>
+            <div class="ti" style="color: var(--clay-t3);"><div class="ti-icon">☰</div>Lists</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="eval">
+    <div class="eval-head">Evaluation Criteria</div>
+    <div class="eval-grid">
+      <div class="eval-item"><h4>Layout</h4><p>Type-led; strong hierarchy through scale, not colour</p></div>
+      <div class="eval-item"><h4>Interaction</h4><p>Clean and deliberate; horizontal rules create mental sections</p></div>
+      <div class="eval-item"><h4>Visual Weight</h4><p>Sophisticated and restrained; appeals to design-literate users</p></div>
+      <div class="eval-item"><h4>Navigation</h4><p>Tab names as typographic elements — minimal icon reliance</p></div>
+      <div class="eval-item"><h4>Components</h4><p>Custom — requires more bespoke Flutter work; higher craft ceiling</p></div>
+      <div class="eval-item"><h4>Brand Fit</h4><p>Very strong New York / past self voice integration; premium feel</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================
+     DIRECTION 4: DEEP CLAY
+     ============================ -->
+<section class="dir-section" id="dir-4">
+  <div class="dir-header">
+    <div>
+      <div class="dir-title">Deep Clay</div>
+      <div class="dir-tagline">"Dark by default. Rich and immersive."</div>
+      <div class="dir-traits">
+        <span class="trait">Dark surfaces primary</span>
+        <span class="trait">Cream text on espresso</span>
+        <span class="trait">Committed tasks glow</span>
+        <span class="trait">High contrast</span>
+        <span class="trait">Dark mode is the vision</span>
+      </div>
+    </div>
+    <div class="dir-desc">
+      The dark variant of Clay isn't an afterthought — it's the design's primary expression. Deep espresso surfaces, cream text, terracotta accents that glow. Committed tasks get a distinct warm card that feels like the task is lit from within. Best for users who do their best work late or in low-light environments.
+    </div>
+  </div>
+
+  <div class="phones-row">
+
+    <!-- Now Tab -->
+    <div class="phone-wrap">
+      <div class="phone-label">Now Tab</div>
+      <div class="phone d4">
+        <div class="phone-inner">
+          <div class="di"></div>
+          <div class="sb" style="color: var(--cdark-t2);">
+            <span class="sb-time">9:41</span>
+            <span class="sb-icons">▲▲▲ 🔋</span>
+          </div>
+          <div class="sc">
+            <div class="d4-now-sc">
+              <div class="d4-now-label">Now</div>
+              <div class="d4-big-task">
+                <div>
+                  <div class="d4-task-eye">Past you · 8:30am</div>
+                  <div class="d4-task-title">Finish quarterly budget review</div>
+                  <div class="d4-task-attr">planned for 10:00 · 45 min</div>
+                  <div class="d4-stake-chip">🔒 $50 · ACLU</div>
+                </div>
+                <div>
+                  <div class="d4-timer">0:08:34</div>
+                  <div class="d4-timer-sub">elapsed</div>
+                </div>
+              </div>
+              <div class="d4-cta">Mark complete</div>
+              <div class="d4-secondary-cta">Start timer · Pause</div>
+            </div>
+          </div>
+          <div class="tb" style="border-top-color: rgba(245,237,228,0.06); background: var(--cdark-s2);">
+            <div class="ti" style="color: var(--cdark-accent);"><div class="ti-icon">◉</div>Now</div>
+            <div class="ti" style="color: rgba(184,152,128,0.5);"><div class="ti-icon">○</div>Today</div>
+            <div class="ti" style="color: rgba(184,152,128,0.5);"><div class="ti-icon">+</div>Add</div>
+            <div class="ti" style="color: rgba(184,152,128,0.5);"><div class="ti-icon">☰</div>Lists</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Commitment Lock -->
+    <div class="phone-wrap">
+      <div class="phone-label">Commitment Lock</div>
+      <div class="phone d4">
+        <div class="phone-inner">
+          <div class="di"></div>
+          <div class="sb" style="color: var(--cdark-t2);">
+            <span class="sb-time">9:41</span>
+            <span class="sb-icons">▲▲▲ 🔋</span>
+          </div>
+          <div class="sc">
+            <div class="d4-lock-sc">
+              <div class="d4-lhead">
+                <div class="d4-lhead-eye">New task · Add tab</div>
+                <div class="d4-lhead-title">Quarterly budget review</div>
+                <div class="d4-lhead-meta">Work · 45 min · today 5pm</div>
+              </div>
+              <div class="d4-stake-card">
+                <div class="d4-sc-top">
+                  <div class="d4-sc-label">Stake</div>
+                  <div class="d4-sc-amount">$40</div>
+                </div>
+                <div class="d4-slider-dark">
+                  <div class="d4-slider-thumb"></div>
+                </div>
+                <div class="d4-zones-row">
+                  <span style="color: var(--stake-lo);">Low</span>
+                  <span style="color: var(--stake-mid);">Mid</span>
+                  <span style="color: var(--stake-hi);">High</span>
+                </div>
+              </div>
+              <div class="d4-voice">Your future self is counting on you.</div>
+              <div class="d4-lock-cta">Lock it in · ACLU</div>
+            </div>
+          </div>
+          <div class="tb" style="border-top-color: rgba(245,237,228,0.06); background: var(--cdark-s2);">
+            <div class="ti" style="color: rgba(184,152,128,0.5);"><div class="ti-icon">◉</div>Now</div>
+            <div class="ti" style="color: rgba(184,152,128,0.5);"><div class="ti-icon">○</div>Today</div>
+            <div class="ti" style="color: var(--cdark-accent);"><div class="ti-icon">+</div>Add</div>
+            <div class="ti" style="color: rgba(184,152,128,0.5);"><div class="ti-icon">☰</div>Lists</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Today Tab -->
+    <div class="phone-wrap">
+      <div class="phone-label">Today Tab</div>
+      <div class="phone d4">
+        <div class="phone-inner">
+          <div class="di"></div>
+          <div class="sb" style="color: var(--cdark-t2);">
+            <span class="sb-time">9:41</span>
+            <span class="sb-icons">▲▲▲ 🔋</span>
+          </div>
+          <div class="sc">
+            <div class="d4-today-sc">
+              <div class="d4-today-head">
+                <div class="d4-today-label">Today</div>
+                <div class="d4-today-date">Sun, Mar 29</div>
+              </div>
+              <div class="d4-hs-bar"></div>
+              <div class="d4-time-block">
+                <div class="d4-tb-time">10:00</div>
+                <div style="flex: 1;">
+                  <div class="d4-tb-title">Quarterly budget review</div>
+                  <div class="d4-tb-meta">45 min · Work</div>
+                </div>
+                <div class="d4-locked-dot"></div>
+              </div>
+              <div class="d4-cal-block">
+                <div class="d4-cal-bar"></div>
+                <div>
+                  <div class="d4-cal-title">Team standup</div>
+                  <div class="d4-cal-meta">11:00 · 30 min · Cal</div>
+                </div>
+              </div>
+              <div class="d4-time-block">
+                <div class="d4-tb-time">11:30</div>
+                <div>
+                  <div class="d4-tb-title">Review PR #48</div>
+                  <div class="d4-tb-meta">20 min · Work</div>
+                </div>
+              </div>
+              <div class="d4-time-block">
+                <div class="d4-tb-time">2:00</div>
+                <div>
+                  <div class="d4-tb-title">Call mom</div>
+                  <div class="d4-tb-meta">30 min · Personal</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="tb" style="border-top-color: rgba(245,237,228,0.06); background: var(--cdark-s2);">
+            <div class="ti" style="color: rgba(184,152,128,0.5);"><div class="ti-icon">◉</div>Now</div>
+            <div class="ti" style="color: var(--cdark-accent);"><div class="ti-icon">○</div>Today</div>
+            <div class="ti" style="color: rgba(184,152,128,0.5);"><div class="ti-icon">+</div>Add</div>
+            <div class="ti" style="color: rgba(184,152,128,0.5);"><div class="ti-icon">☰</div>Lists</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="eval">
+    <div class="eval-head">Evaluation Criteria</div>
+    <div class="eval-grid">
+      <div class="eval-item"><h4>Layout</h4><p>Committed task as glowing card — strong visual hierarchy via luminance</p></div>
+      <div class="eval-item"><h4>Interaction</h4><p>Rich haptic + visual feedback expected; dark surfaces amplify motion</p></div>
+      <div class="eval-item"><h4>Visual Weight</h4><p>Premium — heavy, warm, intentional; matches the emotional stakes</p></div>
+      <div class="eval-item"><h4>Navigation</h4><p>Dark tab bar; glow accent for active state; unmistakable</p></div>
+      <div class="eval-item"><h4>Components</h4><p>Dark variants need full token implementation — already planned</p></div>
+      <div class="eval-item"><h4>Brand Fit</h4><p>High drama; best for power users / evening use; may feel too intense for some</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================
+     DIRECTION 5: SPATIAL TIMELINE
+     ============================ -->
+<section class="dir-section" id="dir-5">
+  <div class="dir-header">
+    <div>
+      <div class="dir-title">Spatial Timeline</div>
+      <div class="dir-tagline">"Your day as a place, not a list."</div>
+      <div class="dir-traits">
+        <span class="trait">Vertical time axis</span>
+        <span class="trait">Tasks positioned spatially</span>
+        <span class="trait">Calendar events native</span>
+        <span class="trait">Now indicator live</span>
+        <span class="trait">Tiimo-inspired</span>
+      </div>
+    </div>
+    <div class="dir-desc">
+      The Today tab becomes a timeline — tasks and calendar events occupy space proportional to their duration. A "now" indicator pin shows your position in the day. This makes overbooked periods visible as literal collisions. Best for visual thinkers and users with heavy calendar overlap.
+    </div>
+  </div>
+
+  <div class="phones-row">
+
+    <!-- Now Tab (standard focused) -->
+    <div class="phone-wrap">
+      <div class="phone-label">Now Tab</div>
+      <div class="phone d5">
+        <div class="phone-inner">
+          <div class="di"></div>
+          <div class="sb" style="color: var(--clay-t3);">
+            <span class="sb-time">9:41</span>
+            <span class="sb-icons">▲▲▲ 🔋</span>
+          </div>
+          <div class="sc">
+            <div class="d5-top-now">
+              <div class="d5-now-label">Now · 9:41am</div>
+              <div class="d5-now-time">Next: Team standup in 1h 19m</div>
+            </div>
+            <div style="background: rgba(196,98,58,0.08); border: 1px solid rgba(196,98,58,0.18); border-radius: 16px; padding: 14px 14px; margin-bottom: 10px;">
+              <div style="font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--clay-accent); margin-bottom: 8px;">Current task</div>
+              <div style="font-family: var(--voice); font-size: 19px; color: var(--clay-t1); line-height: 1.2; margin-bottom: 6px;">Finish quarterly budget review</div>
+              <div style="font-size: 11px; color: var(--clay-t3); margin-bottom: 12px;">10:00 · 45 min · 🔒 $50</div>
+              <div style="background: var(--clay-accent); color: white; border-radius: 11px; padding: 11px; text-align: center; font-size: 13px; font-weight: 600;">Mark complete</div>
+            </div>
+            <div style="font-size: 10px; font-weight: 700; color: var(--clay-t3); letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 6px;">Timeline preview</div>
+            <div class="d5-sc" style="height: 160px; position: relative; overflow: hidden;">
+              <div class="d5-time-axis">
+                <div class="d5-axis-line"></div>
+                <div class="d5-hour-label" style="margin-top: 0px;">9</div>
+                <div class="d5-hour-label" style="margin-top: 30px;">10</div>
+                <div class="d5-hour-label" style="margin-top: 30px;">11</div>
+                <div class="d5-hour-label" style="margin-top: 30px;">12</div>
+              </div>
+              <div class="d5-events-col" style="height: 160px;">
+                <div class="d5-now-indicator">
+                  <div class="d5-now-dot"></div>
+                </div>
+                <div class="d5-event-block d5-hero-event">
+                  <div class="d5-event-title">Budget review 🔒</div>
+                  <div class="d5-event-meta">10:00 · 45m</div>
+                </div>
+                <div class="d5-event-block d5-cal-event">
+                  <div class="d5-event-title">Team standup</div>
+                </div>
+                <div class="d5-event-block d5-task-event">
+                  <div class="d5-event-title">Review PR #48</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="tb" style="border-top-color: rgba(28,20,16,0.07); background: var(--clay-s1);">
+            <div class="ti" style="color: var(--clay-accent);"><div class="ti-icon">◉</div>Now</div>
+            <div class="ti" style="color: var(--clay-t3);"><div class="ti-icon">○</div>Today</div>
+            <div class="ti" style="color: var(--clay-t3);"><div class="ti-icon">+</div>Add</div>
+            <div class="ti" style="color: var(--clay-t3);"><div class="ti-icon">☰</div>Lists</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Today - Timeline -->
+    <div class="phone-wrap">
+      <div class="phone-label">Today — Timeline</div>
+      <div class="phone d5">
+        <div class="phone-inner">
+          <div class="di"></div>
+          <div class="sb" style="color: var(--clay-t3);">
+            <span class="sb-time">9:41</span>
+            <span class="sb-icons">▲▲▲ 🔋</span>
+          </div>
+          <div class="sc" style="padding: 4px 12px 0;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+              <div style="font-size: 20px; font-weight: 700; letter-spacing: -0.5px; color: var(--clay-t1);">Today</div>
+              <div style="font-size: 10px; color: var(--stake-lo); font-weight: 700;">87% clear</div>
+            </div>
+            <div style="display: flex; gap: 0; height: 300px; overflow: hidden; position: relative;">
+              <!-- Time axis -->
+              <div style="width: 28px; flex-shrink: 0; display: flex; flex-direction: column; position: relative;">
+                <div style="position: absolute; top: 0; bottom: 0; right: 6px; width: 1px; background: rgba(28,20,16,0.07);"></div>
+                <div style="font-size: 8px; font-weight: 600; color: var(--clay-t3); margin-top: 0px; position: relative; z-index: 1; background: var(--clay-s1); padding: 1px 0; line-height: 1;">8</div>
+                <div style="font-size: 8px; font-weight: 600; color: var(--clay-t3); margin-top: 24px; position: relative; z-index: 1; background: var(--clay-s1); padding: 1px 0;">9</div>
+                <div style="font-size: 8px; font-weight: 600; color: var(--clay-t3); margin-top: 24px; position: relative; z-index: 1; background: var(--clay-s1); padding: 1px 0;">10</div>
+                <div style="font-size: 8px; font-weight: 600; color: var(--clay-t3); margin-top: 24px; position: relative; z-index: 1; background: var(--clay-s1); padding: 1px 0;">11</div>
+                <div style="font-size: 8px; font-weight: 600; color: var(--clay-t3); margin-top: 24px; position: relative; z-index: 1; background: var(--clay-s1); padding: 1px 0;">12</div>
+                <div style="font-size: 8px; font-weight: 600; color: var(--clay-t3); margin-top: 24px; position: relative; z-index: 1; background: var(--clay-s1); padding: 1px 0;">1</div>
+                <div style="font-size: 8px; font-weight: 600; color: var(--clay-t3); margin-top: 24px; position: relative; z-index: 1; background: var(--clay-s1); padding: 1px 0;">2</div>
+              </div>
+              <!-- Events area -->
+              <div style="flex: 1; padding-left: 6px; position: relative;">
+                <!-- Now line -->
+                <div style="position: absolute; top: 36px; left: 0; right: 0; height: 2px; background: var(--clay-accent); border-radius: 100px; z-index: 10;">
+                  <div style="position: absolute; left: -4px; top: 50%; transform: translateY(-50%); width: 8px; height: 8px; background: var(--clay-accent); border-radius: 50%; border: 2px solid var(--clay-s1);"></div>
+                </div>
+                <!-- Budget review -->
+                <div style="position: absolute; top: 52px; left: 0; right: 2px; height: 44px; background: rgba(196,98,58,0.12); border: 1px solid rgba(196,98,58,0.2); border-radius: 7px; padding: 4px 7px;">
+                  <div style="font-size: 10px; font-weight: 700; color: var(--clay-t1); line-height: 1.2;">Budget review 🔒</div>
+                  <div style="font-size: 9px; color: var(--clay-t3);">10:00 · 45m</div>
+                </div>
+                <!-- Team standup -->
+                <div style="position: absolute; top: 108px; left: 0; right: 2px; height: 30px; background: rgba(94,124,226,0.1); border: 1px solid rgba(94,124,226,0.15); border-radius: 7px; padding: 4px 7px;">
+                  <div style="font-size: 10px; color: #5E7CE2; font-weight: 600;">Team standup · Cal</div>
+                </div>
+                <!-- PR review -->
+                <div style="position: absolute; top: 148px; left: 0; right: 2px; height: 24px; background: rgba(107,158,120,0.1); border: 1px solid rgba(107,158,120,0.15); border-radius: 7px; padding: 4px 7px;">
+                  <div style="font-size: 10px; color: var(--clay-t2);">Review PR #48</div>
+                </div>
+                <!-- Call mom -->
+                <div style="position: absolute; top: 216px; left: 0; right: 2px; height: 26px; background: var(--clay-s2); border: 1px solid rgba(28,20,16,0.1); border-radius: 7px; padding: 4px 7px;">
+                  <div style="font-size: 10px; color: var(--clay-t2);">Call mom</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="tb" style="border-top-color: rgba(28,20,16,0.07); background: var(--clay-s1);">
+            <div class="ti" style="color: var(--clay-t3);"><div class="ti-icon">◉</div>Now</div>
+            <div class="ti" style="color: var(--clay-accent);"><div class="ti-icon">○</div>Today</div>
+            <div class="ti" style="color: var(--clay-t3);"><div class="ti-icon">+</div>Add</div>
+            <div class="ti" style="color: var(--clay-t3);"><div class="ti-icon">☰</div>Lists</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Tab -->
+    <div class="phone-wrap">
+      <div class="phone-label">Add + Lock</div>
+      <div class="phone d5">
+        <div class="phone-inner">
+          <div class="di"></div>
+          <div class="sb" style="color: var(--clay-t3);">
+            <span class="sb-time">9:41</span>
+            <span class="sb-icons">▲▲▲ 🔋</span>
+          </div>
+          <div class="sc">
+            <div class="d5-lock-sc">
+              <div style="font-size: 20px; font-weight: 700; color: var(--clay-t1); letter-spacing: -0.5px; margin-bottom: 12px;">Add</div>
+              <div style="background: var(--clay-s2); border-radius: 12px; padding: 12px; margin-bottom: 10px;">
+                <div style="font-size: 10px; color: var(--clay-t3); margin-bottom: 4px; font-style: italic; font-family: var(--voice);">What does your future self need to do?</div>
+                <div style="font-size: 14px; color: var(--clay-t1); margin-bottom: 8px; line-height: 1.3;">Finish quarterly budget review with full variance analysis</div>
+                <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                  <div style="background: var(--clay-s1); border-radius: 6px; padding: 3px 8px; font-size: 10px; color: var(--clay-t2);">Work</div>
+                  <div style="background: var(--clay-s1); border-radius: 6px; padding: 3px 8px; font-size: 10px; color: var(--clay-t2);">45 min</div>
+                  <div style="background: var(--clay-s1); border-radius: 6px; padding: 3px 8px; font-size: 10px; color: var(--clay-t2);">today 5pm</div>
+                </div>
+              </div>
+              <!-- Scheduled position preview -->
+              <div style="background: rgba(196,98,58,0.06); border: 1px solid rgba(196,98,58,0.12); border-radius: 10px; padding: 10px 12px; margin-bottom: 10px;">
+                <div style="font-size: 9px; font-weight: 700; color: var(--clay-accent); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 4px;">Scheduled position</div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <div style="font-size: 12px; font-weight: 600; color: var(--clay-t1);">Today · 10:00am</div>
+                  <div style="font-size: 10px; color: var(--clay-t3);">no conflicts</div>
+                </div>
+              </div>
+              <div class="d5-lock-context">
+                <div class="d5-lc-eye">Make this real?</div>
+                <div style="height: 5px; background: linear-gradient(to right, var(--stake-lo), var(--stake-mid), var(--stake-hi)); border-radius: 100px; position: relative; margin: 8px 0;">
+                  <div style="position: absolute; top: 50%; left: 38%; transform: translate(-50%, -50%); width: 16px; height: 16px; background: white; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.2); border: 2px solid var(--stake-mid);"></div>
+                </div>
+                <div style="text-align: center; font-size: 16px; font-weight: 700; color: var(--stake-mid);">$35</div>
+              </div>
+              <div class="d5-lock-cta-area">
+                <div style="background: var(--clay-lock); color: var(--clay-s1); border-radius: 12px; padding: 12px; text-align: center; font-size: 14px; font-weight: 700; margin-bottom: 6px;">Lock it in</div>
+                <div style="background: var(--clay-s2); color: var(--clay-t2); border-radius: 10px; padding: 10px; text-align: center; font-size: 12px;">Add without stake</div>
+              </div>
+            </div>
+          </div>
+          <div class="tb" style="border-top-color: rgba(28,20,16,0.07); background: var(--clay-s1);">
+            <div class="ti" style="color: var(--clay-t3);"><div class="ti-icon">◉</div>Now</div>
+            <div class="ti" style="color: var(--clay-t3);"><div class="ti-icon">○</div>Today</div>
+            <div class="ti" style="color: var(--clay-accent);"><div class="ti-icon">+</div>Add</div>
+            <div class="ti" style="color: var(--clay-t3);"><div class="ti-icon">☰</div>Lists</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="eval">
+    <div class="eval-head">Evaluation Criteria</div>
+    <div class="eval-grid">
+      <div class="eval-item"><h4>Layout</h4><p>Spatial — highly novel; tasks as places in time rather than list items</p></div>
+      <div class="eval-item"><h4>Interaction</h4><p>Scroll through time; drag to reschedule potential; high interaction ceiling</p></div>
+      <div class="eval-item"><h4>Visual Weight</h4><p>Medium; colour-coded event types add information density</p></div>
+      <div class="eval-item"><h4>Navigation</h4><p>Today tab becomes the spatial view; Now tab retains focused task</p></div>
+      <div class="eval-item"><h4>Components</h4><p>Custom timeline widget — most complex Flutter implementation</p></div>
+      <div class="eval-item"><h4>Brand Fit</h4><p>Strong for calendar-heavy users; adds "schedule as place" mental model</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================
+     DIRECTION 6: THE RITUAL
+     ============================ -->
+<section class="dir-section" id="dir-6">
+  <div class="dir-header">
+    <div>
+      <div class="dir-title">The Ritual</div>
+      <div class="dir-tagline">"The lock is the product."</div>
+      <div class="dir-traits">
+        <span class="trait">Commitment lock hero</span>
+        <span class="trait">Dark ceremony card</span>
+        <span class="trait">New York ritual copy</span>
+        <span class="trait">Large stake slider</span>
+        <span class="trait">Lock visual weighty</span>
+      </div>
+    </div>
+    <div class="dir-desc">
+      The commitment lock isn't tucked away — it's the design's emotional centre. Committed tasks appear in a dark ceremony card that signals gravity. The lock flow gets maximum visual treatment: large slider, big amount display, deliberate confirmation. Best when commitment lock is the primary differentiator the user experiences.
+    </div>
+  </div>
+
+  <div class="phones-row">
+
+    <!-- Now Tab -->
+    <div class="phone-wrap">
+      <div class="phone-label">Now Tab</div>
+      <div class="phone d6">
+        <div class="phone-inner">
+          <div class="di"></div>
+          <div class="sb" style="color: var(--clay-t3);">
+            <span class="sb-time">9:41</span>
+            <span class="sb-icons">▲▲▲ 🔋</span>
+          </div>
+          <div class="sc">
+            <div class="d6-now-sc">
+              <div class="d6-tab-head">Now</div>
+              <div class="d6-ceremony-card">
+                <div class="d6-cc-label">Commitment · Past you · 8:30am</div>
+                <div class="d6-cc-title">Finish quarterly budget review</div>
+                <div class="d6-cc-stake">
+                  <div class="d6-lock-icon-big">🔒</div>
+                  <div>
+                    <div class="d6-stake-label">$50</div>
+                    <div class="d6-stake-sub">ACLU · at stake</div>
+                  </div>
+                </div>
+                <div class="d6-timer-row">
+                  <div class="d6-elapsed">▶ 0:08:34 elapsed</div>
+                  <div class="d6-deadline">4h 19m to deadline</div>
+                </div>
+              </div>
+              <div class="cta-btn d6-cta" style="border-radius: 13px; margin-bottom: 8px; padding: 13px; font-size: 14px;">Mark complete — unlock stake</div>
+              <div class="d6-next-card">
+                <div>
+                  <div class="d6-next-title">Team standup</div>
+                  <div class="d6-next-meta">Calendar · 11:00am</div>
+                </div>
+                <div class="d6-next-time">1h 19m</div>
+              </div>
+            </div>
+          </div>
+          <div class="tb" style="border-top-color: rgba(28,20,16,0.07); background: var(--clay-s1);">
+            <div class="ti" style="color: var(--clay-accent);"><div class="ti-icon">◉</div>Now</div>
+            <div class="ti" style="color: var(--clay-t3);"><div class="ti-icon">○</div>Today</div>
+            <div class="ti" style="color: var(--clay-t3);"><div class="ti-icon">+</div>Add</div>
+            <div class="ti" style="color: var(--clay-t3);"><div class="ti-icon">☰</div>Lists</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- The Lock Ritual — HERO -->
+    <div class="phone-wrap">
+      <div class="phone-label">The Lock Ritual</div>
+      <div class="phone d6">
+        <div class="phone-inner">
+          <div class="di"></div>
+          <div class="sb" style="color: var(--clay-t3);">
+            <span class="sb-time">9:41</span>
+            <span class="sb-icons">▲▲▲ 🔋</span>
+          </div>
+          <div class="sc">
+            <div class="d6-lock-sc">
+              <div class="d6-ritual-frame">
+                <div class="d6-ritual-task">Finish quarterly budget review</div>
+                <div class="d6-ritual-meta">Work · 45 min · due today 5pm</div>
+                <div class="d6-ritual-divider"></div>
+                <div class="d6-ritual-voice">"Your future self is asking you to lock this in."</div>
+                <div class="d6-big-slider">
+                  <div class="d6-bs-amount">$50</div>
+                  <div class="d6-bs-track">
+                    <div class="d6-bs-thumb"></div>
+                  </div>
+                  <div class="d6-bs-labels">
+                    <span style="color: var(--stake-lo);">Soft</span>
+                    <span style="color: var(--stake-mid);">Real</span>
+                    <span style="color: var(--stake-hi);">Serious</span>
+                  </div>
+                </div>
+                <div style="text-align: center; font-size: 11px; color: var(--clay-t3); margin-bottom: 4px;">→ ACLU · change charity</div>
+              </div>
+              <div class="cta-btn d6-lock-cta" style="border-radius: 14px; padding: 14px;">Lock it in.</div>
+              <div style="text-align: center; font-size: 10px; font-family: var(--voice); font-style: italic; color: var(--clay-t3); margin-top: 6px;">Your future self is counting on you.</div>
+            </div>
+          </div>
+          <div class="tb" style="border-top-color: rgba(28,20,16,0.07); background: var(--clay-s1);">
+            <div class="ti" style="color: var(--clay-t3);"><div class="ti-icon">◉</div>Now</div>
+            <div class="ti" style="color: var(--clay-t3);"><div class="ti-icon">○</div>Today</div>
+            <div class="ti" style="color: var(--clay-accent);"><div class="ti-icon">+</div>Add</div>
+            <div class="ti" style="color: var(--clay-t3);"><div class="ti-icon">☰</div>Lists</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Today Tab -->
+    <div class="phone-wrap">
+      <div class="phone-label">Today Tab</div>
+      <div class="phone d6">
+        <div class="phone-inner">
+          <div class="di"></div>
+          <div class="sb" style="color: var(--clay-t3);">
+            <span class="sb-time">9:41</span>
+            <span class="sb-icons">▲▲▲ 🔋</span>
+          </div>
+          <div class="sc">
+            <div class="d6-today-sc">
+              <div style="font-size: 24px; font-weight: 700; color: var(--clay-t1); letter-spacing: -0.5px; margin-bottom: 2px;">Today</div>
+              <div style="font-size: 11px; color: var(--clay-t3); margin-bottom: 10px;">Sun, Mar 29 · 7 tasks</div>
+              <div style="height: 3px; background: linear-gradient(to right, var(--stake-lo) 0%, var(--stake-lo) 70%, var(--stake-mid) 70%); border-radius: 100px; margin-bottom: 10px;"></div>
+              <div class="d6-today-locked">
+                <div class="d6-tl-lock">🔒</div>
+                <div>
+                  <div class="d6-tl-title">Quarterly budget review</div>
+                  <div class="d6-tl-meta">10:00 · 45 min · $50 · Work</div>
+                </div>
+              </div>
+              <div class="d6-today-task">
+                <div class="d6-tt-check" style="border-color: #5E7CE2;"></div>
+                <div>
+                  <div class="d6-tt-title" style="color: #5E7CE2;">Team standup · Cal</div>
+                  <div class="d6-tt-meta">11:00 · 30 min</div>
+                </div>
+              </div>
+              <div class="d6-today-task">
+                <div class="d6-tt-check"></div>
+                <div>
+                  <div class="d6-tt-title">Review PR #48 from Maya</div>
+                  <div class="d6-tt-meta">11:30 · 20 min · Work</div>
+                </div>
+              </div>
+              <div class="d6-today-task">
+                <div class="d6-tt-check"></div>
+                <div>
+                  <div class="d6-tt-title">Call mom</div>
+                  <div class="d6-tt-meta">2:00 · 30 min · Personal</div>
+                </div>
+              </div>
+              <div class="d6-today-locked" style="margin-top: 2px;">
+                <div class="d6-tl-lock">🔒</div>
+                <div>
+                  <div class="d6-tl-title">Gym session</div>
+                  <div class="d6-tl-meta">6:00 · 60 min · $25 · Health</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="tb" style="border-top-color: rgba(28,20,16,0.07); background: var(--clay-s1);">
+            <div class="ti" style="color: var(--clay-t3);"><div class="ti-icon">◉</div>Now</div>
+            <div class="ti" style="color: var(--clay-accent);"><div class="ti-icon">○</div>Today</div>
+            <div class="ti" style="color: var(--clay-t3);"><div class="ti-icon">+</div>Add</div>
+            <div class="ti" style="color: var(--clay-t3);"><div class="ti-icon">☰</div>Lists</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="eval">
+    <div class="eval-head">Evaluation Criteria</div>
+    <div class="eval-grid">
+      <div class="eval-item"><h4>Layout</h4><p>Lock ritual dominates the Add screen; commitment is the hero interaction</p></div>
+      <div class="eval-item"><h4>Interaction</h4><p>Most ceremonial — large slider, deliberate lock CTA, voice copy prominent</p></div>
+      <div class="eval-item"><h4>Visual Weight</h4><p>Heavy at the lock moment; lighter on list views</p></div>
+      <div class="eval-item"><h4>Navigation</h4><p>Standard tab bar; differentiation comes from content, not chrome</p></div>
+      <div class="eval-item"><h4>Components</h4><p>Dark ceremony card is bespoke; rest is manageable</p></div>
+      <div class="eval-item"><h4>Brand Fit</h4><p>Maximum expression of the commitment mechanic; on-brand for the core differentiator</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================
+     DIRECTION 7: SIGNAL
+     ============================ -->
+<section class="dir-section" id="dir-7">
+  <div class="dir-header">
+    <div>
+      <div class="dir-title">Signal</div>
+      <div class="dir-tagline">"Every pixel is information."</div>
+      <div class="dir-traits">
+        <span class="trait">Schedule health prominent</span>
+        <span class="trait">Data-forward</span>
+        <span class="trait">Chips and badges</span>
+        <span class="trait">Forecast visible</span>
+        <span class="trait">Efficiency-first</span>
+      </div>
+    </div>
+    <div class="dir-desc">
+      Schedule health and task status are visible at a glance. The Now tab leads with a health widget — you always know where your day stands. Chips and badges carry metadata efficiently. Best for power users who want the intelligence layer front and centre, not tucked away in a forecast view.
+    </div>
+  </div>
+
+  <div class="phones-row">
+
+    <!-- Now Tab -->
+    <div class="phone-wrap">
+      <div class="phone-label">Now Tab</div>
+      <div class="phone d7">
+        <div class="phone-inner">
+          <div class="di"></div>
+          <div class="sb" style="color: var(--clay-t2);">
+            <span class="sb-time">9:41</span>
+            <span class="sb-icons">▲▲▲ 🔋</span>
+          </div>
+          <div class="sc">
+            <div class="d7-today-sc">
+              <div class="d7-health-bar">
+                <div class="d7-hb-icon">📊</div>
+                <div class="d7-hb-main">
+                  <div class="d7-hb-label">Schedule healthy</div>
+                  <div class="d7-hb-detail">7.2h planned · 0.8h slack</div>
+                </div>
+                <div class="d7-hb-pct">87%</div>
+              </div>
+              <div style="font-size: 10px; font-weight: 700; color: var(--clay-t3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">Now</div>
+              <div class="d7-now-task">
+                <div class="d7-nt-label">Current task · 9:41am</div>
+                <div class="d7-nt-title">Finish quarterly budget review</div>
+                <div class="d7-nt-row">
+                  <div class="d7-chip timer">▶ 0:08</div>
+                  <div class="d7-chip lock">🔒 $50</div>
+                  <div class="d7-chip list">Work</div>
+                </div>
+                <div style="margin-top: 8px;">
+                  <div class="d7-cta cta-btn" style="border-radius: 11px; padding: 10px; font-size: 13px;">Done</div>
+                </div>
+              </div>
+              <div style="font-size: 10px; font-weight: 700; color: var(--clay-t3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; margin-top: 2px;">Up next</div>
+              <div class="d7-next-block">
+                <div class="d7-nb-label">Today · remaining</div>
+                <div class="d7-nb-row">
+                  <div class="d7-nb-title">Team standup · Cal</div>
+                  <div class="d7-nb-time">11:00</div>
+                </div>
+                <div class="d7-nb-row">
+                  <div class="d7-nb-title">Review PR #48</div>
+                  <div class="d7-nb-time">11:30</div>
+                </div>
+                <div class="d7-nb-row">
+                  <div class="d7-nb-title">Call mom</div>
+                  <div class="d7-nb-time">2:00</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="tb" style="border-top-color: rgba(28,20,16,0.08); background: var(--clay-s1);">
+            <div class="ti" style="color: var(--clay-accent);"><div class="ti-icon">◉</div>Now</div>
+            <div class="ti" style="color: var(--clay-t3);"><div class="ti-icon">○</div>Today</div>
+            <div class="ti" style="color: var(--clay-t3);"><div class="ti-icon">+</div>Add</div>
+            <div class="ti" style="color: var(--clay-t3);"><div class="ti-icon">☰</div>Lists</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Commitment Lock -->
+    <div class="phone-wrap">
+      <div class="phone-label">Commitment Lock</div>
+      <div class="phone d7">
+        <div class="phone-inner">
+          <div class="di"></div>
+          <div class="sb" style="color: var(--clay-t2);">
+            <span class="sb-time">9:41</span>
+            <span class="sb-icons">▲▲▲ 🔋</span>
+          </div>
+          <div class="sc">
+            <div class="d7-lock-sc">
+              <div style="font-size: 10px; font-weight: 700; color: var(--clay-t3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;">New task</div>
+              <div class="d7-lock-info">
+                <div class="d7-li-title">Quarterly budget review</div>
+                <div class="d7-li-meta">Work · 45 min · today 5pm · scheduled 10:00am</div>
+              </div>
+              <div class="d7-stake-widget">
+                <div class="d7-sw-top">
+                  <div class="d7-sw-label">Add a stake?</div>
+                  <div class="d7-sw-toggle">On</div>
+                </div>
+                <div class="d7-sw-zones">
+                  <div class="d7-sw-zone lo"><div>Low</div><div class="d7-sw-zone-label">$5–20</div></div>
+                  <div class="d7-sw-zone mid"><div>Mid</div><div class="d7-sw-zone-label">$25–75</div></div>
+                  <div class="d7-sw-zone hi"><div>High</div><div class="d7-sw-zone-label">$100+</div></div>
+                </div>
+                <div class="d7-sw-amount">$40</div>
+                <div class="d7-sw-track">
+                  <div class="d7-sw-thumb"></div>
+                </div>
+              </div>
+              <div class="d7-forecast-row">
+                <div class="d7-fr-item">
+                  <div class="d7-fr-val">72%</div>
+                  <div class="d7-fr-label">Completion rate</div>
+                </div>
+                <div class="d7-fr-item">
+                  <div class="d7-fr-val">8</div>
+                  <div class="d7-fr-label">Commitments kept</div>
+                </div>
+                <div class="d7-fr-item">
+                  <div class="d7-fr-val">$0</div>
+                  <div class="d7-fr-label">Lost to date</div>
+                </div>
+              </div>
+              <div class="cta-btn" style="background: var(--clay-lock); color: var(--clay-s1); border-radius: 12px; padding: 12px; font-size: 14px; font-weight: 700; margin-bottom: 6px;">Lock in · ACLU</div>
+              <div style="background: var(--clay-s2); color: var(--clay-t2); border-radius: 10px; padding: 9px; text-align: center; font-size: 12px;">Add without stake</div>
+            </div>
+          </div>
+          <div class="tb" style="border-top-color: rgba(28,20,16,0.08); background: var(--clay-s1);">
+            <div class="ti" style="color: var(--clay-t3);"><div class="ti-icon">◉</div>Now</div>
+            <div class="ti" style="color: var(--clay-t3);"><div class="ti-icon">○</div>Today</div>
+            <div class="ti" style="color: var(--clay-accent);"><div class="ti-icon">+</div>Add</div>
+            <div class="ti" style="color: var(--clay-t3);"><div class="ti-icon">☰</div>Lists</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Today Tab -->
+    <div class="phone-wrap">
+      <div class="phone-label">Today Tab</div>
+      <div class="phone d7">
+        <div class="phone-inner">
+          <div class="di"></div>
+          <div class="sb" style="color: var(--clay-t2);">
+            <span class="sb-time">9:41</span>
+            <span class="sb-icons">▲▲▲ 🔋</span>
+          </div>
+          <div class="sc">
+            <div class="d7-today-sc">
+              <div class="d7-today-header">
+                <div>
+                  <div class="d7-th-date">Sun, Mar 29</div>
+                  <div class="d7-th-meta">7 tasks · 7.2h planned</div>
+                </div>
+                <div class="d7-th-forecast">87% clear</div>
+              </div>
+              <div class="d7-hs-track"></div>
+              <div class="d7-hs-label">Schedule health · 0.8h available buffer</div>
+              <div class="d7-grouped-row">
+                <div class="d7-gr-head">
+                  <div class="d7-gr-head-label">Morning</div>
+                  <div class="d7-gr-head-time">3 tasks · 1h 35m</div>
+                </div>
+                <div class="d7-gr-task">
+                  <div>
+                    <div class="d7-gr-title">Budget review 🔒</div>
+                    <div style="font-size: 9px; color: var(--clay-t3);">10:00 · 45m · $50</div>
+                  </div>
+                  <div></div>
+                </div>
+                <div class="d7-gr-task" style="opacity: 0.6;">
+                  <div>
+                    <div class="d7-gr-title" style="color: #5E7CE2;">Team standup · Cal</div>
+                    <div style="font-size: 9px; color: var(--clay-t3);">11:00 · 30m</div>
+                  </div>
+                </div>
+                <div class="d7-gr-task">
+                  <div>
+                    <div class="d7-gr-title">Review PR #48</div>
+                    <div style="font-size: 9px; color: var(--clay-t3);">11:30 · 20m</div>
+                  </div>
+                </div>
+              </div>
+              <div class="d7-grouped-row">
+                <div class="d7-gr-head">
+                  <div class="d7-gr-head-label">Afternoon</div>
+                  <div class="d7-gr-head-time">2 tasks · 1h 30m</div>
+                </div>
+                <div class="d7-gr-task">
+                  <div>
+                    <div class="d7-gr-title">Call mom</div>
+                    <div style="font-size: 9px; color: var(--clay-t3);">2:00 · 30m · Personal</div>
+                  </div>
+                </div>
+                <div class="d7-gr-task">
+                  <div>
+                    <div class="d7-gr-title">Gym session 🔒</div>
+                    <div style="font-size: 9px; color: var(--clay-t3);">6:00 · 60m · $25</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="tb" style="border-top-color: rgba(28,20,16,0.08); background: var(--clay-s1);">
+            <div class="ti" style="color: var(--clay-t3);"><div class="ti-icon">◉</div>Now</div>
+            <div class="ti" style="color: var(--clay-accent);"><div class="ti-icon">○</div>Today</div>
+            <div class="ti" style="color: var(--clay-t3);"><div class="ti-icon">+</div>Add</div>
+            <div class="ti" style="color: var(--clay-t3);"><div class="ti-icon">☰</div>Lists</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="eval">
+    <div class="eval-head">Evaluation Criteria</div>
+    <div class="eval-grid">
+      <div class="eval-item"><h4>Layout</h4><p>Health widget always visible; information density highest of all directions</p></div>
+      <div class="eval-item"><h4>Interaction</h4><p>Chip-based metadata; quick-scan affordances; keyboard shortcut ready</p></div>
+      <div class="eval-item"><h4>Visual Weight</h4><p>Medium-high density; efficient rather than spacious</p></div>
+      <div class="eval-item"><h4>Navigation</h4><p>Standard but enriched — each tab head shows count/summary</p></div>
+      <div class="eval-item"><h4>Components</h4><p>Health widget + chip system — manageable, incremental over base patterns</p></div>
+      <div class="eval-item"><h4>Brand Fit</h4><p>Best for power users; lower emotional warmth; higher informational trust</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================
+     SELECTION PANEL
+     ============================ -->
+<div class="selection-panel">
+  <div class="sp-head">Direction Selection</div>
+  <div class="sp-sub">"After exploring, which direction resonates — or which elements do you want to combine?"</div>
+  <div class="sp-questions">
+    <div class="sp-q">
+      <h4>Layout Intuition</h4>
+      <ul>
+        <li>Oracle's centered single-task — does the radical focus feel right?</li>
+        <li>Architecture's card structure — familiarity over novelty?</li>
+        <li>Editorial's type-led structure — appeals to design-literate?</li>
+        <li>Spatial's timeline — does your user think in time?</li>
+      </ul>
+    </div>
+    <div class="sp-q">
+      <h4>Visual Weight</h4>
+      <ul>
+        <li>Deep Clay's dark immersion — does the app feel heavy enough?</li>
+        <li>Oracle/Editorial's restraint — does terracotta only appear at meaning?</li>
+        <li>Signal's data density — does your user want to see everything?</li>
+        <li>Ritual's drama — should the lock always feel ceremonial?</li>
+      </ul>
+    </div>
+    <div class="sp-q">
+      <h4>Brand Voice</h4>
+      <ul>
+        <li>Where should New York serif appear — everywhere or only voice?</li>
+        <li>How literal should "past self / future self" language be?</li>
+        <li>Should the tone be sacred/minimal (Oracle) or warm/functional (Architecture)?</li>
+        <li>Does the commitment lock need its own visual register?</li>
+      </ul>
+    </div>
+    <div class="sp-q">
+      <h4>Hybrid Options</h4>
+      <ul>
+        <li>Oracle's Now tab + Architecture's Today tab structure</li>
+        <li>Editorial's typography + Signal's health widget</li>
+        <li>Ritual's lock ceremony + Oracle's completion moment</li>
+        <li>Deep Clay dark mode + any light direction as base</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<script>
+function showDir(n) {
+  document.querySelectorAll('.dir-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.dir-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('dir-' + n).classList.add('active');
+  document.querySelectorAll('.dir-btn')[n - 1].classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+
+</body>
+</html>

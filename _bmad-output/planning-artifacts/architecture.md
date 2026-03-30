@@ -111,6 +111,7 @@ Note: `--project-name` is the Dart package name (snake_case); `--org` sets the b
 | Simple prefs | `shared_preferences` | Settings, auth token storage |
 | Unit/widget testing | `mocktail` | Null-safe mocking |
 | Integration testing | `patrol` | Deferred — add when E2E stories exist, not day-one |
+| Live Activities | `live_activities` | ActivityKit bridge — Dynamic Island, Lock Screen, push token callbacks; **iOS only**; macOS guard required |
 
 **Project structure (feature-first clean architecture):**
 ```
@@ -205,6 +206,124 @@ This is not optional — standard `pg` connection pooling is incompatible with t
 
 **v2 Android path:** Extend push Worker to call FCM HTTP v1 API alongside APNs. The `push` Flutter package handles Android via FCM when configured — no backend architectural change required.
 
+### Live Activities & WidgetKit
+
+**Decision: `live_activities` Flutter plugin + native Swift Widget Extension targets**
+
+Live Activities (Dynamic Island, Lock Screen) and WidgetKit home screen widgets require native Swift — Flutter cannot render these surfaces directly. The `live_activities` pub.dev package bridges Flutter to ActivityKit via a method channel, handling start/update/end calls and push token callbacks. UI views are written in SwiftUI inside native Widget Extension targets added to the Xcode project.
+
+**iOS only.** macOS does not support Live Activities, Dynamic Island, or WidgetKit home screen widgets. All calls to the `live_activities` plugin must be guarded with `Platform.isIOS`. The macOS build ignores these targets entirely.
+
+#### Native Extension Targets
+
+Two Xcode Widget Extension targets in `apps/flutter/ios/`:
+
+| Target | Type | Purpose |
+|---|---|---|
+| `OnTaskLiveActivity` | Widget Extension | Dynamic Island compact/expanded + Lock Screen Live Activities |
+| `OnTaskWidget` | Widget Extension | Home screen widgets — Now (small), Today (medium) |
+
+Both targets import SwiftUI view code from a shared group (`SharedWidgetViews/`). `ActivityAttributes` and `ContentState` definitions live in `OnTaskLiveActivity` and are referenced by the shared views.
+
+`Info.plist` addition (Runner target):
+```xml
+<key>NSSupportsLiveActivities</key>
+<true/>
+```
+
+Entitlement required in `Runner.entitlements`:
+```
+com.apple.developer.live-activities
+```
+
+#### ActivityKit Content State
+
+```swift
+// OnTaskLiveActivity/OnTaskLiveActivity.swift
+struct OnTaskActivityAttributes: ActivityAttributes {
+    let taskId: String
+
+    struct ContentState: Codable, Hashable {
+        var taskTitle: String
+        var elapsedSeconds: Int?       // nil when not in timer mode
+        var deadlineTimestamp: Date?   // nil when no commitment deadline
+        var stakeAmount: Decimal?      // nil when no stake
+        var activityStatus: Status
+
+        enum Status: String, Codable {
+            case active, completed, failed, watchMode
+        }
+    }
+}
+```
+
+Payload stays within the 4KB ActivityKit limit: task title, time values, stake amount, status flag only. No proof content, no notes.
+
+#### ActivityKit Push Token Flow
+
+The `live_activities` plugin delivers a push token per Live Activity via callback. This token is stored server-side to enable server-initiated updates (deadline countdown, stake outcome).
+
+**API endpoint:** `POST /v1/live-activities/token` — body `{ taskId, activityType, pushToken }`. Upserts on `(user_id, task_id, activity_type)`. Called automatically by Flutter when an activity starts.
+
+**DB table** (`packages/core/src/schema/live-activity-tokens.ts`):
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | uuid | PK |
+| `user_id` | uuid | FK → users |
+| `task_id` | uuid (nullable) | FK → tasks; null for non-task activities |
+| `activity_type` | text | `'task_timer'` \| `'commitment_countdown'` \| `'watch_mode'` |
+| `push_token` | text | ActivityKit push token from client |
+| `created_at` | timestamptz | |
+| `expires_at` | timestamptz | ActivityKit tokens expire with the activity (max 8h) |
+
+#### Server-Side Live Activity Updates
+
+Uses the same `@fivesheepco/cloudflare-apns2` Worker already in place — additional headers required for the live activity push type:
+
+| APNs Header | Value |
+|---|---|
+| `apns-push-type` | `liveactivity` |
+| `apns-topic` | `com.ontaskhq.ontask.push-type.liveactivity` |
+| `apns-expiration` | Unix timestamp matching `expires_at` |
+
+**ActivityKit push payload:**
+```json
+{
+  "aps": {
+    "timestamp": 1711720000,
+    "event": "update",
+    "content-state": {
+      "taskTitle": "Pay rent",
+      "elapsedSeconds": 1842,
+      "deadlineTimestamp": 1711723600,
+      "stakeAmount": 50,
+      "activityStatus": "active"
+    },
+    "dismissal-date": 1711723600
+  }
+}
+```
+
+**Service:** `apps/api/src/services/live-activity.ts` — called by commitment contract and proof endpoints when relevant state changes occur.
+
+Server-push triggers:
+
+| Event | Push type | Notes |
+|---|---|---|
+| Commitment deadline within 1h | `update` | deadline urgency flag set |
+| Task completed, proof submitted | `end` | `activityStatus: 'completed'` |
+| Deadline passed, charge triggered | `end` | `activityStatus: 'failed'` |
+| Watch Mode session ends | `end` | `activityStatus: 'completed'` |
+
+#### Implementation Constraints
+
+- **Watch Mode update rate:** ≤ 1 update/second to the Live Activity (Apple guideline); elapsed timer is driven by a client-side Swift `Timer.periodic`, not server pushes
+- **8-hour hard limit:** iOS terminates Live Activities after 8 hours regardless of activity state; the app must restart the activity via the plugin if a task session continues
+- **VoiceOver notifications:** `UIAccessibility.post(notification: .announcement, argument:)` must be called from Swift when activity state changes — Flutter cannot post UIAccessibility notifications across the extension boundary
+- **Background push token updates:** ActivityKit push token refreshes are delivered to the app in background; the `live_activities` plugin forwards them via method channel — register `onActivityUpdate` in the Flutter layer and re-`POST /v1/live-activities/token` on token change
+- **macOS guard:** Every call site in Flutter: `if (Platform.isIOS) { liveActivitiesPlugin... }`
+
 ### Operator Dashboard & Admin API
 
 **API:** Admin endpoints at `/admin/v1/` — separate prefix from user-facing `/v1/`. Excluded from user-facing OpenAPI spec; separate admin spec generated if needed.
@@ -295,9 +414,10 @@ Reference: https://neon.com/blog/adopting-neon-branching-in-ci-cd-pipelines-a-pr
 7. APNs push (`@fivesheepco/cloudflare-apns2`; integration tested against staging only)
 8. `/packages/scheduling` — TDD-first, pure function, 100% coverage
 9. Stripe integration + commitment contract flow
-10. `/packages/ai` — Vercel AI SDK + Cloudflare AI Gateway
-11. MCP Worker
-12. Admin SPA (Cloudflare Pages)
+10. Live Activities — `OnTaskLiveActivity` + `OnTaskWidget` Xcode targets; `live_activities` Flutter plugin; `live-activity.ts` service; `live_activity_tokens` table
+11. `/packages/ai` — Vercel AI SDK + Cloudflare AI Gateway
+12. MCP Worker
+13. Admin SPA (Cloudflare Pages)
 
 ## Implementation Patterns & Consistency Rules
 
@@ -616,6 +736,7 @@ apps/api/
 │   │   ├── proof.ts                # FR31-41, FR66-67
 │   │   ├── disputes.ts             # FR39-41
 │   │   ├── notifications.ts        # FR42-43, FR72
+│   │   ├── live-activities.ts      # ActivityKit push token registration; server-push update triggers (iOS only)
 │   │   ├── subscriptions.ts        # FR49, FR82-84, FR86-90
 │   │   └── calendar.ts             # FR46 — connect, list, webhook receiver
 │   ├── middleware/
@@ -633,6 +754,7 @@ apps/api/
 │   │   │   ├── apple.ts            # EventKit / CalDAV (v2 stub)
 │   │   │   └── outlook.ts          # Microsoft Graph API (v2 stub)
 │   │   ├── push.ts                 # APNs via @fivesheepco/cloudflare-apns2
+│   │   ├── live-activity.ts        # ActivityKit server-push via APNs (apns-push-type: liveactivity)
 │   │   └── analytics.ts            # PostHog server-side events (NFR-B1)
 │   ├── queues/
 │   │   ├── proof-verification-consumer.ts
@@ -763,7 +885,18 @@ apps/flutter/
 │       ├── scheduling/
 │       └── commitment_contracts/
 ├── ios/
-│   └── Runner/                          # APNs entitlements (push package, no Firebase)
+│   ├── Runner/
+│   │   ├── Info.plist                   # NSSupportsLiveActivities = YES; URL schemes; Associated Domains
+│   │   └── Runner.entitlements          # Push notifications; Live Activities; Associated Domains
+│   ├── OnTaskLiveActivity/              # Widget Extension — Dynamic Island + Lock Screen Live Activities
+│   │   ├── OnTaskLiveActivity.swift     # ActivityAttributes, ContentState, WidgetBundle entry
+│   │   ├── OnTaskLiveActivityLiveActivity.swift  # Dynamic Island (compact/expanded) + Lock Screen SwiftUI views
+│   │   └── Info.plist
+│   ├── OnTaskWidget/                    # WidgetKit — home screen widgets
+│   │   ├── OnTaskWidget.swift           # Widget provider + timeline entry
+│   │   ├── OnTaskWidgetViews.swift      # Now widget (small) + Today widget (medium) SwiftUI views
+│   │   └── Info.plist
+│   └── SharedWidgetViews/              # Shared SwiftUI components imported by both extensions
 └── macos/
     └── Runner/                          # APNs entitlements (push package, no Firebase)
 ```
@@ -814,6 +947,7 @@ packages/core/
     │   ├── calendar-connections-google.ts   # Google OAuth tokens (AES-256-GCM encrypted)
     │   ├── calendar-connections-outlook.ts  # stub (v2)
     │   ├── calendar-connections-apple.ts    # stub (v2, EventKit — no tokens)
+    │   ├── live-activity-tokens.ts          # ActivityKit push tokens; scoped per user+task+type; expires with activity
     │   └── index.ts
     ├── types/
     │   ├── scheduling.ts                # ScheduleInput, ScheduleOutput
@@ -941,6 +1075,10 @@ apps/api/src/services/calendar/
 
 HealthKit unavailable on macOS. `proof/` feature degrades gracefully on macOS (HealthKit proof type hidden). Implementation responsibility of the proof feature agent.
 
+**Gap 4 — Live Activities & WidgetKit (UX spec §Responsive Design): RESOLVED**
+
+Live Activities (Dynamic Island, Lock Screen) and WidgetKit home screen widgets require native Swift and cannot be rendered by Flutter. Resolution: `live_activities` pub.dev plugin bridges Flutter to ActivityKit; two native Widget Extension targets (`OnTaskLiveActivity`, `OnTaskWidget`) added to `apps/flutter/ios/`; server-side updates via APNs with `apns-push-type: liveactivity` from the existing `@fivesheepco/cloudflare-apns2` Worker; push tokens stored in `live_activity_tokens` table. Full specification in the `### Live Activities & WidgetKit` section above. iOS only — all calls guarded with `Platform.isIOS`.
+
 ### Additional Patterns from Validation
 
 **Calendar token encryption:**
@@ -983,6 +1121,7 @@ All NFR categories covered. NFR-I1 (60s propagation) handled by Google Calendar 
 - [x] Admin login endpoint (argon2, Workers Secret creds)
 - [x] `apple-app-site-association` served from Cloudflare Pages with explicit `Content-Type`
 - [x] Google Calendar webhook channel token validation
+- [x] Live Activities & WidgetKit — `live_activities` plugin, Swift extension targets, ActivityKit push token flow, server-push via APNs liveactivity type, `live_activity_tokens` table, iOS-only guard
 
 ### Architecture Readiness Assessment
 

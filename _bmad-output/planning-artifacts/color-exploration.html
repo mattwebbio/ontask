@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>On Task — Colour Direction Exploration</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif;
+      background: #F0EEE9;
+      padding: 40px 24px;
+      min-height: 100vh;
+    }
+
+    h1 {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #999;
+      margin-bottom: 8px;
+    }
+
+    .page-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: #1a1a1a;
+      margin-bottom: 4px;
+    }
+
+    .page-subtitle {
+      font-size: 15px;
+      color: #666;
+      margin-bottom: 48px;
+    }
+
+    .themes {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 32px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    @media (max-width: 900px) {
+      .themes { grid-template-columns: 1fr; }
+    }
+
+    .theme-column {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .theme-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #888;
+      margin-bottom: 4px;
+    }
+
+    .theme-name {
+      font-size: 20px;
+      font-weight: 700;
+      color: #1a1a1a;
+      margin-bottom: 16px;
+    }
+
+    /* ── PHONE SHELL ── */
+    .phone {
+      border-radius: 36px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.18), 0 4px 16px rgba(0,0,0,0.1);
+      width: 100%;
+      aspect-ratio: 9/16;
+      position: relative;
+    }
+
+    .phone-screen {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── STATUS BAR ── */
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 20px 8px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    /* ── NOW TAB ── */
+    .now-header {
+      padding: 8px 20px 16px;
+    }
+
+    .now-header .greeting {
+      font-size: 13px;
+      font-weight: 500;
+      opacity: 0.55;
+      margin-bottom: 2px;
+    }
+
+    .now-header .title {
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .now-content {
+      flex: 1;
+      padding: 0 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* ── TASK CARD — COMMITTED ── */
+    .task-card {
+      border-radius: 20px;
+      padding: 18px 18px 16px;
+    }
+
+    .task-card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .task-card-meta {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      opacity: 0.6;
+      margin-bottom: 4px;
+    }
+
+    .task-card-title {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      line-height: 1.2;
+    }
+
+    .lock-badge {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      border-radius: 10px;
+      padding: 5px 9px;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+      flex-shrink: 0;
+      margin-left: 10px;
+    }
+
+    .task-voice {
+      font-size: 13px;
+      line-height: 1.4;
+      opacity: 0.7;
+      margin-bottom: 14px;
+      font-style: italic;
+    }
+
+    .task-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      flex: 1;
+      border: none;
+      border-radius: 12px;
+      padding: 12px 0;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: -0.2px;
+    }
+
+    .btn-secondary {
+      border: none;
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      opacity: 0.7;
+    }
+
+    /* ── TASK CARD — STANDARD ── */
+    .task-card-standard {
+      border-radius: 16px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .task-check {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 2px solid;
+      flex-shrink: 0;
+    }
+
+    .task-standard-content { flex: 1; }
+
+    .task-standard-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .task-standard-sub {
+      font-size: 12px;
+      opacity: 0.5;
+    }
+
+    /* ── STAKE SLIDER ── */
+    .stake-section {
+      border-radius: 20px;
+      padding: 16px 18px;
+    }
+
+    .stake-label {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      opacity: 0.6;
+      margin-bottom: 12px;
+    }
+
+    .slider-track {
+      height: 8px;
+      border-radius: 4px;
+      position: relative;
+      margin-bottom: 8px;
+      overflow: hidden;
+    }
+
+    .slider-fill {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 55%;
+      border-radius: 4px;
+    }
+
+    .slider-thumb {
+      position: absolute;
+      top: 50%;
+      left: 55%;
+      transform: translate(-50%, -50%);
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    }
+
+    .stake-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      font-weight: 600;
+      opacity: 0.55;
+      margin-bottom: 12px;
+    }
+
+    .stake-value {
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      text-align: center;
+      margin-bottom: 4px;
+    }
+
+    .stake-anchor {
+      font-size: 12px;
+      opacity: 0.55;
+      text-align: center;
+      margin-bottom: 14px;
+    }
+
+    .lock-btn {
+      width: 100%;
+      border: none;
+      border-radius: 14px;
+      padding: 14px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: -0.2px;
+    }
+
+    .lock-subtext {
+      font-size: 11px;
+      text-align: center;
+      opacity: 0.5;
+      margin-top: 8px;
+      font-style: italic;
+    }
+
+    /* ── COLOUR SWATCHES ── */
+    .swatches {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .swatch {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .swatch-circle {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    }
+
+    .swatch-name {
+      font-size: 10px;
+      color: #888;
+      text-align: center;
+      max-width: 44px;
+      line-height: 1.2;
+    }
+
+    /* ── SCHEDULE HEALTH STRIP ── */
+    .health-strip {
+      display: flex;
+      gap: 4px;
+      padding: 10px 16px;
+      border-radius: 12px;
+      margin: 0 16px;
+    }
+
+    .health-day {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .health-day-label {
+      font-size: 10px;
+      font-weight: 600;
+      opacity: 0.5;
+    }
+
+    .health-dot {
+      width: 28px;
+      height: 6px;
+      border-radius: 3px;
+    }
+
+    /* ── TAB BAR ── */
+    .tab-bar {
+      display: flex;
+      padding: 8px 8px 20px;
+      gap: 4px;
+    }
+
+    .tab {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      padding: 8px 4px;
+      border-radius: 12px;
+    }
+
+    .tab-icon {
+      font-size: 18px;
+    }
+
+    .tab-label {
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    .tab.active .tab-label { font-weight: 700; }
+
+    /* ══════════════════════════════════════════
+       DIRECTION A — WARM INDIGO
+    ══════════════════════════════════════════ */
+    .a .phone-screen { background: #FAF9F7; }
+    .a .status-bar { color: #1E1B4B; }
+    .a .now-header .greeting { color: #1E1B4B; }
+    .a .now-header .title { color: #1E1B4B; }
+
+    .a .task-card { background: #1E1B4B; color: white; }
+    .a .task-card-meta { color: rgba(255,255,255,0.6); }
+    .a .task-voice { color: rgba(255,255,255,0.7); }
+    .a .lock-badge { background: rgba(255,255,255,0.15); color: white; }
+    .a .btn-primary { background: #4B47A5; color: white; }
+    .a .btn-secondary { background: rgba(255,255,255,0.12); color: white; }
+
+    .a .task-card-standard { background: white; }
+    .a .task-check { border-color: #4B47A5; }
+    .a .task-standard-title { color: #1E1B4B; }
+    .a .task-standard-sub { color: #1E1B4B; }
+
+    .a .stake-section { background: white; }
+    .a .stake-label { color: #1E1B4B; }
+    .a .slider-track { background: #E8E6F0; }
+    .a .slider-fill { background: linear-gradient(to right, #6B9E78, #D4842A, #C0533A); }
+    .a .stake-labels { color: #1E1B4B; }
+    .a .stake-value { color: #1E1B4B; }
+    .a .stake-anchor { color: #1E1B4B; }
+    .a .lock-btn { background: #1E1B4B; color: white; }
+    .a .lock-subtext { color: #1E1B4B; }
+
+    .a .health-strip { background: white; }
+    .a .health-day-label { color: #1E1B4B; }
+
+    .a .tab-bar { background: #FAF9F7; border-top: 1px solid rgba(0,0,0,0.06); }
+    .a .tab { color: #999; }
+    .a .tab.active { color: #4B47A5; }
+    .a .tab.active .tab-label { color: #4B47A5; }
+
+    /* ══════════════════════════════════════════
+       DIRECTION B — SLATE + GOLD
+    ══════════════════════════════════════════ */
+    .b .phone-screen { background: #FAFAF8; }
+    .b .status-bar { color: #2C3040; }
+    .b .now-header .greeting { color: #2C3040; }
+    .b .now-header .title { color: #2C3040; }
+
+    .b .task-card { background: #2C3040; color: white; }
+    .b .task-card-meta { color: rgba(255,255,255,0.6); }
+    .b .task-voice { color: rgba(255,255,255,0.7); }
+    .b .lock-badge { background: rgba(201,151,58,0.25); color: #E8B96A; }
+    .b .btn-primary { background: #C9973A; color: white; }
+    .b .btn-secondary { background: rgba(255,255,255,0.1); color: white; }
+
+    .b .task-card-standard { background: white; }
+    .b .task-check { border-color: #C9973A; }
+    .b .task-standard-title { color: #2C3040; }
+    .b .task-standard-sub { color: #2C3040; }
+
+    .b .stake-section { background: white; }
+    .b .stake-label { color: #2C3040; }
+    .b .slider-track { background: #ECEAE4; }
+    .b .slider-fill { background: linear-gradient(to right, #6B9E78, #C9973A, #C0533A); }
+    .b .stake-labels { color: #2C3040; }
+    .b .stake-value { color: #2C3040; }
+    .b .stake-anchor { color: #2C3040; }
+    .b .lock-btn { background: #2C3040; color: white; }
+    .b .lock-subtext { color: #2C3040; }
+
+    .b .health-strip { background: white; }
+    .b .health-day-label { color: #2C3040; }
+
+    .b .tab-bar { background: #FAFAF8; border-top: 1px solid rgba(0,0,0,0.06); }
+    .b .tab { color: #999; }
+    .b .tab.active { color: #C9973A; }
+    .b .tab.active .tab-label { color: #C9973A; }
+
+    /* ══════════════════════════════════════════
+       DIRECTION C — TERRACOTTA & CREAM
+    ══════════════════════════════════════════ */
+    .c .phone-screen { background: #FDF6EE; }
+    .c .status-bar { color: #231A14; }
+    .c .now-header .greeting { color: #231A14; }
+    .c .now-header .title { color: #231A14; }
+
+    .c .task-card { background: #231A14; color: white; }
+    .c .task-card-meta { color: rgba(255,255,255,0.6); }
+    .c .task-voice { color: rgba(255,255,255,0.7); }
+    .c .lock-badge { background: rgba(196,98,58,0.3); color: #E8926A; }
+    .c .btn-primary { background: #C4623A; color: white; }
+    .c .btn-secondary { background: rgba(255,255,255,0.1); color: white; }
+
+    .c .task-card-standard { background: white; }
+    .c .task-check { border-color: #C4623A; }
+    .c .task-standard-title { color: #231A14; }
+    .c .task-standard-sub { color: #231A14; }
+
+    .c .stake-section { background: white; }
+    .c .stake-label { color: #231A14; }
+    .c .slider-track { background: #EDE4DA; }
+    .c .slider-fill { background: linear-gradient(to right, #6B9E78, #D4842A, #C4623A); }
+    .c .stake-labels { color: #231A14; }
+    .c .stake-value { color: #231A14; }
+    .c .stake-anchor { color: #231A14; }
+    .c .lock-btn { background: #231A14; color: white; }
+    .c .lock-subtext { color: #231A14; }
+
+    .c .health-strip { background: white; }
+    .c .health-day-label { color: #231A14; }
+
+    .c .tab-bar { background: #FDF6EE; border-top: 1px solid rgba(0,0,0,0.06); }
+    .c .tab { color: #999; }
+    .c .tab.active { color: #C4623A; }
+    .c .tab.active .tab-label { color: #C4623A; }
+
+    /* ── SWATCH ROW ── */
+    .swatch-row {
+      background: white;
+      border-radius: 16px;
+      padding: 16px;
+    }
+
+    .swatch-row-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #999;
+      margin-bottom: 12px;
+    }
+
+    /* ── HYBRID NOTE ── */
+    .hybrid-note {
+      max-width: 1200px;
+      margin: 32px auto 0;
+      background: white;
+      border-radius: 20px;
+      padding: 24px 28px;
+    }
+
+    .hybrid-note h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: #1a1a1a;
+      margin-bottom: 8px;
+    }
+
+    .hybrid-note p {
+      font-size: 14px;
+      color: #555;
+      line-height: 1.6;
+    }
+
+    .hybrid-preview {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+      align-items: center;
+    }
+
+    .hybrid-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #F5F4FF;
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #4B47A5;
+    }
+
+    .hybrid-chip .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .hybrid-chip.gold {
+      background: #FDF8EE;
+      color: #9A6E20;
+    }
+
+    .plus { font-size: 18px; color: #ccc; font-weight: 300; }
+  </style>
+</head>
+<body>
+
+  <h1>On Task</h1>
+  <div class="page-title">Colour Direction Exploration</div>
+  <div class="page-subtitle">Three directions for the visual foundation — Now tab, commitment lock flow, stake slider</div>
+
+  <div class="themes">
+
+    <!-- ══ DIRECTION A ══ -->
+    <div class="theme-column a">
+      <div class="theme-label">Direction A</div>
+      <div class="theme-name">Warm Indigo</div>
+
+      <div class="swatch-row">
+        <div class="swatch-row-label">Palette</div>
+        <div class="swatches">
+          <div class="swatch"><div class="swatch-circle" style="background:#1E1B4B"></div><div class="swatch-name">Lock dark</div></div>
+          <div class="swatch"><div class="swatch-circle" style="background:#4B47A5"></div><div class="swatch-name">Primary</div></div>
+          <div class="swatch"><div class="swatch-circle" style="background:#7B78C8"></div><div class="swatch-name">Muted</div></div>
+          <div class="swatch"><div class="swatch-circle" style="background:#6B9E78"></div><div class="swatch-name">Success</div></div>
+          <div class="swatch"><div class="swatch-circle" style="background:#D4842A"></div><div class="swatch-name">Warning</div></div>
+          <div class="swatch"><div class="swatch-circle" style="background:#C0533A"></div><div class="swatch-name">Risk</div></div>
+          <div class="swatch"><div class="swatch-circle" style="background:#FAF9F7; border: 1px solid #e0ddd8"></div><div class="swatch-name">Surface</div></div>
+        </div>
+      </div>
+
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="status-bar"><span>9:41</span><span>●●●</span></div>
+
+          <div class="now-header">
+            <div class="greeting">Your past self planned this ·</div>
+            <div class="title">Now</div>
+          </div>
+
+          <!-- Health strip -->
+          <div class="health-strip">
+            <div class="health-day"><div class="health-day-label">M</div><div class="health-dot" style="background:#6B9E78"></div></div>
+            <div class="health-day"><div class="health-day-label">T</div><div class="health-dot" style="background:#6B9E78"></div></div>
+            <div class="health-day"><div class="health-day-label">W</div><div class="health-dot" style="background:#D4842A"></div></div>
+            <div class="health-day"><div class="health-day-label">T</div><div class="health-dot" style="background:#D4842A"></div></div>
+            <div class="health-day"><div class="health-day-label">F</div><div class="health-dot" style="background:#C0533A"></div></div>
+            <div class="health-day"><div class="health-day-label">S</div><div class="health-dot" style="background:#E8E6F0"></div></div>
+            <div class="health-day"><div class="health-day-label">S</div><div class="health-dot" style="background:#E8E6F0"></div></div>
+          </div>
+
+          <div class="now-content" style="margin-top: 10px;">
+
+            <!-- Committed task -->
+            <div class="task-card">
+              <div class="task-card-header">
+                <div>
+                  <div class="task-card-meta">Household · Spencer</div>
+                  <div class="task-card-title">Call the dentist<br>to book a cleaning</div>
+                </div>
+                <div class="lock-badge">🔒 $25</div>
+              </div>
+              <div class="task-voice">"Your past self made this plan for you."</div>
+              <div class="task-actions">
+                <button class="btn-primary">Mark done</button>
+                <button class="btn-secondary">Defer</button>
+              </div>
+            </div>
+
+            <!-- Standard task -->
+            <div class="task-card-standard">
+              <div class="task-check"></div>
+              <div class="task-standard-content">
+                <div class="task-standard-title">Review Q2 budget doc</div>
+                <div class="task-standard-sub">Work · 30 min · 11:00 AM</div>
+              </div>
+            </div>
+
+            <!-- Stake slider -->
+            <div class="stake-section">
+              <div class="stake-label">Add a stake</div>
+              <div class="slider-track">
+                <div class="slider-fill"></div>
+                <div class="slider-thumb"></div>
+              </div>
+              <div class="stake-labels">
+                <span>$5 — a coffee</span>
+                <span>$50 — dinner out</span>
+                <span>$100</span>
+              </div>
+              <div class="stake-value">$25</div>
+              <div class="stake-anchor">Meaningful, not devastating</div>
+              <button class="lock-btn">Lock it in</button>
+              <div class="lock-subtext">Your future self is counting on you.</div>
+            </div>
+
+          </div>
+
+          <div class="tab-bar">
+            <div class="tab active"><div class="tab-icon">⏱</div><div class="tab-label">Now</div></div>
+            <div class="tab"><div class="tab-icon">📋</div><div class="tab-label">Today</div></div>
+            <div class="tab"><div class="tab-icon">＋</div><div class="tab-label">Add</div></div>
+            <div class="tab"><div class="tab-icon">≡</div><div class="tab-label">Lists</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ DIRECTION B ══ -->
+    <div class="theme-column b">
+      <div class="theme-label">Direction B</div>
+      <div class="theme-name">Slate + Gold</div>
+
+      <div class="swatch-row">
+        <div class="swatch-row-label">Palette</div>
+        <div class="swatches">
+          <div class="swatch"><div class="swatch-circle" style="background:#2C3040"></div><div class="swatch-name">Lock dark</div></div>
+          <div class="swatch"><div class="swatch-circle" style="background:#C9973A"></div><div class="swatch-name">Primary</div></div>
+          <div class="swatch"><div class="swatch-circle" style="background:#E8B96A"></div><div class="swatch-name">Muted</div></div>
+          <div class="swatch"><div class="swatch-circle" style="background:#6B9E78"></div><div class="swatch-name">Success</div></div>
+          <div class="swatch"><div class="swatch-circle" style="background:#C9973A"></div><div class="swatch-name">Warning</div></div>
+          <div class="swatch"><div class="swatch-circle" style="background:#C0533A"></div><div class="swatch-name">Risk</div></div>
+          <div class="swatch"><div class="swatch-circle" style="background:#FAFAF8; border: 1px solid #e0ddd8"></div><div class="swatch-name">Surface</div></div>
+        </div>
+      </div>
+
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="status-bar"><span>9:41</span><span>●●●</span></div>
+
+          <div class="now-header">
+            <div class="greeting">Your past self planned this ·</div>
+            <div class="title">Now</div>
+          </div>
+
+          <div class="health-strip">
+            <div class="health-day"><div class="health-day-label">M</div><div class="health-dot" style="background:#6B9E78"></div></div>
+            <div class="health-day"><div class="health-day-label">T</div><div class="health-dot" style="background:#6B9E78"></div></div>
+            <div class="health-day"><div class="health-day-label">W</div><div class="health-dot" style="background:#C9973A"></div></div>
+            <div class="health-day"><div class="health-day-label">T</div><div class="health-dot" style="background:#C9973A"></div></div>
+            <div class="health-day"><div class="health-day-label">F</div><div class="health-dot" style="background:#C0533A"></div></div>
+            <div class="health-day"><div class="health-day-label">S</div><div class="health-dot" style="background:#ECEAE4"></div></div>
+            <div class="health-day"><div class="health-day-label">S</div><div class="health-dot" style="background:#ECEAE4"></div></div>
+          </div>
+
+          <div class="now-content" style="margin-top: 10px;">
+
+            <div class="task-card">
+              <div class="task-card-header">
+                <div>
+                  <div class="task-card-meta">Household · Spencer</div>
+                  <div class="task-card-title">Call the dentist<br>to book a cleaning</div>
+                </div>
+                <div class="lock-badge">🔒 $25</div>
+              </div>
+              <div class="task-voice">"Your past self made this plan for you."</div>
+              <div class="task-actions">
+                <button class="btn-primary">Mark done</button>
+                <button class="btn-secondary">Defer</button>
+              </div>
+            </div>
+
+            <div class="task-card-standard">
+              <div class="task-check"></div>
+              <div class="task-standard-content">
+                <div class="task-standard-title">Review Q2 budget doc</div>
+                <div class="task-standard-sub">Work · 30 min · 11:00 AM</div>
+              </div>
+            </div>
+
+            <div class="stake-section">
+              <div class="stake-label">Add a stake</div>
+              <div class="slider-track">
+                <div class="slider-fill"></div>
+                <div class="slider-thumb"></div>
+              </div>
+              <div class="stake-labels">
+                <span>$5 — a coffee</span>
+                <span>$50 — dinner out</span>
+                <span>$100</span>
+              </div>
+              <div class="stake-value">$25</div>
+              <div class="stake-anchor">Meaningful, not devastating</div>
+              <button class="lock-btn">Lock it in</button>
+              <div class="lock-subtext">Your future self is counting on you.</div>
+            </div>
+
+          </div>
+
+          <div class="tab-bar">
+            <div class="tab active"><div class="tab-icon">⏱</div><div class="tab-label">Now</div></div>
+            <div class="tab"><div class="tab-icon">📋</div><div class="tab-label">Today</div></div>
+            <div class="tab"><div class="tab-icon">＋</div><div class="tab-label">Add</div></div>
+            <div class="tab"><div class="tab-icon">≡</div><div class="tab-label">Lists</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ DIRECTION C ══ -->
+    <div class="theme-column c">
+      <div class="theme-label">Direction C</div>
+      <div class="theme-name">Terracotta & Cream</div>
+
+      <div class="swatch-row">
+        <div class="swatch-row-label">Palette</div>
+        <div class="swatches">
+          <div class="swatch"><div class="swatch-circle" style="background:#231A14"></div><div class="swatch-name">Lock dark</div></div>
+          <div class="swatch"><div class="swatch-circle" style="background:#C4623A"></div><div class="swatch-name">Primary</div></div>
+          <div class="swatch"><div class="swatch-circle" style="background:#E8926A"></div><div class="swatch-name">Muted</div></div>
+          <div class="swatch"><div class="swatch-circle" style="background:#6B9E78"></div><div class="swatch-name">Success</div></div>
+          <div class="swatch"><div class="swatch-circle" style="background:#D4842A"></div><div class="swatch-name">Warning</div></div>
+          <div class="swatch"><div class="swatch-circle" style="background:#C4623A"></div><div class="swatch-name">Risk</div></div>
+          <div class="swatch"><div class="swatch-circle" style="background:#FDF6EE; border: 1px solid #e8ddd0"></div><div class="swatch-name">Surface</div></div>
+        </div>
+      </div>
+
+      <div class="phone">
+        <div class="phone-screen">
+          <div class="status-bar"><span>9:41</span><span>●●●</span></div>
+
+          <div class="now-header">
+            <div class="greeting">Your past self planned this ·</div>
+            <div class="title">Now</div>
+          </div>
+
+          <div class="health-strip">
+            <div class="health-day"><div class="health-day-label">M</div><div class="health-dot" style="background:#6B9E78"></div></div>
+            <div class="health-day"><div class="health-day-label">T</div><div class="health-dot" style="background:#6B9E78"></div></div>
+            <div class="health-day"><div class="health-day-label">W</div><div class="health-dot" style="background:#D4842A"></div></div>
+            <div class="health-day"><div class="health-day-label">T</div><div class="health-dot" style="background:#D4842A"></div></div>
+            <div class="health-day"><div class="health-day-label">F</div><div class="health-dot" style="background:#C4623A"></div></div>
+            <div class="health-day"><div class="health-day-label">S</div><div class="health-dot" style="background:#EDE4DA"></div></div>
+            <div class="health-day"><div class="health-day-label">S</div><div class="health-dot" style="background:#EDE4DA"></div></div>
+          </div>
+
+          <div class="now-content" style="margin-top: 10px;">
+
+            <div class="task-card">
+              <div class="task-card-header">
+                <div>
+                  <div class="task-card-meta">Household · Spencer</div>
+                  <div class="task-card-title">Call the dentist<br>to book a cleaning</div>
+                </div>
+                <div class="lock-badge">🔒 $25</div>
+              </div>
+              <div class="task-voice">"Your past self made this plan for you."</div>
+              <div class="task-actions">
+                <button class="btn-primary">Mark done</button>
+                <button class="btn-secondary">Defer</button>
+              </div>
+            </div>
+
+            <div class="task-card-standard">
+              <div class="task-check"></div>
+              <div class="task-standard-content">
+                <div class="task-standard-title">Review Q2 budget doc</div>
+                <div class="task-standard-sub">Work · 30 min · 11:00 AM</div>
+              </div>
+            </div>
+
+            <div class="stake-section">
+              <div class="stake-label">Add a stake</div>
+              <div class="slider-track">
+                <div class="slider-fill"></div>
+                <div class="slider-thumb"></div>
+              </div>
+              <div class="stake-labels">
+                <span>$5 — a coffee</span>
+                <span>$50 — dinner out</span>
+                <span>$100</span>
+              </div>
+              <div class="stake-value">$25</div>
+              <div class="stake-anchor">Meaningful, not devastating</div>
+              <button class="lock-btn">Lock it in</button>
+              <div class="lock-subtext">Your future self is counting on you.</div>
+            </div>
+
+          </div>
+
+          <div class="tab-bar">
+            <div class="tab active"><div class="tab-icon">⏱</div><div class="tab-label">Now</div></div>
+            <div class="tab"><div class="tab-icon">📋</div><div class="tab-label">Today</div></div>
+            <div class="tab"><div class="tab-icon">＋</div><div class="tab-label">Add</div></div>
+            <div class="tab"><div class="tab-icon">≡</div><div class="tab-label">Lists</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Hybrid note -->
+  <div class="hybrid-note">
+    <h3>💡 Hybrid option worth considering</h3>
+    <p>Direction A's indigo base is the most distinctive and ownable in the productivity space. Direction B's gold completion moment is genuinely special — warm, earned, celebratory. These could be combined: indigo as the primary brand colour (navigation, UI chrome, committed task cards), gold reserved exclusively for completion and achievement moments (the "release" animation, the impact dashboard, stake-released confirmations). Two colours with two distinct emotional registers — commitment vs. celebration.</p>
+    <div class="hybrid-preview">
+      <div class="hybrid-chip">
+        <div class="dot" style="background:#4B47A5"></div>
+        Indigo — commitment, structure, locking in
+      </div>
+      <div class="plus">+</div>
+      <div class="hybrid-chip gold">
+        <div class="dot" style="background:#C9973A"></div>
+        Gold — completion, release, achievement
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
