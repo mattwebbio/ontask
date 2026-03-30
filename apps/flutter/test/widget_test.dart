@@ -4,6 +4,8 @@
 // navigation shell. Story 1.6 introduced the iOS shell; Story 1.7 added the
 // macOS shell. Story 1.8 added auth — the test overrides auth state to
 // "authenticated" so the navigation shell is reachable.
+// Story 1.9 added onboarding — the test must also mark onboarding as completed
+// so the router does not redirect to /onboarding.
 //
 // The test is platform-aware since Platform.isMacOS is true when
 // running tests locally on macOS.
@@ -17,6 +19,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ontask/features/auth/domain/auth_result.dart';
 import 'package:ontask/features/auth/presentation/auth_provider.dart';
 import 'package:ontask/main.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   setUpAll(() {
@@ -25,9 +28,16 @@ void main() {
 
   setUp(() {
     FlutterSecureStorage.setMockInitialValues({});
+    // Default: onboarding NOT completed — individual tests override as needed.
+    SharedPreferences.setMockInitialValues({});
   });
 
   testWidgets('App boots and renders navigation shell', (tester) async {
+    // Mark onboarding completed so the router does not redirect to /onboarding.
+    SharedPreferences.setMockInitialValues({kOnboardingCompleted: true});
+    final prefs = await SharedPreferences.getInstance();
+    AuthStateNotifier.prewarmPrefs(prefs);
+
     await tester.pumpWidget(
       ProviderScope(
         overrides: [

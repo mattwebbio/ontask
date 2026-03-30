@@ -2,6 +2,7 @@ import { OpenAPIHono } from '@hono/zod-openapi'
 import { applyScopedCors } from './middleware/cors.js'
 import { healthRouter } from './routes/health.js'
 import { authRouter } from './routes/auth.js'
+import { usersRouter } from './routes/users.js'
 import { AppError } from './lib/errors.js'
 import { err } from './lib/response.js'
 
@@ -29,6 +30,7 @@ applyScopedCors(app)
 // ── Routes ─────────────────────────────────────────────────────────────────
 app.route('/', healthRouter)
 app.route('/', authRouter)
+app.route('/', usersRouter)
 
 // ── OpenAPI documentation ──────────────────────────────────────────────────
 app.doc('/v1/doc', {
