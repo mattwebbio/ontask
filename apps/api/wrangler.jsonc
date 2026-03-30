@@ -20,8 +20,13 @@
 
   // ── Bindings ───────────────────────────────────────────────────────────────
   // DATABASE_URL placeholder — real value set in Cloudflare dashboard (never committed).
+  // Observability vars — intentionally empty placeholders.
+  // Real values set via `wrangler secret put` in CI/CD for staging and production.
   "vars": {
-    "DATABASE_URL": "postgresql://placeholder"
+    "DATABASE_URL": "postgresql://placeholder",
+    "ENVIRONMENT": "production",
+    "GLITCHTIP_DSN": "",
+    "POSTHOG_API_KEY": ""
   }
 
   // "kv_namespaces": [],

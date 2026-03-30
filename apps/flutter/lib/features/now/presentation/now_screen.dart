@@ -10,6 +10,13 @@ import 'widgets/now_empty_state.dart';
 /// (orientation change, theme switch, tab re-entry) cannot restart the timer.
 ///
 /// Real task data will be wired in Story 1.8+ (after auth).
+///
+/// --- Analytics stubs (Story 1.12, NFR-B1) ---
+/// When task completion is wired up in a future story, emit the PostHog event:
+///   // TODO(impl): analyticsService.track('task_completed', properties: {'task_id': taskId})
+///
+/// When stake confirmation is wired up in a future story, emit:
+///   // TODO(impl): analyticsService.track('stake_set', properties: {'stake_amount_cents': amount, 'task_id': taskId})
 class NowScreen extends StatefulWidget {
   const NowScreen({super.key});
 

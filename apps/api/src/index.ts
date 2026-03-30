@@ -4,6 +4,7 @@ import { healthRouter } from './routes/health.js'
 import { authRouter } from './routes/auth.js'
 import { usersRouter } from './routes/users.js'
 import { AppError } from './lib/errors.js'
+import { reportToGlitchTip } from './lib/glitchtip.js'
 import { err } from './lib/response.js'
 
 const app = new OpenAPIHono<{ Bindings: CloudflareBindings }>()
@@ -12,10 +13,22 @@ const app = new OpenAPIHono<{ Bindings: CloudflareBindings }>()
 // Must be registered before routes so Hono wires it up correctly.
 // Catches AppError subclasses and maps them to the standard error envelope.
 // All other errors become 500 INTERNAL_SERVER_ERROR.
+// Non-AppError (unexpected) errors are reported to GlitchTip (AC #2, ARCH-31).
 app.onError((error, c) => {
   if (error instanceof AppError) {
     return c.json(err(error.code, error.message, error.details), error.httpStatus as 400)
   }
+  // Report unexpected errors to GlitchTip — AppError subclasses are NOT forwarded.
+  void reportToGlitchTip(
+    error,
+    {
+      workerName: 'ontask-api',
+      environment: c.env.ENVIRONMENT ?? 'production',
+      path: new URL(c.req.url).pathname,
+      method: c.req.method,
+    },
+    c.env
+  )
   return c.json(err('INTERNAL_SERVER_ERROR', 'An unexpected error occurred'), 500)
 })
 

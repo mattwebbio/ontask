@@ -59,6 +59,12 @@ dependencies:
   # TOTP QR code rendering — displays otpauth:// URI as scannable QR in 2FA setup (FR92).
   qr_flutter: ^4.1.0
 
+  # Observability & Error Tracking (ARCH-30, ARCH-31)
+  # sentry_flutter: Sentry-compatible SDK for GlitchTip DSN integration; captures unhandled Dart + Flutter errors.
+  sentry_flutter: ^8.14.0
+  # posthog_flutter: PostHog Flutter SDK for in-app event tracking and feature flag evaluation.
+  posthog_flutter: ^4.6.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
