@@ -39,6 +39,9 @@ dependencies:
   # Skeleton loading animations
   shimmer: ^3.0.0
 
+  # Desktop window management (macOS minimum size enforcement)
+  window_manager: ^0.3.9
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
