@@ -12,6 +12,9 @@ part of 'api_client.dart';
 ///
 /// Every repository must receive this via `ref.watch(apiClientProvider)`.
 /// Do NOT call `ApiClient(...)` directly — that breaks test overrides.
+///
+/// The [onSignOut] callback is wired to [AuthStateNotifier.setUnauthenticated]
+/// so that when the 401 interceptor forces sign-out, the GoRouter redirect fires.
 
 @ProviderFor(apiClient)
 final apiClientProvider = ApiClientProvider._();
@@ -20,6 +23,9 @@ final apiClientProvider = ApiClientProvider._();
 ///
 /// Every repository must receive this via `ref.watch(apiClientProvider)`.
 /// Do NOT call `ApiClient(...)` directly — that breaks test overrides.
+///
+/// The [onSignOut] callback is wired to [AuthStateNotifier.setUnauthenticated]
+/// so that when the 401 interceptor forces sign-out, the GoRouter redirect fires.
 
 final class ApiClientProvider
     extends $FunctionalProvider<ApiClient, ApiClient, ApiClient>
@@ -28,6 +34,9 @@ final class ApiClientProvider
   ///
   /// Every repository must receive this via `ref.watch(apiClientProvider)`.
   /// Do NOT call `ApiClient(...)` directly — that breaks test overrides.
+  ///
+  /// The [onSignOut] callback is wired to [AuthStateNotifier.setUnauthenticated]
+  /// so that when the 401 interceptor forces sign-out, the GoRouter redirect fires.
   ApiClientProvider._()
     : super(
         from: null,
@@ -61,4 +70,4 @@ final class ApiClientProvider
   }
 }
 
-String _$apiClientHash() => r'6af97be93d52d3e46056c5ebf1f6719288811945';
+String _$apiClientHash() => r'6a937944101fff2cda6900fb911d1edfb49f8732';

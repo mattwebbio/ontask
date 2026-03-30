@@ -19,6 +19,23 @@ class AppStrings {
   static const String listsEmptySubtitle =
       "Create a list to start organising what matters.";
 
+  // ── Auth screen ──────────────────────────────────────────────────────────────
+  static const String authSignInWithApple = "Sign in with Apple";
+  static const String authSignInWithGoogle = "Sign in with Google";
+  static const String authEmailLabel = "Email";
+  static const String authPasswordLabel = "Password";
+  static const String authSignInButton = "Sign In";
+  static const String authForgotPassword = "Forgot password?";
+
+  /// Plain-language error for invalid credentials — never expose error codes (NFR-UX2).
+  static const String authErrorInvalidCredentials =
+      "That email or password isn't quite right. Try again or reset your password.";
+  static const String authErrorGeneric =
+      "Something went wrong. Please try again.";
+
+  /// Subtitle — New York serif / emotional voice copy only.
+  static const String authSubtitle = "your past self is counting on you";
+
   // ── macOS shell ──────────────────────────────────────────────────────────────
   static const String macosNewTask = "New Task";
   static const String macosNavNow = "Now";

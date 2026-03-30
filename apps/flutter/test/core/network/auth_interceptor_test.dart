@@ -1,11 +1,12 @@
 import 'package:dio/dio.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ontask/core/network/interceptors/auth_interceptor.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:ontask/features/auth/data/token_storage.dart';
 
 void main() {
   setUp(() {
-    SharedPreferences.setMockInitialValues({});
+    FlutterSecureStorage.setMockInitialValues({});
   });
 
   group('AuthInterceptor — 401 handling (ARCH-20)', () {
@@ -13,7 +14,7 @@ void main() {
         'first 401 with no refresh token forces sign-out and rejects the error',
         () async {
       // Arrange: no refresh token → refresh fails → force sign-out + reject.
-      SharedPreferences.setMockInitialValues({});
+      FlutterSecureStorage.setMockInitialValues({});
 
       final interceptor = AuthInterceptor(dio: Dio());
       bool rejected = false;
@@ -45,7 +46,7 @@ void main() {
     test(
       'second consecutive 401 (retry header present) immediately rejects',
       () async {
-        SharedPreferences.setMockInitialValues({});
+        FlutterSecureStorage.setMockInitialValues({});
 
         final interceptor = AuthInterceptor(dio: Dio());
         bool rejected = false;
@@ -78,6 +79,8 @@ void main() {
     );
 
     test('non-401 errors pass through via handler.next', () async {
+      FlutterSecureStorage.setMockInitialValues({});
+
       final interceptor = AuthInterceptor(dio: Dio());
       bool passed = false;
 
@@ -99,11 +102,11 @@ void main() {
       expect(passed, isTrue, reason: 'Non-401 errors should pass through');
     });
 
-    test('tokens are cleared from SharedPreferences on force sign-out',
+    test('tokens are cleared from TokenStorage (Keychain) on force sign-out',
         () async {
-      SharedPreferences.setMockInitialValues({
-        kAccessToken: 'old-access-token',
-        kRefreshToken: '', // empty → refresh fails → sign-out
+      FlutterSecureStorage.setMockInitialValues({
+        'access_token': 'old-access-token',
+        'refresh_token': '', // empty → refresh fails → sign-out
       });
 
       final interceptor = AuthInterceptor(dio: Dio());
@@ -120,12 +123,65 @@ void main() {
       final handler = _CapturingErrorHandler(onReject: (_) {});
       await interceptor.handleError(dioError, handler);
 
-      final prefs = await SharedPreferences.getInstance();
+      final accessToken = await const TokenStorage().getAccessToken();
       expect(
-        prefs.getString(kAccessToken),
+        accessToken,
         isNull,
-        reason: 'Access token should be cleared after sign-out',
+        reason: 'Access token should be cleared from Keychain after sign-out',
       );
+    });
+
+    test('onSignOut callback is invoked when force sign-out occurs', () async {
+      FlutterSecureStorage.setMockInitialValues({});
+
+      bool signedOut = false;
+      final interceptor = AuthInterceptor(
+        dio: Dio(),
+        onSignOut: () => signedOut = true,
+      );
+
+      final requestOptions = RequestOptions(path: '/test');
+      final dioError = DioException(
+        requestOptions: requestOptions,
+        response: Response(
+          requestOptions: requestOptions,
+          statusCode: 401,
+        ),
+      );
+
+      final handler = _CapturingErrorHandler(onReject: (_) {});
+      await interceptor.handleError(dioError, handler);
+
+      expect(
+        signedOut,
+        isTrue,
+        reason:
+            'onSignOut callback should be called when force sign-out occurs',
+      );
+    });
+
+    test(
+        '_tryRefreshToken returns false when no refresh token is stored '
+        '(verifies AC #3 fallback)', () async {
+      FlutterSecureStorage.setMockInitialValues({});
+
+      final interceptor = AuthInterceptor(dio: Dio());
+      bool rejected = false;
+
+      final requestOptions = RequestOptions(path: '/test');
+      final dioError = DioException(
+        requestOptions: requestOptions,
+        response: Response(
+          requestOptions: requestOptions,
+          statusCode: 401,
+        ),
+      );
+
+      final handler = _CapturingErrorHandler(onReject: (_) => rejected = true);
+      await interceptor.handleError(dioError, handler);
+
+      // No refresh token → _tryRefreshToken returns false → force sign-out + reject.
+      expect(rejected, isTrue);
     });
   });
 }

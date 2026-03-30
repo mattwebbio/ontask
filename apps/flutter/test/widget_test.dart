@@ -2,19 +2,44 @@
 //
 // This test verifies that the app boots without errors and renders the
 // navigation shell. Story 1.6 introduced the iOS shell; Story 1.7 added the
-// macOS shell. The test is platform-aware since Platform.isMacOS is true when
+// macOS shell. Story 1.8 added auth — the test overrides auth state to
+// "authenticated" so the navigation shell is reachable.
+//
+// The test is platform-aware since Platform.isMacOS is true when
 // running tests locally on macOS.
 
 import 'dart:io' show Platform;
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ontask/features/auth/domain/auth_result.dart';
+import 'package:ontask/features/auth/presentation/auth_provider.dart';
 import 'package:ontask/main.dart';
 
 void main() {
+  setUpAll(() {
+    TestWidgetsFlutterBinding.ensureInitialized();
+  });
+
+  setUp(() {
+    FlutterSecureStorage.setMockInitialValues({});
+  });
+
   testWidgets('App boots and renders navigation shell', (tester) async {
-    await tester.pumpWidget(const ProviderScope(child: OnTaskApp()));
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          // Override auth state to authenticated so the router renders
+          // the main navigation shell instead of the auth screen.
+          authStateProvider.overrideWithValue(
+            const AuthResult.authenticated(userId: 'test-user'),
+          ),
+        ],
+        child: const OnTaskApp(),
+      ),
+    );
     // Allow go_router to resolve the initial route, then advance past the
     // 800ms skeleton delay in NowScreen.
     await tester.pump();
@@ -35,5 +60,21 @@ void main() {
       // CupertinoTabBar is present
       expect(find.byType(CupertinoTabBar), findsOneWidget);
     }
+  });
+
+  testWidgets('App shows auth screen when unauthenticated', (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          authStateProvider.overrideWithValue(const AuthResult.unauthenticated()),
+        ],
+        child: const OnTaskApp(),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    // The auth gate redirects to /auth/sign-in; verify auth UI is shown.
+    expect(find.text('On Task'), findsOneWidget);
   });
 }

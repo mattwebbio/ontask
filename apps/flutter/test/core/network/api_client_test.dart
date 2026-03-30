@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:ontask/core/network/api_client.dart';
@@ -6,6 +7,16 @@ import 'package:ontask/core/network/api_client.dart';
 class MockApiClient extends Mock implements ApiClient {}
 
 void main() {
+  // Required because reading apiClientProvider initialises AuthStateNotifier,
+  // which calls TokenStorage (flutter_secure_storage) — a platform channel.
+  setUpAll(() {
+    TestWidgetsFlutterBinding.ensureInitialized();
+  });
+
+  setUp(() {
+    FlutterSecureStorage.setMockInitialValues({});
+  });
+
   group('ApiClient — Riverpod injection', () {
     test('apiClientProvider creates an ApiClient instance', () {
       final container = ProviderContainer();
