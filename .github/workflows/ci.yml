@@ -1,13 +1,241 @@
-# CI Pipeline — implemented in Story 1.2
-# Stub: bundle size check, Flutter tests, scheduling engine tests (100% coverage),
-# lint + typecheck, Neon ephemeral branch lifecycle
 name: CI
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, closed]
 
 jobs:
-  placeholder:
+  # ─────────────────────────────────────────────────────────────
+  # TypeScript lint + typecheck across all workspace packages
+  # ─────────────────────────────────────────────────────────────
+  lint-typecheck:
+    if: github.event.action != 'closed'
     runs-on: ubuntu-latest
     steps:
-      - run: echo "CI pipeline implemented in Story 1.2"
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: '10.33.0'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint all packages
+        run: pnpm -r lint
+
+      - name: Typecheck all packages
+        run: pnpm -r typecheck
+
+  # ─────────────────────────────────────────────────────────────
+  # Scheduling engine — 100% coverage enforced
+  # ─────────────────────────────────────────────────────────────
+  scheduling-tests:
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: '10.33.0'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run scheduling tests with coverage gate
+        run: pnpm --filter @ontask/scheduling test --coverage
+
+  # ─────────────────────────────────────────────────────────────
+  # Flutter unit + widget tests
+  # ─────────────────────────────────────────────────────────────
+  flutter-tests:
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.0'
+          channel: 'stable'
+
+      - name: Run Flutter tests
+        working-directory: apps/flutter
+        run: flutter test
+
+  # ─────────────────────────────────────────────────────────────
+  # Worker bundle size — fail if either Worker exceeds 8 MB gzip
+  # ─────────────────────────────────────────────────────────────
+  bundle-size:
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: '10.33.0'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies (including native build scripts)
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm approve-builds --yes
+
+      - name: Check API worker bundle size
+        run: |
+          OUTPUT=$(pnpm --filter @ontask/api exec wrangler deploy --dry-run 2>&1)
+          echo "$OUTPUT"
+          # Parse "gzip: X.XX KiB" or "gzip: X.XX MiB"
+          GZIP_LINE=$(echo "$OUTPUT" | grep -oE 'gzip: [0-9]+(\.[0-9]+)? (KiB|MiB)')
+          if [ -z "$GZIP_LINE" ]; then
+            echo "❌ ERROR: Could not parse bundle size from wrangler output"
+            exit 1
+          fi
+          VALUE=$(echo "$GZIP_LINE" | grep -oE '[0-9]+(\.[0-9]+)?')
+          UNIT=$(echo "$GZIP_LINE" | grep -oE 'KiB|MiB')
+          if [ "$UNIT" = "MiB" ]; then
+            SIZE_MB=$VALUE
+          else
+            SIZE_MB=$(echo "scale=4; $VALUE / 1024" | bc)
+          fi
+          echo "API worker gzip size: ${SIZE_MB} MiB"
+          if (( $(echo "$SIZE_MB > 8" | bc -l) )); then
+            echo "❌ ERROR: API worker bundle exceeds 8 MiB compressed (${SIZE_MB} MiB)"
+            exit 1
+          fi
+          echo "✅ API worker bundle OK (${SIZE_MB} MiB)"
+
+      - name: Check MCP worker bundle size
+        run: |
+          OUTPUT=$(pnpm --filter @ontask/mcp exec wrangler deploy --dry-run 2>&1)
+          echo "$OUTPUT"
+          GZIP_LINE=$(echo "$OUTPUT" | grep -oE 'gzip: [0-9]+(\.[0-9]+)? (KiB|MiB)')
+          if [ -z "$GZIP_LINE" ]; then
+            echo "❌ ERROR: Could not parse bundle size from wrangler output"
+            exit 1
+          fi
+          VALUE=$(echo "$GZIP_LINE" | grep -oE '[0-9]+(\.[0-9]+)?')
+          UNIT=$(echo "$GZIP_LINE" | grep -oE 'KiB|MiB')
+          if [ "$UNIT" = "MiB" ]; then
+            SIZE_MB=$VALUE
+          else
+            SIZE_MB=$(echo "scale=4; $VALUE / 1024" | bc)
+          fi
+          echo "MCP worker gzip size: ${SIZE_MB} MiB"
+          if (( $(echo "$SIZE_MB > 8" | bc -l) )); then
+            echo "❌ ERROR: MCP worker bundle exceeds 8 MiB compressed (${SIZE_MB} MiB)"
+            exit 1
+          fi
+          echo "✅ MCP worker bundle OK (${SIZE_MB} MiB)"
+
+  # ─────────────────────────────────────────────────────────────
+  # Neon ephemeral branch — create on PR open/sync/reopen
+  # Hard-fails if NEON_PROJECT_ID or NEON_API_KEY are not set
+  # Idempotent: treats 409 (branch already exists) as success
+  # ─────────────────────────────────────────────────────────────
+  neon-branch-create:
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    env:
+      NEON_PROJECT_ID: ${{ secrets.NEON_PROJECT_ID }}
+      NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+    steps:
+      - name: Validate required secrets
+        run: |
+          if [ -z "$NEON_PROJECT_ID" ]; then
+            echo "❌ NEON_PROJECT_ID secret is not set"
+            exit 1
+          fi
+          if [ -z "$NEON_API_KEY" ]; then
+            echo "❌ NEON_API_KEY secret is not set"
+            exit 1
+          fi
+
+      - name: Create Neon ephemeral branch
+        run: |
+          HTTP_STATUS=$(curl -s -o /tmp/neon-response.json -w "%{http_code}" \
+            -X POST "https://console.neon.tech/api/v2/projects/$NEON_PROJECT_ID/branches" \
+            -H "Authorization: Bearer $NEON_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d "{\"branch\": {\"name\": \"pr-${{ github.event.pull_request.number }}\"}}")
+          cat /tmp/neon-response.json
+          if [ "$HTTP_STATUS" = "409" ]; then
+            echo "✅ Neon branch already exists: pr-${{ github.event.pull_request.number }}"
+          elif [ "$HTTP_STATUS" -lt 200 ] || [ "$HTTP_STATUS" -ge 300 ]; then
+            echo "❌ Neon API returned HTTP $HTTP_STATUS"
+            exit 1
+          else
+            echo "✅ Neon branch created: pr-${{ github.event.pull_request.number }}"
+          fi
+
+  # ─────────────────────────────────────────────────────────────
+  # Neon ephemeral branch — delete on PR close
+  # Hard-fails if secrets missing or delete fails
+  # ─────────────────────────────────────────────────────────────
+  neon-branch-delete:
+    if: github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    env:
+      NEON_PROJECT_ID: ${{ secrets.NEON_PROJECT_ID }}
+      NEON_API_KEY: ${{ secrets.NEON_API_KEY }}
+    steps:
+      - name: Validate required secrets
+        run: |
+          if [ -z "$NEON_PROJECT_ID" ]; then
+            echo "❌ NEON_PROJECT_ID secret is not set"
+            exit 1
+          fi
+          if [ -z "$NEON_API_KEY" ]; then
+            echo "❌ NEON_API_KEY secret is not set"
+            exit 1
+          fi
+
+      - name: Find Neon branch ID
+        id: find-branch
+        run: |
+          BRANCH_NAME="pr-${{ github.event.pull_request.number }}"
+          HTTP_STATUS=$(curl -s -o /tmp/neon-branches.json -w "%{http_code}" \
+            "https://console.neon.tech/api/v2/projects/$NEON_PROJECT_ID/branches?limit=100" \
+            -H "Authorization: Bearer $NEON_API_KEY")
+          if [ "$HTTP_STATUS" -lt 200 ] || [ "$HTTP_STATUS" -ge 300 ]; then
+            echo "❌ Neon API returned HTTP $HTTP_STATUS listing branches"
+            cat /tmp/neon-branches.json
+            exit 1
+          fi
+          BRANCH_ID=$(jq -r --arg NAME "$BRANCH_NAME" '.branches[] | select(.name == $NAME) | .id' /tmp/neon-branches.json)
+          if [ -z "$BRANCH_ID" ]; then
+            echo "⚠️ No Neon branch found named '$BRANCH_NAME' — may have been deleted already"
+            echo "branch_id=" >> $GITHUB_OUTPUT
+          else
+            echo "branch_id=$BRANCH_ID" >> $GITHUB_OUTPUT
+            echo "Found branch: $BRANCH_ID"
+          fi
+
+      - name: Delete Neon branch
+        if: steps.find-branch.outputs.branch_id != ''
+        run: |
+          HTTP_STATUS=$(curl -s -o /tmp/neon-delete-response.json -w "%{http_code}" \
+            -X DELETE "https://console.neon.tech/api/v2/projects/$NEON_PROJECT_ID/branches/${{ steps.find-branch.outputs.branch_id }}" \
+            -H "Authorization: Bearer $NEON_API_KEY")
+          cat /tmp/neon-delete-response.json
+          if [ "$HTTP_STATUS" -lt 200 ] || [ "$HTTP_STATUS" -ge 300 ]; then
+            echo "❌ Neon branch delete returned HTTP $HTTP_STATUS"
+            exit 1
+          fi
+          echo "✅ Neon branch deleted: ${{ steps.find-branch.outputs.branch_id }}"
