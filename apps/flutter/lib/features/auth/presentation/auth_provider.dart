@@ -71,7 +71,7 @@ class AuthStateNotifier extends _$AuthStateNotifier {
     _initFromStorage();
 
     return wasAuthenticated
-        ? const AuthResult.authenticated(userId: '')
+        ? const AuthResult.authenticated(userId: '', provider: 'email')
         : const AuthResult.unauthenticated();
   }
 
@@ -85,7 +85,7 @@ class AuthStateNotifier extends _$AuthStateNotifier {
     if (token != null && token.isNotEmpty) {
       // Assume authenticated — the 401 interceptor will sign-out if the token
       // is actually expired and the refresh attempt fails.
-      state = const AuthResult.authenticated(userId: '');
+      state = const AuthResult.authenticated(userId: '', provider: 'email');
     } else {
       // No token in Keychain — ensure we are unauthenticated and reset the
       // hint so next launch starts unauthenticated too.
@@ -95,9 +95,12 @@ class AuthStateNotifier extends _$AuthStateNotifier {
   }
 
   /// Called on successful authentication to update state.
-  Future<void> setAuthenticated(String userId) async {
+  ///
+  /// [provider] must be 'email', 'apple', or 'google' — propagated from
+  /// [AuthRepository] so the UI can gate 2FA to email-only accounts (NFR-S8).
+  Future<void> setAuthenticated(String userId, {required String provider}) async {
     await _prefs?.setBool(kAuthWasAuthenticated, true);
-    state = AuthResult.authenticated(userId: userId);
+    state = AuthResult.authenticated(userId: userId, provider: provider);
   }
 
   /// Called on sign-out or when the 401 interceptor forces the user out.

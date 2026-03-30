@@ -65,7 +65,10 @@ class _TwoFactorVerifyScreenState
     switch (result) {
       case Authenticated(:final userId):
         unawaited(
-          ref.read(authStateProvider.notifier).setAuthenticated(userId),
+          ref.read(authStateProvider.notifier).setAuthenticated(
+            userId,
+            provider: 'email',
+          ),
         );
       case AuthError(:final message):
         setState(() => _errorMessage = message);

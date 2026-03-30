@@ -51,7 +51,7 @@ void main() {
     testWidgets('shows Export Data tile', (tester) async {
       await pumpAccountSettingsScreen(
         tester,
-        authState: const AuthResult.authenticated(userId: 'user_1'),
+        authState: const AuthResult.authenticated(userId: 'user_1', provider: 'email'),
       );
 
       expect(find.text(AppStrings.accountExportData), findsOneWidget);
@@ -60,24 +60,41 @@ void main() {
     testWidgets('shows Delete Account tile', (tester) async {
       await pumpAccountSettingsScreen(
         tester,
-        authState: const AuthResult.authenticated(userId: 'user_1'),
+        authState: const AuthResult.authenticated(userId: 'user_1', provider: 'email'),
       );
 
       expect(find.text(AppStrings.accountDeleteAccount), findsOneWidget);
     });
 
-    testWidgets('shows 2FA tile for authenticated (email) users', (tester) async {
-      // Authenticated state represents email users in the current stub implementation.
+    testWidgets('shows 2FA tile for authenticated email users', (tester) async {
       await pumpAccountSettingsScreen(
         tester,
-        authState: const AuthResult.authenticated(userId: 'user_1'),
+        authState: const AuthResult.authenticated(userId: 'user_1', provider: 'email'),
       );
 
       expect(find.text(AppStrings.accountTwoFactorAuth), findsOneWidget);
     });
 
+    testWidgets('hides 2FA tile for Apple Sign In users (NFR-S8)', (tester) async {
+      await pumpAccountSettingsScreen(
+        tester,
+        authState: const AuthResult.authenticated(userId: 'user_1', provider: 'apple'),
+      );
+
+      expect(find.text(AppStrings.accountTwoFactorAuth), findsNothing);
+    });
+
+    testWidgets('hides 2FA tile for Google Sign In users (NFR-S8)', (tester) async {
+      await pumpAccountSettingsScreen(
+        tester,
+        authState: const AuthResult.authenticated(userId: 'user_1', provider: 'google'),
+      );
+
+      expect(find.text(AppStrings.accountTwoFactorAuth), findsNothing);
+    });
+
     testWidgets('hides 2FA tile when user is unauthenticated', (tester) async {
-      // Unauthenticated state represents OAuth users or signed-out users.
+      // Unauthenticated state represents signed-out users.
       // 2FA tile must not be shown (NFR-S8: only email/password accounts).
       await pumpAccountSettingsScreen(
         tester,
@@ -104,7 +121,7 @@ void main() {
         (tester) async {
       await pumpAccountSettingsScreen(
         tester,
-        authState: const AuthResult.authenticated(userId: 'user_1'),
+        authState: const AuthResult.authenticated(userId: 'user_1', provider: 'email'),
       );
 
       await tester.tap(find.text(AppStrings.accountExportData));
@@ -118,7 +135,7 @@ void main() {
         (tester) async {
       await pumpAccountSettingsScreen(
         tester,
-        authState: const AuthResult.authenticated(userId: 'user_1'),
+        authState: const AuthResult.authenticated(userId: 'user_1', provider: 'email'),
       );
 
       await tester.tap(find.text(AppStrings.accountDeleteAccount));

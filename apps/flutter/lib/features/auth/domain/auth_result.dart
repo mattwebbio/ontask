@@ -11,7 +11,10 @@ part 'auth_result.freezed.dart';
 /// - [AuthResult.twoFactorRequired] — email login succeeded but 2FA challenge required (FR92)
 @freezed
 sealed class AuthResult with _$AuthResult {
-  const factory AuthResult.authenticated({required String userId}) = Authenticated;
+  const factory AuthResult.authenticated({
+    required String userId,
+    required String provider,
+  }) = Authenticated;
   const factory AuthResult.unauthenticated() = Unauthenticated;
   const factory AuthResult.error({required String message}) = AuthError;
 

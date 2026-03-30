@@ -125,10 +125,10 @@ return twoFactorRequired(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String userId)?  authenticated,TResult Function()?  unauthenticated,TResult Function( String message)?  error,TResult Function( String tempToken)?  twoFactorRequired,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String userId,  String provider)?  authenticated,TResult Function()?  unauthenticated,TResult Function( String message)?  error,TResult Function( String tempToken)?  twoFactorRequired,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case Authenticated() when authenticated != null:
-return authenticated(_that.userId);case Unauthenticated() when unauthenticated != null:
+return authenticated(_that.userId,_that.provider);case Unauthenticated() when unauthenticated != null:
 return unauthenticated();case AuthError() when error != null:
 return error(_that.message);case TwoFactorRequired() when twoFactorRequired != null:
 return twoFactorRequired(_that.tempToken);case _:
@@ -149,10 +149,10 @@ return twoFactorRequired(_that.tempToken);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String userId)  authenticated,required TResult Function()  unauthenticated,required TResult Function( String message)  error,required TResult Function( String tempToken)  twoFactorRequired,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String userId,  String provider)  authenticated,required TResult Function()  unauthenticated,required TResult Function( String message)  error,required TResult Function( String tempToken)  twoFactorRequired,}) {final _that = this;
 switch (_that) {
 case Authenticated():
-return authenticated(_that.userId);case Unauthenticated():
+return authenticated(_that.userId,_that.provider);case Unauthenticated():
 return unauthenticated();case AuthError():
 return error(_that.message);case TwoFactorRequired():
 return twoFactorRequired(_that.tempToken);}
@@ -169,10 +169,10 @@ return twoFactorRequired(_that.tempToken);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String userId)?  authenticated,TResult? Function()?  unauthenticated,TResult? Function( String message)?  error,TResult? Function( String tempToken)?  twoFactorRequired,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String userId,  String provider)?  authenticated,TResult? Function()?  unauthenticated,TResult? Function( String message)?  error,TResult? Function( String tempToken)?  twoFactorRequired,}) {final _that = this;
 switch (_that) {
 case Authenticated() when authenticated != null:
-return authenticated(_that.userId);case Unauthenticated() when unauthenticated != null:
+return authenticated(_that.userId,_that.provider);case Unauthenticated() when unauthenticated != null:
 return unauthenticated();case AuthError() when error != null:
 return error(_that.message);case TwoFactorRequired() when twoFactorRequired != null:
 return twoFactorRequired(_that.tempToken);case _:
@@ -187,10 +187,11 @@ return twoFactorRequired(_that.tempToken);case _:
 
 
 class Authenticated implements AuthResult {
-  const Authenticated({required this.userId});
+  const Authenticated({required this.userId, required this.provider});
   
 
  final  String userId;
+ final  String provider;
 
 /// Create a copy of AuthResult
 /// with the given fields replaced by the non-null parameter values.
@@ -202,16 +203,16 @@ $AuthenticatedCopyWith<Authenticated> get copyWith => _$AuthenticatedCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Authenticated&&(identical(other.userId, userId) || other.userId == userId));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Authenticated&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.provider, provider) || other.provider == provider));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,userId);
+int get hashCode => Object.hash(runtimeType,userId,provider);
 
 @override
 String toString() {
-  return 'AuthResult.authenticated(userId: $userId)';
+  return 'AuthResult.authenticated(userId: $userId, provider: $provider)';
 }
 
 
@@ -222,7 +223,7 @@ abstract mixin class $AuthenticatedCopyWith<$Res> implements $AuthResultCopyWith
   factory $AuthenticatedCopyWith(Authenticated value, $Res Function(Authenticated) _then) = _$AuthenticatedCopyWithImpl;
 @useResult
 $Res call({
- String userId
+ String userId, String provider
 });
 
 
@@ -239,9 +240,10 @@ class _$AuthenticatedCopyWithImpl<$Res>
 
 /// Create a copy of AuthResult
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? userId = null,}) {
+@pragma('vm:prefer-inline') $Res call({Object? userId = null,Object? provider = null,}) {
   return _then(Authenticated(
 userId: null == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
+as String,provider: null == provider ? _self.provider : provider // ignore: cast_nullable_to_non_nullable
 as String,
   ));
 }

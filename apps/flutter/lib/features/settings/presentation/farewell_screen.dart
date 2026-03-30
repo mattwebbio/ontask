@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/l10n/strings.dart';
 import '../../../core/theme/app_theme.dart';
@@ -10,7 +11,7 @@ import '../../../core/theme/app_theme.dart';
 ///   - Warm, narrative voice — "past self / future self" framing
 ///   - No back navigation — uses [WillPopScope] to block Android back gesture;
 ///     iOS swipe-back is blocked by removing the route from history via pushAndRemoveUntil
-///   - "Done" button navigates to the auth screen — uses [Navigator.pushNamedAndRemoveUntil]
+///   - "Done" button navigates to the auth screen — uses [GoRouter.go]
 ///     so the user cannot navigate back to any authenticated screens
 ///
 /// This screen is a terminal route. It is pushed via [Navigator.pushAndRemoveUntil]
@@ -60,12 +61,10 @@ class FarewellScreen extends StatelessWidget {
                 // ── Done — routes to auth screen (no pop) ────────────────────
                 CupertinoButton.filled(
                   onPressed: () {
-                    // Clear all routes and go to auth screen.
-                    // The router's redirect will send unauthenticated users to /auth/sign-in.
-                    Navigator.of(context).pushNamedAndRemoveUntil(
-                      '/',
-                      (_) => false,
-                    );
+                    // Navigate to auth screen via GoRouter — clears the
+                    // navigation stack so the user cannot navigate back to
+                    // any authenticated screens (FR60, AC #2).
+                    context.go('/auth/sign-in');
                   },
                   child: Text(AppStrings.farewellDoneButton),
                 ),

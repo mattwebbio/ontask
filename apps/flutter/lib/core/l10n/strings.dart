@@ -223,4 +223,14 @@ class AppStrings {
   static const String twoFactorDisableInstructions =
       "Enter your current authenticator code to disable two-factor authentication.";
   static const String twoFactorDisableButton = "Disable Two-Factor Authentication";
+
+  /// Label for the "copy all backup codes" affordance on the 2FA setup screen.
+  static const String twoFactorCopyAllCodes = "Copy all codes";
+
+  /// Placeholder for the confirmation code field on the 2FA setup screen.
+  static const String twoFactorConfirmCodePlaceholder = "000000";
+
+  /// Generic error shown when account deletion fails unexpectedly.
+  static const String deleteAccountError =
+      "Something went wrong. Please try again.";
 }

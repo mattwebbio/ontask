@@ -4,6 +4,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
+import '../../../core/l10n/strings.dart';
 import '../../../core/network/api_client.dart';
 import '../domain/auth_result.dart';
 import 'token_storage.dart';
@@ -56,7 +57,7 @@ class AuthRepository extends _$AuthRepository {
         },
       );
 
-      return _handleTokenResponse(response.data);
+      return _handleTokenResponse(response.data, provider: 'apple');
     } on SignInWithAppleAuthorizationException catch (e) {
       if (e.code == AuthorizationErrorCode.canceled) {
         return const AuthResult.unauthenticated();
@@ -108,7 +109,7 @@ class AuthRepository extends _$AuthRepository {
         data: {'idToken': idToken},
       );
 
-      return _handleTokenResponse(response.data);
+      return _handleTokenResponse(response.data, provider: 'google');
     } on DioException catch (e) {
       return _handleDioError(e);
     } catch (e) {
@@ -150,7 +151,7 @@ class AuthRepository extends _$AuthRepository {
         );
       }
 
-      return _handleTokenResponse(response.data);
+      return _handleTokenResponse(response.data, provider: 'email');
     } on DioException catch (e) {
       return _handleDioError(e);
     } catch (e) {
@@ -180,7 +181,7 @@ class AuthRepository extends _$AuthRepository {
         data: {'tempToken': tempToken, 'code': totpCode},
       );
 
-      return _handleTokenResponse(response.data);
+      return _handleTokenResponse(response.data, provider: 'email');
     } on DioException catch (e) {
       final responseData = e.response?.data;
       if (responseData is Map<String, dynamic>) {
@@ -188,8 +189,7 @@ class AuthRepository extends _$AuthRepository {
         final code = errorData?['code'] as String?;
         if (code == 'INVALID_TOTP_CODE') {
           return const AuthResult.error(
-            message:
-                "That code isn't right. Check your authenticator app and try again.",
+            message: AppStrings.twoFactorVerifyError,
           );
         }
       }
@@ -220,7 +220,13 @@ class AuthRepository extends _$AuthRepository {
   // ---------------------------------------------------------------------------
 
   /// Parses a successful auth response, stores tokens, and returns [AuthResult.authenticated].
-  Future<AuthResult> _handleTokenResponse(Map<String, dynamic>? data) async {
+  ///
+  /// [provider] must be 'email', 'apple', or 'google' — used by
+  /// [AccountSettingsScreen] to hide the 2FA tile for OAuth users (NFR-S8).
+  Future<AuthResult> _handleTokenResponse(
+    Map<String, dynamic>? data, {
+    required String provider,
+  }) async {
     final responseData = data?['data'] as Map<String, dynamic>?;
     final accessToken = responseData?['accessToken'] as String?;
     final refreshToken = responseData?['refreshToken'] as String?;
@@ -237,7 +243,7 @@ class AuthRepository extends _$AuthRepository {
       refreshToken: refreshToken,
     );
 
-    return AuthResult.authenticated(userId: userId);
+    return AuthResult.authenticated(userId: userId, provider: provider);
   }
 
   /// Maps a [DioException] to an [AuthResult.error] with a plain-language message.

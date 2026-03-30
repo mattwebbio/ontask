@@ -73,7 +73,7 @@ class _DeleteAccountScreenState extends ConsumerState<DeleteAccountScreen> {
       if (mounted) {
         setState(() {
           _isDeleting = false;
-          _errorMessage = 'Something went wrong. Please try again.';
+          _errorMessage = AppStrings.deleteAccountError;
         });
       }
     }

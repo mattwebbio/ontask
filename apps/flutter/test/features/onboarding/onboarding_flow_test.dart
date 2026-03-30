@@ -26,7 +26,7 @@ void main() {
       ProviderScope(
         overrides: [
           authStateProvider.overrideWithValue(
-            const AuthResult.authenticated(userId: 'test-user'),
+            const AuthResult.authenticated(userId: 'test-user', provider: 'email'),
           ),
         ],
         child: MaterialApp(

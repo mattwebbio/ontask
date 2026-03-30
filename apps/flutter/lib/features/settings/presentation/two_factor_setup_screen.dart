@@ -137,7 +137,7 @@ class _TwoFactorSetupScreenState extends ConsumerState<TwoFactorSetupScreen> {
               const SizedBox(height: 32),
               CupertinoButton.filled(
                 onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Done'),
+                child: Text(AppStrings.farewellDoneButton),
               ),
             ],
           ),
@@ -266,7 +266,7 @@ class _TwoFactorSetupScreenState extends ConsumerState<TwoFactorSetupScreen> {
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        'Copy all codes',
+                        AppStrings.twoFactorCopyAllCodes,
                         style: textTheme.bodySmall?.copyWith(
                           color: colors.accentPrimary,
                         ),
@@ -287,7 +287,7 @@ class _TwoFactorSetupScreenState extends ConsumerState<TwoFactorSetupScreen> {
           const SizedBox(height: 8),
           CupertinoTextField(
             controller: _confirmController,
-            placeholder: '000000',
+            placeholder: AppStrings.twoFactorConfirmCodePlaceholder,
             keyboardType: TextInputType.number,
             maxLength: 6,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),

@@ -31,14 +31,8 @@ class AccountSettingsScreen extends ConsumerWidget {
     // Determine whether this is an email/password account.
     // 2FA is available only for email accounts (NFR-S8).
     // Apple/Google Sign In users must never see this tile.
-    // The AuthResult.authenticated variant does not carry a provider field in
-    // this implementation — we infer email-only by checking that the user IS
-    // authenticated (non-oauth flows will be the only ones that see this screen
-    // in a real environment). For a stub environment we show 2FA to all
-    // authenticated users except those in the twoFactorRequired transient state.
-    // TODO(impl): When `provider` field is added to AuthResult.authenticated,
-    // use: authState.mapOrNull(authenticated: (s) => s.provider) == 'email'
-    final isEmailAccount = authState is Authenticated;
+    final isEmailAccount =
+        authState.mapOrNull(authenticated: (s) => s.provider) == 'email';
 
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
