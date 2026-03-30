@@ -2,14 +2,22 @@ import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_provider.dart';
+import 'features/auth/presentation/auth_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Pre-warm SharedPreferences so AuthStateNotifier.build() can read the
+  // 'auth_was_authenticated' flag synchronously on first access.
+  final prefs = await SharedPreferences.getInstance();
+  AuthStateNotifier.prewarmPrefs(prefs);
+
   if (Platform.isMacOS) {
     await windowManager.ensureInitialized();
     const windowOptions = WindowOptions(

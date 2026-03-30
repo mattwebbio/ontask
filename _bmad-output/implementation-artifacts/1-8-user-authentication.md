@@ -434,6 +434,16 @@ apps/flutter/test/features/auth/auth_repository_test.dart
 apps/flutter/test/features/auth/auth_screen_test.dart
 apps/flutter/test/widget_test.dart
 
+## Review Findings
+
+- [x] [Review][Decision] Auth state init race condition — D1: Option 3 applied. Pre-warm `SharedPreferences` in `main()` before `runApp()`, store `auth_was_authenticated` boolean. `build()` reads it synchronously and returns the correct initial state. `_initFromStorage()` still validates the Keychain asynchronously and corrects if the token is missing/expired. [apps/flutter/lib/features/auth/presentation/auth_provider.dart]
+- [x] [Review][Decision] Stale `onSignOut` callback if `authStateProvider` auto-disposes and re-creates — D2: Option 1 applied. Added `keepAlive: true` to `@Riverpod(keepAlive: true)` annotation on `AuthStateNotifier`. Provider never disposes, so the captured callback always points to the live notifier. [apps/flutter/lib/features/auth/presentation/auth_provider.dart]
+- [x] [Review][Patch] Wrong color token for error messages — Fixed: `colors.scheduleCritical` → `colors.scheduleAtRisk` (amber/warning tint per UX spec). [apps/flutter/lib/features/auth/presentation/auth_screen.dart]
+- [x] [Review][Patch] Serif font used in functional Google button element — Fixed: removed `fontFamily: 'serif'` from Google "G" logo text. System sans-serif used instead. [apps/flutter/lib/features/auth/presentation/auth_screen.dart]
+- [x] [Review][Patch] Missing widget test for error message display — Added `testWidgets` in `AuthScreen — error display (NFR-UX2)` group: pumps `AuthScreen` with a fake repository returning `AuthResult.error(...)`, triggers sign-in, verifies error renders below the Sign In button with no error codes. [apps/flutter/test/features/auth/auth_screen_test.dart]
+- [x] [Review][Patch] Missing interceptor test for successful token refresh — Added `_tryRefreshToken calls POST /v1/auth/refresh and stores new tokens on success (AC #3 positive path)` test using a `MockDio` that responds to the refresh endpoint and stubs the retry fetch. Verifies new tokens are persisted and original request is resolved. [apps/flutter/test/core/network/auth_interceptor_test.dart]
+- [x] [Review][Defer] `_AuthRefreshListenable` subscription never cancelled — `ref.listen(authStateProvider, ...)` subscription in `_AuthRefreshListenable` is never explicitly cancelled and `dispose()` is never called on the `ChangeNotifier`. Harmless in practice because the provider/router lifecycle is tied to the root widget, but architecturally imprecise. [apps/flutter/lib/core/router/app_router.dart:111] — deferred, pre-existing Riverpod lifecycle pattern
+
 ## Change Log
 
 - 2026-03-30: Story 1.8 implemented — User Authentication complete. Added Sign in with Apple, Sign in with Google, and email/password auth flows. Created TokenStorage (Keychain), AuthRepository, AuthStateNotifier, AuthScreen, and auth gate router. Completed AuthInterceptor TODO stubs (token refresh + sign-out). All 129 tests pass.

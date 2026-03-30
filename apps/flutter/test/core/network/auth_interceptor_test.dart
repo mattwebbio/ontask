@@ -1,10 +1,21 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:ontask/core/network/interceptors/auth_interceptor.dart';
 import 'package:ontask/features/auth/data/token_storage.dart';
 
+// ── Mocks ─────────────────────────────────────────────────────────────────────
+
+class MockDio extends Mock implements Dio {}
+
+// ── Tests ─────────────────────────────────────────────────────────────────────
+
 void main() {
+  setUpAll(() {
+    registerFallbackValue(RequestOptions(path: ''));
+  });
+
   setUp(() {
     FlutterSecureStorage.setMockInitialValues({});
   });
@@ -182,6 +193,71 @@ void main() {
 
       // No refresh token → _tryRefreshToken returns false → force sign-out + reject.
       expect(rejected, isTrue);
+    });
+
+    test(
+        '_tryRefreshToken calls POST /v1/auth/refresh and stores new tokens '
+        'on success (AC #3 positive path)', () async {
+      // Arrange: seed a valid refresh token so _tryRefreshToken proceeds.
+      FlutterSecureStorage.setMockInitialValues({
+        'access_token': 'old-access',
+        'refresh_token': 'valid-refresh-token',
+      });
+
+      final mockDio = MockDio();
+
+      // The interceptor uses _dio for the refresh call AND for retrying the
+      // original request.  Stub the refresh endpoint to return new tokens.
+      when(
+        () => mockDio.post<Map<String, dynamic>>(
+          '/v1/auth/refresh',
+          data: any(named: 'data'),
+        ),
+      ).thenAnswer(
+        (_) async => Response(
+          requestOptions: RequestOptions(path: '/v1/auth/refresh'),
+          statusCode: 200,
+          data: {
+            'data': {
+              'accessToken': 'new-access-token',
+              'refreshToken': 'new-refresh-token',
+            },
+          },
+        ),
+      );
+
+      // Stub fetch() for the retry of the original request — returns 200.
+      when(() => mockDio.fetch<dynamic>(any())).thenAnswer(
+        (_) async => Response(
+          requestOptions: RequestOptions(path: '/test'),
+          statusCode: 200,
+        ),
+      );
+
+      bool resolved = false;
+      final interceptor = AuthInterceptor(dio: mockDio);
+
+      final requestOptions = RequestOptions(path: '/test');
+      final dioError = DioException(
+        requestOptions: requestOptions,
+        response: Response(
+          requestOptions: requestOptions,
+          statusCode: 401,
+        ),
+      );
+
+      final handler = _CapturingErrorHandler(onResolve: (_) => resolved = true);
+      await interceptor.handleError(dioError, handler);
+
+      // Refresh succeeded → original request was retried → resolved.
+      expect(resolved, isTrue, reason: 'Request should be resolved after successful token refresh');
+
+      // New tokens must be persisted in TokenStorage (Keychain mock).
+      final storage = const TokenStorage();
+      expect(await storage.getAccessToken(), 'new-access-token',
+          reason: 'New access token must be stored in Keychain after refresh');
+      expect(await storage.getRefreshToken(), 'new-refresh-token',
+          reason: 'New refresh token must be stored in Keychain after refresh');
     });
   });
 }

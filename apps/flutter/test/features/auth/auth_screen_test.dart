@@ -4,9 +4,30 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ontask/core/theme/app_theme.dart';
+import 'package:ontask/features/auth/data/auth_repository.dart';
 import 'package:ontask/features/auth/domain/auth_result.dart';
 import 'package:ontask/features/auth/presentation/auth_provider.dart';
 import 'package:ontask/features/auth/presentation/auth_screen.dart';
+
+// ── Fakes ─────────────────────────────────────────────────────────────────────
+
+/// A fake [AuthRepository] that returns a fixed [AuthResult] from every
+/// sign-in method.  Used to inject error / cancel results without a real API.
+class _FakeAuthRepository extends AuthRepository {
+  _FakeAuthRepository(this._result);
+
+  final AuthResult _result;
+
+  @override
+  Future<AuthResult> signInWithEmail(String email, String password) async =>
+      _result;
+
+  @override
+  Future<AuthResult> signInWithApple() async => _result;
+
+  @override
+  Future<AuthResult> signInWithGoogle() async => _result;
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -127,6 +148,55 @@ void main() {
       expect(errorMsg, isNot(contains('error_code')));
       expect(errorMsg, contains('password'));
       expect(errorMsg, contains('Try again'));
+    });
+
+    testWidgets(
+        'error message renders below the form after failed sign-in, '
+        'contains no error codes (NFR-UX2)', (tester) async {
+      const errorMessage =
+          "That email or password isn't quite right. Try again or reset your password.";
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            authStateProvider.overrideWithValue(
+              const AuthResult.unauthenticated(),
+            ),
+            authRepositoryProvider.overrideWith(
+              () => _FakeAuthRepository(
+                const AuthResult.error(message: errorMessage),
+              ),
+            ),
+          ],
+          child: MaterialApp(
+            theme: AppTheme.light(ThemeVariant.clay, 'PlayfairDisplay'),
+            home: const AuthScreen(),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      // Trigger email sign-in to surface the error.
+      await tester.tap(find.text('Sign In'));
+      await tester.pumpAndSettle();
+
+      // Error message must be visible.
+      final errorFinder = find.text(errorMessage);
+      expect(errorFinder, findsOneWidget);
+
+      // Error message must appear below the "Sign In" button.
+      final signInButtonFinder = find.text('Sign In');
+      final errorPos = tester.getTopLeft(errorFinder);
+      final buttonPos = tester.getTopLeft(signInButtonFinder);
+      expect(
+        errorPos.dy,
+        greaterThan(buttonPos.dy),
+        reason: 'Error message must appear below the Sign In button',
+      );
+
+      // Error must not contain technical codes (NFR-UX2).
+      expect(errorMessage, isNot(contains('INVALID_CREDENTIALS')));
+      expect(errorMessage, isNot(contains('401')));
     });
   });
 }

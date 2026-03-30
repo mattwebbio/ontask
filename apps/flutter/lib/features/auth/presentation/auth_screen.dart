@@ -1,3 +1,5 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -98,7 +100,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   void _handleResult(AuthResult result) {
     switch (result) {
       case Authenticated(:final userId):
-        ref.read(authStateProvider.notifier).setAuthenticated(userId);
+        unawaited(ref.read(authStateProvider.notifier).setAuthenticated(userId));
       case Unauthenticated():
         // User cancelled — no error needed.
         break;
@@ -240,7 +242,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 14,
-                      color: colors.scheduleCritical,
+                      color: colors.scheduleAtRisk,
                       // SF Pro only — no serif in error messages (UX spec)
                     ),
                   ),
@@ -289,7 +291,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
             const Text(
               'G',
               style: TextStyle(
-                fontFamily: 'serif',
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: Color(0xFF4285F4),
