@@ -53,7 +53,7 @@ development_status:
   1-4-flutter-architecture-foundation: in-progress
   1-5-design-system-theme-implementation: done
   1-6-ios-navigation-shell-loading-states: done
-  1-7-macos-layout-keyboard-navigation: backlog
+  1-7-macos-layout-keyboard-navigation: review
   1-8-user-authentication: backlog
   1-9-onboarding-flow-sample-schedule: backlog
   1-10-account-settings-session-management: backlog

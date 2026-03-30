@@ -5,6 +5,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../features/lists/presentation/lists_screen.dart';
 import '../../features/now/presentation/now_screen.dart';
+import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/shell/presentation/app_shell.dart';
 import '../../features/today/presentation/today_screen.dart';
 
@@ -57,6 +58,16 @@ GoRouter appRouter(Ref ref) {
               GoRoute(
                 path: '/lists',
                 builder: (context, state) => const ListsScreen(),
+              ),
+            ],
+          ),
+          // Settings branch — macOS sidebar item 3 (index 4).
+          // iOS shell never navigates to this branch.
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/settings',
+                builder: (context, state) => const SettingsScreen(),
               ),
             ],
           ),

@@ -18,4 +18,14 @@ class AppStrings {
   static const String listsEmptyTitle = "No lists yet.";
   static const String listsEmptySubtitle =
       "Create a list to start organising what matters.";
+
+  // ── macOS shell ──────────────────────────────────────────────────────────────
+  static const String macosNewTask = "New Task";
+  static const String macosNavNow = "Now";
+  static const String macosNavToday = "Today";
+  static const String macosNavLists = "Lists";
+  static const String macosNavSettings = "Settings";
+  static const String macosCommandPaletteTitle = "Command Palette";
+  static const String macosCommandPalettePlaceholder = "Search commands…";
+  static const String macosSettingsTitle = "Settings";
 }

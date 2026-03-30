@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_theme.dart';
 import 'add_tab_sheet.dart';
+import 'macos_shell.dart';
 import 'shell_providers.dart';
 
 /// The main navigation shell hosting the four-tab Cupertino tab bar.
@@ -78,6 +81,12 @@ class _AppShellState extends ConsumerState<AppShell> {
 
   @override
   Widget build(BuildContext context) {
+    // macOS: delegate to macOS-specific three/two-pane shell.
+    // iOS: continue with CupertinoTabScaffold below — unchanged.
+    if (Platform.isMacOS) {
+      return MacosShell(navigationShell: widget.navigationShell);
+    }
+
     final colors = Theme.of(context).extension<OnTaskColors>()!;
 
     // Watch the Add sheet request signal from within-tab CTAs (e.g. TodayEmptyState).
