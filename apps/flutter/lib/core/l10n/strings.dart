@@ -111,4 +111,43 @@ class AppStrings {
   static const String macosCommandPaletteTitle = "Command Palette";
   static const String macosCommandPalettePlaceholder = "Search commands…";
   static const String macosSettingsTitle = "Settings";
+
+  // ── Settings sections ────────────────────────────────────────────────────────
+  static const String settingsTitle = "Settings";
+  static const String settingsAppearance = "Appearance";
+  static const String settingsSecurity = "Security";
+  static const String settingsActiveSessions = "Active Sessions";
+  static const String settingsScheduling = "Scheduling Preferences";
+  static const String settingsAccount = "Account";
+  static const String settingsNotifications = "Notifications";
+
+  // ── Appearance settings ──────────────────────────────────────────────────────
+  static const String appearanceThemeLabel = "Theme";
+  static const String appearanceThemeClay = "Clay";
+  static const String appearanceThemeSlate = "Slate";
+  static const String appearanceThemeDusk = "Dusk";
+  static const String appearanceThemeMonochrome = "Monochrome";
+  static const String appearanceModeLight = "Light";
+  static const String appearanceModeDark = "Dark";
+  static const String appearanceModeSystem = "Automatic";
+  static const String appearanceTextSizeLabel = "Text Size";
+
+  // ── Active sessions ──────────────────────────────────────────────────────────
+  static const String sessionsTitle = "Active Sessions";
+  static const String sessionsCurrentDevice = "This device";
+  static const String sessionsSignOut = "Sign out this device";
+  static const String sessionsSignOutConfirmTitle = "Sign out device?";
+  static const String sessionsSignOutConfirmMessage =
+      "This will sign out that device. They'll need to sign in again to access On Task.";
+  static const String sessionsSignOutCancel = "Cancel";
+  static const String sessionsSignOutConfirm = "Sign out";
+  static const String sessionsLastActive = "Last active";
+  static const String sessionsSignOutSuccessMessage =
+      "That device has been signed out.";
+  static const String sessionsSignOutErrorMessage =
+      "Something went wrong. Please try again.";
+
+  // ── Sync / conflict resolution ───────────────────────────────────────────────
+  static const String syncConflictResolvedMessage =
+      "Some changes were updated to match what's on the server.";
 }
