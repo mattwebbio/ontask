@@ -1,6 +1,6 @@
 # Story 1.4: Flutter Architecture Foundation
 
-Status: review
+Status: in-progress
 
 ## Story
 
@@ -517,6 +517,15 @@ claude-sonnet-4-6
 - `apps/flutter/test/core/network/auth_interceptor_test.dart` — 401 interceptor tests
 - `apps/flutter/test/features/example/example_provider_test.dart` — provider + AsyncValue tests
 - `.github/workflows/ci.yml` — added `flutter pub get` step before `flutter test`
+
+### Review Findings
+
+- [ ] [Review][Patch] ExampleRepository ignores API response envelope — `fetchAll()` calls `dio.get<List<dynamic>>('/examples')` and treats the HTTP body as a raw `List<dynamic>`, but the architecture contract (Story 1.3 Dev Notes) specifies all list responses are enveloped as `{ "data": [...], "pagination": {...} }`. At runtime against the real API this will throw a cast exception. [apps/flutter/lib/features/example/data/example_repository.dart:21]
+- [x] [Review][Defer] `_tryRefreshToken()` is a hardcoded stub (always returns `false`) — the refresh-success → retry path is dead code and untested [apps/flutter/lib/core/network/interceptors/auth_interceptor.dart:105] — deferred, Story 1.8 scope; acknowledged via TODO
+- [x] [Review][Defer] `_forceSignOut()` clears SharedPreferences tokens but does not navigate the user to a login screen — UI remains on the current screen after sign-out [apps/flutter/lib/core/network/interceptors/auth_interceptor.dart:121] — deferred, Story 1.8 scope; acknowledged via TODO
+- [x] [Review][Defer] `AuthInterceptor` uses the same `Dio` instance it retries through — retry requests re-enter the full interceptor pipeline including `AuthInterceptor` itself; guarded by `kRetryHeader` but architecturally fragile [apps/flutter/lib/core/network/api_client.dart:19] — deferred, pre-existing design; `kRetryHeader` guard mitigates infinite loop risk
+- [x] [Review][Defer] `onRequest` in `AuthInterceptor` never attaches an `Authorization` header — all initial requests go out unauthenticated and rely on the 401 refresh cycle [apps/flutter/lib/core/network/interceptors/auth_interceptor.dart:30] — deferred, Story 1.8 scope; no auth tokens exist yet
+- [x] [Review][Defer] No test covers refresh-succeeds → retry-succeeds happy path [apps/flutter/test/core/network/auth_interceptor_test.dart] — deferred, intentional stub per Story 1.4 scope; Story 1.8 will implement real token refresh
 
 ### Change Log
 

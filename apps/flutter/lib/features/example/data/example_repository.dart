@@ -19,8 +19,10 @@ class ExampleRepository implements IExampleRepository {
 
   @override
   Future<List<Example>> fetchAll() async {
-    final response = await apiClient.dio.get<List<dynamic>>('/examples');
-    final data = response.data ?? [];
+    // API returns { "data": [...], "pagination": {...} } envelope (Story 1.3 contract).
+    final response = await apiClient.dio.get<Map<String, dynamic>>('/examples');
+    final envelope = response.data ?? {};
+    final data = (envelope['data'] as List<dynamic>?) ?? [];
     return data
         .map((e) => ExampleDto.fromJson(e as Map<String, dynamic>).toDomain())
         .toList();
