@@ -1,0 +1,13 @@
+# CI Pipeline — implemented in Story 1.2
+# Stub: bundle size check, Flutter tests, scheduling engine tests (100% coverage),
+# lint + typecheck, Neon ephemeral branch lifecycle
+name: CI
+
+on:
+  pull_request:
+
+jobs:
+  placeholder:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "CI pipeline implemented in Story 1.2"

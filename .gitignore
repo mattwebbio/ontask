@@ -1,0 +1,83 @@
+# ─────────────────────────────────────────────────────────────
+# Node / pnpm
+# ─────────────────────────────────────────────────────────────
+node_modules/
+dist/
+build/
+.cache/
+.turbo/
+*.tsbuildinfo
+
+# pnpm lock (committed — do not ignore)
+# pnpm-lock.yaml is NOT listed here intentionally
+
+# ─────────────────────────────────────────────────────────────
+# Cloudflare / Wrangler
+# ─────────────────────────────────────────────────────────────
+.wrangler/
+.dev.vars
+wrangler.toml.bak
+
+# ─────────────────────────────────────────────────────────────
+# Environment / secrets
+# ─────────────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ─────────────────────────────────────────────────────────────
+# Flutter / Dart
+# NOTE: *.g.dart and *.freezed.dart are intentionally NOT
+# listed here — generated files are committed to the repo so
+# CI does not need to run build_runner.
+# ─────────────────────────────────────────────────────────────
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+.metadata
+# Flutter build artefacts (platform-specific)
+apps/flutter/.dart_tool/
+apps/flutter/build/
+apps/flutter/ios/Pods/
+apps/flutter/ios/.symlinks/
+apps/flutter/macos/Pods/
+apps/flutter/macos/.symlinks/
+apps/flutter/ios/Flutter/flutter_export_environment.sh
+apps/flutter/macos/Flutter/flutter_export_environment.sh
+
+# Fastlane
+apps/flutter/fastlane/report.xml
+apps/flutter/fastlane/Preview.html
+apps/flutter/fastlane/screenshots/
+apps/flutter/fastlane/test_output/
+
+# ─────────────────────────────────────────────────────────────
+# macOS
+# ─────────────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V7
+.Trashes
+
+# ─────────────────────────────────────────────────────────────
+# IDEs / editors
+# ─────────────────────────────────────────────────────────────
+.idea/
+*.iml
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ─────────────────────────────────────────────────────────────
+# Test artefacts
+# ─────────────────────────────────────────────────────────────
+coverage/
+lcov.info
+*.lcov

@@ -1,0 +1,13 @@
+# Deploy to Production — implemented in Story 1.2
+name: Deploy Production
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  placeholder:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Production deploy implemented in Story 1.2"

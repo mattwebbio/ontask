@@ -1,0 +1,17 @@
+{
+  "name": "ontask",
+  "private": true,
+  "version": "0.0.1",
+  "description": "On Task — intelligent scheduling with commitment contracts",
+  "packageManager": "pnpm@10.33.0",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=10.0.0"
+  },
+  "scripts": {
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck"
+  }
+}

@@ -47,7 +47,7 @@ development_status:
   # Epic 1: Foundation & User Accounts
   # ─────────────────────────────────────────────────────────
   epic-1: in-progress
-  1-1-monorepo-project-scaffold: ready-for-dev
+  1-1-monorepo-project-scaffold: done
   1-2-cicd-pipeline-staging-environments: backlog
   1-3-api-foundation-database-response-standards: backlog
   1-4-flutter-architecture-foundation: backlog
