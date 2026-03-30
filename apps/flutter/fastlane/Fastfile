@@ -1,0 +1,22 @@
+default_platform(:ios)
+
+platform :ios do
+  desc "Upload a new beta build to TestFlight"
+  lane :beta do
+    # Fetch latest build number from App Store Connect and increment
+    latest = app_store_build_number(
+      app_identifier: "com.ontaskhq.ontask",
+      live: false,
+    )
+    increment_build_number(build_number: latest + 1)
+
+    # Build the Flutter IPA
+    sh("flutter build ipa --release", chdir: "../")
+
+    # Upload to TestFlight (skip waiting for processing — check ASC manually)
+    upload_to_testflight(
+      ipa: "../build/ios/ipa/ontask.ipa",
+      skip_waiting_for_build_processing: true,
+    )
+  end
+end

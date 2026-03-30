@@ -2,3 +2,10 @@ packages:
   - 'apps/*'
   - '!apps/flutter'
   - 'packages/*'
+
+# Allow these packages to run build scripts (native binaries)
+# Avoids needing interactive `pnpm approve-builds` in CI
+onlyBuiltDependencies:
+  - esbuild
+  - sharp
+  - workerd

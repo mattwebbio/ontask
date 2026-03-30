@@ -1,0 +1,8 @@
+app_identifier("com.ontaskhq.ontask")
+
+# apple_id and team_id are set via environment variables in CI:
+#   FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD
+#   FASTLANE_TEAM_ID
+# Set apple_id below for local usage if needed:
+# apple_id("")
+# team_id("")
