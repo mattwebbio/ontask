@@ -31,6 +31,6 @@ export interface ErrorResponse {
     /** Human-readable error message */
     message: string
     /** Optional additional error details */
-    details: Record<string, unknown>
+    details?: Record<string, unknown>
   }
 }

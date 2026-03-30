@@ -36,7 +36,16 @@ const paymentCorsOptions = {
 
 /**
  * Registers scoped CORS middleware on the given OpenAPIHono app instance.
- * Call this during app initialization — after route group mounts, not globally.
+ *
+ * ORDERING REQUIREMENT: This function MUST be called BEFORE any routes are mounted.
+ * Hono processes middleware in registration order. If routes are mounted first,
+ * OPTIONS preflight requests will be matched by the route handler (returning 404/405)
+ * before CORS middleware has a chance to run. The result is that browsers will
+ * silently block all cross-origin requests — no console error, just a failed fetch.
+ *
+ * Correct order in index.ts:
+ *   1. applyScopedCors(app)   ← middleware first
+ *   2. app.route(...)         ← then routes
  */
 export function applyScopedCors<T extends OpenAPIHono<{ Bindings: CloudflareBindings }>>(
   app: T

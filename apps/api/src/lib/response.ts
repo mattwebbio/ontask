@@ -8,7 +8,7 @@ import type { DataResponse, ListResponse, ErrorResponse } from '@ontask/core'
  * Shapes:
  *   ok()   → { "data": { ...fields } }
  *   list() → { "data": [...], "pagination": { "cursor": "...", "hasMore": true } }
- *   err()  → { "error": { "code": "SCREAMING_SNAKE_CASE", "message": "...", "details": {} } }
+ *   err()  → { "error": { "code": "SCREAMING_SNAKE_CASE", "message": "...", "details"?: {} } }
  */
 
 /** Wraps a single object in the standard success envelope. */
@@ -31,14 +31,18 @@ export function list<T>(data: T[], cursor: string | null, hasMore: boolean): Lis
  * Produces the standard error envelope.
  * @param code - SCREAMING_SNAKE_CASE error code string (never numeric)
  * @param message - Human-readable error message
- * @param details - Optional additional error context
+ * @param details - Optional additional error context (omitted from response when not provided)
  */
 export function err(
   code: string,
   message: string,
-  details: Record<string, unknown> = {}
+  details?: Record<string, unknown>
 ): ErrorResponse {
   return {
-    error: { code, message, details },
+    error: {
+      code,
+      message,
+      ...(details !== undefined ? { details } : {}),
+    },
   }
 }

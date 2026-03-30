@@ -15,7 +15,7 @@ export class AppError extends Error {
     public readonly code: string,
     public readonly httpStatus: number,
     message: string,
-    public readonly details: Record<string, unknown> = {}
+    public readonly details?: Record<string, unknown>
   ) {
     super(message)
     this.name = this.constructor.name
@@ -61,5 +61,12 @@ export class ConflictError extends AppError {
 export class BusinessLogicError extends AppError {
   constructor(message = 'Unprocessable entity', details?: Record<string, unknown>) {
     super('BUSINESS_LOGIC_ERROR', 422, message, details)
+  }
+}
+
+/** 429 — Rate limit exceeded */
+export class RateLimitError extends AppError {
+  constructor(message = 'Rate limit exceeded', details?: Record<string, unknown>) {
+    super('RATE_LIMIT_EXCEEDED', 429, message, details)
   }
 }
