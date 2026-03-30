@@ -5,10 +5,16 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../features/auth/domain/auth_result.dart';
 import '../../features/auth/presentation/auth_provider.dart';
 import '../../features/auth/presentation/auth_screen.dart';
+import '../../features/auth/presentation/two_factor_verify_screen.dart';
 import '../../features/lists/presentation/lists_screen.dart';
 import '../../features/now/presentation/now_screen.dart';
 import '../../features/onboarding/presentation/onboarding_flow.dart';
+import '../../features/settings/presentation/account_settings_screen.dart';
+import '../../features/settings/presentation/delete_account_screen.dart';
+import '../../features/settings/presentation/export_data_screen.dart';
+import '../../features/settings/presentation/farewell_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
+import '../../features/settings/presentation/two_factor_setup_screen.dart';
 import '../../features/shell/presentation/app_shell.dart';
 import '../../features/today/presentation/today_screen.dart';
 
@@ -37,10 +43,20 @@ GoRouter appRouter(Ref ref) {
     redirect: (context, state) {
       final authState = ref.read(authStateProvider);
       final isAuthenticated = authState is Authenticated;
+      final isTwoFactorRequired = authState is TwoFactorRequired;
       final isOnAuthRoute = state.matchedLocation.startsWith('/auth');
       final isOnOnboardingRoute = state.matchedLocation.startsWith('/onboarding');
+      final isOnFarewellRoute = state.matchedLocation == '/farewell';
 
-      if (!isAuthenticated && !isOnAuthRoute) return '/auth/sign-in';
+      // 2FA challenge — redirect to verify screen (FR92, AC #3).
+      if (isTwoFactorRequired && state.matchedLocation != '/auth/2fa-verify') {
+        return '/auth/2fa-verify';
+      }
+
+      // Farewell screen is accessible post-deletion even when unauthenticated.
+      if (isOnFarewellRoute) return null;
+
+      if (!isAuthenticated && !isTwoFactorRequired && !isOnAuthRoute) return '/auth/sign-in';
       if (isAuthenticated && isOnAuthRoute) return '/now';
 
       // Onboarding gate (only for authenticated users):
@@ -73,6 +89,26 @@ GoRouter appRouter(Ref ref) {
       GoRoute(
         path: '/auth/sign-in',
         builder: (context, state) => const AuthScreen(),
+      ),
+
+      // 2FA verification route — step 2 of email login when 2FA is enabled (FR92).
+      // Not inside the authenticated shell — rendered without tab bar.
+      GoRoute(
+        path: '/auth/2fa-verify',
+        builder: (context, state) {
+          final authState = ref.read(authStateProvider);
+          final tempToken = (authState is TwoFactorRequired)
+              ? authState.tempToken
+              : '';
+          return TwoFactorVerifyScreen(tempToken: tempToken);
+        },
+      ),
+
+      // Farewell route — terminal screen after account deletion (FR60).
+      // Outside authenticated shell — accessible without auth state.
+      GoRoute(
+        path: '/farewell',
+        builder: (context, state) => const FarewellScreen(),
       ),
 
       // Onboarding route — outside StatefulShellRoute so no shell renders over it.
@@ -127,6 +163,31 @@ GoRouter appRouter(Ref ref) {
               GoRoute(
                 path: '/settings',
                 builder: (context, state) => const SettingsScreen(),
+                routes: [
+                  // Account sub-screen (Story 1.11).
+                  GoRoute(
+                    path: 'account',
+                    builder: (context, state) =>
+                        const AccountSettingsScreen(),
+                    routes: [
+                      GoRoute(
+                        path: 'export',
+                        builder: (context, state) =>
+                            const ExportDataScreen(),
+                      ),
+                      GoRoute(
+                        path: 'delete',
+                        builder: (context, state) =>
+                            const DeleteAccountScreen(),
+                      ),
+                      GoRoute(
+                        path: '2fa-setup',
+                        builder: (context, state) =>
+                            const TwoFactorSetupScreen(),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ],
           ),

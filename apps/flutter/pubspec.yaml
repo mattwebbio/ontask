@@ -53,6 +53,12 @@ dependencies:
   # processing on reconnect (FR94).
   connectivity_plus: ^6.1.4
 
+  # Data export delivery — presents system share sheet / Files save on iOS and macOS (FR81).
+  share_plus: ^10.0.0
+
+  # TOTP QR code rendering — displays otpauth:// URI as scannable QR in 2FA setup (FR92).
+  qr_flutter: ^4.1.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -44,7 +44,7 @@ void main() {
           // Override auth state to authenticated so the router renders
           // the main navigation shell instead of the auth screen.
           authStateProvider.overrideWithValue(
-            const AuthResult.authenticated(userId: 'test-user'),
+            const AuthResult.authenticated(userId: 'test-user', provider: 'email'),
           ),
         ],
         child: const OnTaskApp(),

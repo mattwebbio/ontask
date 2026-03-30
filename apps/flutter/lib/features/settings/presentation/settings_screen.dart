@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/l10n/strings.dart';
 import '../../../core/theme/app_theme.dart';
+import 'account_settings_screen.dart';
 import 'appearance_settings_screen.dart';
 import 'sessions_screen.dart';
 
@@ -73,13 +74,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 // Stub — Notifications implemented in Epic 8.
               },
             ),
-            // ── Account (stub — Story 1.11) ─────────────────────────────────
+            // ── Account ─────────────────────────────────────────────────────
             _SettingsTile(
               label: AppStrings.settingsAccount,
               icon: CupertinoIcons.person_crop_circle,
-              onTap: () {
-                // Stub — Account deletion / 2FA implemented in Story 1.11.
-              },
+              onTap: () => Navigator.of(context).push(
+                CupertinoPageRoute<void>(
+                  builder: (_) => const AccountSettingsScreen(),
+                ),
+              ),
             ),
           ],
         ),

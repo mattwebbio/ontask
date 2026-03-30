@@ -65,7 +65,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
     if (mounted) {
       setState(() => _loadingAction = null);
-      _handleResult(result);
+      _handleResult(result, provider: 'apple');
     }
   }
 
@@ -78,7 +78,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
     if (mounted) {
       setState(() => _loadingAction = null);
-      _handleResult(result);
+      _handleResult(result, provider: 'google');
     }
   }
 
@@ -93,19 +93,28 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
     if (mounted) {
       setState(() => _loadingAction = null);
-      _handleResult(result);
+      _handleResult(result, provider: 'email');
     }
   }
 
-  void _handleResult(AuthResult result) {
+  void _handleResult(AuthResult result, {required String provider}) {
     switch (result) {
       case Authenticated(:final userId):
-        unawaited(ref.read(authStateProvider.notifier).setAuthenticated(userId));
+        unawaited(
+          ref.read(authStateProvider.notifier).setAuthenticated(
+            userId,
+            provider: provider,
+          ),
+        );
       case Unauthenticated():
         // User cancelled — no error needed.
         break;
       case AuthError(:final message):
         setState(() => _errorMessage = message);
+      case TwoFactorRequired(:final tempToken):
+        // Email login returned a 2FA challenge — transition state so the router
+        // redirects to /auth/2fa-verify. The temp token travels via auth state.
+        ref.read(authStateProvider.notifier).setTwoFactorRequired(tempToken);
     }
   }
 

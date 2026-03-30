@@ -45,7 +45,7 @@ final class AuthRepositoryProvider
   AuthRepository create() => AuthRepository();
 }
 
-String _$authRepositoryHash() => r'2b11d8dbd1c75684faf9fdadb1ba7d14b0173231';
+String _$authRepositoryHash() => r'e1d823c832464751dcc2135668e0eba001b43fae';
 
 /// Repository responsible for all authentication flows.
 ///

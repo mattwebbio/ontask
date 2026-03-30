@@ -55,13 +55,14 @@ extension AuthResultPatterns on AuthResult {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( Authenticated value)?  authenticated,TResult Function( Unauthenticated value)?  unauthenticated,TResult Function( AuthError value)?  error,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( Authenticated value)?  authenticated,TResult Function( Unauthenticated value)?  unauthenticated,TResult Function( AuthError value)?  error,TResult Function( TwoFactorRequired value)?  twoFactorRequired,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case Authenticated() when authenticated != null:
 return authenticated(_that);case Unauthenticated() when unauthenticated != null:
 return unauthenticated(_that);case AuthError() when error != null:
-return error(_that);case _:
+return error(_that);case TwoFactorRequired() when twoFactorRequired != null:
+return twoFactorRequired(_that);case _:
   return orElse();
 
 }
@@ -79,13 +80,14 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( Authenticated value)  authenticated,required TResult Function( Unauthenticated value)  unauthenticated,required TResult Function( AuthError value)  error,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( Authenticated value)  authenticated,required TResult Function( Unauthenticated value)  unauthenticated,required TResult Function( AuthError value)  error,required TResult Function( TwoFactorRequired value)  twoFactorRequired,}){
 final _that = this;
 switch (_that) {
 case Authenticated():
 return authenticated(_that);case Unauthenticated():
 return unauthenticated(_that);case AuthError():
-return error(_that);}
+return error(_that);case TwoFactorRequired():
+return twoFactorRequired(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
 ///
@@ -99,13 +101,14 @@ return error(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( Authenticated value)?  authenticated,TResult? Function( Unauthenticated value)?  unauthenticated,TResult? Function( AuthError value)?  error,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( Authenticated value)?  authenticated,TResult? Function( Unauthenticated value)?  unauthenticated,TResult? Function( AuthError value)?  error,TResult? Function( TwoFactorRequired value)?  twoFactorRequired,}){
 final _that = this;
 switch (_that) {
 case Authenticated() when authenticated != null:
 return authenticated(_that);case Unauthenticated() when unauthenticated != null:
 return unauthenticated(_that);case AuthError() when error != null:
-return error(_that);case _:
+return error(_that);case TwoFactorRequired() when twoFactorRequired != null:
+return twoFactorRequired(_that);case _:
   return null;
 
 }
@@ -122,12 +125,13 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String userId)?  authenticated,TResult Function()?  unauthenticated,TResult Function( String message)?  error,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String userId,  String provider)?  authenticated,TResult Function()?  unauthenticated,TResult Function( String message)?  error,TResult Function( String tempToken)?  twoFactorRequired,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case Authenticated() when authenticated != null:
-return authenticated(_that.userId);case Unauthenticated() when unauthenticated != null:
+return authenticated(_that.userId,_that.provider);case Unauthenticated() when unauthenticated != null:
 return unauthenticated();case AuthError() when error != null:
-return error(_that.message);case _:
+return error(_that.message);case TwoFactorRequired() when twoFactorRequired != null:
+return twoFactorRequired(_that.tempToken);case _:
   return orElse();
 
 }
@@ -145,12 +149,13 @@ return error(_that.message);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String userId)  authenticated,required TResult Function()  unauthenticated,required TResult Function( String message)  error,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String userId,  String provider)  authenticated,required TResult Function()  unauthenticated,required TResult Function( String message)  error,required TResult Function( String tempToken)  twoFactorRequired,}) {final _that = this;
 switch (_that) {
 case Authenticated():
-return authenticated(_that.userId);case Unauthenticated():
+return authenticated(_that.userId,_that.provider);case Unauthenticated():
 return unauthenticated();case AuthError():
-return error(_that.message);}
+return error(_that.message);case TwoFactorRequired():
+return twoFactorRequired(_that.tempToken);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -164,12 +169,13 @@ return error(_that.message);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String userId)?  authenticated,TResult? Function()?  unauthenticated,TResult? Function( String message)?  error,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String userId,  String provider)?  authenticated,TResult? Function()?  unauthenticated,TResult? Function( String message)?  error,TResult? Function( String tempToken)?  twoFactorRequired,}) {final _that = this;
 switch (_that) {
 case Authenticated() when authenticated != null:
-return authenticated(_that.userId);case Unauthenticated() when unauthenticated != null:
+return authenticated(_that.userId,_that.provider);case Unauthenticated() when unauthenticated != null:
 return unauthenticated();case AuthError() when error != null:
-return error(_that.message);case _:
+return error(_that.message);case TwoFactorRequired() when twoFactorRequired != null:
+return twoFactorRequired(_that.tempToken);case _:
   return null;
 
 }
@@ -181,10 +187,11 @@ return error(_that.message);case _:
 
 
 class Authenticated implements AuthResult {
-  const Authenticated({required this.userId});
+  const Authenticated({required this.userId, required this.provider});
   
 
  final  String userId;
+ final  String provider;
 
 /// Create a copy of AuthResult
 /// with the given fields replaced by the non-null parameter values.
@@ -196,16 +203,16 @@ $AuthenticatedCopyWith<Authenticated> get copyWith => _$AuthenticatedCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Authenticated&&(identical(other.userId, userId) || other.userId == userId));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Authenticated&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.provider, provider) || other.provider == provider));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,userId);
+int get hashCode => Object.hash(runtimeType,userId,provider);
 
 @override
 String toString() {
-  return 'AuthResult.authenticated(userId: $userId)';
+  return 'AuthResult.authenticated(userId: $userId, provider: $provider)';
 }
 
 
@@ -216,7 +223,7 @@ abstract mixin class $AuthenticatedCopyWith<$Res> implements $AuthResultCopyWith
   factory $AuthenticatedCopyWith(Authenticated value, $Res Function(Authenticated) _then) = _$AuthenticatedCopyWithImpl;
 @useResult
 $Res call({
- String userId
+ String userId, String provider
 });
 
 
@@ -233,9 +240,10 @@ class _$AuthenticatedCopyWithImpl<$Res>
 
 /// Create a copy of AuthResult
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? userId = null,}) {
+@pragma('vm:prefer-inline') $Res call({Object? userId = null,Object? provider = null,}) {
   return _then(Authenticated(
 userId: null == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
+as String,provider: null == provider ? _self.provider : provider // ignore: cast_nullable_to_non_nullable
 as String,
   ));
 }
@@ -334,6 +342,72 @@ class _$AuthErrorCopyWithImpl<$Res>
 @pragma('vm:prefer-inline') $Res call({Object? message = null,}) {
   return _then(AuthError(
 message: null == message ? _self.message : message // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class TwoFactorRequired implements AuthResult {
+  const TwoFactorRequired({required this.tempToken});
+  
+
+ final  String tempToken;
+
+/// Create a copy of AuthResult
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$TwoFactorRequiredCopyWith<TwoFactorRequired> get copyWith => _$TwoFactorRequiredCopyWithImpl<TwoFactorRequired>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is TwoFactorRequired&&(identical(other.tempToken, tempToken) || other.tempToken == tempToken));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,tempToken);
+
+@override
+String toString() {
+  return 'AuthResult.twoFactorRequired(tempToken: $tempToken)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $TwoFactorRequiredCopyWith<$Res> implements $AuthResultCopyWith<$Res> {
+  factory $TwoFactorRequiredCopyWith(TwoFactorRequired value, $Res Function(TwoFactorRequired) _then) = _$TwoFactorRequiredCopyWithImpl;
+@useResult
+$Res call({
+ String tempToken
+});
+
+
+
+
+}
+/// @nodoc
+class _$TwoFactorRequiredCopyWithImpl<$Res>
+    implements $TwoFactorRequiredCopyWith<$Res> {
+  _$TwoFactorRequiredCopyWithImpl(this._self, this._then);
+
+  final TwoFactorRequired _self;
+  final $Res Function(TwoFactorRequired) _then;
+
+/// Create a copy of AuthResult
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? tempToken = null,}) {
+  return _then(TwoFactorRequired(
+tempToken: null == tempToken ? _self.tempToken : tempToken // ignore: cast_nullable_to_non_nullable
 as String,
   ));
 }

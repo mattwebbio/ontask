@@ -4,6 +4,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
+import '../../../core/l10n/strings.dart';
 import '../../../core/network/api_client.dart';
 import '../domain/auth_result.dart';
 import 'token_storage.dart';
@@ -56,7 +57,7 @@ class AuthRepository extends _$AuthRepository {
         },
       );
 
-      return _handleTokenResponse(response.data);
+      return _handleTokenResponse(response.data, provider: 'apple');
     } on SignInWithAppleAuthorizationException catch (e) {
       if (e.code == AuthorizationErrorCode.canceled) {
         return const AuthResult.unauthenticated();
@@ -108,7 +109,7 @@ class AuthRepository extends _$AuthRepository {
         data: {'idToken': idToken},
       );
 
-      return _handleTokenResponse(response.data);
+      return _handleTokenResponse(response.data, provider: 'google');
     } on DioException catch (e) {
       return _handleDioError(e);
     } catch (e) {
@@ -126,6 +127,8 @@ class AuthRepository extends _$AuthRepository {
   /// Authenticates the user with email and password.
   ///
   /// On success, stores tokens in the Keychain and returns [AuthResult.authenticated].
+  /// When 2FA is enabled, the server returns `{ status: 'totp_required', tempToken }` —
+  /// this method returns [AuthResult.twoFactorRequired] with the temp token in that case.
   /// On invalid credentials, returns [AuthResult.error] with a plain-language message.
   Future<AuthResult> signInWithEmail(String email, String password) async {
     try {
@@ -135,11 +138,67 @@ class AuthRepository extends _$AuthRepository {
         data: {'email': email, 'password': password},
       );
 
-      return _handleTokenResponse(response.data);
+      // Handle 2FA challenge: { status: 'totp_required', tempToken }
+      final responseData = response.data?['data'] as Map<String, dynamic>?;
+      final status = responseData?['status'] as String?;
+      if (status == 'totp_required') {
+        final tempToken = responseData?['tempToken'] as String?;
+        if (tempToken != null && tempToken.isNotEmpty) {
+          return AuthResult.twoFactorRequired(tempToken: tempToken);
+        }
+        return const AuthResult.error(
+          message: 'Something went wrong. Please try again.',
+        );
+      }
+
+      return _handleTokenResponse(response.data, provider: 'email');
     } on DioException catch (e) {
       return _handleDioError(e);
     } catch (e) {
       debugPrint('[AuthRepository] signInWithEmail unexpected error: $e');
+      return const AuthResult.error(
+        message: 'Something went wrong. Please try again.',
+      );
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Two-factor authentication
+  // ---------------------------------------------------------------------------
+
+  /// Completes the 2FA login step by verifying the TOTP code or backup code.
+  ///
+  /// [tempToken] is the short-lived token returned by [POST /v1/auth/email] when
+  /// 2FA is enabled. [totpCode] is the 6-digit TOTP code or a one-time backup code.
+  ///
+  /// On success, stores full access + refresh tokens and returns [AuthResult.authenticated].
+  /// On invalid code, returns [AuthResult.error] (FR92, AC #3).
+  Future<AuthResult> verify2FA(String tempToken, String totpCode) async {
+    try {
+      final dio = ref.read(apiClientProvider).dio;
+      final response = await dio.post<Map<String, dynamic>>(
+        '/v1/auth/2fa/verify',
+        data: {'tempToken': tempToken, 'code': totpCode},
+      );
+
+      return _handleTokenResponse(response.data, provider: 'email');
+    } on DioException catch (e) {
+      final responseData = e.response?.data;
+      if (responseData is Map<String, dynamic>) {
+        final errorData = responseData['error'] as Map<String, dynamic>?;
+        final code = errorData?['code'] as String?;
+        if (code == 'INVALID_TOTP_CODE') {
+          return const AuthResult.error(
+            message: AppStrings.twoFactorVerifyError,
+          );
+        }
+      }
+      debugPrint('[AuthRepository] verify2FA DioException: ${e.message}');
+      return const AuthResult.error(
+        message: 'Something went wrong. Please try again.',
+      );
+    } catch (e) {
+      debugPrint('[AuthRepository] verify2FA unexpected error: $e');
       return const AuthResult.error(
         message: 'Something went wrong. Please try again.',
       );
@@ -161,7 +220,13 @@ class AuthRepository extends _$AuthRepository {
   // ---------------------------------------------------------------------------
 
   /// Parses a successful auth response, stores tokens, and returns [AuthResult.authenticated].
-  Future<AuthResult> _handleTokenResponse(Map<String, dynamic>? data) async {
+  ///
+  /// [provider] must be 'email', 'apple', or 'google' — used by
+  /// [AccountSettingsScreen] to hide the 2FA tile for OAuth users (NFR-S8).
+  Future<AuthResult> _handleTokenResponse(
+    Map<String, dynamic>? data, {
+    required String provider,
+  }) async {
     final responseData = data?['data'] as Map<String, dynamic>?;
     final accessToken = responseData?['accessToken'] as String?;
     final refreshToken = responseData?['refreshToken'] as String?;
@@ -178,7 +243,7 @@ class AuthRepository extends _$AuthRepository {
       refreshToken: refreshToken,
     );
 
-    return AuthResult.authenticated(userId: userId);
+    return AuthResult.authenticated(userId: userId, provider: provider);
   }
 
   /// Maps a [DioException] to an [AuthResult.error] with a plain-language message.
