@@ -26,8 +26,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Lint all packages
-        run: pnpm -r lint
+      - name: Lint all packages (if configured)
+        run: pnpm -r --if-present lint
 
       - name: Typecheck all packages
         run: pnpm -r typecheck
@@ -92,10 +92,8 @@ jobs:
           node-version: '20'
           cache: 'pnpm'
 
-      - name: Install dependencies (including native build scripts)
-        run: |
-          pnpm install --frozen-lockfile
-          pnpm approve-builds --yes
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
       - name: Check API worker bundle size
         run: |
