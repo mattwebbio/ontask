@@ -393,6 +393,20 @@ apps/
 - **`withValues(alpha:)` instead of deprecated `withOpacity()`** for color opacity.
 - **`SemanticsService.announce()` is deprecated in Flutter 3.41**; use alternative announcement patterns.
 
+### Review Findings
+
+- [ ] [Review][Decision] Touch targets below 44pt minimum for short-duration blocks — blocks for tasks under ~33 minutes are shorter than the 44pt minimum touch target (UX accessibility constraint). Options: (a) enforce minimum block height of 44pt visually, (b) expand hit-test rect to 44pt while keeping visual height proportional, (c) defer to Epic 3 when real scheduling data exists.
+- [ ] [Review][Patch] `Paint()` allocation in `paint()` — `timeline_painter.dart:159`: `highlightPaint` is allocated inside `paint()` on every frame with a "current" block. Pre-allocate in constructor. [UX-DR12: zero allocations in paint()]
+- [ ] [Review][Patch] `TextStyle` allocations in `paint()` — `timeline_painter.dart:109,169`: Two `TextStyle(...)` constructors inside the paint loop. Pre-allocate as final fields in constructor.
+- [ ] [Review][Patch] `TextSpan` allocations in `paint()` — `timeline_painter.dart:107,167`: New `TextSpan` objects created per iteration. Pre-allocate and update `text` property on the pre-allocated TextSpan, or accept as unavoidable TextPainter pattern.
+- [ ] [Review][Patch] `paint.color` mutation corrupts pre-allocated Paint objects — `timeline_painter.dart:148`: `paint.color = paint.color.withValues(alpha: opacity)` permanently changes `_taskBlockPaint`/`_calendarBlockPaint` color. After a completed block (0.3 alpha), subsequent blocks use wrong color. Fix: clone or reset color before each block, or use separate Paint per opacity level.
+- [ ] [Review][Patch] Mutable `bounds` side-effect inside `paint()` — `timeline_painter.dart:136`: `block.bounds = Rect.fromLTWH(...)` mutates domain model from within the painter. Move bounds computation to `_buildBlocks()` in `TimelineView` or a dedicated layout pass.
+- [ ] [Review][Patch] Semantic nodes use `Rect.zero` bounds before first paint — `semanticsBuilder` returns `block.bounds` which are `Rect.zero` until `paint()` runs. VoiceOver nodes will be stacked at origin and unreachable. Fix: compute bounds in the build step (same fix as #6 above).
+- [ ] [Review][Patch] No guard for zero/negative `durationMinutes` — `timeline_painter.dart:133`: If `durationMinutes` is 0, block height is 0. Add `max(durationMinutes, 1)` or minimum block height.
+- [ ] [Review][Patch] Tap-on-block test is a no-op — `timeline_view_test.dart:154-167`: Test named "tap on block calls detail callback" only checks a `GestureDetector` exists. It never actually taps and never asserts `tappedBlock != null`. Should tap at computed block coordinates and verify callback.
+- [ ] [Review][Patch] Hour label VoiceOver string template is misleading — `timeline_painter.dart:264`: `replaceFirst('{hour}', "$hour o'clock")` bakes "o'clock" into the replacement value rather than the `AppStrings.timelineHourLabel` template. Move "o'clock" into the template string for proper l10n. E.g., `timelineHourLabel = "{hour} o'clock"` and replace with just the hour number.
+- [x] [Review][Defer] `_formatTime` is 4th duplication of time formatting logic — `timeline_painter.dart:230`, `today_screen.dart:402`. Pre-existing issue flagged in story's own deferred issues section. Extract to `core/utils/time_format.dart`.
+
 ### Open Review Findings from Story 2.7
 
 - [ ] [Review][Decision] AC4 Dynamic Island padding -- SafeArea vs explicit viewPadding.top

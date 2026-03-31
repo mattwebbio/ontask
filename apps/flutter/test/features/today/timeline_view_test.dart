@@ -158,12 +158,18 @@ void main() {
       );
       await tester.pump();
 
-      // Tap in the area where the first block should be rendered
-      // Block at 9am: y = (540/60) * 80 = 720, height = (30/60) * 80 = 40
+      // Block at 9am: y = (540/60) * 80 = 720, block height = max(40, 44) = 44
       // Block area left = 32 + 8 = 40
-      // Tap the GestureDetector wrapping the CustomPaint
-      final gestureDetector = find.byType(GestureDetector);
-      expect(gestureDetector, findsWidgets);
+      // Tap centre of the first block
+      final gestureDetector = find.byType(GestureDetector).first;
+      final renderBox =
+          tester.renderObject<RenderBox>(gestureDetector);
+      // Tap at (50, 730) — inside the 9am block bounds
+      await tester.tapAt(renderBox.localToGlobal(const Offset(50, 730)));
+      await tester.pump();
+
+      expect(tappedBlock, isNotNull);
+      expect(tappedBlock!.taskId, 'task-1');
     });
   });
 }

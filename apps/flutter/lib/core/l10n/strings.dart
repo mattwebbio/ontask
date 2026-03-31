@@ -443,7 +443,7 @@ class AppStrings {
   static const String timelineBlockDuration = '{minutes} minutes';
   static const String timelineBlockVoiceOver =
       '{title}. {startTime}. {duration} minutes.';
-  static const String timelineHourLabel = '{hour}';
+  static const String timelineHourLabel = "{hour} o'clock";
   static const String timelineCalendarEvent = 'Calendar event';
 
   // ── Shared actions ──────────────────────────────────────────────────────

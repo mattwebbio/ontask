@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/cupertino.dart';
@@ -13,7 +14,8 @@ import 'today_task_row.dart';
 /// **Performance**: All [Paint] and [TextPainter] objects are pre-allocated
 /// in the constructor. ZERO allocations in [paint()] (UX-DR12).
 class TimelinePainter extends CustomPainter {
-  /// The blocks to render on the timeline.
+  /// The blocks to render on the timeline. Bounds must be pre-computed
+  /// before passing to the painter (computed in [TimelineView._computeBounds]).
   final List<TimelineBlock> blocks;
 
   /// Current time for the now indicator.
@@ -34,23 +36,29 @@ class TimelinePainter extends CustomPainter {
   /// Now indicator dot radius.
   static const double nowDotRadius = 4.0;
 
+  /// Minimum block height for touch targets (44pt per Apple HIG).
+  static const double minBlockHeight = 44.0;
+
   // Pre-allocated paint objects
   final Paint _axisPaint;
   final Paint _nowLinePaint;
   final Paint _nowDotPaint;
   final Paint _taskBlockPaint;
   final Paint _calendarBlockPaint;
+  final Paint _highlightPaint;
   // Pre-allocated for Epic 6 committed task blocks (stakeAmountCents)
   // ignore: unused_field
-  final Paint _committedBlockPaint; // ignore: unused_field
+  final Paint _committedBlockPaint;
   // Pre-allocated for empty time block rendering
   // ignore: unused_field
-  final Paint _emptyBlockPaint; // ignore: unused_field
+  final Paint _emptyBlockPaint;
 
-  // Pre-allocated text painter for hour labels (reused per label)
+  // Pre-allocated text styles
+  final TextStyle _hourLabelStyle;
+  final TextStyle _blockTitleStyle;
+
+  // Pre-allocated text painters (reused per label/block)
   final TextPainter _hourLabelPainter;
-
-  // Pre-allocated text painter for block titles
   final TextPainter _blockTitlePainter;
 
   /// Callback for handling block taps (used by semantics).
@@ -71,9 +79,22 @@ class TimelinePainter extends CustomPainter {
         _nowDotPaint = Paint()..color = colors.accentPrimary,
         _taskBlockPaint = Paint()..color = colors.accentCompletion,
         _calendarBlockPaint = Paint()..color = CupertinoColors.systemGrey,
+        _highlightPaint = Paint()
+          ..color = colors.accentPrimary
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2,
         _committedBlockPaint = Paint()..color = colors.accentPrimary,
         _emptyBlockPaint = Paint()
           ..color = colors.surfaceSecondary.withValues(alpha: 0.3),
+        _hourLabelStyle = TextStyle(
+          color: colors.textSecondary,
+          fontSize: 11,
+        ),
+        _blockTitleStyle = TextStyle(
+          color: colors.textPrimary,
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+        ),
         _hourLabelPainter = TextPainter(
           textDirection: ui.TextDirection.ltr,
           textAlign: TextAlign.right,
@@ -88,9 +109,6 @@ class TimelinePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final blockAreaLeft = timeAxisWidth + 8.0;
-    final blockAreaWidth = size.width - blockAreaLeft - 8.0;
-
     // Draw time axis rules and hour labels
     for (int hour = 0; hour < 24; hour++) {
       final y = hour * hourHeight;
@@ -102,14 +120,11 @@ class TimelinePainter extends CustomPainter {
         _axisPaint,
       );
 
-      // Hour label
+      // Hour label — reuse pre-allocated style
       final labelText = _formatHourLabel(hour);
       _hourLabelPainter.text = TextSpan(
         text: labelText,
-        style: TextStyle(
-          color: colors.textSecondary,
-          fontSize: 11,
-        ),
+        style: _hourLabelStyle,
       );
       _hourLabelPainter.layout(maxWidth: timeAxisWidth - 4);
       _hourLabelPainter.paint(
@@ -125,27 +140,15 @@ class TimelinePainter extends CustomPainter {
       _axisPaint,
     );
 
-    // Draw event blocks
+    // Draw event blocks — bounds are pre-computed in TimelineView
     for (final block in blocks) {
-      final minutesSinceMidnight =
-          block.startTime.hour * 60 + block.startTime.minute;
-      final yPosition = (minutesSinceMidnight / 60) * hourHeight;
-      final blockHeight = (block.durationMinutes / 60) * hourHeight;
-
-      // Update block bounds for hit testing
-      block.bounds = Rect.fromLTWH(
-        blockAreaLeft,
-        yPosition,
-        blockAreaWidth,
-        blockHeight,
-      );
-
-      // Select paint based on block type and state
+      // Select paint based on block type
       final paint = _paintForBlock(block);
 
-      // Apply state-based opacity
+      // Save original color, apply opacity, draw, restore
+      final originalColor = paint.color;
       final opacity = _opacityForState(block.state);
-      paint.color = paint.color.withValues(alpha: opacity);
+      paint.color = originalColor.withValues(alpha: opacity);
 
       // Draw rounded rect
       final rrect = RRect.fromRectAndRadius(
@@ -154,29 +157,29 @@ class TimelinePainter extends CustomPainter {
       );
       canvas.drawRRect(rrect, paint);
 
+      // Restore original color to avoid corruption
+      paint.color = originalColor;
+
       // Draw current block highlight
       if (block.state == TodayTaskRowState.current) {
-        final highlightPaint = Paint()
-          ..color = colors.accentPrimary
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 2;
-        canvas.drawRRect(rrect, highlightPaint);
+        canvas.drawRRect(rrect, _highlightPaint);
       }
 
-      // Draw block title
+      // Draw block title — reuse pre-allocated style, adjust alpha
+      final titleAlpha = opacity;
       _blockTitlePainter.text = TextSpan(
         text: block.title,
-        style: TextStyle(
-          color: colors.textPrimary.withValues(alpha: opacity),
-          fontSize: 13,
-          fontWeight: FontWeight.w500,
-        ),
+        style: titleAlpha == 1.0
+            ? _blockTitleStyle
+            : _blockTitleStyle.copyWith(
+                color: _blockTitleStyle.color?.withValues(alpha: titleAlpha),
+              ),
       );
-      _blockTitlePainter.layout(maxWidth: blockAreaWidth - 12);
-      if (blockHeight > 20) {
+      _blockTitlePainter.layout(maxWidth: block.bounds.width - 12);
+      if (block.bounds.height > 20) {
         _blockTitlePainter.paint(
           canvas,
-          Offset(blockAreaLeft + 6, yPosition + 4),
+          Offset(block.bounds.left + 6, block.bounds.top + 4),
         );
       }
     }
@@ -242,6 +245,25 @@ class TimelinePainter extends CustomPainter {
     return '$displayHour:${minute.toString().padLeft(2, '0')}$period';
   }
 
+  /// Compute bounds for a block given the available width.
+  ///
+  /// Called from [TimelineView._computeBounds] so bounds are available
+  /// before painting and before [semanticsBuilder] runs.
+  static Rect computeBlockBounds({
+    required DateTime startTime,
+    required int durationMinutes,
+    required double hourHeight,
+    required double blockAreaLeft,
+    required double blockAreaWidth,
+  }) {
+    final safeDuration = math.max(durationMinutes, 1);
+    final minutesSinceMidnight = startTime.hour * 60 + startTime.minute;
+    final yPosition = (minutesSinceMidnight / 60) * hourHeight;
+    final blockHeight =
+        math.max((safeDuration / 60) * hourHeight, minBlockHeight);
+    return Rect.fromLTWH(blockAreaLeft, yPosition, blockAreaWidth, blockHeight);
+  }
+
   @override
   bool shouldRepaint(covariant TimelinePainter oldDelegate) {
     return !identical(blocks, oldDelegate.blocks) ||
@@ -257,17 +279,18 @@ class TimelinePainter extends CustomPainter {
       // Add hour label semantics
       for (int hour = 0; hour < 24; hour++) {
         final y = hour * hourHeight;
+        final hourText = _formatHourLabel(hour);
         semantics.add(CustomPainterSemantics(
           rect: Rect.fromLTWH(0, y - 10, timeAxisWidth, 20),
           properties: SemanticsProperties(
             label: AppStrings.timelineHourLabel
-                .replaceFirst('{hour}', "$hour o'clock"),
+                .replaceFirst('{hour}', hourText),
             textDirection: ui.TextDirection.ltr,
           ),
         ));
       }
 
-      // Add block semantics
+      // Add block semantics — bounds are pre-computed
       for (final block in blocks) {
         final label = AppStrings.timelineBlockVoiceOver
             .replaceFirst('{title}', block.title)

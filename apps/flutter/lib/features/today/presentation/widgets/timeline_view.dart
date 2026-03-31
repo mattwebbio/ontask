@@ -95,13 +95,31 @@ class _TimelineViewState extends State<TimelineView> {
       return TimelineBlock(
         taskId: task.id,
         title: task.title,
-        bounds: Rect.zero, // Will be computed by painter
+        bounds: Rect.zero, // Computed in _computeBounds when width is known
         startTime: startTime,
         durationMinutes: duration,
         isCalendarEvent: state == TodayTaskRowState.calendarEvent,
         state: state,
       );
     }).toList();
+  }
+
+  /// Compute bounds for all blocks using the available width.
+  /// Called in [build] via [LayoutBuilder] so bounds are set before
+  /// the painter and semanticsBuilder access them.
+  void _computeBounds(double availableWidth) {
+    final blockAreaLeft = TimelinePainter.timeAxisWidth + 8.0;
+    final blockAreaWidth = availableWidth - blockAreaLeft - 8.0;
+
+    for (final block in _blocks) {
+      block.bounds = TimelinePainter.computeBlockBounds(
+        startTime: block.startTime,
+        durationMinutes: block.durationMinutes,
+        hourHeight: widget.hourHeight,
+        blockAreaLeft: blockAreaLeft,
+        blockAreaWidth: blockAreaWidth,
+      );
+    }
   }
 
   TodayTaskRowState _determineState(Task task) {
@@ -118,31 +136,40 @@ class _TimelineViewState extends State<TimelineView> {
     final colors = Theme.of(context).extension<OnTaskColors>()!;
     final totalHeight = 24 * widget.hourHeight;
 
-    return SingleChildScrollView(
-      controller: _scrollController,
-      child: RepaintBoundary(
-        child: GestureDetector(
-          onTapDown: (details) {
-            final tappedBlock = _blocks.cast<TimelineBlock?>().firstWhere(
-                  (b) => b!.bounds.contains(details.localPosition),
-                  orElse: () => null,
-                );
-            if (tappedBlock != null) {
-              widget.onBlockTapped?.call(tappedBlock);
-            }
-          },
-          child: CustomPaint(
-            painter: TimelinePainter(
-              blocks: _blocks,
-              now: _now,
-              colors: colors,
-              hourHeight: widget.hourHeight,
-              onBlockTapped: widget.onBlockTapped,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Compute bounds before creating painter so semanticsBuilder
+        // has correct rects (fixes VoiceOver Rect.zero bug)
+        _computeBounds(constraints.maxWidth);
+
+        return SingleChildScrollView(
+          controller: _scrollController,
+          child: RepaintBoundary(
+            child: GestureDetector(
+              onTapDown: (details) {
+                final tappedBlock =
+                    _blocks.cast<TimelineBlock?>().firstWhere(
+                          (b) => b!.bounds.contains(details.localPosition),
+                          orElse: () => null,
+                        );
+                if (tappedBlock != null) {
+                  widget.onBlockTapped?.call(tappedBlock);
+                }
+              },
+              child: CustomPaint(
+                painter: TimelinePainter(
+                  blocks: _blocks,
+                  now: _now,
+                  colors: colors,
+                  hourHeight: widget.hourHeight,
+                  onBlockTapped: widget.onBlockTapped,
+                ),
+                size: Size(constraints.maxWidth, totalHeight),
+              ),
             ),
-            size: Size(double.infinity, totalHeight),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
