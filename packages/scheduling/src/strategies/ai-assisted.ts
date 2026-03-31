@@ -8,10 +8,10 @@ import type { ScheduleInput, ScheduleOutput } from '@ontask/core'
  * NOTE: The strategy itself remains a pure function — the AI scores are
  * pre-computed and passed in via ScheduleInput; this function has no external calls.
  */
-export function aiAssistedStrategy(_input: ScheduleInput): ScheduleOutput {
+export function aiAssistedStrategy(input: ScheduleInput): ScheduleOutput {
   return {
     scheduledBlocks: [],
-    unscheduledTaskIds: _input.tasks.map((t) => t.id),
-    generatedAt: _input.windowStart,
+    unscheduledTaskIds: input.tasks.map((t) => t.id),
+    generatedAt: input.windowStart,
   }
 }

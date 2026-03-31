@@ -70,3 +70,12 @@
 - **`_shimmer` declared as top-level function with leading underscore** — Leading underscore on a top-level function in `prediction_badge_async.dart` is unconventional Dart (grants library-private visibility but reads as class-private). Pre-existing codebase style pattern; low risk. Could be a private static method on a helper class if the file grows. [`apps/flutter/lib/features/prediction/presentation/widgets/prediction_badge_async.dart:65`]
 - **Import ordering in `prediction_badge_async.dart`** — Material import (`package:flutter/material.dart show Theme`) appears interleaved with local imports rather than grouped with other package imports. Pre-existing style pattern across codebase. [`apps/flutter/lib/features/prediction/presentation/widgets/prediction_badge_async.dart:5`]
 - **`ref.watch` on stable `predictionRepositoryProvider` in async providers** — Semantically `ref.read` would be more appropriate for a stable dependency (repository never changes after construction), but `ref.watch` matches the pattern documented in Previous Story Learnings and is functionally correct. [`apps/flutter/lib/features/prediction/presentation/prediction_provider.dart:22,32,42`]
+
+## Deferred from: code review of 3-1-scheduling-engine-foundation (2026-03-31)
+
+- **`constraints/index.ts` undocumented barrel file** — `packages/scheduling/src/constraints/index.ts` was created but not listed in the story's File List or completion notes. It is a valid addition (used by `test/constraints/index.test.ts` to verify all constraint exports), but the story change log does not reflect it. Update story file list if auditing accuracy matters. [`packages/scheduling/src/constraints/index.ts`]
+
+## Deferred from: code review of 2-13-chapter-break-screen-ipad-layout (2026-03-31)
+
+- **Unsafe `state.extra` cast in `/chapter-break` route** — `state.extra as Map<String, dynamic>?` will throw a `TypeError` if the caller passes extra of a wrong type. Pre-existing pattern across all routes in `app_router.dart`; acceptable for V1 internal navigation. [`apps/flutter/lib/core/router/app_router.dart:137`]
+- **Optimistic task completion without error handling** — `completeTask(task.id)` is called then `context.push('/chapter-break')` fires immediately regardless of API success. V1 design decision (optimistic UI); error handling deferred to when the task completion API is fully wired with error states. [`apps/flutter/lib/features/now/presentation/now_screen.dart:94`]
