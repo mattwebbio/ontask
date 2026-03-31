@@ -6,9 +6,12 @@ import '../../../../core/theme/app_theme.dart';
 
 /// Skeleton loading placeholder for the Today tab.
 ///
-/// Shows 4 skeleton task rows with a shimmer sweep animation (1.2s loop,
-/// left-to-right gradient). Wrapped in [RepaintBoundary] to isolate repaints.
+/// Shows a skeleton pill for the schedule health strip area at top,
+/// followed by 4 skeleton task rows matching [TodayTaskRow] proportions
+/// (40pt time label + title area + trailing indicator) with a shimmer
+/// sweep animation (1.2s loop, left-to-right gradient).
 ///
+/// Wrapped in [RepaintBoundary] to isolate repaints.
 /// Reduced-motion: when [MediaQuery.disableAnimations] is true, renders a
 /// static fill with no shimmer animation.
 class TodaySkeleton extends StatelessWidget {
@@ -20,7 +23,7 @@ class TodaySkeleton extends StatelessWidget {
 
     // Reduced motion: skip shimmer animation
     if (MediaQuery.of(context).disableAnimations) {
-      return _buildSkeletonRows(colors);
+      return _buildSkeletonContent(colors);
     }
 
     return RepaintBoundary(
@@ -28,18 +31,58 @@ class TodaySkeleton extends StatelessWidget {
         baseColor: colors.surfaceSecondary,
         highlightColor: colors.surfacePrimary,
         period: const Duration(milliseconds: 1200),
-        child: _buildSkeletonRows(colors),
+        child: _buildSkeletonContent(colors),
       ),
     );
   }
 
-  Widget _buildSkeletonRows(OnTaskColors colors) {
+  Widget _buildSkeletonContent(OnTaskColors colors) {
     return Column(
-      children: List.generate(4, (_) => _SkeletonRow(colors: colors)),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Schedule health strip skeleton
+        _SkeletonHealthStrip(colors: colors),
+        const SizedBox(height: AppSpacing.sm),
+        // Task rows
+        ...List.generate(4, (_) => _SkeletonRow(colors: colors)),
+      ],
     );
   }
 }
 
+/// Skeleton placeholder for the schedule health strip area.
+class _SkeletonHealthStrip extends StatelessWidget {
+  final OnTaskColors colors;
+
+  const _SkeletonHealthStrip({required this.colors});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.sm,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: List.generate(
+          7,
+          (_) => Container(
+            width: 32,
+            height: 28,
+            decoration: BoxDecoration(
+              color: colors.surfaceSecondary,
+              borderRadius: BorderRadius.circular(6),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Skeleton row matching [TodayTaskRow] proportions:
+/// 40pt time label placeholder + title area + trailing indicator.
 class _SkeletonRow extends StatelessWidget {
   final OnTaskColors colors;
 
@@ -54,31 +97,31 @@ class _SkeletonRow extends StatelessWidget {
       ),
       child: Row(
         children: [
+          // 40pt time label placeholder
           Container(
-            width: 20,
-            height: 20,
+            width: 40,
+            height: 12,
             decoration: BoxDecoration(
               color: colors.surfaceSecondary,
-              shape: BoxShape.circle,
+              borderRadius: BorderRadius.circular(3),
             ),
           ),
           const SizedBox(width: AppSpacing.md),
+          // Title area placeholder
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  height: 14,
-                  width: double.infinity,
-                  color: colors.surfaceSecondary,
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                Container(
-                  height: 11,
-                  width: 120,
-                  color: colors.surfaceSecondary,
-                ),
-              ],
+            child: Container(
+              height: 14,
+              color: colors.surfaceSecondary,
+            ),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          // Trailing indicator placeholder
+          Container(
+            width: 18,
+            height: 18,
+            decoration: BoxDecoration(
+              color: colors.surfaceSecondary,
+              shape: BoxShape.circle,
             ),
           ),
         ],

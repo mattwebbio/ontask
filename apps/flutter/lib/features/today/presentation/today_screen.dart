@@ -1,21 +1,29 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart' show Theme;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/l10n/strings.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../features/shell/presentation/shell_providers.dart';
+import '../../tasks/domain/task.dart';
+import '../domain/day_health.dart';
+import 'schedule_health_provider.dart';
+import 'today_provider.dart';
+import 'widgets/schedule_health_strip.dart';
 import 'widgets/today_empty_state.dart';
 import 'widgets/today_skeleton.dart';
+import 'widgets/today_task_row.dart';
 
-/// Placeholder screen for the Today tab.
+/// Today tab showing tasks for the day with a weekly health indicator.
 ///
-/// Shows skeleton for 800ms (hard cap, AC 6) then transitions to the empty
-/// state. The 800ms [Future] is stored in [initState] so ancestor rebuilds
-/// (orientation change, theme switch, tab re-entry) cannot restart the timer.
+/// Watches [todayProvider] for task list and [scheduleHealthProvider] for
+/// health strip data. Shows skeleton during loading (800ms hard cap),
+/// then either empty state or task rows with schedule health strip.
 ///
 /// The [TodayEmptyState] Add CTA is wired to [openAddSheetRequestProvider],
 /// which [AppShell] watches to open [AddTabSheet]. The optional [onAddTapped]
 /// parameter is retained for widget tests that need direct callback injection.
-///
-/// Real task data will be wired in Story 1.8+ (after auth).
 class TodayScreen extends ConsumerStatefulWidget {
   final VoidCallback? onAddTapped;
 
@@ -44,20 +52,312 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: FutureBuilder<void>(
+    final todayState = ref.watch(todayProvider);
+    final healthState = ref.watch(scheduleHealthProvider);
+
+    return SafeArea(
+      child: FutureBuilder<void>(
         future: _skeletonDelay,
         builder: (context, snapshot) {
-          if (snapshot.connectionState != ConnectionState.done) {
-            return const SafeArea(child: TodaySkeleton());
+          final skeletonDone =
+              snapshot.connectionState == ConnectionState.done;
+
+          // Show skeleton while either: skeleton delay not done, or data loading
+          if (!skeletonDone || todayState.isLoading) {
+            return const TodaySkeleton();
           }
-          return SafeArea(
-            child: TodayEmptyState(
-              onAddTapped: _handleAddTapped,
-            ),
+
+          // Error state: fall through to empty
+          final tasks = todayState.value ?? [];
+
+          if (tasks.isEmpty) {
+            return TodayEmptyState(onAddTapped: _handleAddTapped);
+          }
+
+          return _TodayContent(
+            tasks: tasks,
+            healthDays: healthState.value ?? [],
+            onComplete: (id) =>
+                ref.read(todayProvider.notifier).completeTask(id),
+            onReschedule: (id) => _showReschedulePicker(context, id),
           );
         },
       ),
     );
+  }
+
+  void _showReschedulePicker(BuildContext context, String taskId) {
+    DateTime selectedDate = DateTime.now().add(const Duration(days: 1));
+
+    showCupertinoModalPopup<void>(
+      context: context,
+      builder: (_) => Container(
+        height: 300,
+        color: CupertinoColors.systemBackground.resolveFrom(context),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                CupertinoButton(
+                  child: const Text(AppStrings.actionCancel),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+                Text(
+                  AppStrings.todayReschedulePickerTitle,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                CupertinoButton(
+                  child: const Text(AppStrings.actionDone),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    ref
+                        .read(todayProvider.notifier)
+                        .rescheduleTask(
+                          taskId,
+                          selectedDate.toIso8601String(),
+                        );
+                  },
+                ),
+              ],
+            ),
+            Expanded(
+              child: CupertinoDatePicker(
+                mode: CupertinoDatePickerMode.date,
+                initialDateTime: selectedDate,
+                minimumDate: DateTime.now(),
+                onDateTimeChanged: (date) => selectedDate = date,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Main content widget for when tasks are loaded.
+class _TodayContent extends StatelessWidget {
+  final List<Task> tasks;
+  final List<DayHealth> healthDays;
+  final void Function(String) onComplete;
+  final void Function(String) onReschedule;
+
+  const _TodayContent({
+    required this.tasks,
+    required this.healthDays,
+    required this.onComplete,
+    required this.onReschedule,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<OnTaskColors>()!;
+    final now = DateTime.now();
+
+    // Group tasks by time of day
+    final overdue = <Task>[];
+    final morning = <Task>[];
+    final afternoon = <Task>[];
+    final evening = <Task>[];
+
+    for (final task in tasks) {
+      if (task.completedAt != null) {
+        // Completed tasks go into their original time block
+        _addToTimeBlock(task, morning, afternoon, evening);
+        continue;
+      }
+      if (task.dueDate != null && task.dueDate!.isBefore(now)) {
+        overdue.add(task);
+        continue;
+      }
+      _addToTimeBlock(task, morning, afternoon, evening);
+    }
+
+    // Count and hours for header
+    final totalTasks = tasks.length;
+
+    return CustomScrollView(
+      slivers: [
+        // Header
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.lg,
+              AppSpacing.lg,
+              AppSpacing.xs,
+            ),
+            child: Row(
+              children: [
+                Text(
+                  AppStrings.todayHeaderTitle,
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                        color: colors.textPrimary,
+                      ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Text(
+                  AppStrings.todayTaskCount
+                      .replaceFirst('{count}', '$totalTasks'),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: colors.textSecondary,
+                      ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        // Schedule health strip
+        if (healthDays.isNotEmpty)
+          SliverToBoxAdapter(
+            child: ScheduleHealthStrip(days: healthDays),
+          ),
+        // Overdue section
+        if (overdue.isNotEmpty) ...[
+          _SectionDivider(title: AppStrings.todayOverdueSection),
+          _TaskSliver(
+            tasks: overdue,
+            rowState: TodayTaskRowState.overdue,
+            onComplete: onComplete,
+            onReschedule: onReschedule,
+          ),
+        ],
+        // Morning section
+        if (morning.isNotEmpty) ...[
+          _SectionDivider(title: AppStrings.todayMorningSection),
+          _TaskSliver(
+            tasks: morning,
+            onComplete: onComplete,
+            onReschedule: onReschedule,
+          ),
+        ],
+        // Afternoon section
+        if (afternoon.isNotEmpty) ...[
+          _SectionDivider(title: AppStrings.todayAfternoonSection),
+          _TaskSliver(
+            tasks: afternoon,
+            onComplete: onComplete,
+            onReschedule: onReschedule,
+          ),
+        ],
+        // Evening section
+        if (evening.isNotEmpty) ...[
+          _SectionDivider(title: AppStrings.todayEveningSection),
+          _TaskSliver(
+            tasks: evening,
+            onComplete: onComplete,
+            onReschedule: onReschedule,
+          ),
+        ],
+        // Bottom padding
+        const SliverToBoxAdapter(
+          child: SizedBox(height: AppSpacing.xxxl),
+        ),
+      ],
+    );
+  }
+
+  void _addToTimeBlock(
+    Task task,
+    List<Task> morning,
+    List<Task> afternoon,
+    List<Task> evening,
+  ) {
+    final hour = task.dueDate?.hour ?? 9; // Default to morning
+    if (hour < 12) {
+      morning.add(task);
+    } else if (hour < 17) {
+      afternoon.add(task);
+    } else {
+      evening.add(task);
+    }
+  }
+}
+
+/// Lightweight section divider for time-of-day grouping.
+class _SectionDivider extends StatelessWidget {
+  final String title;
+
+  const _SectionDivider({required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<OnTaskColors>()!;
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          AppSpacing.lg,
+          AppSpacing.lg,
+          AppSpacing.xs,
+        ),
+        child: Text(
+          title,
+          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: colors.textSecondary,
+              ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Sliver list of [TodayTaskRow] widgets.
+class _TaskSliver extends StatelessWidget {
+  final List<Task> tasks;
+  final TodayTaskRowState? rowState;
+  final void Function(String) onComplete;
+  final void Function(String) onReschedule;
+
+  const _TaskSliver({
+    required this.tasks,
+    this.rowState,
+    required this.onComplete,
+    required this.onReschedule,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SliverList(
+      delegate: SliverChildBuilderDelegate(
+        (context, index) {
+          final task = tasks[index];
+          return TodayTaskRow(
+            taskId: task.id,
+            title: task.title,
+            timeLabel: _formatTime(task.dueDate),
+            rowState: rowState ?? _determineState(task),
+            onComplete: () => onComplete(task.id),
+            onReschedule: () => onReschedule(task.id),
+          );
+        },
+        childCount: tasks.length,
+      ),
+    );
+  }
+
+  TodayTaskRowState _determineState(Task task) {
+    if (task.completedAt != null) return TodayTaskRowState.completed;
+    final now = DateTime.now();
+    if (task.dueDate != null && task.dueDate!.isBefore(now)) {
+      return TodayTaskRowState.overdue;
+    }
+    // TODO(stub): calendarEvent and current detection require real scheduling data
+    return TodayTaskRowState.upcoming;
+  }
+
+  String _formatTime(DateTime? dateTime) {
+    if (dateTime == null) return '';
+    final hour = dateTime.hour;
+    final minute = dateTime.minute;
+    final period = hour >= 12 ? 'pm' : 'am';
+    final displayHour = hour == 0
+        ? 12
+        : hour > 12
+            ? hour - 12
+            : hour;
+    if (minute == 0) return '$displayHour$period';
+    return '$displayHour:${minute.toString().padLeft(2, '0')}$period';
   }
 }
