@@ -152,24 +152,47 @@ void main() {
     });
 
     testWidgets('tap on block calls detail callback', (tester) async {
+      // Use tasks at early hours so blocks are visible without scrolling
+      final earlyTasks = [
+        Task(
+          id: 'tap-task-1',
+          title: 'Early task',
+          position: 0,
+          dueDate: DateTime(farFuture.year, farFuture.month, farFuture.day, 0, 30),
+          scheduledStartTime:
+              DateTime(farFuture.year, farFuture.month, farFuture.day, 0, 30),
+          durationMinutes: 60,
+          createdAt: DateTime(2026, 3, 30),
+          updatedAt: DateTime(2026, 3, 30),
+        ),
+      ];
+
       TimelineBlock? tappedBlock;
       await tester.pumpWidget(
-        buildWidget(onBlockTapped: (block) => tappedBlock = block),
+        buildWidget(
+          tasks: earlyTasks,
+          onBlockTapped: (block) => tappedBlock = block,
+        ),
       );
       await tester.pump();
 
-      // Block at 9am: y = (540/60) * 80 = 720, block height = max(40, 44) = 44
+      // Block at 0:30: y = (30/60) * 80 = 40, height = (60/60) * 80 = 80
       // Block area left = 32 + 8 = 40
-      // Tap centre of the first block
-      final gestureDetector = find.byType(GestureDetector).first;
-      final renderBox =
-          tester.renderObject<RenderBox>(gestureDetector);
-      // Tap at (50, 730) — inside the 9am block bounds
-      await tester.tapAt(renderBox.localToGlobal(const Offset(50, 730)));
+      // Tap at a position inside the block — use the scroll view's coordinate space
+      // Since _scrollToNow scrolls to current time, the 0:30 block may still be
+      // outside viewport. Use the ScrollController to scroll to top first.
+      final scrollFinder = find.byType(SingleChildScrollView);
+      final scrollWidget =
+          tester.widget<SingleChildScrollView>(scrollFinder);
+      scrollWidget.controller?.jumpTo(0);
+      await tester.pump();
+
+      // Now tap at (50, 60) — inside the 0:30 block (y=40, height=80)
+      await tester.tapAt(const Offset(50, 60));
       await tester.pump();
 
       expect(tappedBlock, isNotNull);
-      expect(tappedBlock!.taskId, 'task-1');
+      expect(tappedBlock!.taskId, 'tap-task-1');
     });
   });
 }
