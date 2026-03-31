@@ -12,6 +12,7 @@ import '../../domain/section.dart';
 ///
 /// Supports nested sub-sections rendered recursively.
 /// Shows "Add task" and "Add section" affordances.
+/// Long-press on the section header to save as template.
 class SectionWidget extends StatefulWidget {
   const SectionWidget({
     required this.section,
@@ -24,6 +25,7 @@ class SectionWidget extends StatefulWidget {
     this.onAddSection,
     this.onTaskTap,
     this.onArchiveTask,
+    this.onSaveAsTemplate,
     super.key,
   });
 
@@ -37,6 +39,7 @@ class SectionWidget extends StatefulWidget {
   final VoidCallback? onAddSection;
   final void Function(Task task)? onTaskTap;
   final void Function(Task task)? onArchiveTask;
+  final void Function(Section section)? onSaveAsTemplate;
 
   @override
   State<SectionWidget> createState() => _SectionWidgetState();
@@ -55,6 +58,7 @@ class _SectionWidgetState extends State<SectionWidget> {
         // Section header
         GestureDetector(
           onTap: () => setState(() => _isExpanded = !_isExpanded),
+          onLongPress: () => _showSectionActions(context),
           child: Padding(
             padding: EdgeInsets.only(
               left: AppSpacing.lg + (widget.depth * AppSpacing.lg),
@@ -115,6 +119,7 @@ class _SectionWidgetState extends State<SectionWidget> {
               onAddSection: widget.onAddSection,
               onTaskTap: widget.onTaskTap,
               onArchiveTask: widget.onArchiveTask,
+              onSaveAsTemplate: widget.onSaveAsTemplate,
             );
           }),
 
@@ -156,6 +161,27 @@ class _SectionWidgetState extends State<SectionWidget> {
           ),
         ],
       ],
+    );
+  }
+
+  void _showSectionActions(BuildContext context) {
+    showCupertinoModalPopup<void>(
+      context: context,
+      builder: (ctx) => CupertinoActionSheet(
+        actions: [
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              widget.onSaveAsTemplate?.call(widget.section);
+            },
+            child: const Text(AppStrings.templateSaveAsTemplate),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          onPressed: () => Navigator.of(ctx).pop(),
+          child: const Text(AppStrings.actionCancel),
+        ),
+      ),
     );
   }
 }

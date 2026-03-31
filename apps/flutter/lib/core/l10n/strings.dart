@@ -313,4 +313,34 @@ class AppStrings {
 
   // ── Lists tab — error state ────────────────────────────────────────────────
   static const String listsError = "Something went wrong loading your lists. Please try again.";
+
+  // ── Templates ──────────────────────────────────────────────────────────────
+  static const String templateSaveAsTemplate = 'Save as template';
+  static const String templateSaveDialogTitle = 'Save template';
+  static const String templateNamePlaceholder = 'Template name';
+  static const String templateSaveSuccess = 'Template saved.';
+  static const String templateSaveError =
+      'Something went wrong saving the template. Please try again.';
+  static const String templateStartFromTemplate = 'Start from template';
+  static const String templatePickerTitle = 'Choose a template';
+  static const String templatePickerEmpty =
+      'No templates yet. Save a list or section as a template to get started.';
+  static const String templateApplyButton = 'Use this template';
+  static const String templateApplySuccess = 'Template applied.';
+  static const String templateApplyError =
+      'Something went wrong applying the template. Please try again.';
+  static const String templateDueDateOffsetLabel =
+      'Offset due dates by how many days from today?';
+  static const String templateDueDateOffsetNone = 'Keep original dates';
+  static const String templateLibraryTitle = 'Templates';
+  static const String templateDeleteConfirmTitle = 'Delete template?';
+  static const String templateDeleteConfirmMessage =
+      'This template will be permanently removed.';
+  static const String templateDeleteSuccess = 'Template deleted.';
+  static const String templateSourceList = 'List template';
+  static const String templateSourceSection = 'Section template';
+  static const String templateNameSuffix = ' template';
+
+  // ── Shared actions ──────────────────────────────────────────────────────
+  static const String actionDelete = 'Delete';
 }

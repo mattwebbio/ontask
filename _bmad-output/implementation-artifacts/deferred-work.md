@@ -41,3 +41,7 @@
 ## Deferred from: code review of 2-2-task-properties-scheduling-hints (2026-03-30)
 
 - **`lists_provider.g.dart` hash changed without lists code changes** — `build_runner` regeneration side-effect changed the hash in `lists_provider.g.dart` despite no lists-related source changes in Story 2.2. Not harmful; monitor for similar drift in future stories.
+
+## Deferred from: code review of 2-4-task-templates (2026-03-30)
+
+- **API stub `offsetDate` does not recurse into `childSections` for due dates** — The `offsetDate` helper in the apply template stub only scans top-level `sections[].tasks` and `rootTasks` for `minDate` calculation, missing tasks in nested `childSections`. This is a stub-only issue that will be addressed when real implementation replaces stubs.
