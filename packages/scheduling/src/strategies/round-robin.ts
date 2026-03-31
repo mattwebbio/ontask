@@ -6,10 +6,10 @@ import type { ScheduleInput, ScheduleOutput } from '@ontask/core'
  *
  * Distributes tasks evenly across available time slots in a round-robin fashion.
  */
-export function roundRobinStrategy(_input: ScheduleInput): ScheduleOutput {
+export function roundRobinStrategy(input: ScheduleInput): ScheduleOutput {
   return {
     scheduledBlocks: [],
-    unscheduledTaskIds: _input.tasks.map((t) => t.id),
-    generatedAt: _input.windowStart,
+    unscheduledTaskIds: input.tasks.map((t) => t.id),
+    generatedAt: input.windowStart,
   }
 }

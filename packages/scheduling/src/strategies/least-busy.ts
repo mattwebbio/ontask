@@ -6,10 +6,10 @@ import type { ScheduleInput, ScheduleOutput } from '@ontask/core'
  *
  * Places tasks in the time windows with fewest existing calendar events.
  */
-export function leastBusyStrategy(_input: ScheduleInput): ScheduleOutput {
+export function leastBusyStrategy(input: ScheduleInput): ScheduleOutput {
   return {
     scheduledBlocks: [],
-    unscheduledTaskIds: _input.tasks.map((t) => t.id),
-    generatedAt: _input.windowStart,
+    unscheduledTaskIds: input.tasks.map((t) => t.id),
+    generatedAt: input.windowStart,
   }
 }
