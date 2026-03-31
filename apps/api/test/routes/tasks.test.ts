@@ -194,6 +194,141 @@ describe('Tasks routes', () => {
     expect(task).toHaveProperty('priority')
   })
 
+  // ── Story 2.3: Recurrence fields ─────────────────────────────────────────
+
+  it('POST /v1/tasks — accepts and echoes recurrence fields', async () => {
+    const res = await app.request('/v1/tasks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: 'Daily standup',
+        recurrenceRule: 'daily',
+      }),
+    })
+
+    expect(res.status).toBe(201)
+    const body = await res.json() as AnyJson
+    expect(body.data.recurrenceRule).toBe('daily')
+    expect(body.data.recurrenceInterval).toBeNull()
+    expect(body.data.recurrenceDaysOfWeek).toBeNull()
+    expect(body.data.recurrenceParentId).toBeNull()
+  })
+
+  it('POST /v1/tasks — accepts weekly recurrence with days of week', async () => {
+    const res = await app.request('/v1/tasks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: 'Weekly sync',
+        recurrenceRule: 'weekly',
+        recurrenceDaysOfWeek: '[1,3,5]',
+      }),
+    })
+
+    expect(res.status).toBe(201)
+    const body = await res.json() as AnyJson
+    expect(body.data.recurrenceRule).toBe('weekly')
+    expect(body.data.recurrenceDaysOfWeek).toBe('[1,3,5]')
+  })
+
+  it('POST /v1/tasks — accepts custom recurrence with interval', async () => {
+    const res = await app.request('/v1/tasks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: 'Every 3 days',
+        recurrenceRule: 'custom',
+        recurrenceInterval: 3,
+      }),
+    })
+
+    expect(res.status).toBe(201)
+    const body = await res.json() as AnyJson
+    expect(body.data.recurrenceRule).toBe('custom')
+    expect(body.data.recurrenceInterval).toBe(3)
+  })
+
+  it('POST /v1/tasks — defaults recurrence fields to null', async () => {
+    const res = await app.request('/v1/tasks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: 'No recurrence' }),
+    })
+
+    expect(res.status).toBe(201)
+    const body = await res.json() as AnyJson
+    expect(body.data.recurrenceRule).toBeNull()
+    expect(body.data.recurrenceInterval).toBeNull()
+    expect(body.data.recurrenceDaysOfWeek).toBeNull()
+    expect(body.data.recurrenceParentId).toBeNull()
+  })
+
+  it('POST /v1/tasks — rejects invalid recurrenceRule enum', async () => {
+    const res = await app.request('/v1/tasks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: 'Bad enum',
+        recurrenceRule: 'biweekly',
+      }),
+    })
+
+    expect(res.status).toBeGreaterThanOrEqual(400)
+  })
+
+  it('PATCH /v1/tasks/:id — updates recurrence fields', async () => {
+    const res = await app.request('/v1/tasks/a0000000-0000-4000-8000-000000000001', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        recurrenceRule: 'monthly',
+      }),
+    })
+
+    expect(res.status).toBe(200)
+    const body = await res.json() as AnyJson
+    expect(body.data.recurrenceRule).toBe('monthly')
+  })
+
+  it('GET /v1/tasks — response includes recurrence fields', async () => {
+    const res = await app.request('/v1/tasks', { method: 'GET' })
+
+    expect(res.status).toBe(200)
+    const body = await res.json() as AnyJson
+    const task = body.data[0]
+    expect(task).toHaveProperty('recurrenceRule')
+    expect(task).toHaveProperty('recurrenceInterval')
+    expect(task).toHaveProperty('recurrenceDaysOfWeek')
+    expect(task).toHaveProperty('recurrenceParentId')
+  })
+
+  it('POST /v1/tasks/:id/complete — sets completedAt, no next instance for non-recurring', async () => {
+    const res = await app.request('/v1/tasks/a0000000-0000-4000-8000-000000000001/complete', {
+      method: 'POST',
+    })
+
+    expect(res.status).toBe(200)
+    const body = await res.json() as AnyJson
+    expect(body.data.completedTask).toBeDefined()
+    expect(body.data.completedTask.completedAt).not.toBeNull()
+    expect(body.data.nextInstance).toBeNull()
+  })
+
+  it('POST /v1/tasks/:id/complete — response shape includes completedTask and nextInstance fields', async () => {
+    // Stub always returns non-recurring (recurrenceRule=null), so nextInstance is null.
+    // TODO(impl): when real DB is wired, add test with recurring task to verify nextInstance is populated.
+    const res = await app.request('/v1/tasks/a0000000-0000-4000-8000-000000000001/complete', {
+      method: 'POST',
+    })
+
+    expect(res.status).toBe(200)
+    const body = await res.json() as AnyJson
+    expect(body.data).toHaveProperty('completedTask')
+    expect(body.data).toHaveProperty('nextInstance')
+    expect(body.data.completedTask.completedAt).not.toBeNull()
+    expect(body.data.completedTask.id).toBe('a0000000-0000-4000-8000-000000000001')
+  })
+
   it('All task routes match Zod response schemas (no schema violations)', async () => {
     // POST returns proper data envelope
     const postRes = await app.request('/v1/tasks', {

@@ -32,6 +32,10 @@ const createTaskSchema = z.object({
   }),
   energyRequirement: z.enum(['high_focus', 'low_energy', 'flexible']).nullable().optional(),
   priority: z.enum(['normal', 'high', 'critical']).nullable().optional(),
+  recurrenceRule: z.enum(['daily', 'weekly', 'monthly', 'custom']).nullable().optional(),
+  recurrenceInterval: z.number().int().min(1).nullable().optional(),
+  recurrenceDaysOfWeek: z.string().nullable().optional(),
+  recurrenceParentId: z.string().uuid().nullable().optional(),
 })
 
 const updateTaskSchema = z.object({
@@ -47,6 +51,10 @@ const updateTaskSchema = z.object({
   timeWindowEnd: z.string().nullable().optional(),
   energyRequirement: z.enum(['high_focus', 'low_energy', 'flexible']).nullable().optional(),
   priority: z.enum(['normal', 'high', 'critical']).nullable().optional(),
+  recurrenceRule: z.enum(['daily', 'weekly', 'monthly', 'custom']).nullable().optional(),
+  recurrenceInterval: z.number().int().min(1).nullable().optional(),
+  recurrenceDaysOfWeek: z.string().nullable().optional(),
+  recurrenceParentId: z.string().uuid().nullable().optional(),
 })
 
 const taskSchema = z.object({
@@ -64,6 +72,10 @@ const taskSchema = z.object({
   timeWindowEnd: z.string().nullable(),
   energyRequirement: z.enum(['high_focus', 'low_energy', 'flexible']).nullable(),
   priority: z.enum(['normal', 'high', 'critical']).nullable(),
+  recurrenceRule: z.enum(['daily', 'weekly', 'monthly', 'custom']).nullable(),
+  recurrenceInterval: z.number().int().nullable(),
+  recurrenceDaysOfWeek: z.string().nullable(),
+  recurrenceParentId: z.string().uuid().nullable(),
   archivedAt: z.string().datetime().nullable(),
   completedAt: z.string().datetime().nullable(),
   createdAt: z.string().datetime(),
@@ -77,6 +89,13 @@ const TaskListResponseSchema = z.object({
   pagination: z.object({
     cursor: z.string().nullable(),
     hasMore: z.boolean(),
+  }),
+})
+
+const CompleteTaskResponseSchema = z.object({
+  data: z.object({
+    completedTask: taskSchema,
+    nextInstance: taskSchema.nullable(),
   }),
 })
 
@@ -104,6 +123,10 @@ function stubTask(overrides: Partial<z.infer<typeof taskSchema>> = {}): z.infer<
     timeWindowEnd: null,
     energyRequirement: null,
     priority: 'normal',
+    recurrenceRule: null,
+    recurrenceInterval: null,
+    recurrenceDaysOfWeek: null,
+    recurrenceParentId: null,
     archivedAt: null,
     completedAt: null,
     createdAt: now,
@@ -149,6 +172,10 @@ app.openapi(postTaskRoute, async (c) => {
       timeWindowEnd: body.timeWindowEnd ?? null,
       energyRequirement: body.energyRequirement ?? null,
       priority: body.priority ?? 'normal',
+      recurrenceRule: body.recurrenceRule ?? null,
+      recurrenceInterval: body.recurrenceInterval ?? null,
+      recurrenceDaysOfWeek: body.recurrenceDaysOfWeek ?? null,
+      recurrenceParentId: body.recurrenceParentId ?? null,
     })),
     201,
   )
@@ -279,6 +306,133 @@ app.openapi(reorderTaskRoute, async (c) => {
   const { id } = c.req.valid('param')
   const { position } = c.req.valid('json')
   return c.json(ok(stubTask({ id, position })), 200)
+})
+
+// ── POST /v1/tasks/:id/complete ────────────────────────────────────────────
+
+/**
+ * Computes the next due date for a recurring task.
+ * If the completed task has no dueDate, computes from now().
+ */
+function computeNextDueDate(
+  recurrenceRule: string,
+  baseDateStr: string | null,
+  recurrenceInterval: number | null,
+  recurrenceDaysOfWeek: string | null,
+): string {
+  const baseDate = baseDateStr ? new Date(baseDateStr) : new Date()
+
+  switch (recurrenceRule) {
+    case 'daily': {
+      baseDate.setUTCDate(baseDate.getUTCDate() + 1)
+      return baseDate.toISOString()
+    }
+    case 'weekly': {
+      // Parse days of week from JSON string
+      const days: number[] = recurrenceDaysOfWeek ? JSON.parse(recurrenceDaysOfWeek) : []
+      if (days.length === 0) {
+        // Fallback: next week same day
+        baseDate.setUTCDate(baseDate.getUTCDate() + 7)
+        return baseDate.toISOString()
+      }
+      // ISO: Mon=1..Sun=7; JS getUTCDay(): Sun=0..Sat=6
+      // Convert JS day to ISO day
+      const nextDay = new Date(baseDate)
+      nextDay.setUTCDate(nextDay.getUTCDate() + 1) // start from day after
+      for (let i = 0; i < 7; i++) {
+        const jsDay = nextDay.getUTCDay()
+        const isoDay = jsDay === 0 ? 7 : jsDay
+        if (days.includes(isoDay)) {
+          return nextDay.toISOString()
+        }
+        nextDay.setUTCDate(nextDay.getUTCDate() + 1)
+      }
+      // Should not reach here, but fallback
+      baseDate.setUTCDate(baseDate.getUTCDate() + 7)
+      return baseDate.toISOString()
+    }
+    case 'monthly': {
+      const day = baseDate.getUTCDate()
+      baseDate.setUTCMonth(baseDate.getUTCMonth() + 1)
+      // Clamp to month end if needed (e.g., Jan 31 -> Feb 28)
+      if (baseDate.getUTCDate() !== day) {
+        baseDate.setUTCDate(0) // last day of previous month
+      }
+      return baseDate.toISOString()
+    }
+    case 'custom': {
+      const interval = recurrenceInterval ?? 1
+      baseDate.setUTCDate(baseDate.getUTCDate() + interval)
+      return baseDate.toISOString()
+    }
+    default:
+      baseDate.setUTCDate(baseDate.getUTCDate() + 1)
+      return baseDate.toISOString()
+  }
+}
+
+const completeTaskRoute = createRoute({
+  method: 'post',
+  path: '/v1/tasks/{id}/complete',
+  tags: ['Tasks'],
+  summary: 'Complete a task',
+  description:
+    'Sets completedAt = now(). For recurring tasks, returns both the completed task and an auto-generated next instance.',
+  request: {
+    params: z.object({ id: z.string().uuid() }),
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: CompleteTaskResponseSchema } },
+      description: 'Task completed; next instance returned for recurring tasks',
+    },
+    404: { content: { 'application/json': { schema: ErrorSchema } }, description: 'Task not found' },
+  },
+})
+
+app.openapi(completeTaskRoute, async (c) => {
+  // TODO(impl): look up real task from DB, set completedAt via Drizzle
+  const { id } = c.req.valid('param')
+  const completedTask = stubTask({
+    id,
+    completedAt: new Date().toISOString(),
+  })
+
+  // If recurring, generate next instance
+  let nextInstance: z.infer<typeof taskSchema> | null = null
+  if (completedTask.recurrenceRule) {
+    const seriesParentId = completedTask.recurrenceParentId ?? completedTask.id
+    const nextDueDate = computeNextDueDate(
+      completedTask.recurrenceRule,
+      completedTask.dueDate,
+      completedTask.recurrenceInterval,
+      completedTask.recurrenceDaysOfWeek,
+    )
+    // Copy all properties except id, completedAt, createdAt, updatedAt, dueDate
+    nextInstance = stubTask({
+      id: 'a0000000-0000-4000-8000-000000000099',
+      userId: completedTask.userId,
+      listId: completedTask.listId,
+      sectionId: completedTask.sectionId,
+      parentTaskId: completedTask.parentTaskId,
+      title: completedTask.title,
+      notes: completedTask.notes,
+      position: completedTask.position,
+      timeWindow: completedTask.timeWindow,
+      timeWindowStart: completedTask.timeWindowStart,
+      timeWindowEnd: completedTask.timeWindowEnd,
+      energyRequirement: completedTask.energyRequirement,
+      priority: completedTask.priority,
+      recurrenceRule: completedTask.recurrenceRule,
+      recurrenceInterval: completedTask.recurrenceInterval,
+      recurrenceDaysOfWeek: completedTask.recurrenceDaysOfWeek,
+      recurrenceParentId: seriesParentId,
+      dueDate: nextDueDate,
+      completedAt: null,
+    })
+  }
+
+  return c.json({ data: { completedTask, nextInstance } }, 200)
 })
 
 export { app as tasksRouter }

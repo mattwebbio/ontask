@@ -30,6 +30,10 @@ class TasksNotifier extends _$TasksNotifier {
     String? timeWindowEnd,
     String? energyRequirement,
     String? priority,
+    String? recurrenceRule,
+    int? recurrenceInterval,
+    String? recurrenceDaysOfWeek,
+    String? recurrenceParentId,
   }) async {
     final repo = ref.read(tasksRepositoryProvider);
     final task = await repo.createTask(
@@ -44,12 +48,30 @@ class TasksNotifier extends _$TasksNotifier {
       timeWindowEnd: timeWindowEnd,
       energyRequirement: energyRequirement,
       priority: priority,
+      recurrenceRule: recurrenceRule,
+      recurrenceInterval: recurrenceInterval,
+      recurrenceDaysOfWeek: recurrenceDaysOfWeek,
+      recurrenceParentId: recurrenceParentId,
     );
 
     // Optimistically add to state
     final current = state.value ?? [];
     state = AsyncData([...current, task]);
     return task;
+  }
+
+  /// Completes a task. For recurring tasks, replaces the completed task
+  /// and inserts the auto-generated next instance.
+  Future<void> completeTask(String id) async {
+    final repo = ref.read(tasksRepositoryProvider);
+    final result = await repo.completeTask(id);
+
+    final current = state.value ?? [];
+    var updated = current.map((t) => t.id == id ? result.completed : t).toList();
+    if (result.nextInstance != null) {
+      updated = [...updated, result.nextInstance!];
+    }
+    state = AsyncData(updated);
   }
 
   /// Updates task properties.
