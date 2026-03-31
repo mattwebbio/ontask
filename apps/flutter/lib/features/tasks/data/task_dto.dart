@@ -1,5 +1,8 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'dart:convert';
+
 import '../domain/energy_requirement.dart';
+import '../domain/recurrence_rule.dart';
 import '../domain/task.dart';
 import '../domain/task_priority.dart';
 import '../domain/time_window.dart';
@@ -28,6 +31,10 @@ abstract class TaskDto with _$TaskDto {
     String? timeWindowEnd,
     String? energyRequirement,
     String? priority,
+    String? recurrenceRule,
+    int? recurrenceInterval,
+    String? recurrenceDaysOfWeek,
+    String? recurrenceParentId,
     String? archivedAt,
     String? completedAt,
     required String createdAt,
@@ -51,6 +58,12 @@ abstract class TaskDto with _$TaskDto {
         timeWindowEnd: timeWindowEnd,
         energyRequirement: EnergyRequirement.fromJson(energyRequirement),
         priority: TaskPriority.fromJson(priority),
+        recurrenceRule: RecurrenceRule.fromJson(recurrenceRule),
+        recurrenceInterval: recurrenceInterval,
+        recurrenceDaysOfWeek: recurrenceDaysOfWeek != null
+            ? (jsonDecode(recurrenceDaysOfWeek!) as List).cast<int>()
+            : null,
+        recurrenceParentId: recurrenceParentId,
         archivedAt: archivedAt != null ? DateTime.parse(archivedAt!) : null,
         completedAt: completedAt != null ? DateTime.parse(completedAt!) : null,
         createdAt: DateTime.parse(createdAt),

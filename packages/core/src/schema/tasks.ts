@@ -24,6 +24,10 @@ export const tasksTable = pgTable('tasks', {
   energyRequirement: text(), // 'high_focus' | 'low_energy' | 'flexible'
   priority: text().default('normal'), // 'normal' | 'high' | 'critical'
   archivedAt: timestamp({ withTimezone: true }),
+  recurrenceRule: text(), // 'daily' | 'weekly' | 'monthly' | 'custom'
+  recurrenceInterval: integer(), // for custom interval: number of days between occurrences
+  recurrenceDaysOfWeek: text(), // JSON array string of ISO day numbers e.g. '[1,2,5]' (Mon=1..Sun=7)
+  recurrenceParentId: uuid(), // self-reference to the original recurring task (series parent)
   completedAt: timestamp({ withTimezone: true }),
   createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp({ withTimezone: true }).defaultNow().notNull(),

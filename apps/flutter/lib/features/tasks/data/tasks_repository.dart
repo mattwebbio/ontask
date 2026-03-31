@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/network/api_client.dart';
+import '../domain/recurrence_rule.dart';
 import '../domain/task.dart';
 import 'task_dto.dart';
 
@@ -26,6 +27,10 @@ class TasksRepository {
     String? timeWindowEnd,
     String? energyRequirement,
     String? priority,
+    String? recurrenceRule,
+    int? recurrenceInterval,
+    String? recurrenceDaysOfWeek,
+    String? recurrenceParentId,
   }) async {
     final response = await _client.dio.post<Map<String, dynamic>>(
       '/v1/tasks',
@@ -41,6 +46,10 @@ class TasksRepository {
         if (timeWindowEnd != null) 'timeWindowEnd': timeWindowEnd,
         if (energyRequirement != null) 'energyRequirement': energyRequirement,
         if (priority != null) 'priority': priority,
+        if (recurrenceRule != null) 'recurrenceRule': recurrenceRule,
+        if (recurrenceInterval != null) 'recurrenceInterval': recurrenceInterval,
+        if (recurrenceDaysOfWeek != null) 'recurrenceDaysOfWeek': recurrenceDaysOfWeek,
+        if (recurrenceParentId != null) 'recurrenceParentId': recurrenceParentId,
       },
     );
     return TaskDto.fromJson(
@@ -90,6 +99,23 @@ class TasksRepository {
     return TaskDto.fromJson(
       response.data!['data'] as Map<String, dynamic>,
     ).toDomain();
+  }
+
+  /// Completes a task. For recurring tasks, returns both the completed task
+  /// and the auto-generated next instance.
+  Future<({Task completed, Task? nextInstance})> completeTask(String id) async {
+    final response = await _client.dio.post<Map<String, dynamic>>(
+      '/v1/tasks/$id/complete',
+    );
+    final data = response.data!['data'] as Map<String, dynamic>;
+    final completed = TaskDto.fromJson(
+      data['completedTask'] as Map<String, dynamic>,
+    ).toDomain();
+    final nextInstanceData = data['nextInstance'];
+    final nextInstance = nextInstanceData != null
+        ? TaskDto.fromJson(nextInstanceData as Map<String, dynamic>).toDomain()
+        : null;
+    return (completed: completed, nextInstance: nextInstance);
   }
 
   /// Archives a task (soft delete — sets archivedAt).

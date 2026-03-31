@@ -1,6 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import 'energy_requirement.dart';
+import 'recurrence_rule.dart';
 import 'task_priority.dart';
 import 'time_window.dart';
 
@@ -26,6 +27,10 @@ abstract class Task with _$Task {
     String? timeWindowEnd,
     EnergyRequirement? energyRequirement,
     @Default(TaskPriority.normal) TaskPriority? priority,
+    RecurrenceRule? recurrenceRule,
+    int? recurrenceInterval,
+    List<int>? recurrenceDaysOfWeek,
+    String? recurrenceParentId,
     DateTime? archivedAt,
     DateTime? completedAt,
     required DateTime createdAt,

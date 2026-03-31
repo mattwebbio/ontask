@@ -8,6 +8,7 @@ import '../../../../core/l10n/strings.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/energy_requirement.dart';
+import '../../domain/recurrence_rule.dart';
 import '../../domain/task.dart';
 import '../../domain/task_priority.dart';
 import '../../domain/time_window.dart';
@@ -36,6 +37,9 @@ class _TaskEditInlineState extends ConsumerState<TaskEditInline> {
   late final TextEditingController _titleController;
   late final TextEditingController _notesController;
   Timer? _debounce;
+  /// Cached edit scope choice for recurring tasks: null = not chosen yet,
+  /// true = edit all future, false = edit this instance only.
+  bool? _editAllFuture;
 
   @override
   void initState() {
@@ -57,14 +61,58 @@ class _TaskEditInlineState extends ConsumerState<TaskEditInline> {
   }
 
   void _onFieldsChanged(Map<String, dynamic> fields) {
+    if (widget.task.recurrenceRule != null && _editAllFuture == null) {
+      // Show edit scope choice before applying changes
+      _showEditScopeChoice(fields);
+      return;
+    }
+    _applyFields(fields);
+  }
+
+  void _showEditScopeChoice(Map<String, dynamic> fields) {
+    showCupertinoModalPopup<void>(
+      context: context,
+      builder: (context) => CupertinoActionSheet(
+        title: const Text(AppStrings.taskRecurrenceEditChoiceTitle),
+        actions: [
+          CupertinoActionSheetAction(
+            onPressed: () {
+              _editAllFuture = false;
+              Navigator.of(context).pop();
+              _applyFields(fields);
+            },
+            child: const Text(AppStrings.taskRecurrenceEditThisInstance),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              _editAllFuture = true;
+              Navigator.of(context).pop();
+              _applyFields({...fields, 'applyToFuture': true});
+            },
+            child: const Text(AppStrings.taskRecurrenceEditAllFuture),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text(AppStrings.actionCancel),
+        ),
+      ),
+    );
+  }
+
+  void _applyFields(Map<String, dynamic> fields) {
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 300), () {
+      final finalFields = Map<String, dynamic>.from(fields);
+      if (_editAllFuture == true && !finalFields.containsKey('applyToFuture')) {
+        finalFields['applyToFuture'] = true;
+      }
       ref
           .read(tasksProvider(
             listId: widget.task.listId,
             sectionId: widget.task.sectionId,
           ).notifier)
-          .updateTask(widget.task.id, fields);
+          .updateTask(widget.task.id, finalFields);
     });
   }
 
@@ -336,6 +384,204 @@ class _TaskEditInlineState extends ConsumerState<TaskEditInline> {
     );
   }
 
+  void _showRecurrencePicker() {
+    showCupertinoModalPopup<void>(
+      context: context,
+      builder: (context) => CupertinoActionSheet(
+        title: const Text(AppStrings.taskRecurrenceLabel),
+        actions: [
+          CupertinoActionSheetAction(
+            onPressed: () {
+              _applyFields({
+                'recurrenceRule': null,
+                'recurrenceInterval': null,
+                'recurrenceDaysOfWeek': null,
+              });
+              Navigator.of(context).pop();
+              setState(() {});
+            },
+            child: const Text(AppStrings.actionNone),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              _applyFields({
+                'recurrenceRule': 'daily',
+                'recurrenceInterval': null,
+                'recurrenceDaysOfWeek': null,
+              });
+              Navigator.of(context).pop();
+              setState(() {});
+            },
+            child: const Text(AppStrings.taskRecurrenceDaily),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              _applyFields({'recurrenceRule': 'weekly'});
+              Navigator.of(context).pop();
+              _showWeeklyDayPicker();
+              setState(() {});
+            },
+            child: const Text(AppStrings.taskRecurrenceWeekly),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              _applyFields({
+                'recurrenceRule': 'monthly',
+                'recurrenceInterval': null,
+                'recurrenceDaysOfWeek': null,
+              });
+              Navigator.of(context).pop();
+              setState(() {});
+            },
+            child: const Text(AppStrings.taskRecurrenceMonthly),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              _applyFields({'recurrenceRule': 'custom'});
+              Navigator.of(context).pop();
+              _showCustomIntervalPicker();
+              setState(() {});
+            },
+            child: const Text(AppStrings.taskRecurrenceCustom),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text(AppStrings.actionCancel),
+        ),
+      ),
+    );
+  }
+
+  void _showWeeklyDayPicker() {
+    final dayNames = [
+      AppStrings.taskDayMonday,
+      AppStrings.taskDayTuesday,
+      AppStrings.taskDayWednesday,
+      AppStrings.taskDayThursday,
+      AppStrings.taskDayFriday,
+      AppStrings.taskDaySaturday,
+      AppStrings.taskDaySunday,
+    ];
+    final selectedDays =
+        Set<int>.from(widget.task.recurrenceDaysOfWeek ?? <int>[]);
+
+    showCupertinoModalPopup<void>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => CupertinoActionSheet(
+          title: const Text(AppStrings.taskRecurrenceWeeklyDaysLabel),
+          actions: [
+            for (var i = 0; i < 7; i++)
+              CupertinoActionSheetAction(
+                onPressed: () {
+                  setModalState(() {
+                    final day = i + 1;
+                    if (selectedDays.contains(day)) {
+                      selectedDays.remove(day);
+                    } else {
+                      selectedDays.add(day);
+                    }
+                  });
+                },
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(dayNames[i]),
+                    if (selectedDays.contains(i + 1)) ...[
+                      const SizedBox(width: 8),
+                      const Icon(CupertinoIcons.checkmark, size: 16),
+                    ],
+                  ],
+                ),
+              ),
+          ],
+          cancelButton: CupertinoActionSheetAction(
+            onPressed: () {
+              if (selectedDays.isNotEmpty) {
+                final sorted = selectedDays.toList()..sort();
+                _applyFields({'recurrenceDaysOfWeek': sorted.toString()});
+              }
+              Navigator.of(context).pop();
+            },
+            child: const Text(AppStrings.actionDone),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showCustomIntervalPicker() {
+    int selectedInterval = widget.task.recurrenceInterval ?? 2;
+
+    showCupertinoModalPopup<void>(
+      context: context,
+      builder: (context) => Container(
+        height: 260,
+        color: CupertinoColors.systemBackground.resolveFrom(context),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: AppSpacing.lg),
+                  child: Text(
+                    AppStrings.taskRecurrenceCustomDaysLabel,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ),
+                CupertinoButton(
+                  child: const Text(AppStrings.actionDone),
+                  onPressed: () {
+                    _applyFields({'recurrenceInterval': selectedInterval});
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            ),
+            Expanded(
+              child: CupertinoPicker(
+                magnification: 1.22,
+                squeeze: 1.2,
+                useMagnifier: true,
+                itemExtent: 32,
+                scrollController: FixedExtentScrollController(
+                  initialItem: selectedInterval - 2,
+                ),
+                onSelectedItemChanged: (index) {
+                  selectedInterval = index + 2;
+                },
+                children: List<Widget>.generate(
+                  364,
+                  (index) => Center(
+                    child: Text('${index + 2}'),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _recurrenceLabel(RecurrenceRule rule) {
+    switch (rule) {
+      case RecurrenceRule.daily:
+        return AppStrings.taskRecurrenceDaily;
+      case RecurrenceRule.weekly:
+        return AppStrings.taskRecurrenceWeekly;
+      case RecurrenceRule.monthly:
+        return AppStrings.taskRecurrenceMonthly;
+      case RecurrenceRule.custom:
+        if (widget.task.recurrenceInterval != null) {
+          return 'Every ${widget.task.recurrenceInterval} days';
+        }
+        return AppStrings.taskRecurrenceCustom;
+    }
+  }
+
   String _energyLabel(EnergyRequirement energy) {
     switch (energy) {
       case EnergyRequirement.highFocus:
@@ -487,6 +733,30 @@ class _TaskEditInlineState extends ConsumerState<TaskEditInline> {
                   widget.task.priority != null && widget.task.priority != TaskPriority.normal
                       ? '${AppStrings.taskPriorityLabel}: ${_priorityLabel(widget.task.priority!)}'
                       : AppStrings.taskPriorityLabel,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: colors.textSecondary,
+                      ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+
+          // Recurrence picker
+          GestureDetector(
+            onTap: _showRecurrencePicker,
+            child: Row(
+              children: [
+                Icon(
+                  CupertinoIcons.repeat,
+                  size: 18,
+                  color: colors.textSecondary,
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Text(
+                  widget.task.recurrenceRule != null
+                      ? '${AppStrings.taskRecurrenceLabel}: ${_recurrenceLabel(widget.task.recurrenceRule!)}'
+                      : AppStrings.taskRecurrenceLabel,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: colors.textSecondary,
                       ),

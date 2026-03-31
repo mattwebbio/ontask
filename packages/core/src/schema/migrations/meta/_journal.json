@@ -15,6 +15,13 @@
       "when": 1774926702271,
       "tag": "0001_yummy_randall_flagg",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1774928015578,
+      "tag": "0002_square_purple_man",
+      "breakpoints": true
     }
   ]
 }

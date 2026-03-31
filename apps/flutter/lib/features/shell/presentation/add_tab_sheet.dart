@@ -8,6 +8,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../lists/domain/task_list.dart';
 import '../../lists/presentation/lists_provider.dart';
 import '../../tasks/domain/energy_requirement.dart';
+import '../../tasks/domain/recurrence_rule.dart';
 import '../../tasks/domain/task_priority.dart';
 import '../../tasks/domain/time_window.dart';
 import '../../tasks/presentation/tasks_provider.dart';
@@ -36,6 +37,9 @@ class _AddTabSheetState extends ConsumerState<AddTabSheet> {
   String? _timeWindowEnd;
   EnergyRequirement? _energyRequirement;
   TaskPriority? _priority;
+  RecurrenceRule? _recurrenceRule;
+  int? _recurrenceInterval;
+  List<int>? _recurrenceDaysOfWeek;
   bool _isSubmitting = false;
   String? _titleError;
 
@@ -73,6 +77,11 @@ class _AddTabSheetState extends ConsumerState<AddTabSheet> {
             timeWindowEnd: _timeWindow == TimeWindow.custom ? _timeWindowEnd : null,
             energyRequirement: _energyRequirement?.toJson(),
             priority: _priority?.toJson(),
+            recurrenceRule: _recurrenceRule?.toJson(),
+            recurrenceInterval: _recurrenceInterval,
+            recurrenceDaysOfWeek: _recurrenceDaysOfWeek != null
+                ? _recurrenceDaysOfWeek.toString()
+                : null,
           );
       if (mounted) {
         Navigator.of(context).pop();
@@ -355,6 +364,209 @@ class _AddTabSheetState extends ConsumerState<AddTabSheet> {
     );
   }
 
+  void _showRecurrencePicker() {
+    showCupertinoModalPopup<void>(
+      context: context,
+      builder: (context) => CupertinoActionSheet(
+        title: const Text(AppStrings.taskRecurrenceLabel),
+        actions: [
+          CupertinoActionSheetAction(
+            onPressed: () {
+              setState(() {
+                _recurrenceRule = null;
+                _recurrenceInterval = null;
+                _recurrenceDaysOfWeek = null;
+              });
+              Navigator.of(context).pop();
+            },
+            child: const Text(AppStrings.actionNone),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              setState(() {
+                _recurrenceRule = RecurrenceRule.daily;
+                _recurrenceInterval = null;
+                _recurrenceDaysOfWeek = null;
+              });
+              Navigator.of(context).pop();
+            },
+            child: const Text(AppStrings.taskRecurrenceDaily),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              setState(() {
+                _recurrenceRule = RecurrenceRule.weekly;
+                _recurrenceInterval = null;
+              });
+              Navigator.of(context).pop();
+              _showWeeklyDayPicker();
+            },
+            child: const Text(AppStrings.taskRecurrenceWeekly),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              setState(() {
+                _recurrenceRule = RecurrenceRule.monthly;
+                _recurrenceInterval = null;
+                _recurrenceDaysOfWeek = null;
+              });
+              Navigator.of(context).pop();
+            },
+            child: const Text(AppStrings.taskRecurrenceMonthly),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              setState(() {
+                _recurrenceRule = RecurrenceRule.custom;
+                _recurrenceDaysOfWeek = null;
+              });
+              Navigator.of(context).pop();
+              _showCustomIntervalPicker();
+            },
+            child: const Text(AppStrings.taskRecurrenceCustom),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text(AppStrings.actionCancel),
+        ),
+      ),
+    );
+  }
+
+  void _showWeeklyDayPicker() {
+    final dayNames = [
+      AppStrings.taskDayMonday,
+      AppStrings.taskDayTuesday,
+      AppStrings.taskDayWednesday,
+      AppStrings.taskDayThursday,
+      AppStrings.taskDayFriday,
+      AppStrings.taskDaySaturday,
+      AppStrings.taskDaySunday,
+    ];
+    // ISO day numbers: Mon=1..Sun=7
+    final selectedDays = Set<int>.from(_recurrenceDaysOfWeek ?? <int>[]);
+
+    showCupertinoModalPopup<void>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => CupertinoActionSheet(
+          title: const Text(AppStrings.taskRecurrenceWeeklyDaysLabel),
+          actions: [
+            for (var i = 0; i < 7; i++)
+              CupertinoActionSheetAction(
+                onPressed: () {
+                  setModalState(() {
+                    final day = i + 1;
+                    if (selectedDays.contains(day)) {
+                      selectedDays.remove(day);
+                    } else {
+                      selectedDays.add(day);
+                    }
+                  });
+                },
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(dayNames[i]),
+                    if (selectedDays.contains(i + 1)) ...[
+                      const SizedBox(width: 8),
+                      const Icon(CupertinoIcons.checkmark, size: 16),
+                    ],
+                  ],
+                ),
+              ),
+          ],
+          cancelButton: CupertinoActionSheetAction(
+            onPressed: () {
+              if (selectedDays.isNotEmpty) {
+                setState(() {
+                  _recurrenceDaysOfWeek = selectedDays.toList()..sort();
+                });
+              }
+              Navigator.of(context).pop();
+            },
+            child: const Text(AppStrings.actionDone),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showCustomIntervalPicker() {
+    int selectedInterval = _recurrenceInterval ?? 2;
+
+    showCupertinoModalPopup<void>(
+      context: context,
+      builder: (context) => Container(
+        height: 260,
+        color: CupertinoColors.systemBackground.resolveFrom(context),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: AppSpacing.lg),
+                  child: Text(
+                    AppStrings.taskRecurrenceCustomDaysLabel,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ),
+                CupertinoButton(
+                  child: const Text(AppStrings.actionDone),
+                  onPressed: () {
+                    setState(() {
+                      _recurrenceInterval = selectedInterval;
+                    });
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            ),
+            Expanded(
+              child: CupertinoPicker(
+                magnification: 1.22,
+                squeeze: 1.2,
+                useMagnifier: true,
+                itemExtent: 32,
+                scrollController: FixedExtentScrollController(
+                  initialItem: selectedInterval - 2,
+                ),
+                onSelectedItemChanged: (index) {
+                  selectedInterval = index + 2;
+                },
+                children: List<Widget>.generate(
+                  364, // 2..365
+                  (index) => Center(
+                    child: Text('${index + 2}'),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _recurrenceDisplayLabel() {
+    if (_recurrenceRule == null) return AppStrings.taskRecurrenceLabel;
+    switch (_recurrenceRule!) {
+      case RecurrenceRule.daily:
+        return '${AppStrings.taskRecurrenceLabel}: ${AppStrings.taskRecurrenceDaily}';
+      case RecurrenceRule.weekly:
+        return '${AppStrings.taskRecurrenceLabel}: ${AppStrings.taskRecurrenceWeekly}';
+      case RecurrenceRule.monthly:
+        return '${AppStrings.taskRecurrenceLabel}: ${AppStrings.taskRecurrenceMonthly}';
+      case RecurrenceRule.custom:
+        if (_recurrenceInterval != null) {
+          return '${AppStrings.taskRecurrenceLabel}: Every ${_recurrenceInterval} days';
+        }
+        return '${AppStrings.taskRecurrenceLabel}: ${AppStrings.taskRecurrenceCustom}';
+    }
+  }
+
   String _timeWindowDisplayLabel() {
     if (_timeWindow == null) return AppStrings.taskTimeWindowLabel;
     switch (_timeWindow!) {
@@ -621,6 +833,35 @@ class _AddTabSheetState extends ConsumerState<AddTabSheet> {
                         const SizedBox(width: AppSpacing.sm),
                         Text(
                           _priorityDisplayLabel(),
+                          style:
+                              Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: colors.textSecondary,
+                                  ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+
+                // Recurrence picker
+                GestureDetector(
+                  onTap: _showRecurrencePicker,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.md,
+                      vertical: AppSpacing.sm,
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          CupertinoIcons.repeat,
+                          size: 18,
+                          color: colors.textSecondary,
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        Text(
+                          _recurrenceDisplayLabel(),
                           style:
                               Theme.of(context).textTheme.bodyMedium?.copyWith(
                                     color: colors.textSecondary,

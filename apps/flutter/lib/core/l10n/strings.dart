@@ -267,6 +267,25 @@ class AppStrings {
   static const String taskPriorityHigh = 'High';
   static const String taskPriorityCritical = 'Critical';
 
+  // ── Recurring tasks ────────────────────────────────────────────────────────
+  static const String taskRecurrenceLabel = 'Repeats';
+  static const String taskRecurrenceDaily = 'Daily';
+  static const String taskRecurrenceWeekly = 'Weekly';
+  static const String taskRecurrenceMonthly = 'Monthly';
+  static const String taskRecurrenceCustom = 'Custom interval';
+  static const String taskRecurrenceCustomDaysLabel = 'Every how many days?';
+  static const String taskRecurrenceWeeklyDaysLabel = 'Which days?';
+  static const String taskRecurrenceEditThisInstance = 'Edit this task only';
+  static const String taskRecurrenceEditAllFuture = 'Edit this and all future tasks';
+  static const String taskRecurrenceEditChoiceTitle = 'This is a recurring task';
+  static const String taskDayMonday = 'Monday';
+  static const String taskDayTuesday = 'Tuesday';
+  static const String taskDayWednesday = 'Wednesday';
+  static const String taskDayThursday = 'Thursday';
+  static const String taskDayFriday = 'Friday';
+  static const String taskDaySaturday = 'Saturday';
+  static const String taskDaySunday = 'Sunday';
+
   // ── Lists tab ─────────────────────────────────────────────────────────────
   static const String listsTitle = "Lists";
   static const String createListButton = "Create a list";

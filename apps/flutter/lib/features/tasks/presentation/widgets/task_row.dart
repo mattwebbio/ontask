@@ -5,6 +5,7 @@ import '../../../../core/l10n/strings.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/energy_requirement.dart';
+import '../../domain/recurrence_rule.dart';
 import '../../domain/task.dart';
 import '../../domain/task_priority.dart';
 import '../../domain/time_window.dart';
@@ -76,7 +77,7 @@ class TaskRow extends StatelessWidget {
                                 : null,
                           ),
                     ),
-                    if (task.dueDate != null || _hasSchedulingHints) ...[
+                    if (task.dueDate != null || _hasSchedulingHints || task.recurrenceRule != null) ...[
                       const SizedBox(height: AppSpacing.xs),
                       Wrap(
                         spacing: AppSpacing.sm,
@@ -160,6 +161,27 @@ class TaskRow extends StatelessWidget {
                                 ),
                               ],
                             ),
+                          if (task.recurrenceRule != null)
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  CupertinoIcons.repeat,
+                                  size: 12,
+                                  color: colors.textSecondary,
+                                ),
+                                const SizedBox(width: 2),
+                                Text(
+                                  _recurrenceBadgeLabel(),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(
+                                        color: colors.textSecondary,
+                                      ),
+                                ),
+                              ],
+                            ),
                         ],
                       ),
                     ],
@@ -200,6 +222,22 @@ class TaskRow extends StatelessWidget {
           return '${task.timeWindowStart} – ${task.timeWindowEnd}';
         }
         return AppStrings.taskTimeWindowCustom;
+    }
+  }
+
+  String _recurrenceBadgeLabel() {
+    switch (task.recurrenceRule!) {
+      case RecurrenceRule.daily:
+        return AppStrings.taskRecurrenceDaily;
+      case RecurrenceRule.weekly:
+        return AppStrings.taskRecurrenceWeekly;
+      case RecurrenceRule.monthly:
+        return AppStrings.taskRecurrenceMonthly;
+      case RecurrenceRule.custom:
+        if (task.recurrenceInterval != null) {
+          return 'Every ${task.recurrenceInterval} days';
+        }
+        return AppStrings.taskRecurrenceCustom;
     }
   }
 
