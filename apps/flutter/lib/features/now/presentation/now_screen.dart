@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import 'now_provider.dart';
 import 'timer_provider.dart';
@@ -91,6 +92,14 @@ class _NowScreenState extends ConsumerState<NowScreen> {
             timerElapsedSeconds: elapsed,
             onComplete: () {
               ref.read(nowProvider.notifier).completeTask(task.id);
+              // Navigate to the Chapter Break Screen after task completion.
+              // Use context.push so the user can navigate back via system
+              // back gesture if needed.
+              context.push('/chapter-break', extra: <String, dynamic>{
+                'taskTitle': task.title,
+                // TODO(epic-6): pass stake amount when commitment flow is wired
+                'stakeAmount': null,
+              });
             },
             onStart: () {
               ref.read(taskTimerProvider.notifier).startTimer(task.id);

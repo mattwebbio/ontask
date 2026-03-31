@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-29
-last_updated: 2026-03-31 # Story 2.12 code review — 4 patch findings, moved to in-progress
+last_updated: 2026-03-31 # Story 2.13 complete — review
 project: ontask
 project_key: NOKEY
 tracking_system: file-system
@@ -76,8 +76,8 @@ development_status:
   2-9-task-search-filter: done
   2-10-explicit-task-begin-timer: done
   2-11-predicted-completion-badge: done
-  2-12-schedule-change-banner-overbooking-warning: in-progress
-  2-13-chapter-break-screen-ipad-layout: backlog
+  2-12-schedule-change-banner-overbooking-warning: done
+  2-13-chapter-break-screen-ipad-layout: review
   epic-2-retrospective: optional
 
   # ─────────────────────────────────────────────────────────
