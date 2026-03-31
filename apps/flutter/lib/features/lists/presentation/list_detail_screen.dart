@@ -9,6 +9,7 @@ import '../../tasks/domain/task.dart';
 import '../../tasks/presentation/tasks_provider.dart';
 import '../../tasks/presentation/widgets/task_edit_inline.dart';
 import '../../tasks/presentation/widgets/task_row.dart';
+import '../../templates/presentation/templates_provider.dart';
 import '../domain/section.dart';
 import 'lists_provider.dart';
 import 'sections_provider.dart';
@@ -60,17 +61,32 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
       navigationBar: CupertinoNavigationBar(
         backgroundColor: colors.surfacePrimary,
         middle: Text(list?.title ?? AppStrings.listDetailTitle),
-        trailing: CupertinoButton(
-          padding: EdgeInsets.zero,
-          onPressed: () {
-            setState(() => _showArchived = !_showArchived);
-          },
-          child: Text(
-            _showArchived ? AppStrings.hideArchived : AppStrings.showArchived,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: colors.accentPrimary,
-                ),
-          ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CupertinoButton(
+              padding: EdgeInsets.zero,
+              onPressed: () {
+                setState(() => _showArchived = !_showArchived);
+              },
+              child: Text(
+                _showArchived
+                    ? AppStrings.hideArchived
+                    : AppStrings.showArchived,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: colors.accentPrimary,
+                    ),
+              ),
+            ),
+            CupertinoButton(
+              padding: EdgeInsets.zero,
+              onPressed: () => _showMoreActions(context, list),
+              child: Icon(
+                CupertinoIcons.ellipsis_circle,
+                color: colors.accentPrimary,
+              ),
+            ),
+          ],
         ),
       ),
       child: SafeArea(
@@ -125,6 +141,13 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
                   onTaskTap: (task) =>
                       setState(() => _editingTask = task),
                   onArchiveTask: (task) => _archiveTask(task.id),
+                  onSaveAsTemplate: (section) =>
+                      _showSaveTemplateDialog(
+                        context,
+                        section.title,
+                        'section',
+                        section.id,
+                      ),
                 ),
             ],
           ),
@@ -191,5 +214,77 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
     ref
         .read(tasksProvider(listId: widget.listId).notifier)
         .archiveTask(taskId);
+  }
+
+  void _showMoreActions(BuildContext context, dynamic list) {
+    showCupertinoModalPopup<void>(
+      context: context,
+      builder: (ctx) => CupertinoActionSheet(
+        actions: [
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              _showSaveTemplateDialog(
+                context,
+                list?.title ?? '',
+                'list',
+                widget.listId,
+              );
+            },
+            child: const Text(AppStrings.templateSaveAsTemplate),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          onPressed: () => Navigator.of(ctx).pop(),
+          child: const Text(AppStrings.actionCancel),
+        ),
+      ),
+    );
+  }
+
+  void _showSaveTemplateDialog(
+    BuildContext context,
+    String defaultName,
+    String sourceType,
+    String sourceId,
+  ) {
+    final controller =
+        TextEditingController(text: '$defaultName template');
+    showCupertinoDialog<void>(
+      context: context,
+      builder: (ctx) => CupertinoAlertDialog(
+        title: const Text(AppStrings.templateSaveDialogTitle),
+        content: Padding(
+          padding: const EdgeInsets.only(top: AppSpacing.md),
+          child: CupertinoTextField(
+            controller: controller,
+            placeholder: AppStrings.templateNamePlaceholder,
+            autofocus: true,
+          ),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text(AppStrings.actionCancel),
+          ),
+          CupertinoDialogAction(
+            isDefaultAction: true,
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              try {
+                await ref.read(templatesProvider.notifier).createTemplate(
+                      title: controller.text.trim(),
+                      sourceType: sourceType,
+                      sourceId: sourceId,
+                    );
+              } catch (_) {
+                // Error handling deferred to real implementation
+              }
+            },
+            child: const Text(AppStrings.actionDone),
+          ),
+        ],
+      ),
+    );
   }
 }

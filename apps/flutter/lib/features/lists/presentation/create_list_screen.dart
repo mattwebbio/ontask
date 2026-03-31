@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/l10n/strings.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../templates/presentation/template_picker_screen.dart';
 import 'lists_provider.dart';
 
 /// Modal/sheet for creating a new list.
@@ -165,6 +166,27 @@ class _CreateListScreenState extends ConsumerState<CreateListScreen> {
                     _isSubmitting
                         ? AppStrings.submittingIndicator
                         : AppStrings.createListButton,
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+
+              // Start from template
+              SizedBox(
+                width: double.infinity,
+                child: CupertinoButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    showCupertinoModalPopup<void>(
+                      context: context,
+                      builder: (_) => const TemplatePickerScreen(),
+                    );
+                  },
+                  child: Text(
+                    AppStrings.templateStartFromTemplate,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: colors.accentPrimary,
+                        ),
                   ),
                 ),
               ),

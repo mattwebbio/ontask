@@ -22,6 +22,13 @@
       "when": 1774928015578,
       "tag": "0002_square_purple_man",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1774931166639,
+      "tag": "0003_melted_harry_osborn",
+      "breakpoints": true
     }
   ]
 }

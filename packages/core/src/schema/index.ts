@@ -2,3 +2,4 @@
 export { tasksTable } from './tasks.js'
 export { listsTable } from './lists.js'
 export { sectionsTable } from './sections.js'
+export { templatesTable } from './templates.js'

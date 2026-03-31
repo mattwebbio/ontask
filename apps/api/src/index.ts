@@ -6,6 +6,7 @@ import { usersRouter } from './routes/users.js'
 import { tasksRouter } from './routes/tasks.js'
 import { listsRouter } from './routes/lists.js'
 import { sectionsRouter } from './routes/sections.js'
+import { templatesRouter } from './routes/templates.js'
 import { AppError } from './lib/errors.js'
 import { reportToGlitchTip } from './lib/glitchtip.js'
 import { err } from './lib/response.js'
@@ -50,6 +51,7 @@ app.route('/', usersRouter)
 app.route('/', tasksRouter)
 app.route('/', listsRouter)
 app.route('/', sectionsRouter)
+app.route('/', templatesRouter)
 
 // ── OpenAPI documentation ──────────────────────────────────────────────────
 app.doc('/v1/doc', {

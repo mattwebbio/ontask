@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/l10n/strings.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../templates/presentation/templates_screen.dart';
 import 'create_list_screen.dart';
 import 'lists_provider.dart';
 import 'widgets/lists_empty_state.dart';
@@ -24,6 +25,24 @@ class ListsScreen extends ConsumerWidget {
     final colors = Theme.of(context).extension<OnTaskColors>()!;
 
     return CupertinoPageScaffold(
+      navigationBar: CupertinoNavigationBar(
+        backgroundColor: colors.surfacePrimary,
+        middle: const Text(AppStrings.listsTitle),
+        trailing: CupertinoButton(
+          padding: EdgeInsets.zero,
+          onPressed: () => Navigator.of(context).push(
+            CupertinoPageRoute<void>(
+              builder: (_) => const TemplatesScreen(),
+            ),
+          ),
+          child: Text(
+            AppStrings.templateLibraryTitle,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: colors.accentPrimary,
+                ),
+          ),
+        ),
+      ),
       child: SafeArea(
         child: listsState.when(
           loading: () => const Center(
