@@ -73,7 +73,7 @@ class _TaskEditInlineState extends ConsumerState<TaskEditInline> {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 CupertinoButton(
-                  child: const Text('Done'),
+                  child: const Text(AppStrings.actionDone),
                   onPressed: () => Navigator.of(context).pop(),
                 ),
               ],
@@ -166,7 +166,7 @@ class _TaskEditInlineState extends ConsumerState<TaskEditInline> {
               child: CupertinoButton(
                 padding: EdgeInsets.zero,
                 onPressed: widget.onDone,
-                child: const Text('Done'),
+                child: const Text(AppStrings.actionDone),
               ),
             ),
         ],

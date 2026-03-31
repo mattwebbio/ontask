@@ -13,7 +13,7 @@ describe('Sections routes', () => {
     })
 
     expect(res.status).toBe(201)
-    const body = await res.json()
+    const body = await res.json() as Record<string, any>
     expect(body.data.title).toBe('Sprint backlog')
     expect(body.data.listId).toBe('b0000000-0000-4000-8000-000000000001')
     expect(body.data.parentSectionId).toBeNull()
@@ -35,7 +35,7 @@ describe('Sections routes', () => {
     })
 
     expect(res.status).toBe(200)
-    const body = await res.json()
+    const body = await res.json() as Record<string, any>
     expect(body.data).toBeInstanceOf(Array)
     expect(body.pagination).toBeDefined()
   })
@@ -48,7 +48,7 @@ describe('Sections routes', () => {
     })
 
     expect(res.status).toBe(200)
-    const body = await res.json()
+    const body = await res.json() as Record<string, any>
     expect(body.data).toBeDefined()
   })
 

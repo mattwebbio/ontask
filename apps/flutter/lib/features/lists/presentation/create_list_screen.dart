@@ -62,7 +62,7 @@ class _CreateListScreenState extends ConsumerState<CreateListScreen> {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 CupertinoButton(
-                  child: const Text('Done'),
+                  child: const Text(AppStrings.actionDone),
                   onPressed: () => Navigator.of(context).pop(),
                 ),
               ],
@@ -163,7 +163,7 @@ class _CreateListScreenState extends ConsumerState<CreateListScreen> {
                   onPressed: _isSubmitting ? null : _createList,
                   child: Text(
                     _isSubmitting
-                        ? '...'
+                        ? AppStrings.submittingIndicator
                         : AppStrings.createListButton,
                   ),
                 ),

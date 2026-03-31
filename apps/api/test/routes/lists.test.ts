@@ -10,7 +10,7 @@ describe('Lists routes', () => {
     })
 
     expect(res.status).toBe(201)
-    const body = await res.json()
+    const body = await res.json() as Record<string, any>
     expect(body.data.title).toBe('Work tasks')
     expect(body.data.id).toBeDefined()
     expect(body.data.archivedAt).toBeNull()
@@ -31,7 +31,7 @@ describe('Lists routes', () => {
     const res = await app.request('/v1/lists', { method: 'GET' })
 
     expect(res.status).toBe(200)
-    const body = await res.json()
+    const body = await res.json() as Record<string, any>
     expect(body.data).toBeInstanceOf(Array)
     expect(body.pagination).toBeDefined()
     expect(body.pagination.cursor).toBeNull()
@@ -44,7 +44,7 @@ describe('Lists routes', () => {
     })
 
     expect(res.status).toBe(200)
-    const body = await res.json()
+    const body = await res.json() as Record<string, any>
     expect(body.data.id).toBe('b0000000-0000-4000-8000-000000000001')
     expect(body.data.sections).toBeInstanceOf(Array)
   })
@@ -57,7 +57,7 @@ describe('Lists routes', () => {
     })
 
     expect(res.status).toBe(200)
-    const body = await res.json()
+    const body = await res.json() as Record<string, any>
     expect(body.data).toBeDefined()
   })
 

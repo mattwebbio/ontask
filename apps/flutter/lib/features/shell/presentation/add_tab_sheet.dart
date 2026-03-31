@@ -83,7 +83,7 @@ class _AddTabSheetState extends ConsumerState<AddTabSheet> {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 CupertinoButton(
-                  child: const Text('Done'),
+                  child: const Text(AppStrings.actionDone),
                   onPressed: () => Navigator.of(context).pop(),
                 ),
               ],
@@ -114,7 +114,7 @@ class _AddTabSheetState extends ConsumerState<AddTabSheet> {
               setState(() => _selectedListId = null);
               Navigator.of(context).pop();
             },
-            child: const Text('None'),
+            child: const Text(AppStrings.actionNone),
           ),
           for (final list in lists)
             CupertinoActionSheetAction(
@@ -127,7 +127,7 @@ class _AddTabSheetState extends ConsumerState<AddTabSheet> {
         ],
         cancelButton: CupertinoActionSheetAction(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+          child: const Text(AppStrings.actionCancel),
         ),
       ),
     );
@@ -288,7 +288,7 @@ class _AddTabSheetState extends ConsumerState<AddTabSheet> {
                   child: CupertinoButton.filled(
                     onPressed: _isSubmitting ? null : _createTask,
                     child: Text(
-                      _isSubmitting ? '...' : AppStrings.addTaskCreateButton,
+                      _isSubmitting ? AppStrings.submittingIndicator : AppStrings.addTaskCreateButton,
                     ),
                   ),
                 ),

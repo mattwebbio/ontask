@@ -263,4 +263,13 @@ class AppStrings {
   static const String taskTitlePlaceholder = "Task title";
   static const String editTaskNotes = "Notes";
   static const String editTaskDueDate = "Due date";
+
+  // ── Shared UI actions ──────────────────────────────────────────────────────
+  static const String actionDone = "Done";
+  static const String actionCancel = "Cancel";
+  static const String actionNone = "None";
+  static const String submittingIndicator = "…";
+
+  // ── Lists tab — error state ────────────────────────────────────────────────
+  static const String listsError = "Something went wrong loading your lists. Please try again.";
 }

@@ -23,15 +23,15 @@ class ListsScreen extends ConsumerWidget {
     final listsState = ref.watch(listsProvider);
     final colors = Theme.of(context).extension<OnTaskColors>()!;
 
-    return Scaffold(
-      body: SafeArea(
+    return CupertinoPageScaffold(
+      child: SafeArea(
         child: listsState.when(
           loading: () => const Center(
             child: CupertinoActivityIndicator(),
           ),
           error: (error, _) => Center(
             child: Text(
-              AppStrings.addTaskError,
+              AppStrings.listsError,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: colors.textSecondary,
                   ),

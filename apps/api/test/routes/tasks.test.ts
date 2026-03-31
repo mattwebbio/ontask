@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import app from '../../src/index.js'
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyJson = any
+
 describe('Tasks routes', () => {
   it('POST /v1/tasks — creates task and returns 201 with correct envelope', async () => {
     const res = await app.request('/v1/tasks', {
@@ -10,7 +13,7 @@ describe('Tasks routes', () => {
     })
 
     expect(res.status).toBe(201)
-    const body = await res.json()
+    const body = await res.json() as AnyJson
     expect(body.data.title).toBe('Buy groceries')
     expect(body.data.id).toBeDefined()
     expect(body.data.archivedAt).toBeNull()
@@ -32,7 +35,7 @@ describe('Tasks routes', () => {
     const res = await app.request('/v1/tasks', { method: 'GET' })
 
     expect(res.status).toBe(200)
-    const body = await res.json()
+    const body = await res.json() as AnyJson
     expect(body.data).toBeInstanceOf(Array)
     expect(body.pagination).toBeDefined()
     expect(body.pagination.cursor).toBeNull()
@@ -53,7 +56,7 @@ describe('Tasks routes', () => {
     })
 
     expect(res.status).toBe(200)
-    const body = await res.json()
+    const body = await res.json() as AnyJson
     expect(body.data.id).toBe('a0000000-0000-4000-8000-000000000001')
   })
 
@@ -65,7 +68,7 @@ describe('Tasks routes', () => {
     })
 
     expect(res.status).toBe(200)
-    const body = await res.json()
+    const body = await res.json() as AnyJson
     expect(body.data).toBeDefined()
   })
 
@@ -85,7 +88,7 @@ describe('Tasks routes', () => {
     })
 
     expect(res.status).toBe(200)
-    const body = await res.json()
+    const body = await res.json() as AnyJson
     expect(body.data.position).toBe(3)
   })
 
@@ -96,7 +99,7 @@ describe('Tasks routes', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ title: 'Schema test' }),
     })
-    const postBody = await postRes.json()
+    const postBody = await postRes.json() as AnyJson
     expect(postBody.data).toHaveProperty('id')
     expect(postBody.data).toHaveProperty('title')
     expect(postBody.data).toHaveProperty('position')
@@ -105,7 +108,7 @@ describe('Tasks routes', () => {
 
     // GET list returns proper pagination envelope
     const getRes = await app.request('/v1/tasks', { method: 'GET' })
-    const getBody = await getRes.json()
+    const getBody = await getRes.json() as AnyJson
     expect(getBody).toHaveProperty('data')
     expect(getBody).toHaveProperty('pagination')
   })

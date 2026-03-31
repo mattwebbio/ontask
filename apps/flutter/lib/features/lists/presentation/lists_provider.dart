@@ -44,12 +44,17 @@ class ListsNotifier extends _$ListsNotifier {
     );
   }
 
-  /// Archives a list (soft delete).
+  /// Archives a list (soft delete — sets archivedAt, does not remove from state).
   Future<void> archiveList(String id) async {
     final repo = ref.read(listsRepositoryProvider);
     await repo.archiveList(id);
 
     final current = state.value ?? [];
-    state = AsyncData(current.where((l) => l.id != id).toList());
+    final now = DateTime.now();
+    state = AsyncData(
+      current
+          .map((l) => l.id == id ? l.copyWith(archivedAt: now) : l)
+          .toList(),
+    );
   }
 }

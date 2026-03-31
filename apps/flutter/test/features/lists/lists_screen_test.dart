@@ -108,7 +108,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text(AppStrings.addTaskError), findsOneWidget);
+      expect(find.text(AppStrings.listsError), findsOneWidget);
     });
   });
 }
