@@ -58,6 +58,9 @@ importers:
       '@ontask/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@ontask/scheduling':
+        specifier: workspace:*
+        version: link:../../packages/scheduling
       drizzle-orm:
         specifier: ^0.45.2
         version: 0.45.2(@neondatabase/serverless@1.0.2)(@types/pg@8.20.0)

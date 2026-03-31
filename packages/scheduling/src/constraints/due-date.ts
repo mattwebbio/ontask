@@ -1,14 +1,28 @@
 import type { ScheduleTask, ScheduledBlock } from '@ontask/core'
 
 /**
- * Stub — applyDueDateConstraint
- * Full implementation: Story 3.2
- *
- * Filters or re-orders slots based on a task's dueDate.
+ * applyDueDateConstraint — removes slots whose endTime is after the task's dueDate.
+ * If no slots remain after filtering, marks the task as at-risk via constraintNotes.
+ * If task has no dueDate, passes all slots through unchanged.
  */
 export function applyDueDateConstraint(
-  _task: ScheduleTask,
+  task: ScheduleTask,
   slots: ScheduledBlock[],
 ): ScheduledBlock[] {
-  return slots
+  if (!task.dueDate) {
+    return slots
+  }
+
+  const validSlots = slots.filter((slot) => slot.endTime <= task.dueDate!)
+
+  if (validSlots.length === 0 && slots.length > 0) {
+    // No valid slot before due date — mark all remaining slots as at-risk
+    return slots.map((slot) => ({
+      ...slot,
+      isAtRisk: true,
+      constraintNotes: `No slot available before due date ${task.dueDate!.toISOString()}`,
+    }))
+  }
+
+  return validSlots
 }

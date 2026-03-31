@@ -9,6 +9,7 @@ import { sectionsRouter } from './routes/sections.js'
 import { templatesRouter } from './routes/templates.js'
 import { taskDependenciesRouter } from './routes/task-dependencies.js'
 import { bulkOperationsRouter } from './routes/bulk-operations.js'
+import { schedulingRouter } from './routes/scheduling.js'
 import { AppError } from './lib/errors.js'
 import { reportToGlitchTip } from './lib/glitchtip.js'
 import { err } from './lib/response.js'
@@ -59,6 +60,7 @@ app.route('/', listsRouter)
 app.route('/', sectionsRouter)
 app.route('/', templatesRouter)
 app.route('/', taskDependenciesRouter)
+app.route('/', schedulingRouter)
 
 // ── OpenAPI documentation ──────────────────────────────────────────────────
 app.doc('/v1/doc', {
