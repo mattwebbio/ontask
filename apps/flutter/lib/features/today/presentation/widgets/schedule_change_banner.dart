@@ -32,19 +32,22 @@ class _ScheduleChangeBannerAsyncState
 
     final isVisible = bannerVisible.value == true;
 
-    if (isVisible && !_hapticFired) {
-      _hapticFired = true;
-      HapticFeedback.lightImpact();
-    }
-
     if (!isVisible) {
       return const SizedBox.shrink();
     }
 
     return changesAsync.when(
       loading: () => const SizedBox.shrink(),
-      error: (_, __) => const SizedBox.shrink(),
-      data: (changes) => ScheduleChangeBanner(changes: changes),
+      error: (_, _) => const SizedBox.shrink(),
+      data: (changes) {
+        if (!_hapticFired) {
+          _hapticFired = true;
+          WidgetsBinding.instance.addPostFrameCallback(
+            (_) => HapticFeedback.lightImpact(),
+          );
+        }
+        return ScheduleChangeBanner(changes: changes);
+      },
     );
   }
 }
@@ -95,7 +98,7 @@ class ScheduleChangeBanner extends ConsumerWidget {
             ),
             CupertinoButton(
               padding: EdgeInsets.zero,
-              minSize: 0,
+              minimumSize: Size.zero,
               onPressed: () => _showChangesSheet(context, changes.changes),
               child: Text(
                 AppStrings.scheduleChangeSeeWhat,
@@ -109,7 +112,7 @@ class ScheduleChangeBanner extends ConsumerWidget {
               label: AppStrings.scheduleChangeDismissVoiceOver,
               child: CupertinoButton(
                 padding: const EdgeInsets.only(left: AppSpacing.sm),
-                minSize: 0,
+                minimumSize: Size.zero,
                 onPressed: () => ref
                     .read(scheduleChangeBannerVisibleProvider.notifier)
                     .dismiss(),
@@ -152,7 +155,7 @@ class ScheduleChangeBanner extends ConsumerWidget {
   }
 
   String _buildMovedSummary(ScheduleChangeItem item) {
-    final time = item.newTime != null ? _formatTime(item.newTime!) : '—';
+    final time = item.newTime != null ? _formatTime(item.newTime!) : AppStrings.predictionBadgeUnknown;
     return AppStrings.scheduleChangeMovedFormat
         .replaceFirst('{title}', item.taskTitle)
         .replaceFirst('{time}', time);

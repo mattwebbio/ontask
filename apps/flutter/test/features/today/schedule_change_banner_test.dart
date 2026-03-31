@@ -48,10 +48,12 @@ void main() {
       );
 
   Widget buildBanner(ScheduleChanges changes) {
-    return MaterialApp(
-      theme: AppTheme.light(ThemeVariant.clay, 'PlayfairDisplay'),
-      home: Scaffold(
-        body: ScheduleChangeBanner(changes: changes),
+    return ProviderScope(
+      child: MaterialApp(
+        theme: AppTheme.light(ThemeVariant.clay, 'PlayfairDisplay'),
+        home: Scaffold(
+          body: ScheduleChangeBanner(changes: changes),
+        ),
       ),
     );
   }
@@ -96,6 +98,33 @@ void main() {
       await tester.tap(find.text(AppStrings.scheduleChangeSeeWhat));
       await tester.pumpAndSettle();
       expect(find.textContaining('Team sync prep'), findsOneWidget);
+    });
+
+    testWidgets('tapping dismiss button sets banner visible to false', (tester) async {
+      final container = ProviderContainer(
+        overrides: [
+          todayRepositoryProvider.overrideWithValue(
+            _FakeTodayRepository(changes: stubChanges(hasMeaningfulChanges: true)),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      await container.read(scheduleChangeBannerVisibleProvider.future);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            theme: AppTheme.light(ThemeVariant.clay, 'PlayfairDisplay'),
+            home: Scaffold(body: ScheduleChangeBanner(changes: stubChanges())),
+          ),
+        ),
+      );
+      await tester.tap(find.byIcon(CupertinoIcons.xmark));
+      await tester.pump();
+      expect(container.read(scheduleChangeBannerVisibleProvider).value, false);
+      // Flush Riverpod dispose scheduler timers to avoid pending timer assertion.
+      await tester.pump(const Duration(milliseconds: 500));
     });
   });
 

@@ -136,7 +136,7 @@ class _ActionButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return CupertinoButton(
       padding: EdgeInsets.zero,
-      minSize: 0,
+      minimumSize: Size.zero,
       onPressed: onPressed,
       child: Text(
         label,
@@ -162,7 +162,7 @@ class OverbookingWarningBannerAsync extends ConsumerWidget {
 
     return statusAsync.when(
       loading: () => const SizedBox.shrink(),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
       data: (status) {
         if (!status.isOverbooked) return const SizedBox.shrink();
 
