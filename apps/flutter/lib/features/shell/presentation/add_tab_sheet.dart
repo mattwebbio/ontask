@@ -479,11 +479,15 @@ class _AddTabSheetState extends ConsumerState<AddTabSheet> {
           ],
           cancelButton: CupertinoActionSheetAction(
             onPressed: () {
-              if (selectedDays.isNotEmpty) {
-                setState(() {
+              setState(() {
+                if (selectedDays.isNotEmpty) {
                   _recurrenceDaysOfWeek = selectedDays.toList()..sort();
-                });
-              }
+                } else {
+                  // No days selected — revert recurrence rule
+                  _recurrenceRule = null;
+                  _recurrenceDaysOfWeek = null;
+                }
+              });
               Navigator.of(context).pop();
             },
             child: const Text(AppStrings.actionDone),
@@ -561,7 +565,7 @@ class _AddTabSheetState extends ConsumerState<AddTabSheet> {
         return '${AppStrings.taskRecurrenceLabel}: ${AppStrings.taskRecurrenceMonthly}';
       case RecurrenceRule.custom:
         if (_recurrenceInterval != null) {
-          return '${AppStrings.taskRecurrenceLabel}: Every ${_recurrenceInterval} days';
+          return '${AppStrings.taskRecurrenceLabel}: ${AppStrings.taskRecurrenceEveryNDays.replaceAll('{n}', '$_recurrenceInterval')}';
         }
         return '${AppStrings.taskRecurrenceLabel}: ${AppStrings.taskRecurrenceCustom}';
     }

@@ -392,7 +392,7 @@ class _TaskEditInlineState extends ConsumerState<TaskEditInline> {
         actions: [
           CupertinoActionSheetAction(
             onPressed: () {
-              _applyFields({
+              _onFieldsChanged({
                 'recurrenceRule': null,
                 'recurrenceInterval': null,
                 'recurrenceDaysOfWeek': null,
@@ -404,7 +404,7 @@ class _TaskEditInlineState extends ConsumerState<TaskEditInline> {
           ),
           CupertinoActionSheetAction(
             onPressed: () {
-              _applyFields({
+              _onFieldsChanged({
                 'recurrenceRule': 'daily',
                 'recurrenceInterval': null,
                 'recurrenceDaysOfWeek': null,
@@ -416,7 +416,7 @@ class _TaskEditInlineState extends ConsumerState<TaskEditInline> {
           ),
           CupertinoActionSheetAction(
             onPressed: () {
-              _applyFields({'recurrenceRule': 'weekly'});
+              _onFieldsChanged({'recurrenceRule': 'weekly'});
               Navigator.of(context).pop();
               _showWeeklyDayPicker();
               setState(() {});
@@ -425,7 +425,7 @@ class _TaskEditInlineState extends ConsumerState<TaskEditInline> {
           ),
           CupertinoActionSheetAction(
             onPressed: () {
-              _applyFields({
+              _onFieldsChanged({
                 'recurrenceRule': 'monthly',
                 'recurrenceInterval': null,
                 'recurrenceDaysOfWeek': null,
@@ -437,7 +437,7 @@ class _TaskEditInlineState extends ConsumerState<TaskEditInline> {
           ),
           CupertinoActionSheetAction(
             onPressed: () {
-              _applyFields({'recurrenceRule': 'custom'});
+              _onFieldsChanged({'recurrenceRule': 'custom'});
               Navigator.of(context).pop();
               _showCustomIntervalPicker();
               setState(() {});
@@ -500,7 +500,13 @@ class _TaskEditInlineState extends ConsumerState<TaskEditInline> {
             onPressed: () {
               if (selectedDays.isNotEmpty) {
                 final sorted = selectedDays.toList()..sort();
-                _applyFields({'recurrenceDaysOfWeek': sorted.toString()});
+                _onFieldsChanged({'recurrenceDaysOfWeek': sorted.toString()});
+              } else {
+                // No days selected — revert recurrence rule
+                _onFieldsChanged({
+                  'recurrenceRule': null,
+                  'recurrenceDaysOfWeek': null,
+                });
               }
               Navigator.of(context).pop();
             },
@@ -534,7 +540,7 @@ class _TaskEditInlineState extends ConsumerState<TaskEditInline> {
                 CupertinoButton(
                   child: const Text(AppStrings.actionDone),
                   onPressed: () {
-                    _applyFields({'recurrenceInterval': selectedInterval});
+                    _onFieldsChanged({'recurrenceInterval': selectedInterval});
                     Navigator.of(context).pop();
                   },
                 ),
@@ -576,7 +582,7 @@ class _TaskEditInlineState extends ConsumerState<TaskEditInline> {
         return AppStrings.taskRecurrenceMonthly;
       case RecurrenceRule.custom:
         if (widget.task.recurrenceInterval != null) {
-          return 'Every ${widget.task.recurrenceInterval} days';
+          return AppStrings.taskRecurrenceEveryNDays.replaceAll('{n}', '${widget.task.recurrenceInterval}');
         }
         return AppStrings.taskRecurrenceCustom;
     }

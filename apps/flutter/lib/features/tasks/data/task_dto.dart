@@ -60,13 +60,20 @@ abstract class TaskDto with _$TaskDto {
         priority: TaskPriority.fromJson(priority),
         recurrenceRule: RecurrenceRule.fromJson(recurrenceRule),
         recurrenceInterval: recurrenceInterval,
-        recurrenceDaysOfWeek: recurrenceDaysOfWeek != null
-            ? (jsonDecode(recurrenceDaysOfWeek!) as List).cast<int>()
-            : null,
+        recurrenceDaysOfWeek: _parseDaysOfWeek(recurrenceDaysOfWeek),
         recurrenceParentId: recurrenceParentId,
         archivedAt: archivedAt != null ? DateTime.parse(archivedAt!) : null,
         completedAt: completedAt != null ? DateTime.parse(completedAt!) : null,
         createdAt: DateTime.parse(createdAt),
         updatedAt: DateTime.parse(updatedAt),
       );
+
+  static List<int>? _parseDaysOfWeek(String? value) {
+    if (value == null) return null;
+    try {
+      return (jsonDecode(value) as List).cast<int>();
+    } catch (_) {
+      return null;
+    }
+  }
 }

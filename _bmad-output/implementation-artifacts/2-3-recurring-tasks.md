@@ -112,7 +112,14 @@ So that I can track regular commitments — including staking money on habits �
 
 ### Review Findings
 
-(Populated during code review)
+- [ ] [Review][Patch] Inline string literal `'Every ${task.recurrenceInterval} days'` — must use AppStrings pattern, not inline interpolation [task_row.dart:239]
+- [ ] [Review][Patch] Inline string literal `'Every ${widget.task.recurrenceInterval} days'` — same issue [task_edit_inline.dart:579]
+- [ ] [Review][Patch] Inline string literal `'Every ${_recurrenceInterval} days'` — same issue [add_tab_sheet.dart:564]
+- [ ] [Review][Patch] No API test exercises recurring-task completion (nextInstance branch) — stubTask defaults recurrenceRule to null so the if-branch is never reached [tasks.test.ts]
+- [ ] [Review][Patch] Weekly day picker allows dismissal with zero days selected, leaving recurrenceRule='weekly' with null recurrenceDaysOfWeek — spec requires at least one day [add_tab_sheet.dart, task_edit_inline.dart]
+- [ ] [Review][Patch] `recurrenceDaysOfWeek` JSON parsing in TaskDto.toDomain() has no try/catch — malformed JSON from API will crash the app [task_dto.dart:64]
+- [ ] [Review][Patch] Recurrence picker in TaskEditInline calls `_applyFields` directly, bypassing edit-scope choice dialog for recurring tasks — spec says choice should appear for any editable field [task_edit_inline.dart:396-440]
+- [ ] [Review][Patch] `applyToFuture` sent as body field but spec says it should be a query param on PATCH; also not declared in updateTaskSchema Zod schema [task_edit_inline.dart:90, tasks.ts updateTaskSchema]
 
 ## Dev Notes
 

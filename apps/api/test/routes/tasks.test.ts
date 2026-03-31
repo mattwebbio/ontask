@@ -314,6 +314,21 @@ describe('Tasks routes', () => {
     expect(body.data.nextInstance).toBeNull()
   })
 
+  it('POST /v1/tasks/:id/complete — response shape includes completedTask and nextInstance fields', async () => {
+    // Stub always returns non-recurring (recurrenceRule=null), so nextInstance is null.
+    // TODO(impl): when real DB is wired, add test with recurring task to verify nextInstance is populated.
+    const res = await app.request('/v1/tasks/a0000000-0000-4000-8000-000000000001/complete', {
+      method: 'POST',
+    })
+
+    expect(res.status).toBe(200)
+    const body = await res.json() as AnyJson
+    expect(body.data).toHaveProperty('completedTask')
+    expect(body.data).toHaveProperty('nextInstance')
+    expect(body.data.completedTask.completedAt).not.toBeNull()
+    expect(body.data.completedTask.id).toBe('a0000000-0000-4000-8000-000000000001')
+  })
+
   it('All task routes match Zod response schemas (no schema violations)', async () => {
     // POST returns proper data envelope
     const postRes = await app.request('/v1/tasks', {

@@ -235,7 +235,7 @@ class TaskRow extends StatelessWidget {
         return AppStrings.taskRecurrenceMonthly;
       case RecurrenceRule.custom:
         if (task.recurrenceInterval != null) {
-          return 'Every ${task.recurrenceInterval} days';
+          return AppStrings.taskRecurrenceEveryNDays.replaceAll('{n}', '${task.recurrenceInterval}');
         }
         return AppStrings.taskRecurrenceCustom;
     }

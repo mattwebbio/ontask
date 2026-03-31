@@ -285,6 +285,7 @@ class AppStrings {
   static const String taskDayFriday = 'Friday';
   static const String taskDaySaturday = 'Saturday';
   static const String taskDaySunday = 'Sunday';
+  static const String taskRecurrenceEveryNDays = 'Every {n} days';
 
   // ── Lists tab ─────────────────────────────────────────────────────────────
   static const String listsTitle = "Lists";
