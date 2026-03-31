@@ -10,9 +10,12 @@ import '../../../../core/theme/app_theme.dart';
 import '../../domain/energy_requirement.dart';
 import '../../domain/recurrence_rule.dart';
 import '../../domain/task.dart';
+import '../../domain/task_dependency.dart';
 import '../../domain/task_priority.dart';
 import '../../domain/time_window.dart';
+import '../dependencies_provider.dart';
 import '../tasks_provider.dart';
+import 'dependency_picker.dart';
 
 /// Inline editing widget for task properties.
 ///
@@ -572,6 +575,126 @@ class _TaskEditInlineState extends ConsumerState<TaskEditInline> {
     );
   }
 
+  Widget _buildDependenciesSection(BuildContext context, OnTaskColors colors) {
+    final depsAsync =
+        ref.watch(dependenciesProvider(taskId: widget.task.id));
+    final dependsOn = depsAsync.value?.dependsOn ?? <TaskDependency>[];
+
+    // Get all tasks in the same list to resolve names and for the picker
+    // Note: sectionId omitted intentionally — picker must show all tasks in the list
+    final allTasks = ref
+            .watch(tasksProvider(
+              listId: widget.task.listId,
+            ))
+            .value ??
+        [];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Section header
+        Row(
+          children: [
+            Icon(
+              CupertinoIcons.link,
+              size: 18,
+              color: colors.textSecondary,
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Text(
+              AppStrings.taskDependenciesLabel,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: colors.textSecondary,
+                  ),
+            ),
+          ],
+        ),
+        // Existing dependencies
+        for (final dep in dependsOn)
+          Padding(
+            padding: const EdgeInsets.only(
+              left: AppSpacing.xl,
+              top: AppSpacing.xs,
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    _taskTitleById(allTasks, dep.dependsOnTaskId),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: colors.textPrimary,
+                        ),
+                  ),
+                ),
+                CupertinoButton(
+                  padding: EdgeInsets.zero,
+                  minSize: 24,
+                  onPressed: () {
+                    ref
+                        .read(dependenciesProvider(taskId: widget.task.id)
+                            .notifier)
+                        .removeDependency(dep.id);
+                  },
+                  child: Icon(
+                    CupertinoIcons.xmark_circle_fill,
+                    size: 16,
+                    color: colors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        // Add dependency button
+        Padding(
+          padding: const EdgeInsets.only(
+            left: AppSpacing.xl,
+            top: AppSpacing.xs,
+          ),
+          child: CupertinoButton(
+            padding: EdgeInsets.zero,
+            minSize: 24,
+            onPressed: () => _showDependencyPicker(allTasks, dependsOn),
+            child: Text(
+              AppStrings.taskAddDependency,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: colors.accentPrimary,
+                  ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _taskTitleById(List<Task> tasks, String taskId) {
+    final task = tasks.where((t) => t.id == taskId).firstOrNull;
+    return task?.title ?? taskId;
+  }
+
+  void _showDependencyPicker(
+    List<Task> allTasks,
+    List<TaskDependency> existingDeps,
+  ) {
+    final existingIds = existingDeps.map((d) => d.dependsOnTaskId).toSet();
+    final available = allTasks
+        .where((t) => t.id != widget.task.id && !existingIds.contains(t.id))
+        .toList();
+
+    showCupertinoModalPopup<void>(
+      context: context,
+      builder: (context) => DependencyPicker(
+        availableTasks: available,
+        onSelected: (task) {
+          Navigator.of(context).pop();
+          ref
+              .read(
+                  dependenciesProvider(taskId: widget.task.id).notifier)
+              .addDependency(task.id);
+        },
+      ),
+    );
+  }
+
   String _recurrenceLabel(RecurrenceRule rule) {
     switch (rule) {
       case RecurrenceRule.daily:
@@ -770,6 +893,10 @@ class _TaskEditInlineState extends ConsumerState<TaskEditInline> {
               ],
             ),
           ),
+          const SizedBox(height: AppSpacing.md),
+
+          // Dependencies section
+          _buildDependenciesSection(context, colors),
           const SizedBox(height: AppSpacing.lg),
 
           // Done button

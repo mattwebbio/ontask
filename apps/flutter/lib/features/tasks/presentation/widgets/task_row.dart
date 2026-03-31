@@ -7,6 +7,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../domain/energy_requirement.dart';
 import '../../domain/recurrence_rule.dart';
 import '../../domain/task.dart';
+import '../../domain/task_dependency.dart';
 import '../../domain/task_priority.dart';
 import '../../domain/time_window.dart';
 
@@ -19,12 +20,36 @@ class TaskRow extends StatelessWidget {
     required this.task,
     this.onTap,
     this.onArchive,
+    this.dependsOn = const [],
+    this.blocks = const [],
+    this.allTasks = const [],
+    this.isSelected = false,
+    this.isMultiSelectMode = false,
+    this.onSelectionToggle,
     super.key,
   });
 
   final Task task;
   final VoidCallback? onTap;
   final VoidCallback? onArchive;
+
+  /// Dependencies where this task depends on another.
+  final List<TaskDependency> dependsOn;
+
+  /// Dependencies where this task blocks another.
+  final List<TaskDependency> blocks;
+
+  /// All tasks in the list — used to resolve dependency task titles.
+  final List<Task> allTasks;
+
+  /// Whether this task is selected in multi-select mode.
+  final bool isSelected;
+
+  /// Whether multi-select mode is active.
+  final bool isMultiSelectMode;
+
+  /// Called when the selection checkbox is toggled.
+  final VoidCallback? onSelectionToggle;
 
   @override
   Widget build(BuildContext context) {
@@ -62,6 +87,22 @@ class TaskRow extends StatelessWidget {
           ),
           child: Row(
             children: [
+              // Multi-select checkbox
+              if (isMultiSelectMode) ...[
+                GestureDetector(
+                  onTap: onSelectionToggle,
+                  child: Icon(
+                    isSelected
+                        ? CupertinoIcons.checkmark_circle_fill
+                        : CupertinoIcons.circle,
+                    size: 22,
+                    color: isSelected
+                        ? colors.accentPrimary
+                        : colors.textSecondary,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+              ],
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -77,7 +118,7 @@ class TaskRow extends StatelessWidget {
                                 : null,
                           ),
                     ),
-                    if (task.dueDate != null || _hasSchedulingHints || task.recurrenceRule != null) ...[
+                    if (task.dueDate != null || _hasSchedulingHints || task.recurrenceRule != null || dependsOn.isNotEmpty || blocks.isNotEmpty) ...[
                       const SizedBox(height: AppSpacing.xs),
                       Wrap(
                         spacing: AppSpacing.sm,
@@ -182,6 +223,49 @@ class TaskRow extends StatelessWidget {
                                 ),
                               ],
                             ),
+                          // Dependency indicators
+                          if (dependsOn.isNotEmpty)
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  CupertinoIcons.link,
+                                  size: 12,
+                                  color: colors.textSecondary,
+                                ),
+                                const SizedBox(width: 2),
+                                Text(
+                                  _dependsOnLabel(),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(
+                                        color: colors.textSecondary,
+                                      ),
+                                ),
+                              ],
+                            ),
+                          if (blocks.isNotEmpty)
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  CupertinoIcons.lock,
+                                  size: 12,
+                                  color: colors.textSecondary,
+                                ),
+                                const SizedBox(width: 2),
+                                Text(
+                                  _blocksLabel(),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(
+                                        color: colors.textSecondary,
+                                      ),
+                                ),
+                              ],
+                            ),
                         ],
                       ),
                     ],
@@ -239,6 +323,22 @@ class TaskRow extends StatelessWidget {
         }
         return AppStrings.taskRecurrenceCustom;
     }
+  }
+
+  String _dependsOnLabel() {
+    if (dependsOn.length == 1) {
+      final depTask = allTasks.where((t) => t.id == dependsOn.first.dependsOnTaskId).firstOrNull;
+      return '${AppStrings.taskDependsOn}: ${depTask?.title ?? dependsOn.first.dependsOnTaskId}';
+    }
+    return AppStrings.taskDependsOnCount.replaceAll('{count}', '${dependsOn.length}');
+  }
+
+  String _blocksLabel() {
+    if (blocks.length == 1) {
+      final depTask = allTasks.where((t) => t.id == blocks.first.dependentTaskId).firstOrNull;
+      return '${AppStrings.taskBlocks}: ${depTask?.title ?? blocks.first.dependentTaskId}';
+    }
+    return AppStrings.taskBlocksCount.replaceAll('{count}', '${blocks.length}');
   }
 
   String _energyBadgeLabel() {

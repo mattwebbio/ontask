@@ -341,6 +341,41 @@ class AppStrings {
   static const String templateSourceSection = 'Section template';
   static const String templateNameSuffix = ' template';
 
+  // ── Task Dependencies ──────────────────────────────────────────────────
+  static const String taskDependenciesLabel = 'Dependencies';
+  static const String taskDependsOn = 'Depends on';
+  static const String taskBlocks = 'Blocks';
+  static const String taskAddDependency = 'Add dependency';
+  static const String taskDependencyPickerTitle = 'Choose a task';
+  static const String taskDependencyPickerEmpty = 'No other tasks to link.';
+  static const String taskDependencyRemoved = 'Dependency removed.';
+  static const String taskDependencyAdded = 'Dependency added.';
+  static const String taskDependencyError =
+      'Something went wrong. Please try again.';
+  static const String taskDependencySelfError =
+      "A task can\u2019t depend on itself.";
+  static const String taskDependsOnCount = 'Depends on {count} tasks';
+  static const String taskBlocksCount = 'Blocks {count} tasks';
+
+  // ── Bulk Operations ──────────────────────────────────────────────────────
+  static const String bulkSelectCount = '{count} selected';
+  static const String bulkRescheduleAction = 'Reschedule';
+  static const String bulkCompleteAction = 'Complete';
+  static const String bulkDeleteAction = 'Delete';
+  static const String bulkAssignAction = 'Assign';
+  static const String bulkAssignDisabled = 'Shared lists coming soon';
+  static const String bulkCompleteConfirmTitle = 'Complete {count} tasks?';
+  static const String bulkCompleteConfirmMessage =
+      'These tasks will be marked as done.';
+  static const String bulkDeleteConfirmTitle = 'Delete {count} tasks?';
+  static const String bulkDeleteConfirmMessage =
+      'These tasks will be permanently removed.';
+  static const String bulkRescheduleSuccess = '{count} tasks rescheduled.';
+  static const String bulkCompleteSuccess = '{count} tasks completed.';
+  static const String bulkDeleteSuccess = '{count} tasks deleted.';
+  static const String bulkOperationError =
+      'Something went wrong. Please try again.';
+
   // ── Shared actions ──────────────────────────────────────────────────────
   static const String actionDelete = 'Delete';
 }

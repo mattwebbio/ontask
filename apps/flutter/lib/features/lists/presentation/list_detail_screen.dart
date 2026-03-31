@@ -1,5 +1,8 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/l10n/strings.dart';
@@ -13,6 +16,7 @@ import '../../templates/presentation/templates_provider.dart';
 import '../domain/section.dart';
 import 'lists_provider.dart';
 import 'sections_provider.dart';
+import 'widgets/bulk_actions_bar.dart';
 import 'widgets/section_widget.dart';
 
 /// Shows list title, sections (expandable, nested), and tasks.
@@ -30,6 +34,8 @@ class ListDetailScreen extends ConsumerStatefulWidget {
 class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
   bool _showArchived = false;
   Task? _editingTask;
+  bool _isMultiSelectMode = false;
+  final Set<String> _selectedTaskIds = {};
 
   @override
   Widget build(BuildContext context) {
@@ -60,34 +66,56 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
     return CupertinoPageScaffold(
       navigationBar: CupertinoNavigationBar(
         backgroundColor: colors.surfacePrimary,
-        middle: Text(list?.title ?? AppStrings.listDetailTitle),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CupertinoButton(
-              padding: EdgeInsets.zero,
-              onPressed: () {
-                setState(() => _showArchived = !_showArchived);
-              },
-              child: Text(
-                _showArchived
-                    ? AppStrings.hideArchived
-                    : AppStrings.showArchived,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+        middle: _isMultiSelectMode
+            ? Text(AppStrings.bulkSelectCount
+                .replaceAll('{count}', '${_selectedTaskIds.length}'))
+            : Text(list?.title ?? AppStrings.listDetailTitle),
+        leading: _isMultiSelectMode
+            ? CupertinoButton(
+                padding: EdgeInsets.zero,
+                onPressed: () {
+                  setState(() {
+                    _isMultiSelectMode = false;
+                    _selectedTaskIds.clear();
+                  });
+                },
+                child: Text(
+                  AppStrings.actionCancel,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: colors.accentPrimary,
+                      ),
+                ),
+              )
+            : null,
+        trailing: _isMultiSelectMode
+            ? null
+            : Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CupertinoButton(
+                    padding: EdgeInsets.zero,
+                    onPressed: () {
+                      setState(() => _showArchived = !_showArchived);
+                    },
+                    child: Text(
+                      _showArchived
+                          ? AppStrings.hideArchived
+                          : AppStrings.showArchived,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: colors.accentPrimary,
+                          ),
+                    ),
+                  ),
+                  CupertinoButton(
+                    padding: EdgeInsets.zero,
+                    onPressed: () => _showMoreActions(context, list),
+                    child: Icon(
+                      CupertinoIcons.ellipsis_circle,
                       color: colors.accentPrimary,
                     ),
+                  ),
+                ],
               ),
-            ),
-            CupertinoButton(
-              padding: EdgeInsets.zero,
-              onPressed: () => _showMoreActions(context, list),
-              child: Icon(
-                CupertinoIcons.ellipsis_circle,
-                color: colors.accentPrimary,
-              ),
-            ),
-          ],
-        ),
       ),
       child: SafeArea(
         child: _editingTask != null
@@ -118,11 +146,19 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
             children: [
               // Root tasks
               for (final task in rootTasks)
-                TaskRow(
+                GestureDetector(
                   key: ValueKey(task.id),
-                  task: task,
-                  onTap: () => setState(() => _editingTask = task),
-                  onArchive: () => _archiveTask(task.id),
+                  onLongPress: () => _enterMultiSelect(task.id),
+                  child: TaskRow(
+                    task: task,
+                    isMultiSelectMode: _isMultiSelectMode,
+                    isSelected: _selectedTaskIds.contains(task.id),
+                    onSelectionToggle: () => _toggleSelection(task.id),
+                    onTap: _isMultiSelectMode
+                        ? () => _toggleSelection(task.id)
+                        : () => _onTaskTap(task),
+                    onArchive: () => _archiveTask(task.id),
+                  ),
                 ),
 
               // Sections with their tasks
@@ -153,48 +189,135 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
           ),
         ),
 
-        // Bottom action bar
-        Padding(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: Row(
-            children: [
-              Expanded(
-                child: CupertinoButton(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: AppSpacing.sm,
-                  ),
-                  onPressed: () {
-                    // TODO: show add task form for this list
-                  },
-                  child: Text(
-                    AppStrings.addTaskInList,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: colors.accentPrimary,
-                        ),
-                  ),
-                ),
-              ),
-              Expanded(
-                child: CupertinoButton(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: AppSpacing.sm,
-                  ),
-                  onPressed: () {
-                    // TODO: show add section form
-                  },
-                  child: Text(
-                    AppStrings.addSectionInList,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: colors.accentPrimary,
-                        ),
+        // Bottom action bar — switches between add actions and bulk actions
+        if (_isMultiSelectMode)
+          BulkActionsBar(
+            selectedCount: _selectedTaskIds.length,
+            onReschedule: (dueDate) => _bulkReschedule(dueDate),
+            onComplete: _bulkComplete,
+            onDelete: _bulkDelete,
+          )
+        else
+          Padding(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: Row(
+              children: [
+                Expanded(
+                  child: CupertinoButton(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.sm,
+                    ),
+                    onPressed: () {
+                      // TODO: show add task form for this list
+                    },
+                    child: Text(
+                      AppStrings.addTaskInList,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: colors.accentPrimary,
+                          ),
+                    ),
                   ),
                 ),
-              ),
-            ],
+                Expanded(
+                  child: CupertinoButton(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.sm,
+                    ),
+                    onPressed: () {
+                      // TODO: show add section form
+                    },
+                    child: Text(
+                      AppStrings.addSectionInList,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: colors.accentPrimary,
+                          ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
       ],
     );
+  }
+
+  void _onTaskTap(Task task) {
+    // macOS: Cmd+click toggles selection without entering a dedicated mode
+    if (Platform.isMacOS &&
+        HardwareKeyboard.instance.isLogicalKeyPressed(LogicalKeyboardKey.meta)) {
+      if (!_isMultiSelectMode) {
+        _enterMultiSelect(task.id);
+      } else {
+        _toggleSelection(task.id);
+      }
+      return;
+    }
+    setState(() => _editingTask = task);
+  }
+
+  void _enterMultiSelect(String taskId) {
+    setState(() {
+      _isMultiSelectMode = true;
+      _selectedTaskIds.add(taskId);
+    });
+  }
+
+  void _toggleSelection(String taskId) {
+    setState(() {
+      if (_selectedTaskIds.contains(taskId)) {
+        _selectedTaskIds.remove(taskId);
+        if (_selectedTaskIds.isEmpty) {
+          _isMultiSelectMode = false;
+        }
+      } else {
+        _selectedTaskIds.add(taskId);
+      }
+    });
+  }
+
+  Future<void> _bulkReschedule(String dueDate) async {
+    final ids = _selectedTaskIds.toList();
+    try {
+      await ref
+          .read(tasksProvider(listId: widget.listId).notifier)
+          .bulkReschedule(ids, dueDate);
+    } catch (_) {
+      // Error handling deferred to real implementation
+    }
+    setState(() {
+      _isMultiSelectMode = false;
+      _selectedTaskIds.clear();
+    });
+  }
+
+  Future<void> _bulkComplete() async {
+    final ids = _selectedTaskIds.toList();
+    try {
+      await ref
+          .read(tasksProvider(listId: widget.listId).notifier)
+          .bulkComplete(ids);
+    } catch (_) {
+      // Error handling deferred to real implementation
+    }
+    setState(() {
+      _isMultiSelectMode = false;
+      _selectedTaskIds.clear();
+    });
+  }
+
+  Future<void> _bulkDelete() async {
+    final ids = _selectedTaskIds.toList();
+    try {
+      await ref
+          .read(tasksProvider(listId: widget.listId).notifier)
+          .bulkDelete(ids);
+    } catch (_) {
+      // Error handling deferred to real implementation
+    }
+    setState(() {
+      _isMultiSelectMode = false;
+      _selectedTaskIds.clear();
+    });
   }
 
   void _onReorder(int oldIndex, int newIndex) {
