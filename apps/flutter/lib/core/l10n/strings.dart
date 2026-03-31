@@ -399,6 +399,25 @@ class AppStrings {
   static const String scheduleHealthCriticalDetail = 'Overbooked -- {hours}h';
   static const String scheduleHealthAtRiskTasks = 'At-risk tasks';
 
+  // ── Now tab — task card ──────────────────────────────────────────────────
+  static const String nowCardAttribution =
+      'Your past self planned this for now';
+  static const String nowCardAttributionFromList = 'From {listName}';
+  static const String nowCardAttributionFromListAndAssignor =
+      'From {listName} \u00b7 assigned by {assignor}';
+  static const String nowCardStakeLabel = 'at stake';
+  static const String nowCardMarkDone = 'Mark done';
+  static const String nowCardSubmitProof = 'Submit proof';
+  static const String nowCardStartWatchMode = 'Start Watch Mode';
+  static const String nowCardProofPhoto = 'Photo proof';
+  static const String nowCardProofWatchMode = 'Watch Mode';
+  static const String nowCardProofHealthKit = 'HealthKit';
+  static const String nowCardProofCalendarEvent = 'Calendar event';
+  static const String nowCardVoiceOverStaked = '{amount} staked';
+  static const String nowCardVoiceOverDue = 'due {deadline}';
+  static const String nowCardVoiceOverTimerElapsed = '{time} elapsed';
+  static const String nowCardNextTaskHint = 'Next: {task} at {time}';
+
   // ── Shared actions ──────────────────────────────────────────────────────
   static const String actionDelete = 'Delete';
 }
