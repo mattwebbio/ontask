@@ -540,9 +540,6 @@ class AppStrings {
   static const String chapterBreakVoiceOverAnnounce =
       "A task has been completed. You're on a roll.";
 
-  /// Label prefix for the completed task row.
-  static const String chapterBreakTaskLabel = 'Completed task';
-
   /// Label prefix for the stake-returned row (shown when stakeAmount != null).
   static const String chapterBreakStakeLabel = 'Stake returned';
 

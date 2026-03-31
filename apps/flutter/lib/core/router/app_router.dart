@@ -3,8 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../features/auth/domain/auth_result.dart';
-import '../../features/chapter_break/presentation/chapter_break_screen.dart';
 import '../../features/auth/presentation/auth_provider.dart';
+import '../../features/chapter_break/presentation/chapter_break_screen.dart';
 import '../../features/auth/presentation/auth_screen.dart';
 import '../../features/auth/presentation/two_factor_verify_screen.dart';
 import '../../features/lists/presentation/list_detail_screen.dart';

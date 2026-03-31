@@ -71,7 +71,9 @@ class _ChapterBreakScreenState extends State<ChapterBreakScreen>
     // This is the ONE screen where both announce() AND liveRegion are used
     // together as explicitly required by the UX spec.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      SemanticsService.announce(
+      if (!mounted) return;
+      SemanticsService.sendAnnouncement(
+        View.of(context),
         AppStrings.chapterBreakVoiceOverAnnounce,
         TextDirection.ltr,
       );

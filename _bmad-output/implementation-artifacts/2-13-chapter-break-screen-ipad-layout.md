@@ -1,6 +1,6 @@
 # Story 2.13: Chapter Break Screen & iPad Layout
 
-Status: review
+Status: in-progress
 
 ## Story
 
@@ -462,6 +462,14 @@ claude-sonnet-4-6
 - apps/flutter/lib/features/shell/presentation/app_shell.dart (MODIFIED)
 - apps/flutter/test/features/chapter_break/chapter_break_screen_test.dart (NEW)
 - _bmad-output/implementation-artifacts/sprint-status.yaml (MODIFIED)
+
+### Review Findings
+
+- [ ] [Review][Patch] Deprecated `SemanticsService.announce()` in committed HEAD — working tree fix (`sendAnnouncement` + `mounted` guard) not committed [apps/flutter/lib/features/chapter_break/presentation/chapter_break_screen.dart:74]
+- [ ] [Review][Patch] `AppStrings.chapterBreakTaskLabel` defined but never used — dead string constant [apps/flutter/lib/core/l10n/strings.dart:544]
+- [ ] [Review][Patch] Import ordering broken in `app_router.dart` — `chapter_break` import inserted between `auth/domain` and `auth/presentation` imports, breaking alphabetical order [apps/flutter/lib/core/router/app_router.dart:6]
+- [x] [Review][Defer] Unsafe `state.extra as Map<String, dynamic>?` cast in `/chapter-break` route builder [apps/flutter/lib/core/router/app_router.dart:137] — deferred, pre-existing pattern across all routes
+- [x] [Review][Defer] `completeTask` + `context.push` called sequentially without error handling — optimistic UI by V1 design [apps/flutter/lib/features/now/presentation/now_screen.dart:94] — deferred, pre-existing V1 design decision
 
 ## Change Log
 
