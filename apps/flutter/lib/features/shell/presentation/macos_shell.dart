@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../../../core/l10n/strings.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../now/presentation/now_provider.dart';
+import '../../now/presentation/timer_provider.dart';
 import 'add_tab_sheet.dart';
 import 'command_palette_sheet.dart';
 import 'macos_keyboard_shortcuts.dart';
@@ -109,7 +111,13 @@ class _MacosShellState extends ConsumerState<MacosShell> {
               onInvoke: (_) => null, // placeholder — real logic in Story 2.x
             ),
             ToggleTimerIntent: CallbackAction<ToggleTimerIntent>(
-              onInvoke: (_) => null, // placeholder — real logic in Story 2.x
+              onInvoke: (_) {
+                final task = ref.read(nowProvider).value;
+                if (task != null) {
+                  ref.read(taskTimerProvider.notifier).toggleTimer(task.id);
+                }
+                return null;
+              },
             ),
             CommandPaletteIntent: CallbackAction<CommandPaletteIntent>(
               onInvoke: (_) => _openCommandPalette(),

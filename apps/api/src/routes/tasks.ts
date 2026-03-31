@@ -55,6 +55,8 @@ const updateTaskSchema = z.object({
   recurrenceInterval: z.number().int().min(1).nullable().optional(),
   recurrenceDaysOfWeek: z.string().nullable().optional(),
   recurrenceParentId: z.string().uuid().nullable().optional(),
+  startedAt: z.string().datetime().nullable().optional(),
+  elapsedSeconds: z.number().int().nullable().optional(),
 })
 
 const taskSchema = z.object({
@@ -76,6 +78,8 @@ const taskSchema = z.object({
   recurrenceInterval: z.number().int().nullable(),
   recurrenceDaysOfWeek: z.string().nullable(),
   recurrenceParentId: z.string().uuid().nullable(),
+  startedAt: z.string().datetime().nullable(),
+  elapsedSeconds: z.number().int().nullable(),
   archivedAt: z.string().datetime().nullable(),
   completedAt: z.string().datetime().nullable(),
   createdAt: z.string().datetime(),
@@ -127,6 +131,8 @@ function stubTask(overrides: Partial<z.infer<typeof taskSchema>> = {}): z.infer<
     recurrenceInterval: null,
     recurrenceDaysOfWeek: null,
     recurrenceParentId: null,
+    startedAt: null,
+    elapsedSeconds: null,
     archivedAt: null,
     completedAt: null,
     createdAt: now,
@@ -745,6 +751,89 @@ app.openapi(completeTaskRoute, async (c) => {
   }
 
   return c.json({ data: { completedTask, nextInstance } }, 200)
+})
+
+// ── POST /v1/tasks/:id/start ──────────────────────────────────────────────
+
+const startTaskRoute = createRoute({
+  method: 'post',
+  path: '/v1/tasks/{id}/start',
+  tags: ['Tasks'],
+  summary: 'Start a task timer',
+  description: 'Sets startedAt = now(), marking the task as actively in-progress (FR76).',
+  request: {
+    params: z.object({ id: z.string().uuid() }),
+  },
+  responses: {
+    200: { content: { 'application/json': { schema: TaskResponseSchema } }, description: 'Task timer started' },
+    404: { content: { 'application/json': { schema: ErrorSchema } }, description: 'Task not found' },
+  },
+})
+
+app.openapi(startTaskRoute, async (c) => {
+  // TODO(impl): look up real task from DB, set startedAt via Drizzle
+  const { id } = c.req.valid('param')
+  return c.json(
+    ok(stubTask({ id, startedAt: new Date().toISOString() })),
+    200,
+  )
+})
+
+// ── POST /v1/tasks/:id/pause ──────────────────────────────────────────────
+
+const pauseTaskRoute = createRoute({
+  method: 'post',
+  path: '/v1/tasks/{id}/pause',
+  tags: ['Tasks'],
+  summary: 'Pause a task timer',
+  description:
+    'Computes elapsedSeconds += diff(now, startedAt), clears startedAt. Timer can be resumed later.',
+  request: {
+    params: z.object({ id: z.string().uuid() }),
+  },
+  responses: {
+    200: { content: { 'application/json': { schema: TaskResponseSchema } }, description: 'Task timer paused' },
+    404: { content: { 'application/json': { schema: ErrorSchema } }, description: 'Task not found' },
+  },
+})
+
+app.openapi(pauseTaskRoute, async (c) => {
+  // TODO(impl): look up real task from DB, compute elapsed, update via Drizzle
+  const { id } = c.req.valid('param')
+  // Stub: simulate 120 seconds of elapsed time
+  return c.json(
+    ok(stubTask({ id, startedAt: null, elapsedSeconds: 120 })),
+    200,
+  )
+})
+
+// ── POST /v1/tasks/:id/stop ───────────────────────────────────────────────
+
+const stopTaskRoute = createRoute({
+  method: 'post',
+  path: '/v1/tasks/{id}/stop',
+  tags: ['Tasks'],
+  summary: 'Stop a task timer',
+  description:
+    'Computes elapsedSeconds += diff(now, startedAt), clears startedAt. ' +
+    'Stopping the timer does NOT mark the task as complete — that requires POST /complete.',
+  request: {
+    params: z.object({ id: z.string().uuid() }),
+  },
+  responses: {
+    200: { content: { 'application/json': { schema: TaskResponseSchema } }, description: 'Task timer stopped' },
+    404: { content: { 'application/json': { schema: ErrorSchema } }, description: 'Task not found' },
+  },
+})
+
+app.openapi(stopTaskRoute, async (c) => {
+  // TODO(impl): look up real task from DB, compute elapsed, update via Drizzle
+  const { id } = c.req.valid('param')
+  // Stub: simulate 300 seconds of elapsed time
+  return c.json(
+    ok(stubTask({ id, startedAt: null, elapsedSeconds: 300 })),
+    200,
+  )
 })
 
 export { app as tasksRouter }

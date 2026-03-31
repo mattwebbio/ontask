@@ -52,7 +52,7 @@ final class SearchQueryProvider extends $NotifierProvider<SearchQuery, String> {
   }
 }
 
-String _$searchQueryHash() => r'04a99bc3cc480d464dabed61d14b5402f7807b5a';
+String _$searchQueryHash() => r'4813f1a3feb2fb37e493d6dcd88a587e3cc3fbb8';
 
 /// Holds the current search query text with 300ms debounce.
 ///

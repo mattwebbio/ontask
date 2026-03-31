@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'now_provider.dart';
+import 'timer_provider.dart';
 import 'widgets/now_card_skeleton.dart';
 import 'widgets/now_empty_state.dart';
 import 'widgets/now_task_card.dart';
@@ -28,6 +29,7 @@ class NowScreen extends ConsumerStatefulWidget {
 
 class _NowScreenState extends ConsumerState<NowScreen> {
   late final Future<void> _skeletonDelay;
+  bool _timerInitialised = false;
 
   @override
   void initState() {
@@ -38,6 +40,23 @@ class _NowScreenState extends ConsumerState<NowScreen> {
   @override
   Widget build(BuildContext context) {
     final nowState = ref.watch(nowProvider);
+    final timerState = ref.watch(taskTimerProvider);
+
+    // Auto-initialise timer from task's startedAt when task loads
+    if (!_timerInitialised && nowState.hasValue && nowState.value != null) {
+      final task = nowState.value!;
+      if (task.startedAt != null && !timerState.isRunning) {
+        // Schedule after build to avoid modifying provider during build
+        Future.microtask(() {
+          ref.read(taskTimerProvider.notifier).startTimer(
+                task.id,
+                existingStartedAt: task.startedAt,
+                existingElapsed: task.elapsedSeconds ?? 0,
+              );
+        });
+      }
+      _timerInitialised = true;
+    }
 
     return SafeArea(
       child: FutureBuilder<void>(
@@ -61,10 +80,27 @@ class _NowScreenState extends ConsumerState<NowScreen> {
             return const NowEmptyState();
           }
 
+          // Compute current elapsed from timer provider
+          final elapsed = timerState.isRunning
+              ? ref.read(taskTimerProvider.notifier).currentElapsed
+              : timerState.elapsedSeconds;
+
           return NowTaskCard(
             task: task,
+            timerRunning: timerState.isRunning,
+            timerElapsedSeconds: elapsed,
             onComplete: () {
               ref.read(nowProvider.notifier).completeTask(task.id);
+            },
+            onStart: () {
+              ref.read(taskTimerProvider.notifier).startTimer(task.id);
+              ref.read(nowProvider.notifier).startTask(task.id);
+            },
+            onPause: () {
+              ref.read(taskTimerProvider.notifier).pauseTimer(task.id);
+            },
+            onStop: () {
+              ref.read(taskTimerProvider.notifier).stopTimer(task.id);
             },
           );
         },

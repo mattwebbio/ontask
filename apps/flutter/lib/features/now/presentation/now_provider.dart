@@ -16,8 +16,15 @@ part 'now_provider.g.dart';
 class Now extends _$Now {
   @override
   Future<NowTask?> build() async {
-    final repo = ref.read(nowRepositoryProvider);
+    final repo = ref.watch(nowRepositoryProvider);
     return repo.getCurrentTask();
+  }
+
+  /// Starts the task timer and refreshes state.
+  Future<void> startTask(String taskId) async {
+    final repo = ref.read(nowRepositoryProvider);
+    await repo.startTask(taskId);
+    await refresh();
   }
 
   /// Completes the current task and refreshes to show the next task.

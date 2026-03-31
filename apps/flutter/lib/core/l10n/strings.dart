@@ -467,6 +467,19 @@ class AppStrings {
   static const String searchFilterDateFrom = 'From';
   static const String searchFilterDateTo = 'To';
 
+  // ── Timer ──────────────────────────────────────────────────────────────
+  static const String timerStart = 'Start';
+  static const String timerPause = 'Pause';
+  static const String timerStop = 'Stop';
+  static const String timerRunning = 'Timer running';
+  static const String timerPaused = 'Timer paused';
+  static const String timerElapsedFormat = '{time} elapsed';
+  static const String timerStartVoiceOver = 'Start timer';
+  static const String timerPauseVoiceOver = 'Pause timer';
+  static const String timerStopVoiceOver = 'Stop timer';
+  static const String timerAnnouncementTemplate = '{time} elapsed on {task}';
+  static const String todayRowStartTimer = 'Start timer';
+
   // ── Shared actions ──────────────────────────────────────────────────────
   static const String actionDelete = 'Delete';
 }
