@@ -21,6 +21,17 @@ const createTaskSchema = z.object({
   listId: z.string().uuid().nullable().optional(),
   sectionId: z.string().uuid().nullable().optional(),
   parentTaskId: z.string().uuid().nullable().optional(),
+  timeWindow: z.enum(['morning', 'afternoon', 'evening', 'custom']).nullable().optional(),
+  timeWindowStart: z.string().nullable().optional().openapi({
+    example: '09:00',
+    description: 'HH:mm format. Only used when timeWindow = "custom".',
+  }),
+  timeWindowEnd: z.string().nullable().optional().openapi({
+    example: '11:00',
+    description: 'HH:mm format. Only used when timeWindow = "custom".',
+  }),
+  energyRequirement: z.enum(['high_focus', 'low_energy', 'flexible']).nullable().optional(),
+  priority: z.enum(['normal', 'high', 'critical']).nullable().optional(),
 })
 
 const updateTaskSchema = z.object({
@@ -31,6 +42,11 @@ const updateTaskSchema = z.object({
   sectionId: z.string().uuid().nullable().optional(),
   parentTaskId: z.string().uuid().nullable().optional(),
   position: z.number().int().optional(),
+  timeWindow: z.enum(['morning', 'afternoon', 'evening', 'custom']).nullable().optional(),
+  timeWindowStart: z.string().nullable().optional(),
+  timeWindowEnd: z.string().nullable().optional(),
+  energyRequirement: z.enum(['high_focus', 'low_energy', 'flexible']).nullable().optional(),
+  priority: z.enum(['normal', 'high', 'critical']).nullable().optional(),
 })
 
 const taskSchema = z.object({
@@ -43,6 +59,11 @@ const taskSchema = z.object({
   notes: z.string().nullable(),
   dueDate: z.string().datetime().nullable(),
   position: z.number().int(),
+  timeWindow: z.enum(['morning', 'afternoon', 'evening', 'custom']).nullable(),
+  timeWindowStart: z.string().nullable(),
+  timeWindowEnd: z.string().nullable(),
+  energyRequirement: z.enum(['high_focus', 'low_energy', 'flexible']).nullable(),
+  priority: z.enum(['normal', 'high', 'critical']).nullable(),
   archivedAt: z.string().datetime().nullable(),
   completedAt: z.string().datetime().nullable(),
   createdAt: z.string().datetime(),
@@ -78,6 +99,11 @@ function stubTask(overrides: Partial<z.infer<typeof taskSchema>> = {}): z.infer<
     notes: null,
     dueDate: null,
     position: 0,
+    timeWindow: null,
+    timeWindowStart: null,
+    timeWindowEnd: null,
+    energyRequirement: null,
+    priority: 'normal',
     archivedAt: null,
     completedAt: null,
     createdAt: now,
@@ -118,6 +144,11 @@ app.openapi(postTaskRoute, async (c) => {
       listId: body.listId ?? null,
       sectionId: body.sectionId ?? null,
       parentTaskId: body.parentTaskId ?? null,
+      timeWindow: body.timeWindow ?? null,
+      timeWindowStart: body.timeWindowStart ?? null,
+      timeWindowEnd: body.timeWindowEnd ?? null,
+      energyRequirement: body.energyRequirement ?? null,
+      priority: body.priority ?? 'normal',
     })),
     201,
   )

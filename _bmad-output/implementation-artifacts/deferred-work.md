@@ -32,3 +32,12 @@
 
 - **Fragile serif font resolution in SampleScheduleStep** — `serifFamily` is read from `textTheme.displayLarge?.fontFamily` and then applied to `displaySmall`. If those two slots are ever assigned different font families in the theme, the wrong font silently applies. Pre-existing pattern from `NowEmptyState`. [apps/flutter/lib/features/onboarding/presentation/steps/sample_schedule_step.dart:35]
 - **TimeOfDay formatting duplicated across 3 files** — Identical `padLeft(2, '0')` hour/minute formatting logic exists in `SampleScheduleStep._DemoTaskCard`, `EnergyPreferencesStep._formatTime()`, and `WorkingHoursStep._formatTime()`. No shared utility exists. Not blocking; extract to a shared helper when the next story touches these files. [apps/flutter/lib/features/onboarding/presentation/steps/]
+
+## Deferred from: code review of 2-1-task-list-crud (2026-03-30)
+
+- **Missing `userId` FK constraint on `listsTable` and `tasksTable`** — commented as `TODO(story-TBD)` pending users table availability in the core schema. Pre-existing architectural decision; add FK when user table lands.
+- **Test pass verification pending** — Unable to run `flutter test` or `pnpm test` in review context. Story requires all 206 pre-existing tests + new tests pass. Verify in CI.
+
+## Deferred from: code review of 2-2-task-properties-scheduling-hints (2026-03-30)
+
+- **`lists_provider.g.dart` hash changed without lists code changes** — `build_runner` regeneration side-effect changed the hash in `lists_provider.g.dart` despite no lists-related source changes in Story 2.2. Not harmful; monitor for similar drift in future stories.

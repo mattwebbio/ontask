@@ -25,6 +25,11 @@ class TasksNotifier extends _$TasksNotifier {
     String? listId,
     String? sectionId,
     String? parentTaskId,
+    String? timeWindow,
+    String? timeWindowStart,
+    String? timeWindowEnd,
+    String? energyRequirement,
+    String? priority,
   }) async {
     final repo = ref.read(tasksRepositoryProvider);
     final task = await repo.createTask(
@@ -34,6 +39,11 @@ class TasksNotifier extends _$TasksNotifier {
       listId: listId,
       sectionId: sectionId,
       parentTaskId: parentTaskId,
+      timeWindow: timeWindow,
+      timeWindowStart: timeWindowStart,
+      timeWindowEnd: timeWindowEnd,
+      energyRequirement: energyRequirement,
+      priority: priority,
     );
 
     // Optimistically add to state
