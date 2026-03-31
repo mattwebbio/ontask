@@ -1,6 +1,6 @@
 # Story 2.11: Predicted Completion Badge
 
-Status: review
+Status: in-progress
 
 ## Story
 
@@ -427,6 +427,15 @@ From Story 2.7 (carry forward):
 - Timer disposal pattern: [Source: Story 2.9 review finding — timer_cancel on dispose]
 - Feature anatomy pattern: [Source: `_bmad-output/planning-artifacts/architecture.md` line ~495]
 - Riverpod provider injection: [Source: `_bmad-output/planning-artifacts/architecture.md` line ~567]
+
+### Review Findings
+
+- [ ] [Review][Patch] Inline status strings in `_statusStringForVoiceOver` bypass AppStrings — `'on track'`, `'at risk'`, `'behind'`, `'unknown'` are hardcoded in `prediction_badge.dart:126-132` and injected into the VoiceOver accessibility label. All user-facing strings must be in AppStrings (spec constraint: "No inline literals"). Add `predictionBadgeStatusOnTrack`, `predictionBadgeStatusAtRisk`, `predictionBadgeStatusBehind`, `predictionBadgeStatusUnknown` constants to `AppStrings` and use them in `_statusStringForVoiceOver`. [`apps/flutter/lib/features/prediction/presentation/widgets/prediction_badge.dart:123-134`]
+- [ ] [Review][Patch] Missing async state tests for `ListPredictionBadge` and `SectionPredictionBadge` — `prediction_badge_test.dart` only tests `TaskPredictionBadge` for the loading/error/data async states. The spec task list specifies async state tests for the `PredictionBadgeAsync` variants generically. Add equivalent loading, error, and data state tests for `ListPredictionBadge` and `SectionPredictionBadge`. [`apps/flutter/test/features/prediction/prediction_badge_test.dart`]
+- [ ] [Review][Patch] DTO `fromJson` silently produces empty `entityId` on unexpected API shape — if all three entity ID keys (`taskId`, `listId`, `sectionId`) are absent, `entityId` defaults to `''` without throwing. This would produce a domain model with an empty entity ID that silently passes through the UI. Add a guard: `if (id.isEmpty) throw FormatException('Missing entity ID in prediction response')`. [`apps/flutter/lib/features/prediction/data/completion_prediction_dto.dart:30`]
+- [x] [Review][Defer] `_shimmer` declared as top-level function with leading underscore — leading underscore on a top-level function is unconventional in Dart (it grants library-private visibility, not class-private). Could be a private static method of a helper class. Pre-existing style pattern in this codebase; low risk. [`apps/flutter/lib/features/prediction/presentation/widgets/prediction_badge_async.dart:65`] — deferred, pre-existing convention
+- [x] [Review][Defer] Import ordering in `prediction_badge_async.dart` — Material import (`package:flutter/material.dart show Theme`) appears interleaved with local imports rather than in the packages group. Pre-existing style pattern across codebase. [`apps/flutter/lib/features/prediction/presentation/widgets/prediction_badge_async.dart:5`] — deferred, pre-existing convention
+- [x] [Review][Defer] `ref.watch` on `predictionRepositoryProvider` in async providers — semantically `ref.read` would be more appropriate for a stable dependency (repository never changes), but `ref.watch` matches the pattern documented in Previous Story Learnings and is functionally correct. [`apps/flutter/lib/features/prediction/presentation/prediction_provider.dart:22,32,42`] — deferred, intentional pattern match to codebase convention
 
 ## Dev Agent Record
 
