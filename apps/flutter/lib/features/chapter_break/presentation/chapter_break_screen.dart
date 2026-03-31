@@ -19,7 +19,7 @@ import '../../../core/theme/app_text_styles.dart';
 /// and the [onContinue] callback calls `context.go('/now')`.
 ///
 /// VoiceOver (UX spec §9.6):
-///   • [SemanticsService.announce] fires once on first frame for the initial
+///   • [SemanticsService.sendAnnouncement] fires once on first frame for the initial
 ///     announcement (chapter break screen appears without user action).
 ///   • The headline is also wrapped in `Semantics(liveRegion: true, header: true)`
 ///     for correct VoiceOver reading order: heading → task title → CTA.
