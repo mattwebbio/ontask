@@ -21,7 +21,9 @@ class NowRepository {
     final response = await _client.dio.get<Map<String, dynamic>>(
       '/v1/tasks/current',
     );
-    final data = response.data!['data'];
+    final responseData = response.data;
+    if (responseData == null) return null;
+    final data = responseData['data'];
     if (data == null) return null;
     return NowTaskDto.fromJson(data as Map<String, dynamic>).toDomain();
   }

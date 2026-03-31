@@ -415,8 +415,25 @@ class AppStrings {
   static const String nowCardProofCalendarEvent = 'Calendar event';
   static const String nowCardVoiceOverStaked = '{amount} staked';
   static const String nowCardVoiceOverDue = 'due {deadline}';
+  static const String nowCardVoiceOverFrom = 'from {listName}';
   static const String nowCardVoiceOverTimerElapsed = '{time} elapsed';
   static const String nowCardNextTaskHint = 'Next: {task} at {time}';
+
+  // ── Date/time labels ─────────────────────────────────────────────────────
+  static const String dateToday = 'Today';
+  static const String dateTomorrow = 'Tomorrow';
+  static const String monthJan = 'Jan';
+  static const String monthFeb = 'Feb';
+  static const String monthMar = 'Mar';
+  static const String monthApr = 'Apr';
+  static const String monthMay = 'May';
+  static const String monthJun = 'Jun';
+  static const String monthJul = 'Jul';
+  static const String monthAug = 'Aug';
+  static const String monthSep = 'Sep';
+  static const String monthOct = 'Oct';
+  static const String monthNov = 'Nov';
+  static const String monthDec = 'Dec';
 
   // ── Shared actions ──────────────────────────────────────────────────────
   static const String actionDelete = 'Delete';

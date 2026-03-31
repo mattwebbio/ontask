@@ -440,6 +440,26 @@ Claude Opus 4.6 (1M context)
 - `apps/flutter/test/features/now/now_screen_test.dart` — NEW: 30 widget tests
 - `apps/flutter/test/features/now/now_repository_test.dart` — NEW: 12 repository/DTO/domain tests
 
+### Review Findings
+
+- [ ] [Review][Decision] AC4 Dynamic Island padding — story task says "Use `MediaQuery.of(context).viewPadding.top`" explicitly in `NowTaskCard`, but implementation uses only `SafeArea` in `NowScreen`. Dev Notes say "SafeArea **or** viewPadding.top" — needs owner decision: is SafeArea sufficient or must `viewPadding.top` be called explicitly inside the card? [apps/flutter/lib/features/now/presentation/now_screen.dart:42] [apps/flutter/lib/features/now/presentation/widgets/now_task_card.dart:90]
+
+- [ ] [Review][Patch] Inline `'from '` string in `_buildVoiceOverLabel()` — `parts.add('from ${widget.task.listName}')` hardcodes the `'from '` prefix. A `nowCardVoiceOverFrom` string constant is missing from `AppStrings`. Violates no-inline-strings constraint. [apps/flutter/lib/features/now/presentation/widgets/now_task_card.dart:247]
+
+- [ ] [Review][Patch] Missing NowRepository endpoint test — story task requires "NowRepository: verify getCurrentTask calls correct endpoint `/v1/tasks/current`" but `now_repository_test.dart` has no `NowRepository` group; it only covers `ProofMode`, `NowTaskDto`, and `NowTask domain model`. [apps/flutter/test/features/now/now_repository_test.dart]
+
+- [ ] [Review][Patch] Inline `'Today'`, `'Tomorrow'`, and month abbreviations in `_formatDeadline()` — hardcoded string literals `'Today'`, `'Tomorrow'`, and `['Jan', 'Feb', ...]` violate the no-inline-strings constraint. Corresponding `AppStrings` constants are absent. [apps/flutter/lib/features/now/presentation/widgets/now_task_card.dart:293-316]
+
+- [ ] [Review][Patch] Timer announcement callback is entirely empty — `_startTimerAnnouncements()` has a `Timer.periodic(60s)` with a completely empty callback (no `SemanticsService.announce()` call, no TODO stub). AC3 says the announcement infrastructure should exist. At minimum a `// TODO(story-2.10): SemanticsService.announce(...)` placeholder should be inside the callback. [apps/flutter/lib/features/now/presentation/widgets/now_task_card.dart:55-65]
+
+- [ ] [Review][Patch] Force-unwrap `response.data!` in `NowRepository.getCurrentTask()` — if the HTTP response body is null (network error, empty response), the `!` on `response.data` throws an unhandled `Null check operator used on null value`. Should null-check before indexing. [apps/flutter/lib/features/now/data/now_repository.dart:21]
+
+- [x] [Review][Defer] `_formatDeadline()` duplicates time-formatting logic — a third copy of this logic now exists alongside `today_screen.dart`. Story dev notes call for extraction to `apps/flutter/lib/core/utils/time_format.dart` (deferred from Story 1.9). Not introduced fresh here but actively duplicated. — deferred, pre-existing
+
+- [x] [Review][Defer] VoiceOver label `parts.join(', ')` can embed commas from task title — if a task title contains a comma the separator becomes ambiguous. Low severity. — deferred, pre-existing design limitation
+
+- [x] [Review][Defer] Negative `stakeAmountCents` formats as `'$-1'` — `CommitmentRow.formatAmount(-100)` has no guard for negative values. Stub always returns null; not reachable now. — deferred, pre-existing, not reachable until Epic 6
+
 ### Change Log
 
 | Date | Version | Author | Description |

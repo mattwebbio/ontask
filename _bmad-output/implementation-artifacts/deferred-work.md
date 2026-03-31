@@ -49,3 +49,9 @@
 ## Deferred from: code review of 2-5-task-dependencies-bulk-operations (2026-03-30)
 
 - **Bulk operation errors silently swallowed** — `_bulkReschedule`, `_bulkComplete`, `_bulkDelete` in `list_detail_screen.dart` catch all exceptions with `// Error handling deferred to real implementation`; user sees no error feedback on failure. Stub-only issue; address when real implementation replaces stubs.
+
+## Deferred from: code review of 2-7-now-tab-task-card (2026-03-30)
+
+- **`_formatDeadline()` time-formatting logic duplicated** — A third copy of deadline-formatting logic now exists in `now_task_card.dart` alongside `today_screen.dart`. Story dev notes (from Story 1.9) call for extraction to `apps/flutter/lib/core/utils/time_format.dart`. Should be consolidated when touching either screen.
+- **VoiceOver label `parts.join(', ')` embeds task-title commas** — If a task title contains a comma, the VoiceOver separator becomes ambiguous. Low severity design limitation; address if/when VoiceOver copy is refined.
+- **`CommitmentRow.formatAmount()` has no guard for negative values** — `formatAmount(-100)` returns `'$-1'`. Not reachable while stub API returns null; guard when Epic 6 real stake data is wired.

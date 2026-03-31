@@ -244,7 +244,8 @@ class _NowTaskCardState extends State<NowTaskCard> {
     final parts = <String>[widget.task.title];
 
     if (widget.task.listName != null) {
-      parts.add('from ${widget.task.listName}');
+      parts.add(AppStrings.nowCardVoiceOverFrom
+          .replaceAll('{listName}', widget.task.listName!));
     }
 
     if (widget.task.stakeAmountCents != null) {
@@ -290,9 +291,9 @@ class _NowTaskCardState extends State<NowTaskCard> {
 
     String dayPart;
     if (dateOnly == today) {
-      dayPart = 'Today';
+      dayPart = AppStrings.dateToday;
     } else if (dateOnly == tomorrow) {
-      dayPart = 'Tomorrow';
+      dayPart = AppStrings.dateTomorrow;
     } else {
       dayPart =
           '${_monthName(date.month)} ${date.day}';
@@ -312,8 +313,10 @@ class _NowTaskCardState extends State<NowTaskCard> {
 
   String _monthName(int month) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      AppStrings.monthJan, AppStrings.monthFeb, AppStrings.monthMar,
+      AppStrings.monthApr, AppStrings.monthMay, AppStrings.monthJun,
+      AppStrings.monthJul, AppStrings.monthAug, AppStrings.monthSep,
+      AppStrings.monthOct, AppStrings.monthNov, AppStrings.monthDec,
     ];
     return months[month - 1];
   }
