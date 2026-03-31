@@ -17,6 +17,9 @@ These documents represent the source of truth for the product's vision, architec
 ## Setup (first run only)
 Read the following planning artifacts to build your mental model — do this ONCE at the start, not repeatedly:
 - `_bmad-output/planning-artifacts/product-brief-ontask.md`
+- `_bmad-output/planning-artifacts/prd.md`
+- `_bmad-output/planning-artifacts/architecture.md`
+- `_bmad-output/planning-artifacts/ux-design-specification.md`
 - `_bmad-output/planning-artifacts/epics.md` (read in chunks — it's large)
 - `_bmad-output/implementation-artifacts/sprint-status.yaml` (to find what's already done)
 
