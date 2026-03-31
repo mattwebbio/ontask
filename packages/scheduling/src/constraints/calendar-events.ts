@@ -1,14 +1,24 @@
 import type { CalendarEvent, ScheduledBlock } from '@ontask/core'
 
 /**
- * Stub — applyCalendarEventConstraint
- * Full implementation: Story 3.2
- *
- * Removes slots that overlap with existing calendar events.
+ * applyCalendarEventConstraint — removes slots that overlap any calendar event.
+ * Overlap condition: slot.startTime < event.endTime && slot.endTime > event.startTime
  */
 export function applyCalendarEventConstraint(
-  _events: CalendarEvent[],
+  events: CalendarEvent[],
   slots: ScheduledBlock[],
 ): ScheduledBlock[] {
-  return slots
+  if (events.length === 0) {
+    return slots
+  }
+
+  return slots.filter((slot) => {
+    for (const event of events) {
+      const overlaps = slot.startTime < event.endTime && slot.endTime > event.startTime
+      if (overlaps) {
+        return false
+      }
+    }
+    return true
+  })
 }
