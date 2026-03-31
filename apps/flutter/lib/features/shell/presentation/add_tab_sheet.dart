@@ -7,6 +7,9 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../lists/domain/task_list.dart';
 import '../../lists/presentation/lists_provider.dart';
+import '../../tasks/domain/energy_requirement.dart';
+import '../../tasks/domain/task_priority.dart';
+import '../../tasks/domain/time_window.dart';
 import '../../tasks/presentation/tasks_provider.dart';
 
 /// Modal sheet shown when the Add action tab is tapped.
@@ -28,6 +31,11 @@ class _AddTabSheetState extends ConsumerState<AddTabSheet> {
   final _notesController = TextEditingController();
   DateTime? _dueDate;
   String? _selectedListId;
+  TimeWindow? _timeWindow;
+  String? _timeWindowStart;
+  String? _timeWindowEnd;
+  EnergyRequirement? _energyRequirement;
+  TaskPriority? _priority;
   bool _isSubmitting = false;
   String? _titleError;
 
@@ -60,6 +68,11 @@ class _AddTabSheetState extends ConsumerState<AddTabSheet> {
                 : null,
             dueDate: _dueDate?.toIso8601String(),
             listId: _selectedListId,
+            timeWindow: _timeWindow?.toJson(),
+            timeWindowStart: _timeWindow == TimeWindow.custom ? _timeWindowStart : null,
+            timeWindowEnd: _timeWindow == TimeWindow.custom ? _timeWindowEnd : null,
+            energyRequirement: _energyRequirement?.toJson(),
+            priority: _priority?.toJson(),
           );
       if (mounted) {
         Navigator.of(context).pop();
@@ -131,6 +144,256 @@ class _AddTabSheetState extends ConsumerState<AddTabSheet> {
         ),
       ),
     );
+  }
+
+  void _showTimeWindowPicker() {
+    showCupertinoModalPopup<void>(
+      context: context,
+      builder: (context) => CupertinoActionSheet(
+        title: const Text(AppStrings.taskTimeWindowLabel),
+        actions: [
+          CupertinoActionSheetAction(
+            onPressed: () {
+              setState(() {
+                _timeWindow = null;
+                _timeWindowStart = null;
+                _timeWindowEnd = null;
+              });
+              Navigator.of(context).pop();
+            },
+            child: const Text(AppStrings.actionNone),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              setState(() => _timeWindow = TimeWindow.morning);
+              Navigator.of(context).pop();
+            },
+            child: const Text(AppStrings.taskTimeWindowMorning),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              setState(() => _timeWindow = TimeWindow.afternoon);
+              Navigator.of(context).pop();
+            },
+            child: const Text(AppStrings.taskTimeWindowAfternoon),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              setState(() => _timeWindow = TimeWindow.evening);
+              Navigator.of(context).pop();
+            },
+            child: const Text(AppStrings.taskTimeWindowEvening),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              setState(() => _timeWindow = TimeWindow.custom);
+              Navigator.of(context).pop();
+              _showCustomTimeRangePicker();
+            },
+            child: const Text(AppStrings.taskTimeWindowCustom),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text(AppStrings.actionCancel),
+        ),
+      ),
+    );
+  }
+
+  void _showCustomTimeRangePicker() {
+    DateTime startTime = DateTime(2026, 1, 1, 9, 0);
+    DateTime endTime = DateTime(2026, 1, 1, 11, 0);
+
+    showCupertinoModalPopup<void>(
+      context: context,
+      builder: (context) {
+        final colors = Theme.of(context).extension<OnTaskColors>()!;
+        return Container(
+        height: 360,
+        color: CupertinoColors.systemBackground.resolveFrom(context),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                CupertinoButton(
+                  child: const Text(AppStrings.actionDone),
+                  onPressed: () {
+                    setState(() {
+                      _timeWindowStart =
+                          '${startTime.hour.toString().padLeft(2, '0')}:${startTime.minute.toString().padLeft(2, '0')}';
+                      _timeWindowEnd =
+                          '${endTime.hour.toString().padLeft(2, '0')}:${endTime.minute.toString().padLeft(2, '0')}';
+                    });
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              child: Text(
+                AppStrings.taskTimeWindowCustomStart,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: colors.textSecondary,
+                    ),
+              ),
+            ),
+            SizedBox(
+              height: 120,
+              child: CupertinoDatePicker(
+                mode: CupertinoDatePickerMode.time,
+                initialDateTime: startTime,
+                onDateTimeChanged: (date) {
+                  startTime = date;
+                },
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+              child: Text(
+                AppStrings.taskTimeWindowCustomEnd,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: colors.textSecondary,
+                    ),
+              ),
+            ),
+            SizedBox(
+              height: 120,
+              child: CupertinoDatePicker(
+                mode: CupertinoDatePickerMode.time,
+                initialDateTime: endTime,
+                onDateTimeChanged: (date) {
+                  endTime = date;
+                },
+              ),
+            ),
+          ],
+        ),
+      );
+      },
+    );
+  }
+
+  void _showEnergyPicker() {
+    showCupertinoModalPopup<void>(
+      context: context,
+      builder: (context) => CupertinoActionSheet(
+        title: const Text(AppStrings.taskEnergyLabel),
+        actions: [
+          CupertinoActionSheetAction(
+            onPressed: () {
+              setState(() => _energyRequirement = null);
+              Navigator.of(context).pop();
+            },
+            child: const Text(AppStrings.actionNone),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              setState(() => _energyRequirement = EnergyRequirement.highFocus);
+              Navigator.of(context).pop();
+            },
+            child: const Text(AppStrings.taskEnergyHighFocus),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              setState(() => _energyRequirement = EnergyRequirement.lowEnergy);
+              Navigator.of(context).pop();
+            },
+            child: const Text(AppStrings.taskEnergyLowEnergy),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              setState(() => _energyRequirement = EnergyRequirement.flexible);
+              Navigator.of(context).pop();
+            },
+            child: const Text(AppStrings.taskEnergyFlexible),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text(AppStrings.actionCancel),
+        ),
+      ),
+    );
+  }
+
+  void _showPriorityPicker() {
+    showCupertinoModalPopup<void>(
+      context: context,
+      builder: (context) => CupertinoActionSheet(
+        title: const Text(AppStrings.taskPriorityLabel),
+        actions: [
+          CupertinoActionSheetAction(
+            onPressed: () {
+              setState(() => _priority = null);
+              Navigator.of(context).pop();
+            },
+            child: const Text(AppStrings.taskPriorityNormal),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              setState(() => _priority = TaskPriority.high);
+              Navigator.of(context).pop();
+            },
+            child: const Text(AppStrings.taskPriorityHigh),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              setState(() => _priority = TaskPriority.critical);
+              Navigator.of(context).pop();
+            },
+            child: const Text(AppStrings.taskPriorityCritical),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text(AppStrings.actionCancel),
+        ),
+      ),
+    );
+  }
+
+  String _timeWindowDisplayLabel() {
+    if (_timeWindow == null) return AppStrings.taskTimeWindowLabel;
+    switch (_timeWindow!) {
+      case TimeWindow.morning:
+        return '${AppStrings.taskTimeWindowLabel}: ${AppStrings.taskTimeWindowMorning}';
+      case TimeWindow.afternoon:
+        return '${AppStrings.taskTimeWindowLabel}: ${AppStrings.taskTimeWindowAfternoon}';
+      case TimeWindow.evening:
+        return '${AppStrings.taskTimeWindowLabel}: ${AppStrings.taskTimeWindowEvening}';
+      case TimeWindow.custom:
+        if (_timeWindowStart != null && _timeWindowEnd != null) {
+          return '${AppStrings.taskTimeWindowLabel}: $_timeWindowStart – $_timeWindowEnd';
+        }
+        return '${AppStrings.taskTimeWindowLabel}: ${AppStrings.taskTimeWindowCustom}';
+    }
+  }
+
+  String _energyDisplayLabel() {
+    if (_energyRequirement == null) return AppStrings.taskEnergyLabel;
+    switch (_energyRequirement!) {
+      case EnergyRequirement.highFocus:
+        return '${AppStrings.taskEnergyLabel}: ${AppStrings.taskEnergyHighFocus}';
+      case EnergyRequirement.lowEnergy:
+        return '${AppStrings.taskEnergyLabel}: ${AppStrings.taskEnergyLowEnergy}';
+      case EnergyRequirement.flexible:
+        return '${AppStrings.taskEnergyLabel}: ${AppStrings.taskEnergyFlexible}';
+    }
+  }
+
+  String _priorityDisplayLabel() {
+    if (_priority == null) return AppStrings.taskPriorityLabel;
+    switch (_priority!) {
+      case TaskPriority.normal:
+        return '${AppStrings.taskPriorityLabel}: ${AppStrings.taskPriorityNormal}';
+      case TaskPriority.high:
+        return '${AppStrings.taskPriorityLabel}: ${AppStrings.taskPriorityHigh}';
+      case TaskPriority.critical:
+        return '${AppStrings.taskPriorityLabel}: ${AppStrings.taskPriorityCritical}';
+    }
   }
 
   @override
@@ -279,8 +542,95 @@ class _AddTabSheetState extends ConsumerState<AddTabSheet> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: AppSpacing.md),
+                  const SizedBox(height: AppSpacing.sm),
                 ],
+
+                // Time window picker
+                GestureDetector(
+                  onTap: _showTimeWindowPicker,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.md,
+                      vertical: AppSpacing.sm,
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          CupertinoIcons.clock,
+                          size: 18,
+                          color: colors.textSecondary,
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        Text(
+                          _timeWindowDisplayLabel(),
+                          style:
+                              Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: colors.textSecondary,
+                                  ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+
+                // Energy requirement picker
+                GestureDetector(
+                  onTap: _showEnergyPicker,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.md,
+                      vertical: AppSpacing.sm,
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          CupertinoIcons.bolt,
+                          size: 18,
+                          color: colors.textSecondary,
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        Text(
+                          _energyDisplayLabel(),
+                          style:
+                              Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: colors.textSecondary,
+                                  ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+
+                // Priority picker
+                GestureDetector(
+                  onTap: _showPriorityPicker,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.md,
+                      vertical: AppSpacing.sm,
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          CupertinoIcons.flag,
+                          size: 18,
+                          color: colors.textSecondary,
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        Text(
+                          _priorityDisplayLabel(),
+                          style:
+                              Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: colors.textSecondary,
+                                  ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.md),
 
                 // Submit button
                 SizedBox(

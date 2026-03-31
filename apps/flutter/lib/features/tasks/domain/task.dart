@@ -1,5 +1,9 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import 'energy_requirement.dart';
+import 'task_priority.dart';
+import 'time_window.dart';
+
 part 'task.freezed.dart';
 
 /// Core task domain model.
@@ -17,6 +21,11 @@ abstract class Task with _$Task {
     String? sectionId,
     String? parentTaskId,
     required int position,
+    TimeWindow? timeWindow,
+    String? timeWindowStart,
+    String? timeWindowEnd,
+    EnergyRequirement? energyRequirement,
+    @Default(TaskPriority.normal) TaskPriority? priority,
     DateTime? archivedAt,
     DateTime? completedAt,
     required DateTime createdAt,

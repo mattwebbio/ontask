@@ -18,6 +18,11 @@ export const tasksTable = pgTable('tasks', {
   notes: text(),
   dueDate: timestamp({ withTimezone: true }),
   position: integer().default(0).notNull(),
+  timeWindow: text(), // 'morning' | 'afternoon' | 'evening' | 'custom'
+  timeWindowStart: text(), // HH:mm format, used when timeWindow = 'custom'
+  timeWindowEnd: text(), // HH:mm format, used when timeWindow = 'custom'
+  energyRequirement: text(), // 'high_focus' | 'low_energy' | 'flexible'
+  priority: text().default('normal'), // 'normal' | 'high' | 'critical'
   archivedAt: timestamp({ withTimezone: true }),
   completedAt: timestamp({ withTimezone: true }),
   createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),

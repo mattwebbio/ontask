@@ -246,6 +246,27 @@ class AppStrings {
   static const String addTaskError = "Something went wrong. Please try again.";
   static const String addTaskTitleRequired = "Give your task a title.";
 
+  // ── Scheduling hints — time window ──────────────────────────────────────────
+  static const String taskTimeWindowLabel = 'Time window';
+  static const String taskTimeWindowMorning = 'Morning';
+  static const String taskTimeWindowAfternoon = 'Afternoon';
+  static const String taskTimeWindowEvening = 'Evening';
+  static const String taskTimeWindowCustom = 'Custom';
+  static const String taskTimeWindowCustomStart = 'Start time';
+  static const String taskTimeWindowCustomEnd = 'End time';
+
+  // ── Scheduling hints — energy ─────────────────────────────────────────────
+  static const String taskEnergyLabel = 'Energy';
+  static const String taskEnergyHighFocus = 'High focus';
+  static const String taskEnergyLowEnergy = 'Low energy';
+  static const String taskEnergyFlexible = 'Flexible';
+
+  // ── Scheduling hints — priority ───────────────────────────────────────────
+  static const String taskPriorityLabel = 'Priority';
+  static const String taskPriorityNormal = 'Normal';
+  static const String taskPriorityHigh = 'High';
+  static const String taskPriorityCritical = 'Critical';
+
   // ── Lists tab ─────────────────────────────────────────────────────────────
   static const String listsTitle = "Lists";
   static const String createListButton = "Create a list";

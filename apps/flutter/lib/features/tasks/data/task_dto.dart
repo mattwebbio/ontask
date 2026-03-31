@@ -1,5 +1,8 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import '../domain/energy_requirement.dart';
 import '../domain/task.dart';
+import '../domain/task_priority.dart';
+import '../domain/time_window.dart';
 
 part 'task_dto.freezed.dart';
 part 'task_dto.g.dart';
@@ -20,6 +23,11 @@ abstract class TaskDto with _$TaskDto {
     String? sectionId,
     String? parentTaskId,
     required int position,
+    String? timeWindow,
+    String? timeWindowStart,
+    String? timeWindowEnd,
+    String? energyRequirement,
+    String? priority,
     String? archivedAt,
     String? completedAt,
     required String createdAt,
@@ -38,6 +46,11 @@ abstract class TaskDto with _$TaskDto {
         sectionId: sectionId,
         parentTaskId: parentTaskId,
         position: position,
+        timeWindow: TimeWindow.fromJson(timeWindow),
+        timeWindowStart: timeWindowStart,
+        timeWindowEnd: timeWindowEnd,
+        energyRequirement: EnergyRequirement.fromJson(energyRequirement),
+        priority: TaskPriority.fromJson(priority),
         archivedAt: archivedAt != null ? DateTime.parse(archivedAt!) : null,
         completedAt: completedAt != null ? DateTime.parse(completedAt!) : null,
         createdAt: DateTime.parse(createdAt),

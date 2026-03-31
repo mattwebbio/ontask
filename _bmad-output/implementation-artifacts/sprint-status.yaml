@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-29
-last_updated: 2026-03-30 # Story 2.1 review
+last_updated: 2026-03-30 # Story 2.2 review
 project: ontask
 project_key: NOKEY
 tracking_system: file-system
@@ -57,7 +57,7 @@ development_status:
   1-8-user-authentication: done
   1-9-onboarding-flow-sample-schedule: done
   1-10-account-settings-session-management: done
-  1-11-account-deletion-data-export-two-factor-authentication: review
+  1-11-account-deletion-data-export-two-factor-authentication: done
   1-12-observability-error-tracking-bootstrap: done
   epic-1-retrospective: optional
 
@@ -65,8 +65,8 @@ development_status:
   # Epic 2: Task Capture & Daily Planning
   # ─────────────────────────────────────────────────────────
   epic-2: in-progress
-  2-1-task-list-crud: review
-  2-2-task-properties-scheduling-hints: backlog
+  2-1-task-list-crud: done
+  2-2-task-properties-scheduling-hints: review
   2-3-recurring-tasks: backlog
   2-4-task-templates: backlog
   2-5-task-dependencies-bulk-operations: backlog

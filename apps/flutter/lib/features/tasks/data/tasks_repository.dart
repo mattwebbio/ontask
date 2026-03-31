@@ -21,6 +21,11 @@ class TasksRepository {
     String? listId,
     String? sectionId,
     String? parentTaskId,
+    String? timeWindow,
+    String? timeWindowStart,
+    String? timeWindowEnd,
+    String? energyRequirement,
+    String? priority,
   }) async {
     final response = await _client.dio.post<Map<String, dynamic>>(
       '/v1/tasks',
@@ -31,6 +36,11 @@ class TasksRepository {
         if (listId != null) 'listId': listId,
         if (sectionId != null) 'sectionId': sectionId,
         if (parentTaskId != null) 'parentTaskId': parentTaskId,
+        if (timeWindow != null) 'timeWindow': timeWindow,
+        if (timeWindowStart != null) 'timeWindowStart': timeWindowStart,
+        if (timeWindowEnd != null) 'timeWindowEnd': timeWindowEnd,
+        if (energyRequirement != null) 'energyRequirement': energyRequirement,
+        if (priority != null) 'priority': priority,
       },
     );
     return TaskDto.fromJson(

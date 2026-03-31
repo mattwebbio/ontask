@@ -45,7 +45,7 @@ final class ListsNotifierProvider
   ListsNotifier create() => ListsNotifier();
 }
 
-String _$listsNotifierHash() => r'8bce84cd457f97e4d94d730deefcbccaaae079b6';
+String _$listsNotifierHash() => r'7e0f60eb51da99cf511b225a05b72a67e9021a72';
 
 /// Notifier managing all user lists.
 ///
