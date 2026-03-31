@@ -290,6 +290,52 @@ app.openapi(getScheduleHealthRoute, async (c) => {
   return c.json(ok({ days }), 200)
 })
 
+// ── GET /v1/tasks/current ─────────────────────────────────────────────────────
+
+const currentTaskSchema = taskSchema.extend({
+  listName: z.string().nullable(),
+  assignorName: z.string().nullable(),
+  stakeAmountCents: z.number().int().nullable(),
+  proofMode: z.enum(['standard', 'photo', 'watchMode', 'healthKit', 'calendarEvent']),
+})
+
+const CurrentTaskResponseSchema = z.object({
+  data: currentTaskSchema.nullable(),
+})
+
+const getCurrentTaskRoute = createRoute({
+  method: 'get',
+  path: '/v1/tasks/current',
+  tags: ['Tasks'],
+  summary: 'Get the current task for the Now tab',
+  description:
+    'Returns the single current task enriched with list name, assignor, stake amount, and proof mode. ' +
+    'Returns { data: null } when no current task (rest state).',
+  responses: {
+    200: {
+      content: { 'application/json': { schema: CurrentTaskResponseSchema } },
+      description: 'Current task or null',
+    },
+  },
+})
+
+app.openapi(getCurrentTaskRoute, async (c) => {
+  // TODO(impl): determine actual current task from scheduling engine
+  // Stub: return first task from today with enriched fields
+  const dateStr = new Date().toISOString().split('T')[0]
+  const task = stubTask({ dueDate: `${dateStr}T09:00:00.000Z` })
+  return c.json(
+    ok({
+      ...task,
+      listName: 'Personal',
+      assignorName: null,
+      stakeAmountCents: null,
+      proofMode: 'standard' as const,
+    }),
+    200,
+  )
+})
+
 // ── GET /v1/tasks/:id ───────────────────────────────────────────────────────
 
 const getTaskRoute = createRoute({

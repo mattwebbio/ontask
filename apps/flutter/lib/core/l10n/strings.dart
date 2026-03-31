@@ -399,6 +399,42 @@ class AppStrings {
   static const String scheduleHealthCriticalDetail = 'Overbooked -- {hours}h';
   static const String scheduleHealthAtRiskTasks = 'At-risk tasks';
 
+  // ── Now tab — task card ──────────────────────────────────────────────────
+  static const String nowCardAttribution =
+      'Your past self planned this for now';
+  static const String nowCardAttributionFromList = 'From {listName}';
+  static const String nowCardAttributionFromListAndAssignor =
+      'From {listName} \u00b7 assigned by {assignor}';
+  static const String nowCardStakeLabel = 'at stake';
+  static const String nowCardMarkDone = 'Mark done';
+  static const String nowCardSubmitProof = 'Submit proof';
+  static const String nowCardStartWatchMode = 'Start Watch Mode';
+  static const String nowCardProofPhoto = 'Photo proof';
+  static const String nowCardProofWatchMode = 'Watch Mode';
+  static const String nowCardProofHealthKit = 'HealthKit';
+  static const String nowCardProofCalendarEvent = 'Calendar event';
+  static const String nowCardVoiceOverStaked = '{amount} staked';
+  static const String nowCardVoiceOverDue = 'due {deadline}';
+  static const String nowCardVoiceOverFrom = 'from {listName}';
+  static const String nowCardVoiceOverTimerElapsed = '{time} elapsed';
+  static const String nowCardNextTaskHint = 'Next: {task} at {time}';
+
+  // ── Date/time labels ─────────────────────────────────────────────────────
+  static const String dateToday = 'Today';
+  static const String dateTomorrow = 'Tomorrow';
+  static const String monthJan = 'Jan';
+  static const String monthFeb = 'Feb';
+  static const String monthMar = 'Mar';
+  static const String monthApr = 'Apr';
+  static const String monthMay = 'May';
+  static const String monthJun = 'Jun';
+  static const String monthJul = 'Jul';
+  static const String monthAug = 'Aug';
+  static const String monthSep = 'Sep';
+  static const String monthOct = 'Oct';
+  static const String monthNov = 'Nov';
+  static const String monthDec = 'Dec';
+
   // ── Shared actions ──────────────────────────────────────────────────────
   static const String actionDelete = 'Delete';
 }

@@ -45,7 +45,7 @@ final class ScheduleHealthProvider
   ScheduleHealth create() => ScheduleHealth();
 }
 
-String _$scheduleHealthHash() => r'1dd94bfa077f9465e6395e6227ae8d73222899da';
+String _$scheduleHealthHash() => r'5d8d586283690aeb24c4c52191c5f0099a99fd29';
 
 /// AsyncNotifier that loads the weekly schedule health data.
 ///
