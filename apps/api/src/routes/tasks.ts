@@ -363,6 +363,59 @@ app.openapi(getCurrentTaskRoute, async (c) => {
   )
 })
 
+// ── GET /v1/tasks/:id/prediction ────────────────────────────────────────────
+// IMPORTANT: This nested resource route MUST be registered BEFORE /v1/tasks/{id} —
+// Hono matches routes in registration order. If {id} comes first, "prediction"
+// sub-resource paths would never be reached.
+
+const taskPredictionSchema = z.object({
+  taskId: z.string().uuid(),
+  predictedDate: z.string().datetime().nullable(),
+  status: z.enum(['on_track', 'at_risk', 'behind', 'unknown']),
+  tasksRemaining: z.number().int(),
+  estimatedMinutesRemaining: z.number().int(),
+  availableWindowsCount: z.number().int(),
+  reasoning: z.string(),
+})
+
+const TaskPredictionResponseSchema = z.object({ data: taskPredictionSchema })
+
+const getTaskPredictionRoute = createRoute({
+  method: 'get',
+  path: '/v1/tasks/{id}/prediction',
+  tags: ['Tasks'],
+  summary: 'Get predicted completion for a task',
+  description:
+    'Returns predicted completion date, status (on_track/at_risk/behind/unknown), and reasoning for a task. ' +
+    'Stub returns plausible static data; real implementation comes in Epic 3.',
+  request: {
+    params: z.object({ id: z.string().uuid() }),
+  },
+  responses: {
+    200: { content: { 'application/json': { schema: TaskPredictionResponseSchema } }, description: 'Task prediction' },
+    404: { content: { 'application/json': { schema: ErrorSchema } }, description: 'Task not found' },
+  },
+})
+
+app.openapi(getTaskPredictionRoute, async (c) => {
+  // TODO(impl): real prediction from scheduling engine (Epic 3)
+  const { id } = c.req.valid('param')
+  const predictedDate = new Date()
+  predictedDate.setUTCDate(predictedDate.getUTCDate() + 7)
+  return c.json(
+    ok({
+      taskId: id,
+      predictedDate: predictedDate.toISOString(),
+      status: 'on_track' as const,
+      tasksRemaining: 3,
+      estimatedMinutesRemaining: 90,
+      availableWindowsCount: 5,
+      reasoning: 'At current pace, this task will be completed before its due date.',
+    }),
+    200,
+  )
+})
+
 // ── GET /v1/tasks/search ─────────────────────────────────────────────────────
 // IMPORTANT: This named route MUST be registered BEFORE /v1/tasks/{id} —
 // Hono matches routes in registration order. If {id} comes first, "search"

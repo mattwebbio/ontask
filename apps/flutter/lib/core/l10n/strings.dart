@@ -480,6 +480,20 @@ class AppStrings {
   static const String timerAnnouncementTemplate = '{time} elapsed on {task}';
   static const String todayRowStartTimer = 'Start timer';
 
+  // ── Prediction badge ─────────────────────────────────────────────────────
+  static const String predictionBadgeOnTrack = 'On track · {date}';
+  static const String predictionBadgeAtRisk = 'At risk · {date}';
+  static const String predictionBadgeBehind = 'Behind · {date}';
+  static const String predictionBadgeUnknown = '—';
+  static const String predictionBadgeSheetTitle = 'Forecast';
+  static const String predictionBadgeTasksRemaining = '{count} tasks remaining';
+  static const String predictionBadgeEstimatedTime = '{minutes} min estimated';
+  static const String predictionBadgeAvailableWindows = '{count} time windows available';
+  static const String predictionBadgeVoiceOver =
+      'Predicted completion {status}. {date}. Tap for forecast reasoning.';
+  static const String predictionBadgeVoiceOverUnknown =
+      'Predicted completion unknown. Tap for forecast reasoning.';
+
   // ── Shared actions ──────────────────────────────────────────────────────
   static const String actionDelete = 'Delete';
 }

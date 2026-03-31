@@ -12,6 +12,7 @@ import '../../tasks/domain/task.dart';
 import '../../tasks/presentation/tasks_provider.dart';
 import '../../tasks/presentation/widgets/task_edit_inline.dart';
 import '../../tasks/presentation/widgets/task_row.dart';
+import '../../prediction/presentation/widgets/prediction_badge_async.dart';
 import '../../templates/presentation/templates_provider.dart';
 import '../domain/section.dart';
 import 'lists_provider.dart';
@@ -140,6 +141,17 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
 
     return Column(
       children: [
+        // List-level prediction badge — placed above sections/tasks content
+        Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.sm,
+          ),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: ListPredictionBadge(listId: widget.listId),
+          ),
+        ),
         Expanded(
           child: ReorderableListView(
             onReorder: _onReorder,

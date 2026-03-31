@@ -118,6 +118,58 @@ app.openapi(getSectionsRoute, async (c) => {
   return c.json(list([stubSection({ listId })], null, false), 200)
 })
 
+// ── GET /v1/sections/:id/prediction ─────────────────────────────────────────
+// IMPORTANT: This nested resource route MUST be registered BEFORE /v1/sections/{id} —
+// Hono matches routes in registration order.
+
+const sectionPredictionSchema = z.object({
+  sectionId: z.string().uuid(),
+  predictedDate: z.string().datetime().nullable(),
+  status: z.enum(['on_track', 'at_risk', 'behind', 'unknown']),
+  tasksRemaining: z.number().int(),
+  estimatedMinutesRemaining: z.number().int(),
+  availableWindowsCount: z.number().int(),
+  reasoning: z.string(),
+})
+
+const SectionPredictionResponseSchema = z.object({ data: sectionPredictionSchema })
+
+const getSectionPredictionRoute = createRoute({
+  method: 'get',
+  path: '/v1/sections/{id}/prediction',
+  tags: ['Sections'],
+  summary: 'Get predicted completion for a section',
+  description:
+    'Returns predicted completion date, status, and reasoning for all tasks in a section. ' +
+    'Stub returns plausible static data; real implementation comes in Epic 3.',
+  request: {
+    params: z.object({ id: z.string().uuid() }),
+  },
+  responses: {
+    200: { content: { 'application/json': { schema: SectionPredictionResponseSchema } }, description: 'Section prediction' },
+    404: { content: { 'application/json': { schema: ErrorSchema } }, description: 'Section not found' },
+  },
+})
+
+app.openapi(getSectionPredictionRoute, async (c) => {
+  // TODO(impl): real prediction from scheduling engine (Epic 3)
+  const { id } = c.req.valid('param')
+  const predictedDate = new Date()
+  predictedDate.setUTCDate(predictedDate.getUTCDate() + 30)
+  return c.json(
+    ok({
+      sectionId: id,
+      predictedDate: predictedDate.toISOString(),
+      status: 'behind' as const,
+      tasksRemaining: 7,
+      estimatedMinutesRemaining: 300,
+      availableWindowsCount: 4,
+      reasoning: 'At current pace, this section will miss its target date.',
+    }),
+    200,
+  )
+})
+
 // ── PATCH /v1/sections/:id ──────────────────────────────────────────────────
 
 const patchSectionRoute = createRoute({
