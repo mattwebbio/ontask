@@ -12,6 +12,9 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
+  "dependencies": {
+    "@ontask/core": "workspace:*"
+  },
   "devDependencies": {
     "@vitest/coverage-v8": "^3.0.0",
     "vitest": "^3.0.0"
