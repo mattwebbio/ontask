@@ -330,7 +330,7 @@ class TaskRow extends StatelessWidget {
       final depTask = allTasks.where((t) => t.id == dependsOn.first.dependsOnTaskId).firstOrNull;
       return '${AppStrings.taskDependsOn}: ${depTask?.title ?? dependsOn.first.dependsOnTaskId}';
     }
-    return '${AppStrings.taskDependsOn} ${dependsOn.length} tasks';
+    return AppStrings.taskDependsOnCount.replaceAll('{count}', '${dependsOn.length}');
   }
 
   String _blocksLabel() {
@@ -338,7 +338,7 @@ class TaskRow extends StatelessWidget {
       final depTask = allTasks.where((t) => t.id == blocks.first.dependentTaskId).firstOrNull;
       return '${AppStrings.taskBlocks}: ${depTask?.title ?? blocks.first.dependentTaskId}';
     }
-    return '${AppStrings.taskBlocks} ${blocks.length} tasks';
+    return AppStrings.taskBlocksCount.replaceAll('{count}', '${blocks.length}');
   }
 
   String _energyBadgeLabel() {

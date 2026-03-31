@@ -581,10 +581,10 @@ class _TaskEditInlineState extends ConsumerState<TaskEditInline> {
     final dependsOn = depsAsync.value?.dependsOn ?? <TaskDependency>[];
 
     // Get all tasks in the same list to resolve names and for the picker
+    // Note: sectionId omitted intentionally — picker must show all tasks in the list
     final allTasks = ref
             .watch(tasksProvider(
               listId: widget.task.listId,
-              sectionId: widget.task.sectionId,
             ))
             .value ??
         [];

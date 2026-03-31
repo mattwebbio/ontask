@@ -1,6 +1,6 @@
 # Story 2.5: Task Dependencies & Bulk Operations
 
-Status: review
+Status: in-progress
 
 ## Story
 
@@ -433,6 +433,11 @@ Modified files:
 - apps/flutter/lib/core/l10n/strings.dart
 
 ### Review Findings
+
+- [ ] [Review][Patch] Dependency picker scoped to section instead of list — `_buildDependenciesSection` watches `tasksProvider(listId: widget.task.listId, sectionId: widget.task.sectionId)` which filters tasks to the same section only; spec and dev notes require "same list (same listId)"; for tasks in a section this silently hides cross-section tasks from the picker [apps/flutter/lib/features/tasks/presentation/widgets/task_edit_inline.dart:585-588]
+- [ ] [Review][Patch] macOS Cmd+click multi-select not implemented — story task [x] marks it done but no `LogicalKeyboardKey.meta` or keyboard event handler exists in `list_detail_screen.dart`; spec requires Cmd+click to toggle individual task selection on macOS [apps/flutter/lib/features/lists/presentation/list_detail_screen.dart]
+- [ ] [Review][Patch] Inline string literal `' tasks'` in `_dependsOnLabel()` and `_blocksLabel()` — plural-count labels (`'${AppStrings.taskDependsOn} ${dependsOn.length} tasks'`, `'${AppStrings.taskBlocks} ${blocks.length} tasks'`) embed the word "tasks" inline; violates no-inline-strings constraint; add `taskDependsOnCount` and `taskBlocksCount` strings (e.g. `'Depends on {count} tasks'`) to `AppStrings` [apps/flutter/lib/features/tasks/presentation/widgets/task_row.dart:333,341]
+- [x] [Review][Defer] Bulk operation errors silently swallowed — `_bulkReschedule`, `_bulkComplete`, `_bulkDelete` catch all exceptions with `// Error handling deferred to real implementation`; user sees no error feedback on failure; but this is explicitly noted as deferred in dev notes and is pre-existing pattern from stub implementations [apps/flutter/lib/features/lists/presentation/list_detail_screen.dart:267,282,297] — deferred, pre-existing
 
 ### Change Log
 

@@ -354,6 +354,8 @@ class AppStrings {
       'Something went wrong. Please try again.';
   static const String taskDependencySelfError =
       "A task can\u2019t depend on itself.";
+  static const String taskDependsOnCount = 'Depends on {count} tasks';
+  static const String taskBlocksCount = 'Blocks {count} tasks';
 
   // ── Bulk Operations ──────────────────────────────────────────────────────
   static const String bulkSelectCount = '{count} selected';

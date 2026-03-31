@@ -1,5 +1,8 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/l10n/strings.dart';
@@ -153,7 +156,7 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
                     onSelectionToggle: () => _toggleSelection(task.id),
                     onTap: _isMultiSelectMode
                         ? () => _toggleSelection(task.id)
-                        : () => setState(() => _editingTask = task),
+                        : () => _onTaskTap(task),
                     onArchive: () => _archiveTask(task.id),
                   ),
                 ),
@@ -236,6 +239,20 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
           ),
       ],
     );
+  }
+
+  void _onTaskTap(Task task) {
+    // macOS: Cmd+click toggles selection without entering a dedicated mode
+    if (Platform.isMacOS &&
+        HardwareKeyboard.instance.isLogicalKeyPressed(LogicalKeyboardKey.meta)) {
+      if (!_isMultiSelectMode) {
+        _enterMultiSelect(task.id);
+      } else {
+        _toggleSelection(task.id);
+      }
+      return;
+    }
+    setState(() => _editingTask = task);
   }
 
   void _enterMultiSelect(String taskId) {

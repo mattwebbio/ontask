@@ -45,3 +45,7 @@
 ## Deferred from: code review of 2-4-task-templates (2026-03-30)
 
 - **API stub `offsetDate` does not recurse into `childSections` for due dates** — The `offsetDate` helper in the apply template stub only scans top-level `sections[].tasks` and `rootTasks` for `minDate` calculation, missing tasks in nested `childSections`. This is a stub-only issue that will be addressed when real implementation replaces stubs.
+
+## Deferred from: code review of 2-5-task-dependencies-bulk-operations (2026-03-30)
+
+- **Bulk operation errors silently swallowed** — `_bulkReschedule`, `_bulkComplete`, `_bulkDelete` in `list_detail_screen.dart` catch all exceptions with `// Error handling deferred to real implementation`; user sees no error feedback on failure. Stub-only issue; address when real implementation replaces stubs.
