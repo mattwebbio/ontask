@@ -50,7 +50,7 @@ final class NowProvider extends $AsyncNotifierProvider<Now, NowTask?> {
   Now create() => Now();
 }
 
-String _$nowHash() => r'43d641cb912216250b386dceab60b3e3a623888f';
+String _$nowHash() => r'ff328140611e5941a5bf60a52f1d5119036cf15f';
 
 /// AsyncNotifier that manages the current task for the Now tab.
 ///

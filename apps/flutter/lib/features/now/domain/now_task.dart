@@ -22,6 +22,8 @@ abstract class NowTask with _$NowTask {
     String? assignorName,
     int? stakeAmountCents,
     @Default(ProofMode.standard) ProofMode proofMode,
+    DateTime? startedAt,
+    int? elapsedSeconds,
     DateTime? completedAt,
     required DateTime createdAt,
     required DateTime updatedAt,

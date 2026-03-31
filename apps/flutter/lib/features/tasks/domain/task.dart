@@ -31,6 +31,8 @@ abstract class Task with _$Task {
     int? recurrenceInterval,
     List<int>? recurrenceDaysOfWeek,
     String? recurrenceParentId,
+    DateTime? startedAt,
+    int? elapsedSeconds,
     DateTime? archivedAt,
     DateTime? completedAt,
     required DateTime createdAt,

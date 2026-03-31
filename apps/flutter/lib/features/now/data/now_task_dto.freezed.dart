@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$NowTaskDto {
 
- String get id; String get title; String? get notes; String? get dueDate; String? get listId; String? get listName; String? get assignorName; int? get stakeAmountCents; String? get proofMode; String? get completedAt; String get createdAt; String get updatedAt;
+ String get id; String get title; String? get notes; String? get dueDate; String? get listId; String? get listName; String? get assignorName; int? get stakeAmountCents; String? get proofMode; String? get startedAt; int? get elapsedSeconds; String? get completedAt; String get createdAt; String get updatedAt;
 /// Create a copy of NowTaskDto
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $NowTaskDtoCopyWith<NowTaskDto> get copyWith => _$NowTaskDtoCopyWithImpl<NowTask
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is NowTaskDto&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.notes, notes) || other.notes == notes)&&(identical(other.dueDate, dueDate) || other.dueDate == dueDate)&&(identical(other.listId, listId) || other.listId == listId)&&(identical(other.listName, listName) || other.listName == listName)&&(identical(other.assignorName, assignorName) || other.assignorName == assignorName)&&(identical(other.stakeAmountCents, stakeAmountCents) || other.stakeAmountCents == stakeAmountCents)&&(identical(other.proofMode, proofMode) || other.proofMode == proofMode)&&(identical(other.completedAt, completedAt) || other.completedAt == completedAt)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is NowTaskDto&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.notes, notes) || other.notes == notes)&&(identical(other.dueDate, dueDate) || other.dueDate == dueDate)&&(identical(other.listId, listId) || other.listId == listId)&&(identical(other.listName, listName) || other.listName == listName)&&(identical(other.assignorName, assignorName) || other.assignorName == assignorName)&&(identical(other.stakeAmountCents, stakeAmountCents) || other.stakeAmountCents == stakeAmountCents)&&(identical(other.proofMode, proofMode) || other.proofMode == proofMode)&&(identical(other.startedAt, startedAt) || other.startedAt == startedAt)&&(identical(other.elapsedSeconds, elapsedSeconds) || other.elapsedSeconds == elapsedSeconds)&&(identical(other.completedAt, completedAt) || other.completedAt == completedAt)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,title,notes,dueDate,listId,listName,assignorName,stakeAmountCents,proofMode,completedAt,createdAt,updatedAt);
+int get hashCode => Object.hash(runtimeType,id,title,notes,dueDate,listId,listName,assignorName,stakeAmountCents,proofMode,startedAt,elapsedSeconds,completedAt,createdAt,updatedAt);
 
 @override
 String toString() {
-  return 'NowTaskDto(id: $id, title: $title, notes: $notes, dueDate: $dueDate, listId: $listId, listName: $listName, assignorName: $assignorName, stakeAmountCents: $stakeAmountCents, proofMode: $proofMode, completedAt: $completedAt, createdAt: $createdAt, updatedAt: $updatedAt)';
+  return 'NowTaskDto(id: $id, title: $title, notes: $notes, dueDate: $dueDate, listId: $listId, listName: $listName, assignorName: $assignorName, stakeAmountCents: $stakeAmountCents, proofMode: $proofMode, startedAt: $startedAt, elapsedSeconds: $elapsedSeconds, completedAt: $completedAt, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $NowTaskDtoCopyWith<$Res>  {
   factory $NowTaskDtoCopyWith(NowTaskDto value, $Res Function(NowTaskDto) _then) = _$NowTaskDtoCopyWithImpl;
 @useResult
 $Res call({
- String id, String title, String? notes, String? dueDate, String? listId, String? listName, String? assignorName, int? stakeAmountCents, String? proofMode, String? completedAt, String createdAt, String updatedAt
+ String id, String title, String? notes, String? dueDate, String? listId, String? listName, String? assignorName, int? stakeAmountCents, String? proofMode, String? startedAt, int? elapsedSeconds, String? completedAt, String createdAt, String updatedAt
 });
 
 
@@ -65,7 +65,7 @@ class _$NowTaskDtoCopyWithImpl<$Res>
 
 /// Create a copy of NowTaskDto
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? notes = freezed,Object? dueDate = freezed,Object? listId = freezed,Object? listName = freezed,Object? assignorName = freezed,Object? stakeAmountCents = freezed,Object? proofMode = freezed,Object? completedAt = freezed,Object? createdAt = null,Object? updatedAt = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? notes = freezed,Object? dueDate = freezed,Object? listId = freezed,Object? listName = freezed,Object? assignorName = freezed,Object? stakeAmountCents = freezed,Object? proofMode = freezed,Object? startedAt = freezed,Object? elapsedSeconds = freezed,Object? completedAt = freezed,Object? createdAt = null,Object? updatedAt = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
@@ -76,7 +76,9 @@ as String?,listName: freezed == listName ? _self.listName : listName // ignore: 
 as String?,assignorName: freezed == assignorName ? _self.assignorName : assignorName // ignore: cast_nullable_to_non_nullable
 as String?,stakeAmountCents: freezed == stakeAmountCents ? _self.stakeAmountCents : stakeAmountCents // ignore: cast_nullable_to_non_nullable
 as int?,proofMode: freezed == proofMode ? _self.proofMode : proofMode // ignore: cast_nullable_to_non_nullable
-as String?,completedAt: freezed == completedAt ? _self.completedAt : completedAt // ignore: cast_nullable_to_non_nullable
+as String?,startedAt: freezed == startedAt ? _self.startedAt : startedAt // ignore: cast_nullable_to_non_nullable
+as String?,elapsedSeconds: freezed == elapsedSeconds ? _self.elapsedSeconds : elapsedSeconds // ignore: cast_nullable_to_non_nullable
+as int?,completedAt: freezed == completedAt ? _self.completedAt : completedAt // ignore: cast_nullable_to_non_nullable
 as String?,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as String,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as String,
@@ -164,10 +166,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String title,  String? notes,  String? dueDate,  String? listId,  String? listName,  String? assignorName,  int? stakeAmountCents,  String? proofMode,  String? completedAt,  String createdAt,  String updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String title,  String? notes,  String? dueDate,  String? listId,  String? listName,  String? assignorName,  int? stakeAmountCents,  String? proofMode,  String? startedAt,  int? elapsedSeconds,  String? completedAt,  String createdAt,  String updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _NowTaskDto() when $default != null:
-return $default(_that.id,_that.title,_that.notes,_that.dueDate,_that.listId,_that.listName,_that.assignorName,_that.stakeAmountCents,_that.proofMode,_that.completedAt,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.title,_that.notes,_that.dueDate,_that.listId,_that.listName,_that.assignorName,_that.stakeAmountCents,_that.proofMode,_that.startedAt,_that.elapsedSeconds,_that.completedAt,_that.createdAt,_that.updatedAt);case _:
   return orElse();
 
 }
@@ -185,10 +187,10 @@ return $default(_that.id,_that.title,_that.notes,_that.dueDate,_that.listId,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String title,  String? notes,  String? dueDate,  String? listId,  String? listName,  String? assignorName,  int? stakeAmountCents,  String? proofMode,  String? completedAt,  String createdAt,  String updatedAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String title,  String? notes,  String? dueDate,  String? listId,  String? listName,  String? assignorName,  int? stakeAmountCents,  String? proofMode,  String? startedAt,  int? elapsedSeconds,  String? completedAt,  String createdAt,  String updatedAt)  $default,) {final _that = this;
 switch (_that) {
 case _NowTaskDto():
-return $default(_that.id,_that.title,_that.notes,_that.dueDate,_that.listId,_that.listName,_that.assignorName,_that.stakeAmountCents,_that.proofMode,_that.completedAt,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.title,_that.notes,_that.dueDate,_that.listId,_that.listName,_that.assignorName,_that.stakeAmountCents,_that.proofMode,_that.startedAt,_that.elapsedSeconds,_that.completedAt,_that.createdAt,_that.updatedAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -205,10 +207,10 @@ return $default(_that.id,_that.title,_that.notes,_that.dueDate,_that.listId,_tha
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String title,  String? notes,  String? dueDate,  String? listId,  String? listName,  String? assignorName,  int? stakeAmountCents,  String? proofMode,  String? completedAt,  String createdAt,  String updatedAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String title,  String? notes,  String? dueDate,  String? listId,  String? listName,  String? assignorName,  int? stakeAmountCents,  String? proofMode,  String? startedAt,  int? elapsedSeconds,  String? completedAt,  String createdAt,  String updatedAt)?  $default,) {final _that = this;
 switch (_that) {
 case _NowTaskDto() when $default != null:
-return $default(_that.id,_that.title,_that.notes,_that.dueDate,_that.listId,_that.listName,_that.assignorName,_that.stakeAmountCents,_that.proofMode,_that.completedAt,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.title,_that.notes,_that.dueDate,_that.listId,_that.listName,_that.assignorName,_that.stakeAmountCents,_that.proofMode,_that.startedAt,_that.elapsedSeconds,_that.completedAt,_that.createdAt,_that.updatedAt);case _:
   return null;
 
 }
@@ -220,7 +222,7 @@ return $default(_that.id,_that.title,_that.notes,_that.dueDate,_that.listId,_tha
 @JsonSerializable()
 
 class _NowTaskDto extends NowTaskDto {
-  const _NowTaskDto({required this.id, required this.title, this.notes, this.dueDate, this.listId, this.listName, this.assignorName, this.stakeAmountCents, this.proofMode, this.completedAt, required this.createdAt, required this.updatedAt}): super._();
+  const _NowTaskDto({required this.id, required this.title, this.notes, this.dueDate, this.listId, this.listName, this.assignorName, this.stakeAmountCents, this.proofMode, this.startedAt, this.elapsedSeconds, this.completedAt, required this.createdAt, required this.updatedAt}): super._();
   factory _NowTaskDto.fromJson(Map<String, dynamic> json) => _$NowTaskDtoFromJson(json);
 
 @override final  String id;
@@ -232,6 +234,8 @@ class _NowTaskDto extends NowTaskDto {
 @override final  String? assignorName;
 @override final  int? stakeAmountCents;
 @override final  String? proofMode;
+@override final  String? startedAt;
+@override final  int? elapsedSeconds;
 @override final  String? completedAt;
 @override final  String createdAt;
 @override final  String updatedAt;
@@ -249,16 +253,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _NowTaskDto&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.notes, notes) || other.notes == notes)&&(identical(other.dueDate, dueDate) || other.dueDate == dueDate)&&(identical(other.listId, listId) || other.listId == listId)&&(identical(other.listName, listName) || other.listName == listName)&&(identical(other.assignorName, assignorName) || other.assignorName == assignorName)&&(identical(other.stakeAmountCents, stakeAmountCents) || other.stakeAmountCents == stakeAmountCents)&&(identical(other.proofMode, proofMode) || other.proofMode == proofMode)&&(identical(other.completedAt, completedAt) || other.completedAt == completedAt)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _NowTaskDto&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.notes, notes) || other.notes == notes)&&(identical(other.dueDate, dueDate) || other.dueDate == dueDate)&&(identical(other.listId, listId) || other.listId == listId)&&(identical(other.listName, listName) || other.listName == listName)&&(identical(other.assignorName, assignorName) || other.assignorName == assignorName)&&(identical(other.stakeAmountCents, stakeAmountCents) || other.stakeAmountCents == stakeAmountCents)&&(identical(other.proofMode, proofMode) || other.proofMode == proofMode)&&(identical(other.startedAt, startedAt) || other.startedAt == startedAt)&&(identical(other.elapsedSeconds, elapsedSeconds) || other.elapsedSeconds == elapsedSeconds)&&(identical(other.completedAt, completedAt) || other.completedAt == completedAt)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,title,notes,dueDate,listId,listName,assignorName,stakeAmountCents,proofMode,completedAt,createdAt,updatedAt);
+int get hashCode => Object.hash(runtimeType,id,title,notes,dueDate,listId,listName,assignorName,stakeAmountCents,proofMode,startedAt,elapsedSeconds,completedAt,createdAt,updatedAt);
 
 @override
 String toString() {
-  return 'NowTaskDto(id: $id, title: $title, notes: $notes, dueDate: $dueDate, listId: $listId, listName: $listName, assignorName: $assignorName, stakeAmountCents: $stakeAmountCents, proofMode: $proofMode, completedAt: $completedAt, createdAt: $createdAt, updatedAt: $updatedAt)';
+  return 'NowTaskDto(id: $id, title: $title, notes: $notes, dueDate: $dueDate, listId: $listId, listName: $listName, assignorName: $assignorName, stakeAmountCents: $stakeAmountCents, proofMode: $proofMode, startedAt: $startedAt, elapsedSeconds: $elapsedSeconds, completedAt: $completedAt, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 
@@ -269,7 +273,7 @@ abstract mixin class _$NowTaskDtoCopyWith<$Res> implements $NowTaskDtoCopyWith<$
   factory _$NowTaskDtoCopyWith(_NowTaskDto value, $Res Function(_NowTaskDto) _then) = __$NowTaskDtoCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String title, String? notes, String? dueDate, String? listId, String? listName, String? assignorName, int? stakeAmountCents, String? proofMode, String? completedAt, String createdAt, String updatedAt
+ String id, String title, String? notes, String? dueDate, String? listId, String? listName, String? assignorName, int? stakeAmountCents, String? proofMode, String? startedAt, int? elapsedSeconds, String? completedAt, String createdAt, String updatedAt
 });
 
 
@@ -286,7 +290,7 @@ class __$NowTaskDtoCopyWithImpl<$Res>
 
 /// Create a copy of NowTaskDto
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? title = null,Object? notes = freezed,Object? dueDate = freezed,Object? listId = freezed,Object? listName = freezed,Object? assignorName = freezed,Object? stakeAmountCents = freezed,Object? proofMode = freezed,Object? completedAt = freezed,Object? createdAt = null,Object? updatedAt = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? title = null,Object? notes = freezed,Object? dueDate = freezed,Object? listId = freezed,Object? listName = freezed,Object? assignorName = freezed,Object? stakeAmountCents = freezed,Object? proofMode = freezed,Object? startedAt = freezed,Object? elapsedSeconds = freezed,Object? completedAt = freezed,Object? createdAt = null,Object? updatedAt = null,}) {
   return _then(_NowTaskDto(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
@@ -297,7 +301,9 @@ as String?,listName: freezed == listName ? _self.listName : listName // ignore: 
 as String?,assignorName: freezed == assignorName ? _self.assignorName : assignorName // ignore: cast_nullable_to_non_nullable
 as String?,stakeAmountCents: freezed == stakeAmountCents ? _self.stakeAmountCents : stakeAmountCents // ignore: cast_nullable_to_non_nullable
 as int?,proofMode: freezed == proofMode ? _self.proofMode : proofMode // ignore: cast_nullable_to_non_nullable
-as String?,completedAt: freezed == completedAt ? _self.completedAt : completedAt // ignore: cast_nullable_to_non_nullable
+as String?,startedAt: freezed == startedAt ? _self.startedAt : startedAt // ignore: cast_nullable_to_non_nullable
+as String?,elapsedSeconds: freezed == elapsedSeconds ? _self.elapsedSeconds : elapsedSeconds // ignore: cast_nullable_to_non_nullable
+as int?,completedAt: freezed == completedAt ? _self.completedAt : completedAt // ignore: cast_nullable_to_non_nullable
 as String?,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as String,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as String,

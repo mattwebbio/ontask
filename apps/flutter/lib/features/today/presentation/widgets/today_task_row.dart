@@ -1,9 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' show Colors, Dismissible, DismissDirection, Theme;
+import 'package:flutter/semantics.dart';
 
 import '../../../../core/l10n/strings.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../now/presentation/widgets/now_task_card.dart';
 
 /// Visual states for a task row in the Today tab.
 ///
@@ -36,6 +38,11 @@ class TodayTaskRow extends StatelessWidget {
   final TodayTaskRowState rowState;
   final VoidCallback? onComplete;
   final VoidCallback? onReschedule;
+  final VoidCallback? onStartTimer;
+
+  /// If non-null, indicates the task has a timer running/paused with this
+  /// many elapsed seconds. Shows an elapsed indicator instead of Start button.
+  final int? timerElapsedSeconds;
 
   const TodayTaskRow({
     required this.taskId,
@@ -44,6 +51,8 @@ class TodayTaskRow extends StatelessWidget {
     required this.rowState,
     this.onComplete,
     this.onReschedule,
+    this.onStartTimer,
+    this.timerElapsedSeconds,
     super.key,
   });
 
@@ -59,6 +68,7 @@ class TodayTaskRow extends StatelessWidget {
 
     final rowContent = Semantics(
       label: '$timeLabel, $title, ${_accessibilityStatus()}',
+      customSemanticsActions: _buildCustomActions(),
       child: Container(
         decoration: isCurrent
             ? BoxDecoration(
@@ -109,6 +119,8 @@ class TodayTaskRow extends StatelessWidget {
                 ),
               ),
             ),
+            // Timer indicator or start action
+            if (!isMuted && !isCalendarEvent) _buildTimerAction(colors),
             // Trailing status indicator
             _buildStatusIndicator(colors),
           ],
@@ -147,6 +159,59 @@ class TodayTaskRow extends StatelessWidget {
       },
       child: rowContent,
     );
+  }
+
+  /// Builds the timer action: either a small Start button or an elapsed indicator.
+  Widget _buildTimerAction(OnTaskColors colors) {
+    if (timerElapsedSeconds != null && timerElapsedSeconds! > 0) {
+      // Task has timer elapsed — show indicator
+      return Padding(
+        padding: const EdgeInsets.only(right: AppSpacing.sm),
+        child: Text(
+          NowTaskCard.formatElapsed(timerElapsedSeconds!),
+          style: TextStyle(
+            fontFeatures: const [FontFeature.tabularFigures()],
+            fontSize: 11,
+            color: colors.accentPrimary,
+          ),
+        ),
+      );
+    }
+
+    if (onStartTimer != null) {
+      return Semantics(
+        label: AppStrings.todayRowStartTimer,
+        child: SizedBox(
+          height: 44,
+          child: CupertinoButton(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
+            minSize: 44,
+            onPressed: onStartTimer,
+            child: Text(
+              AppStrings.timerStart,
+              style: TextStyle(
+                fontSize: 12,
+                color: colors.accentPrimary,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return const SizedBox.shrink();
+  }
+
+  /// Builds VoiceOver custom semantic actions.
+  Map<CustomSemanticsAction, VoidCallback>? _buildCustomActions() {
+    if (onStartTimer == null) return null;
+    if (timerElapsedSeconds != null && timerElapsedSeconds! > 0) return null;
+
+    return {
+      const CustomSemanticsAction(
+        label: AppStrings.todayRowStartTimer,
+      ): onStartTimer!,
+    };
   }
 
   Widget _buildStatusIndicator(OnTaskColors colors) {

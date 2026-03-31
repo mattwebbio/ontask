@@ -27,6 +27,38 @@ class NowRepository {
     if (data == null) return null;
     return NowTaskDto.fromJson(data as Map<String, dynamic>).toDomain();
   }
+
+  /// Starts the task timer via `POST /v1/tasks/{id}/start`.
+  Future<NowTask> startTask(String id) async {
+    final response = await _client.dio.post<Map<String, dynamic>>(
+      '/v1/tasks/$id/start',
+    );
+    final data = response.data?['data'];
+    if (data == null) throw Exception('Invalid start task response');
+    return NowTaskDto.fromJson(data as Map<String, dynamic>).toDomain();
+  }
+
+  /// Pauses the task timer via `POST /v1/tasks/{id}/pause`.
+  Future<NowTask> pauseTask(String id) async {
+    final response = await _client.dio.post<Map<String, dynamic>>(
+      '/v1/tasks/$id/pause',
+    );
+    final data = response.data?['data'];
+    if (data == null) throw Exception('Invalid pause task response');
+    return NowTaskDto.fromJson(data as Map<String, dynamic>).toDomain();
+  }
+
+  /// Stops the task timer via `POST /v1/tasks/{id}/stop`.
+  ///
+  /// Stopping the timer does NOT mark the task as complete.
+  Future<NowTask> stopTask(String id) async {
+    final response = await _client.dio.post<Map<String, dynamic>>(
+      '/v1/tasks/$id/stop',
+    );
+    final data = response.data?['data'];
+    if (data == null) throw Exception('Invalid stop task response');
+    return NowTaskDto.fromJson(data as Map<String, dynamic>).toDomain();
+  }
 }
 
 /// Riverpod provider for [NowRepository].

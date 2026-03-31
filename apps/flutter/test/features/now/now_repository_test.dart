@@ -156,4 +156,76 @@ void main() {
       expect(task.stakeAmountCents, 5000);
     });
   });
+
+  group('NowTaskDto timer fields', () {
+    final timerJson = {
+      'id': 'a0000000-0000-4000-8000-000000000001',
+      'title': 'Timer task',
+      'notes': null,
+      'dueDate': null,
+      'listId': null,
+      'listName': null,
+      'assignorName': null,
+      'stakeAmountCents': null,
+      'proofMode': 'standard',
+      'startedAt': '2026-03-31T10:00:00.000Z',
+      'elapsedSeconds': 120,
+      'completedAt': null,
+      'createdAt': '2026-03-30T12:00:00.000Z',
+      'updatedAt': '2026-03-30T12:00:00.000Z',
+    };
+
+    test('fromJson parses startedAt and elapsedSeconds', () {
+      final dto = NowTaskDto.fromJson(timerJson);
+      expect(dto.startedAt, '2026-03-31T10:00:00.000Z');
+      expect(dto.elapsedSeconds, 120);
+    });
+
+    test('toDomain maps startedAt and elapsedSeconds', () {
+      final domain = NowTaskDto.fromJson(timerJson).toDomain();
+      expect(domain.startedAt, DateTime.utc(2026, 3, 31, 10, 0));
+      expect(domain.elapsedSeconds, 120);
+    });
+
+    test('toDomain handles null startedAt and elapsedSeconds', () {
+      final nullTimerJson = Map<String, dynamic>.from(timerJson);
+      nullTimerJson['startedAt'] = null;
+      nullTimerJson['elapsedSeconds'] = null;
+      final domain = NowTaskDto.fromJson(nullTimerJson).toDomain();
+      expect(domain.startedAt, isNull);
+      expect(domain.elapsedSeconds, isNull);
+    });
+
+    test('toJson round-trip preserves timer fields', () {
+      final dto = NowTaskDto.fromJson(timerJson);
+      final json = dto.toJson();
+      final roundTripped = NowTaskDto.fromJson(json);
+      expect(roundTripped.startedAt, dto.startedAt);
+      expect(roundTripped.elapsedSeconds, dto.elapsedSeconds);
+    });
+
+    test('NowTask domain model stores timer fields', () {
+      final task = NowTask(
+        id: 'task-1',
+        title: 'Test',
+        startedAt: DateTime(2026, 3, 31, 10, 0),
+        elapsedSeconds: 300,
+        createdAt: DateTime(2026, 3, 30),
+        updatedAt: DateTime(2026, 3, 30),
+      );
+      expect(task.startedAt, DateTime(2026, 3, 31, 10, 0));
+      expect(task.elapsedSeconds, 300);
+    });
+
+    test('NowTask domain defaults timer fields to null', () {
+      final task = NowTask(
+        id: 'task-1',
+        title: 'Test',
+        createdAt: DateTime(2026, 3, 30),
+        updatedAt: DateTime(2026, 3, 30),
+      );
+      expect(task.startedAt, isNull);
+      expect(task.elapsedSeconds, isNull);
+    });
+  });
 }
