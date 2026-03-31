@@ -101,6 +101,10 @@ importers:
         version: 0.31.10
 
   packages/scheduling:
+    dependencies:
+      '@ontask/core':
+        specifier: workspace:*
+        version: link:../core
     devDependencies:
       '@vitest/coverage-v8':
         specifier: ^3.0.0
