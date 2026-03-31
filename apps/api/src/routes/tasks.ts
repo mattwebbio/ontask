@@ -207,6 +207,89 @@ app.openapi(getTasksRoute, async (c) => {
   return c.json(list([stubTask()], null, false), 200)
 })
 
+// ── GET /v1/tasks/today ──────────────────────────────────────────────────────
+
+const getTodayTasksRoute = createRoute({
+  method: 'get',
+  path: '/v1/tasks/today',
+  tags: ['Tasks'],
+  summary: 'Get tasks scheduled for today',
+  description:
+    'Returns tasks for a given date (defaults to server UTC today), sorted by dueDate ascending.',
+  request: {
+    query: z.object({
+      date: z.string().date().optional(),
+    }),
+  },
+  responses: {
+    200: { content: { 'application/json': { schema: TaskListResponseSchema } }, description: 'Today tasks list' },
+  },
+})
+
+app.openapi(getTodayTasksRoute, async (c) => {
+  // TODO(impl): filter by userId from JWT, query tasks by date
+  const query = c.req.valid('query')
+  const dateStr = query.date ?? new Date().toISOString().split('T')[0]
+  // Stub: return tasks sorted by dueDate ascending, filtered by date match
+  const tasks = [stubTask({ dueDate: `${dateStr}T09:00:00.000Z` })]
+  return c.json(list(tasks, null, false), 200)
+})
+
+// ── GET /v1/tasks/schedule-health ────────────────────────────────────────────
+
+const ScheduleHealthDaySchema = z.object({
+  date: z.string().date(),
+  status: z.enum(['healthy', 'at-risk', 'critical']),
+  taskCount: z.number().int(),
+  capacityPercent: z.number(),
+  atRiskTaskIds: z.array(z.string()),
+})
+
+const ScheduleHealthResponseSchema = z.object({
+  data: z.object({
+    days: z.array(ScheduleHealthDaySchema),
+  }),
+})
+
+const getScheduleHealthRoute = createRoute({
+  method: 'get',
+  path: '/v1/tasks/schedule-health',
+  tags: ['Tasks'],
+  summary: 'Get schedule health for a week',
+  description:
+    'Returns 7-day schedule health starting from the given Monday (weekStartDate). ' +
+    'Each day reports healthy/at-risk/critical status.',
+  request: {
+    query: z.object({
+      weekStartDate: z.string().date(),
+    }),
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: ScheduleHealthResponseSchema } },
+      description: 'Weekly schedule health',
+    },
+  },
+})
+
+app.openapi(getScheduleHealthRoute, async (c) => {
+  // TODO(impl): real capacity calculation from scheduling engine (Epic 3)
+  const { weekStartDate } = c.req.valid('query')
+  const startDate = new Date(weekStartDate)
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const date = new Date(startDate)
+    date.setUTCDate(date.getUTCDate() + i)
+    return {
+      date: date.toISOString().split('T')[0],
+      status: 'healthy' as const,
+      taskCount: 0,
+      capacityPercent: 0,
+      atRiskTaskIds: [],
+    }
+  })
+  return c.json(ok({ days }), 200)
+})
+
 // ── GET /v1/tasks/:id ───────────────────────────────────────────────────────
 
 const getTaskRoute = createRoute({

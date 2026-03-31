@@ -376,6 +376,29 @@ class AppStrings {
   static const String bulkOperationError =
       'Something went wrong. Please try again.';
 
+  // ── Today tab — header & sections ──────────────────────────────────────
+  static const String todayHeaderTitle = 'Today';
+  static const String todayTaskCount = '{count} tasks';
+  static const String todayHoursPlanned = '{hours}h planned';
+  static const String todayMorningSection = 'Morning';
+  static const String todayAfternoonSection = 'Afternoon';
+  static const String todayEveningSection = 'Evening';
+  static const String todayOverdueSection = 'Overdue';
+  static const String todayTaskCompleted = 'Task completed.';
+  static const String todayTaskRescheduled = 'Rescheduled.';
+  static const String todayReschedulePickerTitle = 'Reschedule to';
+  static const String todayTimeAm = 'am';
+  static const String todayTimePm = 'pm';
+
+  // ── Schedule health strip ──────────────────────────────────────────────
+  static const String scheduleHealthOnTrack = 'On track';
+  static const String scheduleHealthAtRisk = 'At risk';
+  static const String scheduleHealthCritical = 'Critical';
+  static const String scheduleHealthDetail = '{hours}h available';
+  static const String scheduleHealthAtRiskDetail = 'Running tight';
+  static const String scheduleHealthCriticalDetail = 'Overbooked -- {hours}h';
+  static const String scheduleHealthAtRiskTasks = 'At-risk tasks';
+
   // ── Shared actions ──────────────────────────────────────────────────────
   static const String actionDelete = 'Delete';
 }
