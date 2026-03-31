@@ -25,6 +25,6 @@ class ScheduleHealth extends _$ScheduleHealth {
     final now = DateTime.now();
     // DateTime.weekday: Monday=1, Sunday=7
     final daysFromMonday = now.weekday - 1;
-    return DateTime(now.year, now.month, now.day - daysFromMonday);
+    return DateTime(now.year, now.month, now.day).subtract(Duration(days: daysFromMonday));
   }
 }

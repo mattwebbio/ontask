@@ -105,7 +105,9 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                 ),
                 Text(
                   AppStrings.todayReschedulePickerTitle,
-                  style: Theme.of(context).textTheme.titleMedium,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                 ),
                 CupertinoButton(
                   child: const Text(AppStrings.actionDone),
@@ -351,7 +353,7 @@ class _TaskSliver extends StatelessWidget {
     if (dateTime == null) return '';
     final hour = dateTime.hour;
     final minute = dateTime.minute;
-    final period = hour >= 12 ? 'pm' : 'am';
+    final period = hour >= 12 ? AppStrings.todayTimePm : AppStrings.todayTimeAm;
     final displayHour = hour == 0
         ? 12
         : hour > 12

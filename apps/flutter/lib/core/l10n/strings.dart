@@ -387,6 +387,8 @@ class AppStrings {
   static const String todayTaskCompleted = 'Task completed.';
   static const String todayTaskRescheduled = 'Rescheduled.';
   static const String todayReschedulePickerTitle = 'Reschedule to';
+  static const String todayTimeAm = 'am';
+  static const String todayTimePm = 'pm';
 
   // ── Schedule health strip ──────────────────────────────────────────────
   static const String scheduleHealthOnTrack = 'On track';

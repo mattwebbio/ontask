@@ -1,6 +1,6 @@
 # Story 2.6: Today Tab & Schedule Health Strip
 
-Status: review
+Status: in-progress
 
 ## Story
 
@@ -416,6 +416,15 @@ Claude Opus 4.6 (1M context)
 - `_bmad-output/implementation-artifacts/2-6-today-tab-schedule-health-strip.md` -- MODIFIED: story status + dev record
 
 ### Review Findings
+
+- [ ] [Review][Patch] Material `Dismissible`/`DismissDirection` imported in Cupertino-only widget [apps/flutter/lib/features/today/presentation/widgets/today_task_row.dart:2] — `import 'package:flutter/material.dart' show Colors, Dismissible, DismissDirection, Theme'` brings in Material classes. `Dismissible` and `DismissDirection` are in `flutter/widgets.dart` (not Material-specific); use `import 'package:flutter/widgets.dart' show Dismissible, DismissDirection;` or switch to a Cupertino swipe approach. `Colors.grey` on line 183 should use `CupertinoColors` instead.
+- [ ] [Review][Patch] Full `material.dart` import in `TodaySkeleton` [apps/flutter/lib/features/today/presentation/widgets/today_skeleton.dart:1] — `import 'package:flutter/material.dart'` is a full Material import. Only `Theme` (for `OnTaskColors` extension) is needed; change to `import 'package:flutter/material.dart' show Theme;` to match the pattern used elsewhere.
+- [ ] [Review][Patch] Material `textTheme.titleMedium` used in Cupertino reschedule modal [apps/flutter/lib/features/today/presentation/today_screen.dart:108] — The reschedule picker title uses `Theme.of(context).textTheme.titleMedium` which is a Material typography style. Replace with a `CupertinoTheme`-compatible text style or use a `Text` widget with a Cupertino-appropriate `TextStyle`.
+- [ ] [Review][Patch] Inline string literals `'pm'` / `'am'` in `_formatTime()` [apps/flutter/lib/features/today/presentation/today_screen.dart:354] — Violates the no-inline-strings constraint (all copy must be in `AppStrings`). The story notes a deferred issue from Story 1.9 about extracting `_formatTime` to `apps/flutter/lib/core/utils/time_format.dart`. These AM/PM markers should be added as `AppStrings` constants (e.g., `timeAmSuffix = 'am'`, `timePmSuffix = 'pm'`) or extracted with the utility.
+- [ ] [Review][Patch] `todayHoursPlanned` string defined but never rendered; header missing date and hours [apps/flutter/lib/features/today/presentation/today_screen.dart] — Story AC says "Header: date + task count + hours planned." The `_TodayContent` header shows only `todayHeaderTitle` and `todayTaskCount`; the date and `{hours}h planned` display are absent. `AppStrings.todayHoursPlanned` is unused.
+- [ ] [Review][Patch] At-risk task modal shows raw IDs instead of titles [apps/flutter/lib/features/today/presentation/widgets/schedule_health_strip.dart:129] — AC3 requires "tapping an amber or red day shows a list of the at-risk tasks for that day." The `CupertinoActionSheet` renders `Text(id)` (raw UUID/ID strings) instead of task titles. The `DayHealth` domain model only has `atRiskTaskIds`; a lookup mechanism or title field is needed. For the stub, consider displaying a placeholder string from `AppStrings` when titles are unavailable rather than raw IDs.
+- [ ] [Review][Patch] `TodayRepository` endpoint tests missing from `today_repository_test.dart` [apps/flutter/test/features/today/today_repository_test.dart] — Story task says "TodayRepository: verify getTodayTasks calls correct endpoint" and "TodayRepository: verify getScheduleHealth calls correct endpoint." The test file covers only DTO/domain model unit tests; no test verifies that the repository calls `/v1/tasks/today` or `/v1/tasks/schedule-health` with the correct path and query parameters (using a mock `Dio` or `ApiClient`).
+- [ ] [Review][Patch] `_currentWeekMonday()` day arithmetic can overflow month boundary [apps/flutter/lib/features/today/presentation/schedule_health_provider.dart:28] — `DateTime(now.year, now.month, now.day - daysFromMonday)` will produce a `DateTime` with `day <= 0` when `now.day < daysFromMonday` (e.g., Monday 2026-03-02, `now.day=2`, `daysFromMonday=0` is fine, but 2026-03-01 Sunday gives `day=1-6=-5`). Use `now.subtract(Duration(days: daysFromMonday))` instead, which handles month/year rollovers correctly.
 
 ### Change Log
 
