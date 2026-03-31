@@ -6,6 +6,7 @@ import '../../features/auth/domain/auth_result.dart';
 import '../../features/auth/presentation/auth_provider.dart';
 import '../../features/auth/presentation/auth_screen.dart';
 import '../../features/auth/presentation/two_factor_verify_screen.dart';
+import '../../features/lists/presentation/list_detail_screen.dart';
 import '../../features/lists/presentation/lists_screen.dart';
 import '../../features/now/presentation/now_screen.dart';
 import '../../features/onboarding/presentation/onboarding_flow.dart';
@@ -153,6 +154,14 @@ GoRouter appRouter(Ref ref) {
               GoRoute(
                 path: '/lists',
                 builder: (context, state) => const ListsScreen(),
+                routes: [
+                  GoRoute(
+                    path: ':id',
+                    builder: (context, state) => ListDetailScreen(
+                      listId: state.pathParameters['id']!,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

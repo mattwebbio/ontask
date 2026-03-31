@@ -1,3 +1,4 @@
 // Schema index — tables are added per-story as each domain entity is first introduced.
-// No tables are defined here in Story 1.3; this file exists to establish the export structure.
-export {}
+export { tasksTable } from './tasks.js'
+export { listsTable } from './lists.js'
+export { sectionsTable } from './sections.js'
