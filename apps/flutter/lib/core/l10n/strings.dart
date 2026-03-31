@@ -525,6 +525,24 @@ class AppStrings {
   static const String overbookingWarningVoiceOver =
       'Schedule overloaded at {percent}% capacity. Available actions: Reschedule, Extend deadline, Acknowledge.';
 
+  // ── Chapter Break Screen ─────────────────────────────────────────────────
+  /// Headline — New York serif, 34pt. Warm completion framing (UX-DR13).
+  static const String chapterBreakHeadline = "that one's done.";
+
+  /// Sub-copy — New York serif, 20pt. Future-self framing.
+  static const String chapterBreakSubcopy =
+      'What does your future self need now?';
+
+  /// CTA button label.
+  static const String chapterBreakCta = 'Keep going';
+
+  /// VoiceOver announcement for the chapter break screen (UX spec §9.6).
+  static const String chapterBreakVoiceOverAnnounce =
+      "A task has been completed. You're on a roll.";
+
+  /// Label prefix for the stake-returned row (shown when stakeAmount != null).
+  static const String chapterBreakStakeLabel = 'Stake returned';
+
   // ── Shared actions ──────────────────────────────────────────────────────
   static const String actionNotImplemented =
       'This action is not yet available in this version.';

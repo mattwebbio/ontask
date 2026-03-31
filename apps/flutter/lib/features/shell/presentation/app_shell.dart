@@ -25,6 +25,17 @@ import 'shell_providers.dart';
 /// the provider and responds to counter increments.
 ///
 /// [navigationShell] is provided by go_router's [StatefulShellRoute.indexedStack].
+///
+/// iPad V1: Phone layout rendered centred — acceptable for V1 (UX-DR35).
+/// No LayoutBuilder breakpoint; single-column layout on all screen sizes.
+///
+/// TODO(v1.1-ipad): Two-column layout upgrade path:
+/// Use LayoutBuilder(builder: (context, constraints) {
+///   if (constraints.maxWidth >= 600) {
+///     return _iPadTwoColumnShell(navigationShell); // sidebar 240pt + content
+///   }
+///   return _phoneShell(navigationShell); // current implementation
+/// });
 class AppShell extends ConsumerStatefulWidget {
   final StatefulNavigationShell navigationShell;
 

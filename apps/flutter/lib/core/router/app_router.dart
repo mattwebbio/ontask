@@ -4,6 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../features/auth/domain/auth_result.dart';
 import '../../features/auth/presentation/auth_provider.dart';
+import '../../features/chapter_break/presentation/chapter_break_screen.dart';
 import '../../features/auth/presentation/auth_screen.dart';
 import '../../features/auth/presentation/two_factor_verify_screen.dart';
 import '../../features/lists/presentation/list_detail_screen.dart';
@@ -117,6 +118,29 @@ GoRouter appRouter(Ref ref) {
       GoRoute(
         path: '/onboarding',
         builder: (context, state) => const OnboardingFlow(),
+      ),
+
+      // Chapter Break Screen — top-level route (no shell chrome / tab bar).
+      // Shown after significant milestones: task completed, commitment locked,
+      // missed commitment recovery (UX-DR13). Navigate here via:
+      //   context.push('/chapter-break', extra: {'taskTitle': ..., 'stakeAmount': ...})
+      // [onContinue] calls context.go('/now') for a clean stack.
+      //
+      // TODO(v1.1-ipad): When implementing two-column iPad layout, add a
+      // LayoutBuilder breakpoint check at 600pt logical width in AppShell.
+      // Below 600pt → phone layout (current). Above 600pt → two-column:
+      // sidebar (240pt fixed) + content (fills). Touch-optimised — not macOS
+      // sidebar semantics. No architectural changes required; clean upgrade path.
+      GoRoute(
+        path: '/chapter-break',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          return ChapterBreakScreen(
+            taskTitle: extra?['taskTitle'] as String? ?? '',
+            stakeAmount: extra?['stakeAmount'] as String?,
+            onContinue: () => context.go('/now'),
+          );
+        },
       ),
 
       // Main app shell — all authenticated routes live inside here.
