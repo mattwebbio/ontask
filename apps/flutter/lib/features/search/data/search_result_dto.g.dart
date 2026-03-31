@@ -1,0 +1,59 @@
+// GENERATED CODE - DO NOT MODIFY BY HAND
+
+part of 'search_result_dto.dart';
+
+// **************************************************************************
+// JsonSerializableGenerator
+// **************************************************************************
+
+_SearchResultDto _$SearchResultDtoFromJson(Map<String, dynamic> json) =>
+    _SearchResultDto(
+      id: json['id'] as String,
+      title: json['title'] as String,
+      notes: json['notes'] as String?,
+      dueDate: json['dueDate'] as String?,
+      listId: json['listId'] as String?,
+      sectionId: json['sectionId'] as String?,
+      parentTaskId: json['parentTaskId'] as String?,
+      position: (json['position'] as num).toInt(),
+      timeWindow: json['timeWindow'] as String?,
+      timeWindowStart: json['timeWindowStart'] as String?,
+      timeWindowEnd: json['timeWindowEnd'] as String?,
+      energyRequirement: json['energyRequirement'] as String?,
+      priority: json['priority'] as String?,
+      recurrenceRule: json['recurrenceRule'] as String?,
+      recurrenceInterval: (json['recurrenceInterval'] as num?)?.toInt(),
+      recurrenceDaysOfWeek: json['recurrenceDaysOfWeek'] as String?,
+      recurrenceParentId: json['recurrenceParentId'] as String?,
+      archivedAt: json['archivedAt'] as String?,
+      completedAt: json['completedAt'] as String?,
+      createdAt: json['createdAt'] as String,
+      updatedAt: json['updatedAt'] as String,
+      listName: json['listName'] as String?,
+    );
+
+Map<String, dynamic> _$SearchResultDtoToJson(_SearchResultDto instance) =>
+    <String, dynamic>{
+      'id': instance.id,
+      'title': instance.title,
+      'notes': instance.notes,
+      'dueDate': instance.dueDate,
+      'listId': instance.listId,
+      'sectionId': instance.sectionId,
+      'parentTaskId': instance.parentTaskId,
+      'position': instance.position,
+      'timeWindow': instance.timeWindow,
+      'timeWindowStart': instance.timeWindowStart,
+      'timeWindowEnd': instance.timeWindowEnd,
+      'energyRequirement': instance.energyRequirement,
+      'priority': instance.priority,
+      'recurrenceRule': instance.recurrenceRule,
+      'recurrenceInterval': instance.recurrenceInterval,
+      'recurrenceDaysOfWeek': instance.recurrenceDaysOfWeek,
+      'recurrenceParentId': instance.recurrenceParentId,
+      'archivedAt': instance.archivedAt,
+      'completedAt': instance.completedAt,
+      'createdAt': instance.createdAt,
+      'updatedAt': instance.updatedAt,
+      'listName': instance.listName,
+    };

@@ -446,6 +446,27 @@ class AppStrings {
   static const String timelineHourLabel = "{hour} o'clock";
   static const String timelineCalendarEvent = 'Calendar event';
 
+  // ── Search & filter ──────────────────────────────────────────────────────
+  static const String searchFieldLabel = 'Search all tasks';
+  static const String searchFieldPlaceholder = 'Search tasks, notes...';
+  static const String searchCancel = 'Cancel';
+  static const String searchNoResults = 'No results found';
+  static const String searchInitialHint = 'Search across all your lists';
+  static const String searchFilterList = 'List';
+  static const String searchFilterDate = 'Date';
+  static const String searchFilterStatus = 'Status';
+  static const String searchFilterHasStake = 'Has stake';
+  static const String searchFilterStatusUpcoming = 'Upcoming';
+  static const String searchFilterStatusOverdue = 'Overdue';
+  static const String searchFilterStatusCompleted = 'Completed';
+  static const String searchFilterRemove = 'Remove filter';
+  static const String searchResultCount = '{count} results';
+  static const String searchResultVoiceOver = '{title}. {listName}. {status}.';
+  static const String searchFilterDateRange = '{from} \u2013 {to}';
+  // Review fix #1: From/To labels for date picker (no inline strings)
+  static const String searchFilterDateFrom = 'From';
+  static const String searchFilterDateTo = 'To';
+
   // ── Shared actions ──────────────────────────────────────────────────────
   static const String actionDelete = 'Delete';
 }

@@ -27,6 +27,11 @@ class CommandPaletteIntent extends Intent {
   const CommandPaletteIntent();
 }
 
+/// Intent fired by ⌘⌥F — activates search/filter on macOS.
+class SearchFilterIntent extends Intent {
+  const SearchFilterIntent();
+}
+
 /// Intent fired by ⌘1–⌘4 — navigates to the given sidebar [section].
 ///
 /// [section]: 0 = Now, 1 = Today, 2 = Lists, 3 = Settings.
@@ -62,4 +67,6 @@ const Map<ShortcutActivator, Intent> macosShortcuts = {
   SingleActivator(LogicalKeyboardKey.digit4, meta: true):
       NavigateSectionIntent(3),
   SingleActivator(LogicalKeyboardKey.comma, meta: true): OpenSettingsIntent(),
+  SingleActivator(LogicalKeyboardKey.keyF, meta: true, alt: true):
+      SearchFilterIntent(),
 };

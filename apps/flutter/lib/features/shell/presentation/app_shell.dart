@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../search/presentation/search_screen.dart';
 import '../../settings/presentation/settings_screen.dart';
 import 'add_tab_sheet.dart';
 import 'macos_shell.dart';
@@ -130,17 +131,34 @@ class _AppShellState extends ConsumerState<AppShell> {
           navigationBar: CupertinoNavigationBar(
             backgroundColor: colors.surfacePrimary,
             middle: const Text('On Task'),
-            trailing: CupertinoButton(
-              padding: EdgeInsets.zero,
-              onPressed: () => Navigator.of(context).push(
-                CupertinoPageRoute<void>(
-                  builder: (_) => const SettingsScreen(),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CupertinoButton(
+                  padding: EdgeInsets.zero,
+                  onPressed: () => Navigator.of(context).push(
+                    CupertinoPageRoute<void>(
+                      builder: (_) => const SearchScreen(),
+                    ),
+                  ),
+                  child: Icon(
+                    CupertinoIcons.search,
+                    color: colors.accentPrimary,
+                  ),
                 ),
-              ),
-              child: Icon(
-                CupertinoIcons.person_crop_circle,
-                color: colors.accentPrimary,
-              ),
+                CupertinoButton(
+                  padding: EdgeInsets.zero,
+                  onPressed: () => Navigator.of(context).push(
+                    CupertinoPageRoute<void>(
+                      builder: (_) => const SettingsScreen(),
+                    ),
+                  ),
+                  child: Icon(
+                    CupertinoIcons.person_crop_circle,
+                    color: colors.accentPrimary,
+                  ),
+                ),
+              ],
             ),
           ),
           child: widget.navigationShell,

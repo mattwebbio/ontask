@@ -357,6 +357,168 @@ app.openapi(getCurrentTaskRoute, async (c) => {
   )
 })
 
+// ── GET /v1/tasks/search ─────────────────────────────────────────────────────
+// IMPORTANT: This named route MUST be registered BEFORE /v1/tasks/{id} —
+// Hono matches routes in registration order. If {id} comes first, "search"
+// would be treated as a task ID and fail UUID validation.
+
+const searchResultSchema = taskSchema.extend({
+  listName: z.string().nullable(),
+})
+
+const SearchResultListResponseSchema = z.object({
+  data: z.array(searchResultSchema),
+  pagination: z.object({
+    cursor: z.string().nullable(),
+    hasMore: z.boolean(),
+  }),
+})
+
+const getTaskSearchRoute = createRoute({
+  method: 'get',
+  path: '/v1/tasks/search',
+  tags: ['Tasks'],
+  summary: 'Search tasks across all lists',
+  description:
+    'Returns tasks matching query text and/or filter criteria. ' +
+    'Filters combine with AND logic. Results include listName for display context.',
+  request: {
+    query: z.object({
+      q: z.string().optional(),
+      listId: z.string().uuid().optional(),
+      status: z.enum(['upcoming', 'overdue', 'completed']).optional(),
+      dueDateFrom: z.string().date().optional(),
+      dueDateTo: z.string().date().optional(),
+      hasStake: z.coerce.boolean().optional(),
+      cursor: z.string().optional(),
+    }),
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: SearchResultListResponseSchema } },
+      description: 'Search results',
+    },
+  },
+})
+
+// Stub search data — diverse tasks for meaningful filter testing
+const searchStubTasks = [
+  {
+    ...stubTask({
+      id: 'a0000000-0000-4000-8000-000000000010',
+      title: 'Buy groceries',
+      notes: 'Milk, eggs, bread from the store',
+      listId: 'a0000000-0000-4000-8000-000000000100',
+      dueDate: '2026-04-01T09:00:00.000Z',
+      completedAt: null,
+    }),
+    listName: 'Personal',
+  },
+  {
+    ...stubTask({
+      id: 'a0000000-0000-4000-8000-000000000011',
+      title: 'Finish quarterly report',
+      notes: 'Include Q1 revenue figures',
+      listId: 'a0000000-0000-4000-8000-000000000101',
+      dueDate: '2026-03-28T17:00:00.000Z',
+      completedAt: null,
+      position: 1,
+    }),
+    listName: 'Work',
+  },
+  {
+    ...stubTask({
+      id: 'a0000000-0000-4000-8000-000000000012',
+      title: 'Morning workout',
+      notes: null,
+      listId: 'a0000000-0000-4000-8000-000000000102',
+      dueDate: '2026-04-02T07:00:00.000Z',
+      completedAt: '2026-04-02T07:45:00.000Z',
+      position: 2,
+    }),
+    listName: 'Fitness',
+  },
+  {
+    ...stubTask({
+      id: 'a0000000-0000-4000-8000-000000000013',
+      title: 'Call dentist',
+      notes: 'Schedule cleaning appointment',
+      listId: 'a0000000-0000-4000-8000-000000000100',
+      dueDate: null,
+      completedAt: null,
+      position: 3,
+    }),
+    listName: 'Personal',
+  },
+]
+
+app.openapi(getTaskSearchRoute, async (c) => {
+  // TODO(impl): real full-text search via Drizzle ILIKE / tsvector
+  const query = c.req.valid('query')
+  const nowDate = new Date()
+
+  let results = [...searchStubTasks]
+
+  // Filter by query text (case-insensitive substring match on title and notes)
+  if (query.q) {
+    const q = query.q.toLowerCase()
+    results = results.filter(
+      (t) =>
+        t.title.toLowerCase().includes(q) ||
+        (t.notes && t.notes.toLowerCase().includes(q)),
+    )
+  }
+
+  // Filter by listId
+  if (query.listId) {
+    results = results.filter((t) => t.listId === query.listId)
+  }
+
+  // Filter by status
+  if (query.status) {
+    results = results.filter((t) => {
+      switch (query.status) {
+        case 'completed':
+          return t.completedAt !== null
+        case 'overdue':
+          return (
+            t.completedAt === null &&
+            t.dueDate !== null &&
+            new Date(t.dueDate) < nowDate
+          )
+        case 'upcoming':
+          return (
+            t.completedAt === null &&
+            (t.dueDate === null || new Date(t.dueDate) >= nowDate)
+          )
+        default:
+          return true
+      }
+    })
+  }
+
+  // Filter by due date range
+  if (query.dueDateFrom) {
+    const from = new Date(query.dueDateFrom)
+    results = results.filter(
+      (t) => t.dueDate !== null && new Date(t.dueDate) >= from,
+    )
+  }
+  if (query.dueDateTo) {
+    const to = new Date(query.dueDateTo + 'T23:59:59.999Z')
+    results = results.filter(
+      (t) => t.dueDate !== null && new Date(t.dueDate) <= to,
+    )
+  }
+
+  // Filter by hasStake (future-proofed — stub has no staked tasks)
+  if (query.hasStake) {
+    results = results.filter(() => false) // No staked tasks in stub
+  }
+
+  return c.json(list(results, null, false), 200)
+})
+
 // ── GET /v1/tasks/:id ───────────────────────────────────────────────────────
 
 const getTaskRoute = createRoute({
