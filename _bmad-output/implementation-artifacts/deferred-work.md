@@ -60,6 +60,11 @@
 
 - **`_formatTime` is 4th duplication of time formatting logic** — `timeline_painter.dart:230` and `today_screen.dart:402` each contain their own copy of 12-hour time formatting. Pre-existing issue flagged in story's own deferred issues section. Extract to `apps/flutter/lib/core/utils/time_format.dart`.
 
+## Deferred from: code review of 2-12-schedule-change-banner-overbooking-warning (2026-03-31)
+
+- **Banners not shown in empty-state path** — `ScheduleChangeBannerAsync` and `OverbookingWarningBannerAsync` live inside `_TodayContent`, which only mounts when `tasks.isNotEmpty`. Schedule-change and overbooking notifications are silently dropped when the task list is empty. Structural limitation of stub; Epic 3 scheduling integration will address triggering mechanism. [`apps/flutter/lib/features/today/presentation/today_screen.dart`]
+- **`response.data!` force-unwrap in `getScheduleChanges()` and `getOverbookingStatus()`** — Matches pre-existing pattern throughout `TodayRepository`; will throw `TypeError` on a null or unexpected API response. Add null guard or typed error path when replacing stubs. [`apps/flutter/lib/features/today/data/today_repository.dart`]
+
 ## Deferred from: code review of 2-11-predicted-completion-badge (2026-03-31)
 
 - **`_shimmer` declared as top-level function with leading underscore** — Leading underscore on a top-level function in `prediction_badge_async.dart` is unconventional Dart (grants library-private visibility but reads as class-private). Pre-existing codebase style pattern; low risk. Could be a private static method on a helper class if the file grows. [`apps/flutter/lib/features/prediction/presentation/widgets/prediction_badge_async.dart:65`]

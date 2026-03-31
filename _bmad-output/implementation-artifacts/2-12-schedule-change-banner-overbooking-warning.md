@@ -1,6 +1,6 @@
 # Story 2.12: Schedule Change Banner & Overbooking Warning
 
-Status: review
+Status: in-progress
 
 ## Story
 
@@ -533,6 +533,16 @@ void _showNotImplemented(BuildContext context) {
 - **Button off-screen in tests**: Use `tester.dragUntilVisible()` before tap.
 - **`AnimatedCrossFade` is acceptable**: Pre-existing use in `today_screen.dart` — `AnimatedCrossFade` from Material is allowed despite no-Material rule (established exception).
 - **Drizzle Kit requires `casing: 'snake_case'`** in `drizzle.config.ts`.
+
+### Review Findings
+
+- [ ] [Review][Patch] `ScheduleChangeBanner` test group missing `ProviderScope` — `buildBanner()` wraps a `ConsumerWidget` with only `MaterialApp`; all tests in this group throw `ProviderNotFoundException` at build time [`apps/flutter/test/features/today/schedule_change_banner_test.dart:50`]
+- [ ] [Review][Patch] Inline `'—'` literal in `_buildMovedSummary` bypasses AppStrings — use `AppStrings.predictionBadgeUnknown` instead [`apps/flutter/lib/features/today/presentation/widgets/schedule_change_banner.dart:155`]
+- [ ] [Review][Patch] Haptic fires inside `build()` before banner UI is confirmed visible — `HapticFeedback.lightImpact()` is called when `isVisible == true` but before `changesAsync` resolves; if data is loading or errors, haptic fires with no banner shown. Move call into `addPostFrameCallback` after successful data render [`apps/flutter/lib/features/today/presentation/widgets/schedule_change_banner.dart:37-39`]
+- [ ] [Review][Patch] `ScheduleChangeItemDto.toDomain()` silently maps unrecognised `changeType` values to `moved` — add an explicit fallback or `throw FormatException` for unknown values [`apps/flutter/lib/features/today/data/schedule_change_dto.dart`]
+- [ ] [Review][Patch] Missing test: "ScheduleChangeBanner: verify dismiss button calls dismiss callback" — spec task requires tapping the × button and asserting dismiss is called; current test only asserts icon presence [`apps/flutter/test/features/today/schedule_change_banner_test.dart:70`]
+- [x] [Review][Defer] Banners not shown in empty-state path — `ScheduleChangeBannerAsync` and `OverbookingWarningBannerAsync` are inside `_TodayContent` which only renders when `tasks.isNotEmpty`; schedule-change notifications are silently swallowed when task list is empty — deferred, structural limitation of stub; Epic 3 scheduling integration will address
+- [x] [Review][Defer] `response.data!` force-unwrap in `getScheduleChanges()` and `getOverbookingStatus()` — pre-existing pattern throughout `TodayRepository`; deferred, pre-existing
 
 ### Open Review Findings from Previous Stories (carry forward, not fixed in 2.12)
 
