@@ -332,6 +332,12 @@ _No blocking issues encountered._
 - `packages/scheduling/src/test/strategies/least-busy.test.ts` — NEW
 - `packages/scheduling/src/test/strategies/ai-assisted.test.ts` — NEW
 
+### Review Findings
+
+- [ ] [Review][Decision] `explain_` tests violate ARCH-22 naming convention — AC3 and Dev Notes (ARCH-22) state ALL test descriptions MUST follow `schedule_[constraint]_[condition]_[expected]`. The two tests in `explainer.test.ts` use `explain_emptyInput_returnsEmptyReasons` and `explain_withTasksAndBlocks_returnsEmptyReasons` — they start with `explain_`, not `schedule_`. However, the story's own Tasks/Subtasks checklist explicitly listed `explain_emptyInput_returnsEmptyReasons` as the required name, creating a contradiction between AC3 and the task spec. Decision needed: (a) rename both tests to `schedule_explain_emptyInput_returnsEmptyReasons` / `schedule_explain_withTasks_returnsEmptyReasons` to comply strictly with ARCH-22, or (b) treat `explain_` as a valid prefix for explainer tests (AC3 scope limited to `schedule()` tests). [`packages/scheduling/src/test/explainer.test.ts:19,24`]
+- [ ] [Review][Patch] Strategy params named `_input` but parameter is actively used — `ai-assisted.ts`, `round-robin.ts`, and `least-busy.ts` all name their parameter `_input` (underscore-prefix convention = unused), but all three actively use `_input.tasks` and `_input.windowStart`. The underscore prefix is misleading and technically incorrect. Rename to `input` in all three strategy files. [`packages/scheduling/src/strategies/ai-assisted.ts:11`, `round-robin.ts:9`, `least-busy.ts:9`]
+- [x] [Review][Defer] `constraints/index.ts` undocumented barrel file — The file was not listed in the story's File List and was not mentioned in the Dev Notes. It is a valid and useful addition (consolidates constraint exports, used by `test/constraints/index.test.ts`), but it is untracked in the story's change log. Pre-existing omission from the agent's own completion notes; not a code defect. [`packages/scheduling/src/constraints/index.ts`] — deferred, pre-existing
+
 ## Change Log
 
 - 2026-03-31: Story 3.1 implemented — scheduling engine foundation scaffolded with types in @ontask/core, pure function schedule()/explain() stubs, 6 constraint stubs, 3 strategy stubs, 12 test files achieving 100% coverage, @ontask/core workspace dependency wired.
