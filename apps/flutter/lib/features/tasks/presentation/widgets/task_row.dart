@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/l10n/strings.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../prediction/presentation/widgets/prediction_badge_async.dart';
 import '../../domain/energy_requirement.dart';
 import '../../domain/recurrence_rule.dart';
 import '../../domain/task.dart';
@@ -26,6 +27,7 @@ class TaskRow extends StatelessWidget {
     this.isSelected = false,
     this.isMultiSelectMode = false,
     this.onSelectionToggle,
+    this.showPrediction = false,
     super.key,
   });
 
@@ -50,6 +52,12 @@ class TaskRow extends StatelessWidget {
 
   /// Called when the selection checkbox is toggled.
   final VoidCallback? onSelectionToggle;
+
+  /// Whether to show the predicted completion badge in the trailing area.
+  ///
+  /// Defaults to false to avoid adding network calls to every task row.
+  /// Set to true only in list detail view — not in search results or Today tab.
+  final bool showPrediction;
 
   @override
   Widget build(BuildContext context) {
@@ -272,6 +280,10 @@ class TaskRow extends StatelessWidget {
                   ],
                 ),
               ),
+              if (showPrediction) ...[
+                const SizedBox(width: AppSpacing.sm),
+                TaskPredictionBadge(taskId: task.id),
+              ],
               Icon(
                 CupertinoIcons.chevron_right,
                 size: 16,

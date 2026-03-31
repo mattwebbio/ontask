@@ -130,6 +130,58 @@ app.openapi(getListsRoute, async (c) => {
   return c.json(list([stubList()], null, false), 200)
 })
 
+// ── GET /v1/lists/:id/prediction ────────────────────────────────────────────
+// IMPORTANT: This nested resource route MUST be registered BEFORE /v1/lists/{id} —
+// Hono matches routes in registration order.
+
+const listPredictionSchema = z.object({
+  listId: z.string().uuid(),
+  predictedDate: z.string().datetime().nullable(),
+  status: z.enum(['on_track', 'at_risk', 'behind', 'unknown']),
+  tasksRemaining: z.number().int(),
+  estimatedMinutesRemaining: z.number().int(),
+  availableWindowsCount: z.number().int(),
+  reasoning: z.string(),
+})
+
+const ListPredictionResponseSchema = z.object({ data: listPredictionSchema })
+
+const getListPredictionRoute = createRoute({
+  method: 'get',
+  path: '/v1/lists/{id}/prediction',
+  tags: ['Lists'],
+  summary: 'Get predicted completion for a list',
+  description:
+    'Returns predicted completion date, status, and reasoning for all tasks in a list. ' +
+    'Stub returns plausible static data; real implementation comes in Epic 3.',
+  request: {
+    params: z.object({ id: z.string().uuid() }),
+  },
+  responses: {
+    200: { content: { 'application/json': { schema: ListPredictionResponseSchema } }, description: 'List prediction' },
+    404: { content: { 'application/json': { schema: ErrorSchema } }, description: 'List not found' },
+  },
+})
+
+app.openapi(getListPredictionRoute, async (c) => {
+  // TODO(impl): real prediction from scheduling engine (Epic 3)
+  const { id } = c.req.valid('param')
+  const predictedDate = new Date()
+  predictedDate.setUTCDate(predictedDate.getUTCDate() + 14)
+  return c.json(
+    ok({
+      listId: id,
+      predictedDate: predictedDate.toISOString(),
+      status: 'at_risk' as const,
+      tasksRemaining: 12,
+      estimatedMinutesRemaining: 420,
+      availableWindowsCount: 8,
+      reasoning: 'Some tasks in this list may be tight given current available time windows.',
+    }),
+    200,
+  )
+})
+
 // ── GET /v1/lists/:id ───────────────────────────────────────────────────────
 
 const getListRoute = createRoute({

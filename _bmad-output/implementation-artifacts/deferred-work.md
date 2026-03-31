@@ -59,3 +59,9 @@
 ## Deferred from: code review of 2-8-timeline-view (2026-03-31)
 
 - **`_formatTime` is 4th duplication of time formatting logic** — `timeline_painter.dart:230` and `today_screen.dart:402` each contain their own copy of 12-hour time formatting. Pre-existing issue flagged in story's own deferred issues section. Extract to `apps/flutter/lib/core/utils/time_format.dart`.
+
+## Deferred from: code review of 2-11-predicted-completion-badge (2026-03-31)
+
+- **`_shimmer` declared as top-level function with leading underscore** — Leading underscore on a top-level function in `prediction_badge_async.dart` is unconventional Dart (grants library-private visibility but reads as class-private). Pre-existing codebase style pattern; low risk. Could be a private static method on a helper class if the file grows. [`apps/flutter/lib/features/prediction/presentation/widgets/prediction_badge_async.dart:65`]
+- **Import ordering in `prediction_badge_async.dart`** — Material import (`package:flutter/material.dart show Theme`) appears interleaved with local imports rather than grouped with other package imports. Pre-existing style pattern across codebase. [`apps/flutter/lib/features/prediction/presentation/widgets/prediction_badge_async.dart:5`]
+- **`ref.watch` on stable `predictionRepositoryProvider` in async providers** — Semantically `ref.read` would be more appropriate for a stable dependency (repository never changes after construction), but `ref.watch` matches the pattern documented in Previous Story Learnings and is functionally correct. [`apps/flutter/lib/features/prediction/presentation/prediction_provider.dart:22,32,42`]

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/l10n/strings.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../prediction/presentation/widgets/prediction_badge_async.dart';
 import '../../../tasks/domain/task.dart';
 import '../../../tasks/presentation/widgets/task_row.dart';
 import '../../domain/section.dart';
@@ -84,6 +85,10 @@ class _SectionWidgetState extends State<SectionWidget> {
                           fontWeight: FontWeight.w600,
                         ),
                   ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(right: AppSpacing.sm),
+                  child: SectionPredictionBadge(sectionId: widget.section.id),
                 ),
               ],
             ),
