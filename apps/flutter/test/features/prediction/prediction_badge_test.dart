@@ -9,7 +9,6 @@ import 'package:ontask/core/network/api_client.dart';
 import 'package:ontask/core/theme/app_theme.dart';
 import 'package:ontask/features/prediction/data/prediction_repository.dart';
 import 'package:ontask/features/prediction/domain/completion_prediction.dart';
-import 'package:ontask/features/prediction/presentation/prediction_provider.dart';
 import 'package:ontask/features/prediction/presentation/widgets/prediction_badge.dart';
 import 'package:ontask/features/prediction/presentation/widgets/prediction_badge_async.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -35,7 +34,7 @@ void main() {
     );
   }
 
-  CompletionPrediction _prediction({
+  CompletionPrediction makePrediction({
     required PredictionStatus status,
     DateTime? predictedDate,
   }) =>
@@ -53,26 +52,26 @@ void main() {
 
   group('PredictionBadge', () {
     testWidgets('on_track renders green colour and calendar icon', (tester) async {
-      await tester.pumpWidget(buildBadge(_prediction(status: PredictionStatus.onTrack)));
+      await tester.pumpWidget(buildBadge(makePrediction(status: PredictionStatus.onTrack)));
       expect(find.byIcon(CupertinoIcons.calendar_badge_plus), findsOneWidget);
       // Verify text contains "On track"
       expect(find.textContaining('On track'), findsOneWidget);
     });
 
     testWidgets('at_risk renders amber colour and warning icon', (tester) async {
-      await tester.pumpWidget(buildBadge(_prediction(status: PredictionStatus.atRisk)));
+      await tester.pumpWidget(buildBadge(makePrediction(status: PredictionStatus.atRisk)));
       expect(find.byIcon(CupertinoIcons.exclamationmark_triangle), findsOneWidget);
       expect(find.textContaining('At risk'), findsOneWidget);
     });
 
     testWidgets('behind renders red colour and critical icon', (tester) async {
-      await tester.pumpWidget(buildBadge(_prediction(status: PredictionStatus.behind)));
+      await tester.pumpWidget(buildBadge(makePrediction(status: PredictionStatus.behind)));
       expect(find.byIcon(CupertinoIcons.exclamationmark_circle), findsOneWidget);
       expect(find.textContaining('Behind'), findsOneWidget);
     });
 
     testWidgets('unknown renders em-dash text and calendar icon', (tester) async {
-      await tester.pumpWidget(buildBadge(_prediction(
+      await tester.pumpWidget(buildBadge(makePrediction(
         status: PredictionStatus.unknown,
         predictedDate: null,
       )));
@@ -81,7 +80,7 @@ void main() {
     });
 
     testWidgets('date is formatted as "MMM d" — e.g. "Apr 7"', (tester) async {
-      await tester.pumpWidget(buildBadge(_prediction(
+      await tester.pumpWidget(buildBadge(makePrediction(
         status: PredictionStatus.onTrack,
         predictedDate: DateTime(2026, 4, 7),
       )));
@@ -89,7 +88,7 @@ void main() {
     });
 
     testWidgets('tapping opens reasoning sheet', (tester) async {
-      await tester.pumpWidget(buildBadge(_prediction(status: PredictionStatus.onTrack)));
+      await tester.pumpWidget(buildBadge(makePrediction(status: PredictionStatus.onTrack)));
       await tester.tap(find.byType(PredictionBadge));
       await tester.pumpAndSettle();
       // CupertinoActionSheet should appear with "Forecast" title
@@ -97,14 +96,14 @@ void main() {
     });
 
     testWidgets('reasoning sheet shows tasks remaining count', (tester) async {
-      await tester.pumpWidget(buildBadge(_prediction(status: PredictionStatus.onTrack)));
+      await tester.pumpWidget(buildBadge(makePrediction(status: PredictionStatus.onTrack)));
       await tester.tap(find.byType(PredictionBadge));
       await tester.pumpAndSettle();
       expect(find.textContaining('3 tasks remaining'), findsOneWidget);
     });
 
     testWidgets('VoiceOver label includes status and date', (tester) async {
-      await tester.pumpWidget(buildBadge(_prediction(
+      await tester.pumpWidget(buildBadge(makePrediction(
         status: PredictionStatus.onTrack,
         predictedDate: DateTime(2026, 6, 30),
       )));
@@ -115,6 +114,76 @@ void main() {
   });
 
   // ── PredictionBadgeAsync states ───────────────────────────────────────────
+
+  group('PredictionBadgeAsync (ListPredictionBadge)', () {
+    const listId = 'b0000000-0000-4000-8000-000000000001';
+
+    Widget buildAsyncBadge({required PredictionRepository repo}) {
+      return ProviderScope(
+        overrides: [predictionRepositoryProvider.overrideWithValue(repo)],
+        child: MaterialApp(
+          theme: AppTheme.light(ThemeVariant.clay, 'PlayfairDisplay'),
+          home: const Scaffold(body: Center(child: ListPredictionBadge(listId: listId))),
+        ),
+      );
+    }
+
+    testWidgets('loading state renders shimmer placeholder', (tester) async {
+      await tester.pumpWidget(buildAsyncBadge(repo: _SlowListRepository()));
+      expect(find.byType(PredictionBadge), findsNothing);
+      final shimmer = find.byWidgetPredicate(
+        (w) => w is Container && w.constraints?.maxWidth == 60,
+      );
+      expect(shimmer, findsOneWidget);
+    });
+
+    testWidgets('error state renders SizedBox.shrink (badge absent)', (tester) async {
+      await tester.pumpWidget(buildAsyncBadge(repo: _ErrorListRepository()));
+      await tester.pumpAndSettle();
+      expect(find.byType(PredictionBadge), findsNothing);
+    });
+
+    testWidgets('data state renders PredictionBadge', (tester) async {
+      await tester.pumpWidget(buildAsyncBadge(repo: _FakeListRepository()));
+      await tester.pumpAndSettle();
+      expect(find.byType(PredictionBadge), findsOneWidget);
+    });
+  });
+
+  group('PredictionBadgeAsync (SectionPredictionBadge)', () {
+    const sectionId = 'c0000000-0000-4000-8000-000000000001';
+
+    Widget buildAsyncBadge({required PredictionRepository repo}) {
+      return ProviderScope(
+        overrides: [predictionRepositoryProvider.overrideWithValue(repo)],
+        child: MaterialApp(
+          theme: AppTheme.light(ThemeVariant.clay, 'PlayfairDisplay'),
+          home: const Scaffold(body: Center(child: SectionPredictionBadge(sectionId: sectionId))),
+        ),
+      );
+    }
+
+    testWidgets('loading state renders shimmer placeholder', (tester) async {
+      await tester.pumpWidget(buildAsyncBadge(repo: _SlowSectionRepository()));
+      expect(find.byType(PredictionBadge), findsNothing);
+      final shimmer = find.byWidgetPredicate(
+        (w) => w is Container && w.constraints?.maxWidth == 60,
+      );
+      expect(shimmer, findsOneWidget);
+    });
+
+    testWidgets('error state renders SizedBox.shrink (badge absent)', (tester) async {
+      await tester.pumpWidget(buildAsyncBadge(repo: _ErrorSectionRepository()));
+      await tester.pumpAndSettle();
+      expect(find.byType(PredictionBadge), findsNothing);
+    });
+
+    testWidgets('data state renders PredictionBadge', (tester) async {
+      await tester.pumpWidget(buildAsyncBadge(repo: _FakeSectionRepository()));
+      await tester.pumpAndSettle();
+      expect(find.byType(PredictionBadge), findsOneWidget);
+    });
+  });
 
   group('PredictionBadgeAsync (TaskPredictionBadge)', () {
     const taskId = 'a0000000-0000-4000-8000-000000000001';
@@ -163,37 +232,75 @@ void main() {
   });
 }
 
-/// Fake repository that never completes — used to test loading state.
+CompletionPrediction _stubPrediction(String entityId) => CompletionPrediction(
+      entityId: entityId,
+      predictedDate: DateTime(2026, 6, 30),
+      status: PredictionStatus.onTrack,
+      tasksRemaining: 3,
+      estimatedMinutesRemaining: 90,
+      availableWindowsCount: 5,
+      reasoning: 'At current pace, this will be completed before its due date.',
+    );
+
+/// Fake repositories — task
 class _SlowPredictionRepository extends PredictionRepository {
   _SlowPredictionRepository() : super(ApiClient(baseUrl: 'http://fake'));
-
   @override
-  Future<CompletionPrediction> fetchTaskPrediction(String taskId) =>
-      Completer<CompletionPrediction>().future; // never completes
+  Future<CompletionPrediction> fetchTaskPrediction(String id) =>
+      Completer<CompletionPrediction>().future;
 }
 
-/// Fake repository that always throws — used to test error state.
 class _ErrorPredictionRepository extends PredictionRepository {
   _ErrorPredictionRepository() : super(ApiClient(baseUrl: 'http://fake'));
-
   @override
-  Future<CompletionPrediction> fetchTaskPrediction(String taskId) async =>
+  Future<CompletionPrediction> fetchTaskPrediction(String id) async =>
       throw Exception('Network error');
 }
 
-/// Fake repository that returns a valid prediction.
 class _FakePredictionRepositoryForWidget extends PredictionRepository {
   _FakePredictionRepositoryForWidget() : super(ApiClient(baseUrl: 'http://fake'));
-
   @override
-  Future<CompletionPrediction> fetchTaskPrediction(String taskId) async =>
-      CompletionPrediction(
-        entityId: taskId,
-        predictedDate: DateTime(2026, 6, 30),
-        status: PredictionStatus.onTrack,
-        tasksRemaining: 3,
-        estimatedMinutesRemaining: 90,
-        availableWindowsCount: 5,
-        reasoning: 'At current pace, this task will be completed before its due date.',
-      );
+  Future<CompletionPrediction> fetchTaskPrediction(String id) async => _stubPrediction(id);
+}
+
+/// Fake repositories — list
+class _SlowListRepository extends PredictionRepository {
+  _SlowListRepository() : super(ApiClient(baseUrl: 'http://fake'));
+  @override
+  Future<CompletionPrediction> fetchListPrediction(String id) =>
+      Completer<CompletionPrediction>().future;
+}
+
+class _ErrorListRepository extends PredictionRepository {
+  _ErrorListRepository() : super(ApiClient(baseUrl: 'http://fake'));
+  @override
+  Future<CompletionPrediction> fetchListPrediction(String id) async =>
+      throw Exception('Network error');
+}
+
+class _FakeListRepository extends PredictionRepository {
+  _FakeListRepository() : super(ApiClient(baseUrl: 'http://fake'));
+  @override
+  Future<CompletionPrediction> fetchListPrediction(String id) async => _stubPrediction(id);
+}
+
+/// Fake repositories — section
+class _SlowSectionRepository extends PredictionRepository {
+  _SlowSectionRepository() : super(ApiClient(baseUrl: 'http://fake'));
+  @override
+  Future<CompletionPrediction> fetchSectionPrediction(String id) =>
+      Completer<CompletionPrediction>().future;
+}
+
+class _ErrorSectionRepository extends PredictionRepository {
+  _ErrorSectionRepository() : super(ApiClient(baseUrl: 'http://fake'));
+  @override
+  Future<CompletionPrediction> fetchSectionPrediction(String id) async =>
+      throw Exception('Network error');
+}
+
+class _FakeSectionRepository extends PredictionRepository {
+  _FakeSectionRepository() : super(ApiClient(baseUrl: 'http://fake'));
+  @override
+  Future<CompletionPrediction> fetchSectionPrediction(String id) async => _stubPrediction(id);
 }

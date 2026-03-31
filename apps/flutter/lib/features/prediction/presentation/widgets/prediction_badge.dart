@@ -123,13 +123,13 @@ class PredictionBadge extends StatelessWidget {
   String _statusStringForVoiceOver(PredictionStatus status) {
     switch (status) {
       case PredictionStatus.onTrack:
-        return 'on track';
+        return AppStrings.predictionBadgeStatusOnTrack;
       case PredictionStatus.atRisk:
-        return 'at risk';
+        return AppStrings.predictionBadgeStatusAtRisk;
       case PredictionStatus.behind:
-        return 'behind';
+        return AppStrings.predictionBadgeStatusBehind;
       case PredictionStatus.unknown:
-        return 'unknown';
+        return AppStrings.predictionBadgeStatusUnknown;
     }
   }
 

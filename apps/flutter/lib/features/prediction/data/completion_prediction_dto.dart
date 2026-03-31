@@ -29,6 +29,7 @@ abstract class CompletionPredictionDto with _$CompletionPredictionDto {
   factory CompletionPredictionDto.fromJson(Map<String, dynamic> json) {
     // Normalise entity-specific ID keys to a generic entityId
     final id = (json['taskId'] ?? json['listId'] ?? json['sectionId'] ?? '') as String;
+    if (id.isEmpty) throw const FormatException('Missing entity ID in prediction response');
     return CompletionPredictionDto(
       entityId: id,
       predictedDate: json['predictedDate'] as String?,

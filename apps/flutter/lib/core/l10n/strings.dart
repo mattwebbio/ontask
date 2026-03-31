@@ -489,6 +489,10 @@ class AppStrings {
   static const String predictionBadgeTasksRemaining = '{count} tasks remaining';
   static const String predictionBadgeEstimatedTime = '{minutes} min estimated';
   static const String predictionBadgeAvailableWindows = '{count} time windows available';
+  static const String predictionBadgeStatusOnTrack = 'on track';
+  static const String predictionBadgeStatusAtRisk = 'at risk';
+  static const String predictionBadgeStatusBehind = 'behind';
+  static const String predictionBadgeStatusUnknown = 'unknown';
   static const String predictionBadgeVoiceOver =
       'Predicted completion {status}. {date}. Tap for forecast reasoning.';
   static const String predictionBadgeVoiceOverUnknown =

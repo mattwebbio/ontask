@@ -1,7 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_theme.dart';
 import 'package:flutter/material.dart' show Theme;
 import '../prediction_provider.dart';
@@ -22,7 +21,7 @@ class TaskPredictionBadge extends ConsumerWidget {
     final state = ref.watch(taskPredictionProvider(taskId));
     return state.when(
       loading: () => _shimmer(context),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
       data: (prediction) => PredictionBadge(prediction: prediction),
     );
   }
@@ -39,7 +38,7 @@ class ListPredictionBadge extends ConsumerWidget {
     final state = ref.watch(listPredictionProvider(listId));
     return state.when(
       loading: () => _shimmer(context),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
       data: (prediction) => PredictionBadge(prediction: prediction),
     );
   }
@@ -56,7 +55,7 @@ class SectionPredictionBadge extends ConsumerWidget {
     final state = ref.watch(sectionPredictionProvider(sectionId));
     return state.when(
       loading: () => _shimmer(context),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
       data: (prediction) => PredictionBadge(prediction: prediction),
     );
   }

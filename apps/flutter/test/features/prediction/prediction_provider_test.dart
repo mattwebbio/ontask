@@ -21,7 +21,7 @@ void main() {
   // ── CompletionPredictionDto status conversion ─────────────────────────────
 
   group('CompletionPredictionDto status conversion', () {
-    CompletionPredictionDto _dto(String status) {
+    CompletionPredictionDto dto(String status) {
       return CompletionPredictionDto.fromJson({
         'taskId': 'a0000000-0000-4000-8000-000000000001',
         'predictedDate': '2026-04-07T12:00:00.000Z',
@@ -34,23 +34,19 @@ void main() {
     }
 
     test("'on_track' maps to PredictionStatus.onTrack", () {
-      final dto = _dto('on_track');
-      expect(dto.toDomain().status, PredictionStatus.onTrack);
+      expect(dto('on_track').toDomain().status, PredictionStatus.onTrack);
     });
 
     test("'at_risk' maps to PredictionStatus.atRisk", () {
-      final dto = _dto('at_risk');
-      expect(dto.toDomain().status, PredictionStatus.atRisk);
+      expect(dto('at_risk').toDomain().status, PredictionStatus.atRisk);
     });
 
     test("'behind' maps to PredictionStatus.behind", () {
-      final dto = _dto('behind');
-      expect(dto.toDomain().status, PredictionStatus.behind);
+      expect(dto('behind').toDomain().status, PredictionStatus.behind);
     });
 
     test('unknown status string maps to PredictionStatus.unknown', () {
-      final dto = _dto('some_unknown_value');
-      expect(dto.toDomain().status, PredictionStatus.unknown);
+      expect(dto('some_unknown_value').toDomain().status, PredictionStatus.unknown);
     });
 
     test('predictedDate is null when API returns null', () {
