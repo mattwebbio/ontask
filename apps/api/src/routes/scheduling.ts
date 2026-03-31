@@ -39,7 +39,7 @@ const postTaskScheduleRoute = createRoute({
     'Returns 404 if the task is not present in the schedule output.',
   request: {
     params: z.object({
-      id: z.string().openapi({ example: 'a0000000-0000-4000-8000-000000000001' }),
+      id: z.string().uuid().openapi({ example: 'a0000000-0000-4000-8000-000000000001' }),
     }),
   },
   responses: {

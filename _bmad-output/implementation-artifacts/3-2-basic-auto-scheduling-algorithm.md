@@ -324,7 +324,12 @@ _bmad-output/implementation-artifacts/sprint-status.yaml
 
 ### Review Findings
 
-_to be filled in_
+- [ ] [Review][Patch] Misleading comment contradicts actual behavior at isAtRisk branch [`packages/scheduling/src/scheduler.ts:94-96`]
+- [ ] [Review][Patch] Route param `:id` uses `z.string()` instead of `z.string().uuid()` — inconsistent with all other routes [`apps/api/src/routes/scheduling.ts:38`]
+- [ ] [Review][Patch] Test name inconsistency: `schedule_calendarEvents_noSlots_returnsEmpty` uses plural `calendarEvents` vs singular `calendarEvent` in all other tests in the file [`packages/scheduling/src/test/constraints/calendar-events.test.ts:27`]
+- [x] [Review][Defer] No unit tests for `apps/api/src/services/scheduling.ts` [`apps/api/src/services/scheduling.ts`] — deferred, pre-existing pattern (no API service unit tests in codebase; story only requires 100% coverage for `packages/scheduling`)
+- [x] [Review][Defer] Two separate `new Date()` calls in service layer (for `windowStart` and for `generatedAt`) produce slightly different timestamps [`apps/api/src/services/scheduling.ts:22,31`] — deferred, by-design stub pattern per dev notes; will be addressed in Story 3.3 when real DB data is wired
+- [x] [Review][Defer] No integration test for morning-window + past-due-date intersection (both constraints active simultaneously) — deferred, 100% branch coverage confirmed; would be an enhancement not a gap
 
 ## Change Log
 

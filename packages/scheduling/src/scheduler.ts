@@ -92,8 +92,8 @@ export function schedule(input: ScheduleInput): ScheduleOutput {
 
     // Check if this is an at-risk scenario (due date constraint returned at-risk slots)
     if (firstCandidate.isAtRisk) {
-      // Task cannot be placed before its due date — mark as unscheduled if all at risk
-      // but we do schedule it at the first available slot with isAtRisk = true
+      // Task cannot be placed before its due date — schedule it at the first available
+      // slot anyway with isAtRisk = true so the user can see the overdue placement
       const block: ScheduledBlock = {
         ...firstCandidate,
         taskId: task.id,

@@ -79,3 +79,9 @@
 
 - **Unsafe `state.extra` cast in `/chapter-break` route** — `state.extra as Map<String, dynamic>?` will throw a `TypeError` if the caller passes extra of a wrong type. Pre-existing pattern across all routes in `app_router.dart`; acceptable for V1 internal navigation. [`apps/flutter/lib/core/router/app_router.dart:137`]
 - **Optimistic task completion without error handling** — `completeTask(task.id)` is called then `context.push('/chapter-break')` fires immediately regardless of API success. V1 design decision (optimistic UI); error handling deferred to when the task completion API is fully wired with error states. [`apps/flutter/lib/features/now/presentation/now_screen.dart:94`]
+
+## Deferred from: code review of 3-2-basic-auto-scheduling-algorithm (2026-03-31)
+
+- **No unit tests for `apps/api/src/services/scheduling.ts`** — Pre-existing pattern; no API service unit tests in codebase. Story only requires 100% coverage for `packages/scheduling`. Address when API services get test scaffolding. [`apps/api/src/services/scheduling.ts`]
+- **Two separate `new Date()` calls in service layer for `windowStart` and `generatedAt`** — By-design stub pattern per dev notes; `generatedAt` may be a few milliseconds after `windowStart`. Will be resolved in Story 3.3 when real DB data and window calculation are wired. [`apps/api/src/services/scheduling.ts:22,31`]
+- **No integration test for morning-window + past-due-date constraint intersection** — 100% branch coverage confirmed. Would be an enhancement test, not a coverage gap. Low priority; consider adding in a future test-quality pass.

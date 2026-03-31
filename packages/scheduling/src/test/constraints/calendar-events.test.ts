@@ -18,11 +18,11 @@ const makeEvent = (start: string, end: string): CalendarEvent => ({
 })
 
 describe('applyCalendarEventConstraint', () => {
-  it('schedule_calendarEvents_noSlots_returnsEmpty', () => {
+  it('schedule_calendarEvent_noSlots_returnsEmpty', () => {
     expect(applyCalendarEventConstraint([], [])).toEqual([])
   })
 
-  it('schedule_calendarEvents_noEvents_passesThrough', () => {
+  it('schedule_calendarEvent_noEvents_passesThrough', () => {
     const slots = [makeSlot('2026-04-02T09:00:00.000Z', '2026-04-02T09:30:00.000Z')]
     expect(applyCalendarEventConstraint([], slots)).toEqual(slots)
   })
