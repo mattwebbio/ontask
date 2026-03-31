@@ -55,3 +55,7 @@
 - **`_formatDeadline()` time-formatting logic duplicated** — A third copy of deadline-formatting logic now exists in `now_task_card.dart` alongside `today_screen.dart`. Story dev notes (from Story 1.9) call for extraction to `apps/flutter/lib/core/utils/time_format.dart`. Should be consolidated when touching either screen.
 - **VoiceOver label `parts.join(', ')` embeds task-title commas** — If a task title contains a comma, the VoiceOver separator becomes ambiguous. Low severity design limitation; address if/when VoiceOver copy is refined.
 - **`CommitmentRow.formatAmount()` has no guard for negative values** — `formatAmount(-100)` returns `'$-1'`. Not reachable while stub API returns null; guard when Epic 6 real stake data is wired.
+
+## Deferred from: code review of 2-8-timeline-view (2026-03-31)
+
+- **`_formatTime` is 4th duplication of time formatting logic** — `timeline_painter.dart:230` and `today_screen.dart:402` each contain their own copy of 12-hour time formatting. Pre-existing issue flagged in story's own deferred issues section. Extract to `apps/flutter/lib/core/utils/time_format.dart`.

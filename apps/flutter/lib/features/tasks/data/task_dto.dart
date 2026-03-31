@@ -39,6 +39,8 @@ abstract class TaskDto with _$TaskDto {
     String? completedAt,
     required String createdAt,
     required String updatedAt,
+    int? durationMinutes,
+    String? scheduledStartTime,
   }) = _TaskDto;
 
   factory TaskDto.fromJson(Map<String, dynamic> json) => _$TaskDtoFromJson(json);
@@ -66,6 +68,10 @@ abstract class TaskDto with _$TaskDto {
         completedAt: completedAt != null ? DateTime.parse(completedAt!) : null,
         createdAt: DateTime.parse(createdAt),
         updatedAt: DateTime.parse(updatedAt),
+        durationMinutes: durationMinutes,
+        scheduledStartTime: scheduledStartTime != null
+            ? DateTime.parse(scheduledStartTime!)
+            : null,
       );
 
   static List<int>? _parseDaysOfWeek(String? value) {

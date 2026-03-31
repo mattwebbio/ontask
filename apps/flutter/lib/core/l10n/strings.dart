@@ -435,6 +435,17 @@ class AppStrings {
   static const String monthNov = 'Nov';
   static const String monthDec = 'Dec';
 
+  // ── Timeline view ──────────────────────────────────────────────────────
+  static const String timelineToggleToTimeline = 'Show timeline';
+  static const String timelineToggleToList = 'Show list';
+  static const String timelineNowIndicator = 'Now';
+  static const String timelineEmptyBlock = 'Free time';
+  static const String timelineBlockDuration = '{minutes} minutes';
+  static const String timelineBlockVoiceOver =
+      '{title}. {startTime}. {duration} minutes.';
+  static const String timelineHourLabel = "{hour} o'clock";
+  static const String timelineCalendarEvent = 'Calendar event';
+
   // ── Shared actions ──────────────────────────────────────────────────────
   static const String actionDelete = 'Delete';
 }
