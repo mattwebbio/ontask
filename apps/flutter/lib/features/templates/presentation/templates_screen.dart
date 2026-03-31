@@ -102,7 +102,7 @@ class TemplatesScreen extends ConsumerWidget {
           CupertinoDialogAction(
             isDestructiveAction: true,
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text(AppStrings.templateDeleteSuccess),
+            child: const Text(AppStrings.actionDelete),
           ),
         ],
       ),

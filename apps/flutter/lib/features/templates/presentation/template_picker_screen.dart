@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/l10n/strings.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -321,16 +322,23 @@ class _ApplyTemplateSheetState extends ConsumerState<_ApplyTemplateSheet> {
   Future<void> _applyTemplate() async {
     setState(() => _isApplying = true);
     try {
-      await ref.read(templatesProvider.notifier).applyTemplate(
-            widget.template.id,
-            dueDateOffsetDays:
-                _keepOriginalDates ? null : _offsetDays,
-          );
+      final result =
+          await ref.read(templatesProvider.notifier).applyTemplate(
+                widget.template.id,
+                dueDateOffsetDays:
+                    _keepOriginalDates ? null : _offsetDays,
+              );
       if (mounted) {
         // Pop the apply sheet
         Navigator.of(context).pop();
         // Pop the picker screen
         Navigator.of(context).pop();
+
+        // Navigate to the newly created list if present
+        final listData = result['list'] as Map<String, dynamic>?;
+        if (listData != null && listData['id'] != null) {
+          context.push('/lists/${listData['id']}');
+        }
       }
     } catch (_) {
       // Error handling deferred to real implementation

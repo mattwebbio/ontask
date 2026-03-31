@@ -339,4 +339,8 @@ class AppStrings {
   static const String templateDeleteSuccess = 'Template deleted.';
   static const String templateSourceList = 'List template';
   static const String templateSourceSection = 'Section template';
+  static const String templateNameSuffix = ' template';
+
+  // ── Shared actions ──────────────────────────────────────────────────────
+  static const String actionDelete = 'Delete';
 }

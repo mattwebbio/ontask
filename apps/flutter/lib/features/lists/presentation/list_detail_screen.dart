@@ -248,8 +248,8 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
     String sourceType,
     String sourceId,
   ) {
-    final controller =
-        TextEditingController(text: '$defaultName template');
+    final controller = TextEditingController(
+        text: '$defaultName${AppStrings.templateNameSuffix}');
     showCupertinoDialog<void>(
       context: context,
       builder: (ctx) => CupertinoAlertDialog(
@@ -285,6 +285,6 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
           ),
         ],
       ),
-    );
+    ).then((_) => controller.dispose());
   }
 }

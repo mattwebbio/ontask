@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-29
-last_updated: 2026-03-30 # Story 2.4 review
+last_updated: 2026-03-30 # Story 2.4 code review — in-progress (5 patch findings)
 project: ontask
 project_key: NOKEY
 tracking_system: file-system
@@ -68,7 +68,7 @@ development_status:
   2-1-task-list-crud: done
   2-2-task-properties-scheduling-hints: done
   2-3-recurring-tasks: done
-  2-4-task-templates: review
+  2-4-task-templates: in-progress
   2-5-task-dependencies-bulk-operations: backlog
   2-6-today-tab-schedule-health-strip: backlog
   2-7-now-tab-task-card: backlog

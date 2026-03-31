@@ -1,6 +1,6 @@
 # Story 2.4: Task Templates
 
-Status: review
+Status: in-progress
 
 ## Story
 
@@ -449,6 +449,15 @@ Claude Opus 4.6 (1M context)
 - `apps/flutter/lib/features/lists/presentation/lists_screen.dart` — MODIFIED (added Templates nav button)
 - `apps/flutter/lib/core/l10n/strings.dart` — MODIFIED (added 18 template strings)
 - `apps/flutter/test/features/templates/templates_test.dart` — NEW
+
+### Review Findings
+
+- [ ] [Review][Patch] Delete confirmation button uses wrong string — `AppStrings.templateDeleteSuccess` ("Template deleted.") is used as the destructive action button label in the delete confirmation dialog; should use a new `AppStrings.actionDelete` ("Delete") string instead [apps/flutter/lib/features/templates/presentation/templates_screen.dart:105]
+- [ ] [Review][Patch] Missing navigation to new list after template apply — AC2 and the story spec say "After successful apply, pop the picker and navigate to the new list detail screen" but `_applyTemplate()` only pops two modals without navigating to the created list; the `applyTemplate()` return value (containing the new list ID) is discarded [apps/flutter/lib/features/templates/presentation/template_picker_screen.dart:321-334]
+- [ ] [Review][Patch] Inline string literal `' template'` in save dialog pre-fill — `TextEditingController(text: '$defaultName template')` uses an inline `" template"` suffix; per project convention, this should be a format string in `AppStrings` (e.g. `templateDefaultNameSuffix`) [apps/flutter/lib/features/lists/presentation/list_detail_screen.dart:252]
+- [ ] [Review][Patch] No user-visible success feedback after save or apply — `templateSaveSuccess` and `templateApplySuccess` strings are defined in `AppStrings` but never displayed in the UI; users get no confirmation that save/apply succeeded [apps/flutter/lib/features/lists/presentation/list_detail_screen.dart:274, apps/flutter/lib/features/templates/presentation/template_picker_screen.dart:324]
+- [ ] [Review][Patch] `TextEditingController` not disposed in `_showSaveTemplateDialog` — creates a controller inside a method without disposing it when the dialog closes, causing a minor memory leak [apps/flutter/lib/features/lists/presentation/list_detail_screen.dart:251-252]
+- [x] [Review][Defer] API stub `offsetDate` does not recurse into `childSections` for due dates — the `offsetDate` helper only scans top-level `sections[].tasks` and `rootTasks` for `minDate` calculation, missing tasks in nested `childSections`; this is a stub-only issue that will be addressed when real implementation replaces stubs — deferred, pre-existing stub limitation
 
 ### Change Log
 
