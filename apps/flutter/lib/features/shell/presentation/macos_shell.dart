@@ -114,6 +114,9 @@ class _MacosShellState extends ConsumerState<MacosShell> {
             CommandPaletteIntent: CallbackAction<CommandPaletteIntent>(
               onInvoke: (_) => _openCommandPalette(),
             ),
+            SearchFilterIntent: CallbackAction<SearchFilterIntent>(
+              onInvoke: (_) => _openCommandPalette(),
+            ),
             NavigateSectionIntent: CallbackAction<NavigateSectionIntent>(
               onInvoke: (intent) => _onSidebarItemTapped(intent.section),
             ),
