@@ -1,5 +1,5 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart' show Theme;
+import 'package:flutter/material.dart' show AnimatedCrossFade, CrossFadeState, Theme;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/l10n/strings.dart';
@@ -10,7 +10,9 @@ import '../../tasks/domain/task.dart';
 import '../domain/day_health.dart';
 import 'schedule_health_provider.dart';
 import 'today_provider.dart';
+import 'today_view_mode_provider.dart';
 import 'widgets/schedule_health_strip.dart';
+import 'widgets/timeline_view.dart';
 import 'widgets/today_empty_state.dart';
 import 'widgets/today_skeleton.dart';
 import 'widgets/today_task_row.dart';
@@ -54,6 +56,8 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
   Widget build(BuildContext context) {
     final todayState = ref.watch(todayProvider);
     final healthState = ref.watch(scheduleHealthProvider);
+    final viewModeAsync = ref.watch(todayViewModeProvider);
+    final viewMode = viewModeAsync.value ?? TodayViewMode.list;
 
     return SafeArea(
       child: FutureBuilder<void>(
@@ -74,12 +78,91 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
             return TodayEmptyState(onAddTapped: _handleAddTapped);
           }
 
-          return _TodayContent(
-            tasks: tasks,
-            healthDays: healthState.value ?? [],
-            onComplete: (id) =>
-                ref.read(todayProvider.notifier).completeTask(id),
-            onReschedule: (id) => _showReschedulePicker(context, id),
+          final colors = Theme.of(context).extension<OnTaskColors>()!;
+          final isTimeline = viewMode == TodayViewMode.timeline;
+
+          return Column(
+            children: [
+              // Header with toggle button — renders above both views
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.lg,
+                  AppSpacing.lg,
+                  AppSpacing.lg,
+                  AppSpacing.xs,
+                ),
+                child: Row(
+                  children: [
+                    Text(
+                      AppStrings.todayHeaderTitle,
+                      style:
+                          Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                color: colors.textPrimary,
+                              ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Text(
+                      AppStrings.todayTaskCount
+                          .replaceFirst('{count}', '${tasks.length}'),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: colors.textSecondary,
+                          ),
+                    ),
+                    const Spacer(),
+                    CupertinoButton(
+                      padding: EdgeInsets.zero,
+                      onPressed: () {
+                        final newMode = isTimeline
+                            ? TodayViewMode.list
+                            : TodayViewMode.timeline;
+                        ref
+                            .read(todayViewModeSettingsProvider.notifier)
+                            .setViewMode(newMode);
+                      },
+                      child: Semantics(
+                        label: isTimeline
+                            ? AppStrings.timelineToggleToList
+                            : AppStrings.timelineToggleToTimeline,
+                        child: Icon(
+                          isTimeline
+                              ? CupertinoIcons.list_bullet
+                              : CupertinoIcons.calendar,
+                          color: colors.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // AnimatedCrossFade between list and timeline views
+              Expanded(
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    return AnimatedCrossFade(
+                      duration: const Duration(milliseconds: 200),
+                      crossFadeState: isTimeline
+                          ? CrossFadeState.showSecond
+                          : CrossFadeState.showFirst,
+                      firstChild: SizedBox(
+                        height: constraints.maxHeight,
+                        child: _TodayContent(
+                          tasks: tasks,
+                          healthDays: healthState.value ?? [],
+                          onComplete: (id) =>
+                              ref.read(todayProvider.notifier).completeTask(id),
+                          onReschedule: (id) =>
+                              _showReschedulePicker(context, id),
+                        ),
+                      ),
+                      secondChild: SizedBox(
+                        height: constraints.maxHeight,
+                        child: TimelineView(tasks: tasks),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
           );
         },
       ),
@@ -154,7 +237,6 @@ class _TodayContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).extension<OnTaskColors>()!;
     final now = DateTime.now();
 
     // Group tasks by time of day
@@ -176,40 +258,8 @@ class _TodayContent extends StatelessWidget {
       _addToTimeBlock(task, morning, afternoon, evening);
     }
 
-    // Count and hours for header
-    final totalTasks = tasks.length;
-
     return CustomScrollView(
       slivers: [
-        // Header
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.lg,
-              AppSpacing.lg,
-              AppSpacing.lg,
-              AppSpacing.xs,
-            ),
-            child: Row(
-              children: [
-                Text(
-                  AppStrings.todayHeaderTitle,
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        color: colors.textPrimary,
-                      ),
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                Text(
-                  AppStrings.todayTaskCount
-                      .replaceFirst('{count}', '$totalTasks'),
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: colors.textSecondary,
-                      ),
-                ),
-              ],
-            ),
-          ),
-        ),
         // Schedule health strip
         if (healthDays.isNotEmpty)
           SliverToBoxAdapter(

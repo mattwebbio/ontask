@@ -13,7 +13,9 @@ import 'package:ontask/features/today/domain/day_health_status.dart';
 import 'package:ontask/features/today/presentation/schedule_health_provider.dart';
 import 'package:ontask/features/today/presentation/today_provider.dart';
 import 'package:ontask/features/today/presentation/today_screen.dart';
+import 'package:ontask/features/today/presentation/today_view_mode_provider.dart';
 import 'package:ontask/features/today/presentation/widgets/schedule_health_strip.dart';
+import 'package:ontask/features/today/presentation/widgets/timeline_view.dart';
 import 'package:ontask/features/today/presentation/widgets/today_skeleton.dart';
 import 'package:ontask/features/today/presentation/widgets/today_task_row.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -153,6 +155,72 @@ void main() {
       expect(find.text(AppStrings.todayMorningSection), findsOneWidget);
       expect(find.text(AppStrings.todayAfternoonSection), findsOneWidget);
       expect(find.text(AppStrings.todayEveningSection), findsOneWidget);
+    });
+
+    testWidgets('toggle button appears in header', (tester) async {
+      await tester.pumpWidget(buildWidget());
+      await tester.pumpAndSettle();
+
+      // Should find the calendar icon (toggle to timeline) in list mode
+      expect(find.byIcon(CupertinoIcons.calendar), findsOneWidget);
+    });
+
+    testWidgets('tapping toggle switches to timeline view', (tester) async {
+      await tester.pumpWidget(buildWidget());
+      await tester.pumpAndSettle();
+
+      // Tap the calendar icon to switch to timeline
+      await tester.tap(find.byIcon(CupertinoIcons.calendar));
+      await tester.pumpAndSettle();
+
+      // Should now show list_bullet icon (toggle back to list)
+      expect(find.byIcon(CupertinoIcons.list_bullet), findsOneWidget);
+      // Timeline view should be visible
+      expect(find.byType(TimelineView), findsOneWidget);
+    });
+
+    testWidgets('tapping toggle again returns to list view', (tester) async {
+      await tester.pumpWidget(buildWidget());
+      await tester.pumpAndSettle();
+
+      // Switch to timeline
+      await tester.tap(find.byIcon(CupertinoIcons.calendar));
+      await tester.pumpAndSettle();
+
+      // Switch back to list
+      await tester.tap(find.byIcon(CupertinoIcons.list_bullet));
+      await tester.pumpAndSettle();
+
+      // Should show calendar icon again (list mode)
+      expect(find.byIcon(CupertinoIcons.calendar), findsOneWidget);
+    });
+
+    testWidgets('AnimatedCrossFade transition between views', (tester) async {
+      await tester.pumpWidget(buildWidget());
+      await tester.pumpAndSettle();
+
+      // AnimatedCrossFade should be present when tasks are loaded
+      expect(find.byType(AnimatedCrossFade), findsOneWidget);
+    });
+
+    testWidgets(
+        'list view renders instantly with no loading state on toggle back',
+        (tester) async {
+      await tester.pumpWidget(buildWidget());
+      await tester.pumpAndSettle();
+
+      // Switch to timeline
+      await tester.tap(find.byIcon(CupertinoIcons.calendar));
+      await tester.pumpAndSettle();
+
+      // Switch back to list
+      await tester.tap(find.byIcon(CupertinoIcons.list_bullet));
+      // Pump just one frame — list should be visible without loading
+      await tester.pump(const Duration(milliseconds: 50));
+
+      // Task text should still be present (no skeleton/loading)
+      expect(find.text('Morning standup'), findsOneWidget);
+      expect(find.byType(TodaySkeleton), findsNothing);
     });
   });
 

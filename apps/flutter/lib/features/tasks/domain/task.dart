@@ -35,5 +35,7 @@ abstract class Task with _$Task {
     DateTime? completedAt,
     required DateTime createdAt,
     required DateTime updatedAt,
+    int? durationMinutes,
+    DateTime? scheduledStartTime,
   }) = _Task;
 }

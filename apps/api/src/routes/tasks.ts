@@ -209,20 +209,40 @@ app.openapi(getTasksRoute, async (c) => {
 
 // ── GET /v1/tasks/today ──────────────────────────────────────────────────────
 
+const todayTaskSchema = taskSchema.extend({
+  durationMinutes: z.number().int().nullable().openapi({
+    example: 30,
+    description: 'Estimated duration in minutes. Stub: defaults to 30 for all tasks.',
+  }),
+  scheduledStartTime: z.string().datetime().nullable().openapi({
+    example: '2026-04-01T09:00:00.000Z',
+    description: 'Scheduled start time (ISO 8601). Stub: defaults to task dueDate.',
+  }),
+})
+
+const TodayTaskListResponseSchema = z.object({
+  data: z.array(todayTaskSchema),
+  pagination: z.object({
+    cursor: z.string().nullable(),
+    hasMore: z.boolean(),
+  }),
+})
+
 const getTodayTasksRoute = createRoute({
   method: 'get',
   path: '/v1/tasks/today',
   tags: ['Tasks'],
   summary: 'Get tasks scheduled for today',
   description:
-    'Returns tasks for a given date (defaults to server UTC today), sorted by dueDate ascending.',
+    'Returns tasks for a given date (defaults to server UTC today), sorted by dueDate ascending. ' +
+    'Includes durationMinutes and scheduledStartTime for timeline view rendering.',
   request: {
     query: z.object({
       date: z.string().date().optional(),
     }),
   },
   responses: {
-    200: { content: { 'application/json': { schema: TaskListResponseSchema } }, description: 'Today tasks list' },
+    200: { content: { 'application/json': { schema: TodayTaskListResponseSchema } }, description: 'Today tasks list' },
   },
 })
 
@@ -231,7 +251,8 @@ app.openapi(getTodayTasksRoute, async (c) => {
   const query = c.req.valid('query')
   const dateStr = query.date ?? new Date().toISOString().split('T')[0]
   // Stub: return tasks sorted by dueDate ascending, filtered by date match
-  const tasks = [stubTask({ dueDate: `${dateStr}T09:00:00.000Z` })]
+  const dueDate = `${dateStr}T09:00:00.000Z`
+  const tasks = [{ ...stubTask({ dueDate }), durationMinutes: 30, scheduledStartTime: dueDate }]
   return c.json(list(tasks, null, false), 200)
 })
 
