@@ -233,4 +233,34 @@ class AppStrings {
   /// Generic error shown when account deletion fails unexpectedly.
   static const String deleteAccountError =
       "Something went wrong. Please try again.";
+
+  // ── Add tab / task creation ───────────────────────────────────────────────
+  static const String addTaskTitle = "Capture a task";
+  static const String addTaskTitlePlaceholder = "What do you need to do?";
+  static const String addTaskNotesPlaceholder =
+      "Notes for your future self (optional)";
+  static const String addTaskDueDateLabel = "Due date";
+  static const String addTaskListLabel = "List";
+  static const String addTaskCreateButton = "Add task";
+  static const String addTaskSuccess = "Task captured.";
+  static const String addTaskError = "Something went wrong. Please try again.";
+  static const String addTaskTitleRequired = "Give your task a title.";
+
+  // ── Lists tab ─────────────────────────────────────────────────────────────
+  static const String listsTitle = "Lists";
+  static const String createListButton = "Create a list";
+  static const String createListTitle = "New list";
+  static const String createListTitlePlaceholder = "What should we call it?";
+  static const String createListDefaultDueDateLabel = "Default due date";
+  static const String createListSuccess = "List created.";
+  static const String listDetailTitle = "List";
+  static const String showArchived = "Show archived";
+  static const String hideArchived = "Hide archived";
+  static const String archiveTaskAction = "Archive";
+  static const String addTaskInList = "Add task";
+  static const String addSectionInList = "Add section";
+  static const String sectionTitlePlaceholder = "Section title";
+  static const String taskTitlePlaceholder = "Task title";
+  static const String editTaskNotes = "Notes";
+  static const String editTaskDueDate = "Due date";
 }

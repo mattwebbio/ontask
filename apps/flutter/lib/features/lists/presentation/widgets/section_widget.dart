@@ -1,0 +1,161 @@
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+
+import '../../../../core/l10n/strings.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../tasks/domain/task.dart';
+import '../../../tasks/presentation/widgets/task_row.dart';
+import '../../domain/section.dart';
+
+/// Renders a section header with its tasks.
+///
+/// Supports nested sub-sections rendered recursively.
+/// Shows "Add task" and "Add section" affordances.
+class SectionWidget extends StatefulWidget {
+  const SectionWidget({
+    required this.section,
+    required this.tasks,
+    this.childSections = const [],
+    this.allTasks = const [],
+    this.allSections = const [],
+    this.depth = 0,
+    this.onAddTask,
+    this.onAddSection,
+    this.onTaskTap,
+    this.onArchiveTask,
+    super.key,
+  });
+
+  final Section section;
+  final List<Task> tasks;
+  final List<Section> childSections;
+  final List<Task> allTasks;
+  final List<Section> allSections;
+  final int depth;
+  final VoidCallback? onAddTask;
+  final VoidCallback? onAddSection;
+  final void Function(Task task)? onTaskTap;
+  final void Function(Task task)? onArchiveTask;
+
+  @override
+  State<SectionWidget> createState() => _SectionWidgetState();
+}
+
+class _SectionWidgetState extends State<SectionWidget> {
+  bool _isExpanded = true;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<OnTaskColors>()!;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Section header
+        GestureDetector(
+          onTap: () => setState(() => _isExpanded = !_isExpanded),
+          child: Padding(
+            padding: EdgeInsets.only(
+              left: AppSpacing.lg + (widget.depth * AppSpacing.lg),
+              right: AppSpacing.lg,
+              top: AppSpacing.md,
+              bottom: AppSpacing.sm,
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  _isExpanded
+                      ? CupertinoIcons.chevron_down
+                      : CupertinoIcons.chevron_right,
+                  size: 14,
+                  color: colors.textSecondary,
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: Text(
+                    widget.section.title,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: colors.textPrimary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        if (_isExpanded) ...[
+          // Tasks in this section
+          ...widget.tasks.map(
+            (task) => TaskRow(
+              task: task,
+              onTap: () => widget.onTaskTap?.call(task),
+              onArchive: () => widget.onArchiveTask?.call(task),
+            ),
+          ),
+
+          // Nested child sections (recursive)
+          ...widget.childSections.map((childSection) {
+            final childTasks = widget.allTasks
+                .where((t) => t.sectionId == childSection.id)
+                .toList();
+            final grandchildSections = widget.allSections
+                .where((s) => s.parentSectionId == childSection.id)
+                .toList();
+            return SectionWidget(
+              section: childSection,
+              tasks: childTasks,
+              childSections: grandchildSections,
+              allTasks: widget.allTasks,
+              allSections: widget.allSections,
+              depth: widget.depth + 1,
+              onAddTask: widget.onAddTask,
+              onAddSection: widget.onAddSection,
+              onTaskTap: widget.onTaskTap,
+              onArchiveTask: widget.onArchiveTask,
+            );
+          }),
+
+          // Action affordances
+          Padding(
+            padding: EdgeInsets.only(
+              left: AppSpacing.xl + (widget.depth * AppSpacing.lg),
+            ),
+            child: Row(
+              children: [
+                CupertinoButton(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.sm,
+                    vertical: AppSpacing.xs,
+                  ),
+                  onPressed: widget.onAddTask,
+                  child: Text(
+                    AppStrings.addTaskInList,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: colors.accentPrimary,
+                        ),
+                  ),
+                ),
+                CupertinoButton(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.sm,
+                    vertical: AppSpacing.xs,
+                  ),
+                  onPressed: widget.onAddSection,
+                  child: Text(
+                    AppStrings.addSectionInList,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: colors.accentPrimary,
+                        ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}

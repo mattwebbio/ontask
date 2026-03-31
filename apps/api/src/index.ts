@@ -3,6 +3,9 @@ import { applyScopedCors } from './middleware/cors.js'
 import { healthRouter } from './routes/health.js'
 import { authRouter } from './routes/auth.js'
 import { usersRouter } from './routes/users.js'
+import { tasksRouter } from './routes/tasks.js'
+import { listsRouter } from './routes/lists.js'
+import { sectionsRouter } from './routes/sections.js'
 import { AppError } from './lib/errors.js'
 import { reportToGlitchTip } from './lib/glitchtip.js'
 import { err } from './lib/response.js'
@@ -44,6 +47,9 @@ applyScopedCors(app)
 app.route('/', healthRouter)
 app.route('/', authRouter)
 app.route('/', usersRouter)
+app.route('/', tasksRouter)
+app.route('/', listsRouter)
+app.route('/', sectionsRouter)
 
 // ── OpenAPI documentation ──────────────────────────────────────────────────
 app.doc('/v1/doc', {
