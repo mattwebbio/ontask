@@ -578,6 +578,126 @@ app.openapi(getTaskSearchRoute, async (c) => {
   return c.json(list(results, null, false), 200)
 })
 
+// ── GET /v1/tasks/schedule-changes ──────────────────────────────────────────
+// IMPORTANT: Named route MUST be registered BEFORE /v1/tasks/{id} —
+// Hono matches routes in registration order.
+
+const scheduleChangeItemSchema = z.object({
+  taskId: z.string().uuid(),
+  taskTitle: z.string(),
+  changeType: z.enum(['moved', 'removed']),
+  oldTime: z.string().datetime().nullable(),
+  newTime: z.string().datetime().nullable(),
+})
+
+const scheduleChangesSchema = z.object({
+  hasMeaningfulChanges: z.boolean(),
+  changeCount: z.number().int(),
+  changes: z.array(scheduleChangeItemSchema),
+})
+
+const ScheduleChangesResponseSchema = z.object({ data: scheduleChangesSchema })
+
+const getScheduleChangesRoute = createRoute({
+  method: 'get',
+  path: '/v1/tasks/schedule-changes',
+  tags: ['Tasks'],
+  summary: 'Get schedule changes since last view',
+  description:
+    'Returns schedule change events (moved/removed tasks) since last user view. ' +
+    'Stub returns static data; real integration comes in Epic 3.',
+  responses: {
+    200: {
+      content: { 'application/json': { schema: ScheduleChangesResponseSchema } },
+      description: 'Schedule changes',
+    },
+  },
+})
+
+app.openapi(getScheduleChangesRoute, async (c) => {
+  // TODO(impl): compare current schedule with cached previous snapshot (Epic 3)
+  const today = new Date().toISOString().split('T')[0]
+  return c.json(
+    ok({
+      hasMeaningfulChanges: true,
+      changeCount: 2,
+      changes: [
+        {
+          taskId: 'a0000000-0000-4000-8000-000000000001',
+          taskTitle: 'Morning review',
+          changeType: 'moved' as const,
+          oldTime: `${today}T09:00:00.000Z`,
+          newTime: `${today}T14:00:00.000Z`,
+        },
+        {
+          taskId: 'a0000000-0000-4000-8000-000000000002',
+          taskTitle: 'Team sync prep',
+          changeType: 'removed' as const,
+          oldTime: `${today}T11:00:00.000Z`,
+          newTime: null,
+        },
+      ],
+    }),
+    200,
+  )
+})
+
+// ── GET /v1/tasks/overbooking-status ─────────────────────────────────────────
+// IMPORTANT: Named route MUST be registered BEFORE /v1/tasks/{id} —
+// Hono matches routes in registration order.
+
+const overbookedTaskSchema = z.object({
+  taskId: z.string().uuid(),
+  taskTitle: z.string(),
+  hasStake: z.boolean(),
+  durationMinutes: z.number().int(),
+})
+
+const overbookingStatusSchema = z.object({
+  isOverbooked: z.boolean(),
+  severity: z.enum(['none', 'at_risk', 'critical']),
+  capacityPercent: z.number(),
+  overbookedTasks: z.array(overbookedTaskSchema),
+})
+
+const OverbookingStatusResponseSchema = z.object({ data: overbookingStatusSchema })
+
+const getOverbookingStatusRoute = createRoute({
+  method: 'get',
+  path: '/v1/tasks/overbooking-status',
+  tags: ['Tasks'],
+  summary: 'Get overbooking status for today',
+  description:
+    'Returns whether today is overbooked, severity level, and list of overloaded tasks. ' +
+    'Stub returns static data; real capacity calculation comes in Epic 3.',
+  responses: {
+    200: {
+      content: { 'application/json': { schema: OverbookingStatusResponseSchema } },
+      description: 'Overbooking status',
+    },
+  },
+})
+
+app.openapi(getOverbookingStatusRoute, async (c) => {
+  // TODO(impl): real capacity calculation from scheduling engine (Epic 3)
+  return c.json(
+    ok({
+      isOverbooked: true,
+      severity: 'at_risk' as const,
+      capacityPercent: 115,
+      overbookedTasks: [
+        {
+          taskId: 'a0000000-0000-4000-8000-000000000001',
+          taskTitle: 'Deep work block',
+          hasStake: true,
+          durationMinutes: 120,
+        },
+      ],
+    }),
+    200,
+  )
+})
+
 // ── GET /v1/tasks/:id ───────────────────────────────────────────────────────
 
 const getTaskRoute = createRoute({

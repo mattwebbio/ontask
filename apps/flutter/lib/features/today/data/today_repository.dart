@@ -4,7 +4,11 @@ import '../../../core/network/api_client.dart';
 import '../../tasks/data/task_dto.dart';
 import '../../tasks/domain/task.dart';
 import '../domain/day_health.dart';
+import '../domain/overbooking_status.dart';
+import '../domain/schedule_change.dart';
 import 'day_health_dto.dart';
+import 'overbooking_status_dto.dart';
+import 'schedule_change_dto.dart';
 
 part 'today_repository.g.dart';
 
@@ -46,6 +50,32 @@ class TodayRepository {
             (e) => DayHealthDto.fromJson(e as Map<String, dynamic>).toDomain())
         .toList();
     return days;
+  }
+
+  /// Fetches schedule change events since last user view.
+  ///
+  /// Calls `GET /v1/tasks/schedule-changes`.
+  /// Returns a [ScheduleChanges] describing moved/removed tasks.
+  Future<ScheduleChanges> getScheduleChanges() async {
+    final response = await _client.dio.get<Map<String, dynamic>>(
+      '/v1/tasks/schedule-changes',
+    );
+    return ScheduleChangesDto.fromJson(
+      response.data!['data'] as Map<String, dynamic>,
+    ).toDomain();
+  }
+
+  /// Fetches overbooking status for today.
+  ///
+  /// Calls `GET /v1/tasks/overbooking-status`.
+  /// Returns an [OverbookingStatus] with severity and overloaded task list.
+  Future<OverbookingStatus> getOverbookingStatus() async {
+    final response = await _client.dio.get<Map<String, dynamic>>(
+      '/v1/tasks/overbooking-status',
+    );
+    return OverbookingStatusDto.fromJson(
+      response.data!['data'] as Map<String, dynamic>,
+    ).toDomain();
   }
 }
 

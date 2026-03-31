@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' show AnimatedCrossFade, CrossFadeState, Theme;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,9 +10,12 @@ import '../../../core/theme/app_theme.dart';
 import '../../../features/shell/presentation/shell_providers.dart';
 import '../../tasks/domain/task.dart';
 import '../domain/day_health.dart';
+import 'schedule_change_provider.dart';
 import 'schedule_health_provider.dart';
 import 'today_provider.dart';
 import 'today_view_mode_provider.dart';
+import 'widgets/overbooking_warning_banner.dart';
+import 'widgets/schedule_change_banner.dart';
 import 'widgets/schedule_health_strip.dart';
 import 'widgets/timeline_view.dart';
 import 'widgets/today_empty_state.dart';
@@ -37,11 +42,18 @@ class TodayScreen extends ConsumerStatefulWidget {
 
 class _TodayScreenState extends ConsumerState<TodayScreen> {
   late final Future<void> _skeletonDelay;
+  Timer? _autoDismissTimer;
 
   @override
   void initState() {
     super.initState();
     _skeletonDelay = Future.delayed(const Duration(milliseconds: 800));
+  }
+
+  @override
+  void dispose() {
+    _autoDismissTimer?.cancel();
+    super.dispose();
   }
 
   void _handleAddTapped() {
@@ -58,6 +70,21 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
     final healthState = ref.watch(scheduleHealthProvider);
     final viewModeAsync = ref.watch(todayViewModeProvider);
     final viewMode = viewModeAsync.value ?? TodayViewMode.list;
+
+    // Listen for banner visibility → start/cancel 8-second auto-dismiss timer
+    ref.listen<AsyncValue<bool>>(scheduleChangeBannerVisibleProvider,
+        (previous, next) {
+      if (next.value == true) {
+        _autoDismissTimer?.cancel();
+        _autoDismissTimer = Timer(const Duration(seconds: 8), () {
+          if (mounted) {
+            ref.read(scheduleChangeBannerVisibleProvider.notifier).dismiss();
+          }
+        });
+      } else {
+        _autoDismissTimer?.cancel();
+      }
+    });
 
     return SafeArea(
       child: FutureBuilder<void>(
@@ -260,6 +287,14 @@ class _TodayContent extends StatelessWidget {
 
     return CustomScrollView(
       slivers: [
+        // Schedule Change Banner — always included (hides itself via SizedBox.shrink)
+        const SliverToBoxAdapter(
+          child: ScheduleChangeBannerAsync(),
+        ),
+        // Overbooking Warning Banner — always included (hides itself via SizedBox.shrink)
+        const SliverToBoxAdapter(
+          child: OverbookingWarningBannerAsync(),
+        ),
         // Schedule health strip
         if (healthDays.isNotEmpty)
           SliverToBoxAdapter(

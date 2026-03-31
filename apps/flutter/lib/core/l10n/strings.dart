@@ -498,6 +498,35 @@ class AppStrings {
   static const String predictionBadgeVoiceOverUnknown =
       'Predicted completion unknown. Tap for forecast reasoning.';
 
+  // ── Schedule Change Banner ────────────────────────────────────────────────
+  static const String scheduleChangeBannerMessage =
+      'Your schedule has been updated';
+  static const String scheduleChangeSeeWhat = 'See what changed';
+  static const String scheduleChangeBannerDismiss = 'Dismiss';
+  static const String scheduleChangeDismissVoiceOver =
+      'Dismiss schedule change banner';
+  static const String scheduleChangesSheetTitle = 'Schedule changes';
+  static const String scheduleChangeMovedFormat = '{title} · moved to {time}';
+  static const String scheduleChangeRemovedFormat =
+      '{title} · removed from schedule';
+  static const String scheduleChangeBannerVoiceOver =
+      'Schedule updated. {count} tasks changed. Double-tap to see what changed.';
+
+  // ── Overbooking Warning Banner ────────────────────────────────────────────
+  static const String overbookingWarningMessage =
+      'Schedule overloaded · {percent}% capacity';
+  static const String overbookingWarningAtRisk = 'At risk';
+  static const String overbookingWarningCritical = 'Critical';
+  static const String overbookingReschedule = 'Reschedule';
+  static const String overbookingExtendDeadline = 'Extend deadline';
+  static const String overbookingAcknowledge = 'Acknowledge';
+  static const String overbookingRequestExtension =
+      'Request deadline extension from partner';
+  static const String overbookingWarningVoiceOver =
+      'Schedule overloaded at {percent}% capacity. Available actions: Reschedule, Extend deadline, Acknowledge.';
+
   // ── Shared actions ──────────────────────────────────────────────────────
+  static const String actionNotImplemented =
+      'This action is not yet available in this version.';
   static const String actionDelete = 'Delete';
 }
