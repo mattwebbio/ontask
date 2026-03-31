@@ -104,4 +104,52 @@ class TasksNotifier extends _$TasksNotifier {
       current.map((t) => t.id == id ? updated : t).toList(),
     );
   }
+
+  // ── Bulk Operations ─────────────────────────────────────────────────────
+
+  /// Reschedules multiple tasks to a new due date.
+  Future<void> bulkReschedule(List<String> taskIds, String dueDate) async {
+    final repo = ref.read(tasksRepositoryProvider);
+    await repo.bulkReschedule(taskIds, dueDate);
+
+    // Optimistically update state — set dueDate on matched tasks
+    final current = state.value ?? [];
+    final newDueDate = DateTime.parse(dueDate);
+    state = AsyncData(
+      current
+          .map((t) => taskIds.contains(t.id)
+              ? t.copyWith(dueDate: newDueDate)
+              : t)
+          .toList(),
+    );
+  }
+
+  /// Marks multiple tasks as completed.
+  Future<void> bulkComplete(List<String> taskIds) async {
+    final repo = ref.read(tasksRepositoryProvider);
+    await repo.bulkComplete(taskIds);
+
+    // Optimistically update state — set completedAt
+    final current = state.value ?? [];
+    final now = DateTime.now();
+    state = AsyncData(
+      current
+          .map((t) => taskIds.contains(t.id)
+              ? t.copyWith(completedAt: now)
+              : t)
+          .toList(),
+    );
+  }
+
+  /// Archives multiple tasks (soft delete).
+  Future<void> bulkDelete(List<String> taskIds) async {
+    final repo = ref.read(tasksRepositoryProvider);
+    await repo.bulkDelete(taskIds);
+
+    // Optimistically remove from state
+    final current = state.value ?? [];
+    state = AsyncData(
+      current.where((t) => !taskIds.contains(t.id)).toList(),
+    );
+  }
 }

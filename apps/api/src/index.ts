@@ -7,6 +7,8 @@ import { tasksRouter } from './routes/tasks.js'
 import { listsRouter } from './routes/lists.js'
 import { sectionsRouter } from './routes/sections.js'
 import { templatesRouter } from './routes/templates.js'
+import { taskDependenciesRouter } from './routes/task-dependencies.js'
+import { bulkOperationsRouter } from './routes/bulk-operations.js'
 import { AppError } from './lib/errors.js'
 import { reportToGlitchTip } from './lib/glitchtip.js'
 import { err } from './lib/response.js'
@@ -48,10 +50,15 @@ applyScopedCors(app)
 app.route('/', healthRouter)
 app.route('/', authRouter)
 app.route('/', usersRouter)
+// IMPORTANT: bulkOperationsRouter MUST be registered BEFORE tasksRouter.
+// Hono matches routes in registration order — /v1/tasks/bulk/complete would
+// otherwise match /v1/tasks/{id}/complete with id='bulk'.
+app.route('/', bulkOperationsRouter)
 app.route('/', tasksRouter)
 app.route('/', listsRouter)
 app.route('/', sectionsRouter)
 app.route('/', templatesRouter)
+app.route('/', taskDependenciesRouter)
 
 // ── OpenAPI documentation ──────────────────────────────────────────────────
 app.doc('/v1/doc', {

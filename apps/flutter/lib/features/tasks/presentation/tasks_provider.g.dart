@@ -62,7 +62,7 @@ final class TasksNotifierProvider
   }
 }
 
-String _$tasksNotifierHash() => r'86fd5eeb37a67aa8c538f2fe7a8a57631b2e5df9';
+String _$tasksNotifierHash() => r'3694802baf02acd76a75bad9d0ff2ce9d75ff971';
 
 /// Notifier managing task list state per list/section.
 ///

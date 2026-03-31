@@ -3,6 +3,8 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../core/network/api_client.dart';
 import '../domain/recurrence_rule.dart';
 import '../domain/task.dart';
+import '../domain/task_dependency.dart';
+import 'task_dependency_dto.dart';
 import 'task_dto.dart';
 
 part 'tasks_repository.g.dart';
@@ -132,6 +134,97 @@ class TasksRepository {
     return TaskDto.fromJson(
       response.data!['data'] as Map<String, dynamic>,
     ).toDomain();
+  }
+
+  // ── Task Dependencies ───────────────────────────────────────────────────
+
+  /// Fetches all dependencies for a task (both directions).
+  /// Returns a record with `dependsOn` and `blocks` lists.
+  Future<({List<TaskDependency> dependsOn, List<TaskDependency> blocks})>
+      getDependencies(String taskId) async {
+    final response = await _client.dio.get<Map<String, dynamic>>(
+      '/v1/task-dependencies',
+      queryParameters: {'taskId': taskId},
+    );
+    final data = response.data!['data'] as Map<String, dynamic>;
+    final dependsOn = (data['dependsOn'] as List)
+        .map((e) =>
+            TaskDependencyDto.fromJson(e as Map<String, dynamic>).toDomain())
+        .toList();
+    final blocks = (data['blocks'] as List)
+        .map((e) =>
+            TaskDependencyDto.fromJson(e as Map<String, dynamic>).toDomain())
+        .toList();
+    return (dependsOn: dependsOn, blocks: blocks);
+  }
+
+  /// Creates a dependency: [dependentTaskId] depends on [dependsOnTaskId].
+  Future<TaskDependency> createDependency({
+    required String dependentTaskId,
+    required String dependsOnTaskId,
+  }) async {
+    final response = await _client.dio.post<Map<String, dynamic>>(
+      '/v1/task-dependencies',
+      data: {
+        'dependentTaskId': dependentTaskId,
+        'dependsOnTaskId': dependsOnTaskId,
+      },
+    );
+    return TaskDependencyDto.fromJson(
+      response.data!['data'] as Map<String, dynamic>,
+    ).toDomain();
+  }
+
+  /// Deletes a dependency by ID.
+  Future<void> deleteDependency(String id) async {
+    await _client.dio.delete('/v1/task-dependencies/$id');
+  }
+
+  // ── Bulk Operations ─────────────────────────────────────────────────────
+
+  /// Reschedules multiple tasks to a new due date.
+  Future<({List<String> succeeded, List<({String id, String error})> failed})>
+      bulkReschedule(List<String> taskIds, String dueDate) async {
+    final response = await _client.dio.post<Map<String, dynamic>>(
+      '/v1/tasks/bulk/reschedule',
+      data: {'taskIds': taskIds, 'dueDate': dueDate},
+    );
+    return _parseBulkResult(response.data!);
+  }
+
+  /// Marks multiple tasks as completed.
+  Future<({List<String> succeeded, List<({String id, String error})> failed})>
+      bulkComplete(List<String> taskIds) async {
+    final response = await _client.dio.post<Map<String, dynamic>>(
+      '/v1/tasks/bulk/complete',
+      data: {'taskIds': taskIds},
+    );
+    return _parseBulkResult(response.data!);
+  }
+
+  /// Archives multiple tasks (soft delete).
+  Future<({List<String> succeeded, List<({String id, String error})> failed})>
+      bulkDelete(List<String> taskIds) async {
+    final response = await _client.dio.post<Map<String, dynamic>>(
+      '/v1/tasks/bulk/delete',
+      data: {'taskIds': taskIds},
+    );
+    return _parseBulkResult(response.data!);
+  }
+
+  /// Parses the partial-success bulk result envelope.
+  ({List<String> succeeded, List<({String id, String error})> failed})
+      _parseBulkResult(Map<String, dynamic> responseData) {
+    final data = responseData['data'] as Map<String, dynamic>;
+    final succeeded =
+        (data['succeeded'] as List).cast<String>();
+    final failed = (data['failed'] as List)
+        .map((e) {
+          final map = e as Map<String, dynamic>;
+          return (id: map['id'] as String, error: map['error'] as String);
+        })
+        .toList();
+    return (succeeded: succeeded, failed: failed);
   }
 }
 
