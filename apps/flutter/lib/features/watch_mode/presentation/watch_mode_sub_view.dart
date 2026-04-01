@@ -82,6 +82,9 @@ class _WatchModeSubViewState extends State<WatchModeSubView>
   // ── State machine ──────────────────────────────────────────────────────────
   _WatchModeState _watchState = _WatchModeState.idle;
 
+  // ── Submission guard ───────────────────────────────────────────────────────
+  bool _isSubmitting = false;
+
   // ── Camera ─────────────────────────────────────────────────────────────────
   CameraController? _cameraController;
   String? _cameraError;
@@ -236,7 +239,6 @@ class _WatchModeSubViewState extends State<WatchModeSubView>
     _sessionTimer?.cancel();
     _framePollingTimer?.cancel();
     _cameraIndicatorController.stop();
-    _cameraController?.stopImageStream();
     final endedAt = DateTime.now();
     _session = WatchModeSession(
       taskId: widget.taskId,
@@ -252,9 +254,11 @@ class _WatchModeSubViewState extends State<WatchModeSubView>
   // ── Submit proof ───────────────────────────────────────────────────────────
 
   Future<void> _onSubmitProof() async {
+    if (_isSubmitting) return;
     final session = _session;
     if (session == null) return;
     setState(() {
+      _isSubmitting = true;
       _watchState = _WatchModeState.submitting;
     });
 
@@ -288,7 +292,10 @@ class _WatchModeSubViewState extends State<WatchModeSubView>
 
     switch (result) {
       case ProofVerificationApproved():
-        setState(() => _watchState = _WatchModeState.approved);
+        setState(() {
+          _watchState = _WatchModeState.approved;
+          _isSubmitting = false;
+        });
         _approvalFadeController.forward();
         Future.delayed(const Duration(seconds: 2), () {
           if (!mounted) return;
@@ -299,11 +306,13 @@ class _WatchModeSubViewState extends State<WatchModeSubView>
         setState(() {
           _watchState = _WatchModeState.rejected;
           _rejectionReason = reason;
+          _isSubmitting = false;
         });
       case ProofVerificationError(:final message):
         setState(() {
           _watchState = _WatchModeState.rejected;
           _rejectionReason = message;
+          _isSubmitting = false;
         });
     }
   }
@@ -556,7 +565,7 @@ class _WatchModeSubViewState extends State<WatchModeSubView>
           CupertinoActivityIndicator(color: colors.accentPrimary),
           const SizedBox(height: AppSpacing.sm),
           Text(
-            'Ending session\u2026',
+            AppStrings.watchModeEndingCopy,
             style: TextStyle(color: colors.textSecondary),
           ),
         ],
@@ -819,7 +828,7 @@ class _WatchModeSubViewState extends State<WatchModeSubView>
             borderRadius: BorderRadius.circular(AppSpacing.md),
             onPressed: _onTryAgain,
             child: Text(
-              'Try again',
+              AppStrings.watchModeTryAgainCta,
               style: TextStyle(
                 color: colors.surfacePrimary,
                 fontWeight: FontWeight.w600,

@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -119,7 +117,6 @@ void main() {
         (tester) async {
       final mockRepo = MockProofRepository();
       // Wrap in a Navigator so pop is testable.
-      Object? poppedValue = 'sentinel';
       await tester.pumpWidget(
         MaterialApp(
           theme: AppTheme.light(ThemeVariant.clay, 'PlayfairDisplay'),

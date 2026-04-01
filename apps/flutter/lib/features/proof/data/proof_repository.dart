@@ -64,15 +64,6 @@ class ProofRepository {
     }
   }
 
-  /// Submits a screenshot or document file to the API for AI verification.
-  ///
-  /// Supports PNG, JPG, and PDF files up to 25 MB (FR36).
-  /// Posts `multipart/form-data` with the media file to
-  /// `POST /v1/tasks/{taskId}/proof` — same unified endpoint as photo proof.
-  ///
-  /// Returns [ProofVerificationApproved] on success, [ProofVerificationRejected]
-  /// with the API-provided reason on failure, or [ProofVerificationError]
-  /// on network/unexpected errors.
   /// Submits Watch Mode session data to the API for verification.
   ///
   /// Posts a JSON body (NOT multipart) to `POST /v1/tasks/{taskId}/proof`

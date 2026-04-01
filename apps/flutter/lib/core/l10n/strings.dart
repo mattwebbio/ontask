@@ -1046,4 +1046,10 @@ class AppStrings {
 
   /// Approved state label for Watch Mode session verification.
   static const String watchModeApprovedLabel = 'Session verified';
+
+  /// Copy shown while session is ending.
+  static const String watchModeEndingCopy = 'Ending session\u2026';
+
+  /// "Try again" CTA in Watch Mode timeout state.
+  static const String watchModeTryAgainCta = 'Try again';
 }
