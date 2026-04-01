@@ -13,6 +13,7 @@ import { schedulingRouter } from './routes/scheduling.js'
 import { calendarRouter } from './routes/calendar.js'
 import { sharingRouter } from './routes/sharing.js'
 import { commitmentContractsRouter } from './routes/commitment-contracts.js'
+import { proofRouter } from './routes/proof.js'
 import { chargeTriggerConsumer } from './queues/charge-trigger-consumer.js'
 import { everyOrgConsumer } from './queues/every-org-consumer.js'
 import { triggerOverdueCharges } from './lib/charge-scheduler.js'
@@ -71,6 +72,7 @@ app.route('/', schedulingRouter)
 app.route('/', calendarRouter)
 app.route('/', sharingRouter)
 app.route('/', commitmentContractsRouter)
+app.route('/', proofRouter)
 
 // ── OpenAPI documentation ──────────────────────────────────────────────────
 app.doc('/v1/doc', {

@@ -971,4 +971,29 @@ class AppStrings {
 
   /// Stub sub-view placeholder (shown until Stories 7.2–7.6 implement real sub-views).
   static const String proofPathComingSoon = 'This proof path is coming soon.';
+
+  // ── Photo Proof & AI Verification (FR31-32, Story 7.2) ──────────────────────
+  /// Verifying animation copy (UX-DR30) — "Reviewing your proof…"
+  static const String proofVerifyingCopy = 'Reviewing your proof\u2026';
+
+  /// Approved state label.
+  static const String proofAcceptedLabel = 'Proof accepted';
+
+  /// Rejected state label.
+  static const String proofRejectedLabel = "Couldn't verify \u2014 dispute or resubmit";
+
+  /// Timeout error copy.
+  static const String proofTimeoutCopy = 'Verification timed out \u2014 try again.';
+
+  /// Retry CTA.
+  static const String proofRetakeCta = 'Take another';
+
+  /// Dispute CTA.
+  static const String proofDisputeCta = 'Request review';
+
+  /// Submit captured media CTA.
+  static const String proofSubmitCta = 'Submit';
+
+  /// Shutter button accessibility label.
+  static const String proofShutterLabel = 'Take photo';
 }

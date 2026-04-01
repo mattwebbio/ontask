@@ -59,6 +59,8 @@
 			</array>
 		</dict>
 	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>On Task uses your camera to capture photo proof for task completion verification.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
