@@ -20,6 +20,8 @@ declare namespace Cloudflare {
 		GOOGLE_CLIENT_SECRET?: string;
 		/** 32-byte AES key for encrypting Google Calendar OAuth tokens at rest (NFR-S4, Story 3.3). Set via `wrangler secret put CALENDAR_TOKEN_KEY`. */
 		CALENDAR_TOKEN_KEY?: string;
+		/** Secret token echoed back by Google in X-Goog-Channel-Token header on push notifications (Story 3.5). Set via `wrangler secret put CALENDAR_WEBHOOK_SECRET`. */
+		CALENDAR_WEBHOOK_SECRET?: string;
 	}
 }
 interface CloudflareBindings extends Cloudflare.Env {}

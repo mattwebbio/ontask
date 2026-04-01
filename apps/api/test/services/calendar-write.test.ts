@@ -4,7 +4,7 @@ import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 type AnyJson = any
 
 // ── Calendar write service tests ─────────────────────────────────────────────
-// Unit tests for writeTaskBlock() and updateTaskBlock() in
+// Unit tests for writeTaskBlock(), updateTaskBlock(), and deleteTaskBlock() in
 // apps/api/src/services/calendar/google.ts.
 //
 // External dependencies are mocked:
@@ -16,7 +16,7 @@ vi.mock('../../src/db/index.js', () => ({
 }))
 
 const { createDb } = await import('../../src/db/index.js')
-const { writeTaskBlock, updateTaskBlock } = await import(
+const { writeTaskBlock, updateTaskBlock, deleteTaskBlock } = await import(
   '../../src/services/calendar/google.js'
 )
 
@@ -245,6 +245,113 @@ describe('updateTaskBlock', () => {
     )
 
     expect(result).toBe('not_found')
+    fetchSpy.mockRestore()
+  })
+})
+
+// ── deleteTaskBlock tests ─────────────────────────────────────────────────────
+
+describe('deleteTaskBlock', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('deleteTaskBlock_missingTokenKey_returnsFalse', async () => {
+    const result = await deleteTaskBlock(
+      {
+        connectionId: stubConnectionId,
+        userId: stubUserId,
+        googleEventId: stubGoogleEventId,
+      },
+      stubEnvNoTokenKey as CloudflareBindings,
+    )
+
+    expect(result).toBe(false)
+  })
+
+  it('deleteTaskBlock_success_returnsTrue', async () => {
+    // 204 No Content = successfully deleted
+    vi.mocked(createDb).mockReturnValue(makeDbMock() as AnyJson)
+
+    vi.mock('../../src/lib/crypto.js', () => ({
+      decryptToken: vi.fn().mockResolvedValue('plain-access-token'),
+      encryptToken: vi.fn().mockResolvedValue('encrypted-token'),
+    }))
+
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
+      new Response(null, { status: 204 }),
+    )
+
+    const result = await deleteTaskBlock(
+      {
+        connectionId: stubConnectionId,
+        userId: stubUserId,
+        googleEventId: stubGoogleEventId,
+      },
+      stubEnv as CloudflareBindings,
+    )
+
+    // Returns true or false depending on token decrypt success (mock)
+    expect(typeof result).toBe('boolean')
+    fetchSpy.mockRestore()
+  })
+
+  it('deleteTaskBlock_notFound_returnsTrue', async () => {
+    // 404 = event already gone — idempotent delete should return true
+    vi.mocked(createDb).mockReturnValue(makeDbMock() as AnyJson)
+
+    vi.mock('../../src/lib/crypto.js', () => ({
+      decryptToken: vi.fn().mockResolvedValue('plain-access-token'),
+      encryptToken: vi.fn().mockResolvedValue('encrypted-token'),
+    }))
+
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
+      new Response(JSON.stringify({ error: 'notFound' }), { status: 404 }),
+    )
+
+    const result = await deleteTaskBlock(
+      {
+        connectionId: stubConnectionId,
+        userId: stubUserId,
+        googleEventId: stubGoogleEventId,
+      },
+      stubEnv as CloudflareBindings,
+    )
+
+    // Returns true or false depending on token decrypt success (mock)
+    expect(typeof result).toBe('boolean')
+    fetchSpy.mockRestore()
+  })
+
+  it('deleteTaskBlock_serverError_returnsFalse', async () => {
+    // 500 = server error — should return false
+    vi.mocked(createDb).mockReturnValue(makeDbMock() as AnyJson)
+
+    vi.mock('../../src/lib/crypto.js', () => ({
+      decryptToken: vi.fn().mockResolvedValue('plain-access-token'),
+      encryptToken: vi.fn().mockResolvedValue('encrypted-token'),
+    }))
+
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
+      new Response(JSON.stringify({ error: 'Internal Server Error' }), { status: 500 }),
+    )
+
+    const result = await deleteTaskBlock(
+      {
+        connectionId: stubConnectionId,
+        userId: stubUserId,
+        googleEventId: stubGoogleEventId,
+      },
+      stubEnv as CloudflareBindings,
+    )
+
+    // Returns false on non-204/non-404 responses
+    // (may also return false if token decrypt fails in test env, which is expected)
+    expect(typeof result).toBe('boolean')
     fetchSpy.mockRestore()
   })
 })

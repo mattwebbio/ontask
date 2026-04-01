@@ -1,6 +1,6 @@
 import { schedule } from '@ontask/scheduling'
 import type { ScheduleOutput } from '@ontask/core'
-import { fetchAllCalendarEvents, syncScheduledBlocksToCalendar } from './calendar/index.js'
+import { fetchAllCalendarEvents, syncScheduledBlocksToCalendar, removeStaleCalendarBlocks } from './calendar/index.js'
 
 /**
  * runScheduleForUser — orchestrates the scheduling engine for a single user.
@@ -27,6 +27,11 @@ export async function runScheduleForUser(
     windowStart: now,
     windowEnd,
   })
+
+  // Remove blocks for tasks no longer in the schedule (deleted/completed tasks)
+  // TODO(story-impl): pass real task IDs when task loading is wired
+  const activeTaskIds = result.scheduledBlocks.map((b) => b.taskId)
+  await removeStaleCalendarBlocks(userId, activeTaskIds, env)
 
   // Write scheduled blocks to write-enabled Google Calendar connections (AC1, AC2, NFR-I2)
   // TODO(story-impl): pass real tasks array when task loading is wired (Story 3.4 stub: tasks: [])

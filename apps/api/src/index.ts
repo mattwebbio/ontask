@@ -27,11 +27,12 @@ app.onError((error, c) => {
     return c.json(err(error.code, error.message, error.details), error.httpStatus as 400)
   }
   // Report unexpected errors to GlitchTip — AppError subclasses are NOT forwarded.
+  // c.env may be undefined in test environments (no env passed to app.request).
   void reportToGlitchTip(
     error,
     {
       workerName: 'ontask-api',
-      environment: c.env.ENVIRONMENT ?? 'production',
+      environment: c.env?.ENVIRONMENT ?? 'production',
       path: new URL(c.req.url).pathname,
       method: c.req.method,
     },
