@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-29
-last_updated: 2026-03-31 # Story 5.3 done, PR #38 merged
+last_updated: 2026-04-01 # Story 5.4 ready-for-dev
 project: ontask
 project_key: NOKEY
 tracking_system: file-system
@@ -109,7 +109,7 @@ development_status:
   5-1-list-sharing-invitations: done
   5-2-task-assignment-strategies: done
   5-3-shared-tasks-in-personal-schedule: done
-  5-4-accountability-settings-cascade: backlog
+  5-4-accountability-settings-cascade: ready-for-dev
   5-5-shared-proof-visibility: backlog
   5-6-member-management-shared-ownership: backlog
   epic-5-retrospective: optional
