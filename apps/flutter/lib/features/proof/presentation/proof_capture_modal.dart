@@ -13,6 +13,7 @@ import '../domain/proof_submission_state.dart';
 import 'photo_capture_sub_view.dart';
 import 'screenshot_proof_sub_view.dart';
 import '../../now/domain/proof_mode.dart';
+import '../../watch_mode/presentation/watch_mode_sub_view.dart';
 
 /// Modal bottom sheet for selecting a proof path when submitting task proof.
 ///
@@ -217,6 +218,26 @@ class _ProofCaptureModalState extends State<ProofCaptureModal> {
       );
       if (widget.taskId != null && widget.proofRepository != null) {
         return PhotoCaptureSubView(
+          taskId: widget.taskId!,
+          taskName: widget.taskName,
+          proofRepository: widget.proofRepository!,
+          onApproved: () {
+            setState(() {
+              _submissionState = const ProofSubmissionSubmitted();
+            });
+          },
+        );
+      }
+    }
+
+    // ── Watch Mode / Live Session path — real implementation (Story 7.4) ──────────
+    if (path == ProofPath.healthKit) {
+      assert(
+        widget.taskId != null && widget.proofRepository != null,
+        'ProofCaptureModal: taskId and proofRepository are required for Watch Mode path.',
+      );
+      if (widget.taskId != null && widget.proofRepository != null) {
+        return WatchModeSubView(
           taskId: widget.taskId!,
           taskName: widget.taskName,
           proofRepository: widget.proofRepository!,

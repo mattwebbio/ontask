@@ -1014,4 +1014,42 @@ class AppStrings {
   /// Alert message shown when the chosen file exceeds the 25 MB limit.
   static const String proofScreenshotFileTooLargeMessage =
       'Please choose a file smaller than 25 MB.';
+
+  // ── Watch Mode / Live Session (FR33-34, FR66-67, Story 7.4) ─────────────────
+  /// Watch Mode sub-view title.
+  static const String watchModeTitle = 'Watch Mode';
+
+  /// Privacy note shown before starting a Watch Mode session.
+  static const String watchModePrivacyNote =
+      'Your camera is used to check you\u2019re working. No footage is recorded or stored.';
+
+  /// Error shown when no camera is available.
+  static const String watchModeNoCameraError = 'No camera found on this device.';
+
+  /// CTA to start a Watch Mode session.
+  static const String watchModeStartCta = 'Start Watch Mode';
+
+  /// Button to end an active Watch Mode session.
+  static const String watchModeEndSessionCta = 'End Session';
+
+  /// Session summary screen title (FR67).
+  static const String watchModeSummaryTitle = 'Session complete';
+
+  /// CTA to submit session data as proof (FR67).
+  static const String watchModeSubmitProofCta = 'Submit as proof';
+
+  /// CTA to dismiss session summary without submitting (FR67).
+  static const String watchModeDoneCta = 'Done';
+
+  /// Copy shown during session data submission animation.
+  static const String watchModeSubmittingCopy = 'Submitting session\u2026';
+
+  /// Approved state label for Watch Mode session verification.
+  static const String watchModeApprovedLabel = 'Session verified';
+
+  /// Copy shown while session is ending.
+  static const String watchModeEndingCopy = 'Ending session\u2026';
+
+  /// "Try again" CTA in Watch Mode timeout state.
+  static const String watchModeTryAgainCta = 'Try again';
 }
