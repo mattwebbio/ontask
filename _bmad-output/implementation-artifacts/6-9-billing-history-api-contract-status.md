@@ -1,6 +1,6 @@
 # Story 6.9: Billing History & API Contract Status
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -418,6 +418,11 @@ Modified files:
 - `apps/flutter/test/features/commitment_contracts/commitment_contracts_repository_test.dart`
 - `apps/mcp/src/index.ts`
 - `_bmad-output/implementation-artifacts/sprint-status.yaml`
+
+### Review Findings
+
+- [x] [Review][Patch] Stale test comment says `OnTaskTheme.light()` but code uses `AppTheme.light()` [`apps/flutter/test/features/commitment_contracts/billing_history_screen_test.dart:19`]
+- [x] [Review][Defer] Billing history stub entry IDs use version-nibble-0 UUIDs (`00000000-0000-0000-…`) [`apps/api/src/routes/commitment-contracts.ts:882–900`] — deferred, pre-existing pattern throughout codebase; hono/zod-openapi does not validate response bodies
 
 ### Change Log
 

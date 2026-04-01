@@ -16,7 +16,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 // Widget tests for BillingHistoryScreen — Story 6.9 (FR65, AC: 1).
 //
 // Uses ProviderScope overrides — established pattern from Stories 6.7, 6.8.
-// Wraps in MaterialApp with OnTaskTheme.light() per project convention.
+// Wraps in MaterialApp with AppTheme.light() per project convention.
 
 class MockCommitmentContractsRepository extends Mock
     implements CommitmentContractsRepository {}

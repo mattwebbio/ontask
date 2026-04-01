@@ -1,5 +1,9 @@
 # Deferred Work
 
+## Deferred from: code review of 6-9-billing-history-api-contract-status (2026-04-01)
+
+- **Billing history stub entry IDs use version-nibble-0 UUIDs** — `00000000-0000-0000-0000-000000000011/12/13` in the `/v1/billing-history` stub do not pass RFC-4122 UUID validation (version nibble must be 1–5). Pre-existing pattern throughout `commitment-contracts.ts` stub data (e.g., lines 626, 636, 677–679, 734–736). hono/zod-openapi does not validate response bodies by default, so tests pass. Replace with valid RFC-4122 UUIDs when real DB integration lands or if strict response validation is ever enabled.
+
 ## Deferred from: code review of 6-8-full-commitment-lock-flow-animation (2026-04-01)
 
 - **`minSize` deprecated in `task_edit_inline.dart` (lines 670, 694)** — Pre-existing before Story 6.8 (present in HEAD commit `d5f79a4`); Story 6.8 shifts line numbers by +1 only. Replace `minSize` with `minimumSize` in a future task_edit_inline refactor pass.

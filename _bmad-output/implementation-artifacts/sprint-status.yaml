@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-29
-last_updated: 2026-04-01 # Story 6.9 review
+last_updated: 2026-04-01 # Story 6.9 done
 project: ontask
 project_key: NOKEY
 tracking_system: file-system
@@ -128,7 +128,7 @@ development_status:
   6-6-stake-modification-cancellation: done
   6-7-group-commitment-arrangements-pool-mode: done
   6-8-full-commitment-lock-flow-animation: review
-  6-9-billing-history-api-contract-status: review
+  6-9-billing-history-api-contract-status: done
   epic-6-retrospective: optional
 
   # ─────────────────────────────────────────────────────────
