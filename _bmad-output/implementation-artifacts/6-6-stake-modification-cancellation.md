@@ -390,6 +390,12 @@ So that I have a safety valve for genuine changes in circumstance — not procra
   - [x] Wrap in `MaterialApp` with `OnTaskTheme` to resolve `OnTaskColors` extension (established pattern)
   - [x] Override `commitmentContractsRepositoryProvider` using same `ProviderContainer` pattern as existing tests
 
+### Review Findings
+
+- [x] [Review][Decision] "Lock it in." confirm button: accepted current disabled-inside-opacity behavior as compliant with Dev Notes UX intent (slider "visible but non-interactive" with Opacity 0.5); no `StakeSliderWidget` API change needed.
+- [x] [Review][Patch] SQL migration `0016_stake_modification_deadline.sql` missing trailing newline at EOF — fixed.
+- [x] [Review][Defer] Widget test `findsAtLeastNWidgets(1)` for IgnorePointer is a loose assertion — deferred to deferred-work.md.
+
 ## Dev Notes
 
 ### CRITICAL: Migration number is `0016`
