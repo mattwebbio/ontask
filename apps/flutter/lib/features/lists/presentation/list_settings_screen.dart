@@ -210,6 +210,7 @@ class _ListSettingsScreenState extends ConsumerState<ListSettingsScreen> {
       children: [
         ...members.map((member) => _buildMemberRow(
               member: member,
+              currentUserId: currentUserId,
               isCurrentUserOwner: isCurrentUserOwner,
               ownerCount: ownerCount,
               colors: colors,
@@ -252,11 +253,13 @@ class _ListSettingsScreenState extends ConsumerState<ListSettingsScreen> {
 
   Widget _buildMemberRow({
     required ListMember member,
+    required String currentUserId,
     required bool isCurrentUserOwner,
     required int ownerCount,
     required OnTaskColors colors,
   }) {
     final isOwner = member.role == 'owner';
+    final isCurrentUser = member.userId == currentUserId;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -308,7 +311,8 @@ class _ListSettingsScreenState extends ConsumerState<ListSettingsScreen> {
             ),
           ),
           // Management actions — only visible when current user is owner
-          if (isCurrentUserOwner)
+          // and not on the current user's own row (self-removal via Leave List button)
+          if (isCurrentUserOwner && !isCurrentUser)
             CupertinoButton(
               minimumSize: const Size(44, 44),
               padding: EdgeInsets.zero,
@@ -462,6 +466,7 @@ class _ListSettingsScreenState extends ConsumerState<ListSettingsScreen> {
     } catch (_) {
       if (!mounted) return;
       _showError(this.context, AppStrings.leaveListError);
+    } finally {
       if (mounted) setState(() => _isManagingMember = false);
     }
   }

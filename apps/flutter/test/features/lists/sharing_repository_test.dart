@@ -286,5 +286,40 @@ void main() {
       expect(capturedData, isNotNull);
       expect(capturedData!['role'], equals('owner'));
     });
+
+    test(
+        'sends PATCH with role body {"role": "member"} when revoking owner (revoke path)',
+        () async {
+      final mockDio = MockDio();
+      final mockClient = MockApiClient();
+      when(() => mockClient.dio).thenReturn(mockDio);
+
+      Map<String, dynamic>? capturedData;
+
+      when(
+        () => mockDio.patch<Map<String, dynamic>>(
+          any(),
+          data: any(named: 'data'),
+        ),
+      ).thenAnswer((invocation) async {
+        capturedData =
+            invocation.namedArguments[const Symbol('data')] as Map<String, dynamic>;
+        return Response(
+          requestOptions: RequestOptions(
+              path: '/v1/lists/list-id/members/user-id/role'),
+          statusCode: 200,
+          data: {
+            'data': {'listId': 'list-id', 'userId': 'user-id', 'role': 'member'},
+          },
+        );
+      });
+
+      final repo = SharingRepository(mockClient);
+      final result = await repo.updateMemberRole('list-id', 'user-id', 'member');
+
+      expect(capturedData, isNotNull);
+      expect(capturedData!['role'], equals('member'));
+      expect(result['role'], equals('member'));
+    });
   });
 }

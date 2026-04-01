@@ -1,6 +1,6 @@
 # Story 5.6: Member Management & Shared Ownership
 
-Status: review
+Status: done
 
 ## Story
 
@@ -384,6 +384,15 @@ apps/flutter/test/features/lists/list_settings_screen_test.dart
 _bmad-output/implementation-artifacts/5-6-member-management-shared-ownership.md
 _bmad-output/implementation-artifacts/sprint-status.yaml
 
+### Review Findings
+
+- [x] [Review][Decision] Owner can trigger "Remove from list" on their own row — **D1 resolved: Option A applied.** `_buildMemberRow` now accepts `currentUserId` and suppresses the ellipsis icon when `member.userId == currentUserId`. Owners use the "Leave list" button for self-removal. [apps/flutter/lib/features/lists/presentation/list_settings_screen.dart:315]
+- [x] [Review][Patch] `_confirmLeaveList` missing `finally` block — Fixed. Removed the ad-hoc `if (mounted) setState(...)` in the `catch` block and replaced with a proper `finally { if (mounted) setState(() => _isManagingMember = false); }` block, matching the pattern used in `_updateMemberRole` and `_confirmRemoveMember`. [apps/flutter/lib/features/lists/presentation/list_settings_screen.dart:462]
+- [x] [Review][Patch] `updateMemberRole` unit test only covers `'owner'` role — Fixed. Added `'sends PATCH with role body {"role": "member"} when revoking owner (revoke path)'` test to `sharing_repository_test.dart`; verifies both captured request body `{'role': 'member'}` and the returned map `result['role'] == 'member'`. [apps/flutter/test/features/lists/sharing_repository_test.dart:291]
+- [x] [Review][Defer] `this.context` anti-pattern extended in new code — 7 new occurrences of `this.context` added to `list_settings_screen.dart` (was 5 pre-existing, now 12 total). Pre-existing codebase pattern; not introduced by this story exclusively. [apps/flutter/lib/features/lists/presentation/list_settings_screen.dart] — deferred, pre-existing
+- [x] [Review][Defer] Empty member list renders enabled Leave List button — `_buildMemberList` is called when `membersAsync` has data; if the list is empty, `isLastOwner` is false and the Leave List button renders enabled with no members. Edge case (members list should never be empty in production), and the API will handle it gracefully. [apps/flutter/lib/features/lists/presentation/list_settings_screen.dart:200] — deferred, pre-existing
+
 ## Change Log
 
 - 2026-04-01: Story 5.6 implemented — Member Management & Shared Ownership. Added API endpoints (remove member, leave list, update role), Flutter SharingRepository methods, Members section in ListSettingsScreen, 14 l10n strings, 9 new tests (4 unit + 5 widget). All 665 Flutter tests pass.
+- 2026-04-01: Story 5.6 post-review patches — (D1) hide ellipsis on current user's own row in `_buildMemberRow` (pass `currentUserId`, guard with `!isCurrentUser`); (Patch 1) replace ad-hoc catch-branch reset with proper `finally` block in `_confirmLeaveList`; (Patch 2) add `updateMemberRole` revoke-path test (`role: 'member'`). 20 targeted tests pass.

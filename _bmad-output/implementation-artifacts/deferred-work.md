@@ -116,3 +116,8 @@
 ## Deferred from: code review of 5-4-accountability-settings-cascade (2026-04-01)
 
 - **`_journal.json` missing trailing newline at EOF** [`packages/core/src/schema/migrations/meta/_journal.json`] — `drizzle-kit generate` emits the file without a trailing newline. Pre-existing tool behavior; not caused by this story.
+
+## Deferred from: code review of 5-6-member-management-shared-ownership (2026-04-01)
+
+- **`this.context` anti-pattern extended in new code** [`apps/flutter/lib/features/lists/presentation/list_settings_screen.dart`] — 7 new occurrences added (pre-existing count was 5; total now 12). Methods accept a `BuildContext` parameter but internally use `this.context` instead. Pre-existing codebase pattern; functionally safe while `mounted` checks are in place. Clean up in a future refactor pass when touching this file.
+- **Empty member list renders enabled Leave List button** [`apps/flutter/lib/features/lists/presentation/list_settings_screen.dart:200`] — When `membersAsync` data is an empty list, `ownerCount == 0`, `isLastOwner == false`, and the Leave List button renders enabled with no members present. Unreachable in production (members list includes at least the current user). Handle defensively when real member data is wired.
