@@ -785,4 +785,38 @@ class AppStrings {
 
   /// Error shown when leaving a list fails.
   static const String leaveListError = 'Could not leave list. Please try again.';
+
+  // ── Payment method setup (FR23, FR64) ──────────────────────────────────────
+  /// Settings tile label — Settings → Payments navigation entry.
+  static const String settingsPayments = 'Payments';
+
+  /// Screen title for the PaymentSettingsScreen navigation bar.
+  static const String paymentSetupTitle = 'Payment Method';
+
+  /// CTA button label when no payment method is stored.
+  static const String paymentSetupButton = 'Set up payment method';
+
+  /// CTA button label when a payment method is already stored (update path).
+  static const String paymentUpdateButton = 'Update payment method';
+
+  /// Destructive action button label to remove stored payment method.
+  static const String paymentRemoveButton = 'Remove payment method';
+
+  /// Confirmation dialog title shown before removing a payment method.
+  static const String paymentRemoveConfirmTitle = 'Remove payment method?';
+
+  /// Confirmation dialog message shown before removing a payment method.
+  static const String paymentRemoveConfirmMessage =
+      'Your stored card will be removed. You will need to set up a new payment method before adding a commitment stake.';
+
+  /// Inline note shown when "Remove" is blocked because of active stakes.
+  static const String paymentRemoveBlockedByStakes =
+      'You have active commitment stakes. Remove all stakes before removing your payment method.';
+
+  /// Generic error shown when payment setup fails unexpectedly.
+  static const String paymentSetupError =
+      'Could not complete payment setup. Please try again.';
+
+  /// Section label above the stored payment method display row.
+  static const String paymentMethodDisplay = 'Payment method';
 }

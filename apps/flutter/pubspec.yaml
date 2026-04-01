@@ -59,6 +59,9 @@ dependencies:
   # TOTP QR code rendering — displays otpauth:// URI as scannable QR in 2FA setup (FR92).
   qr_flutter: ^4.1.0
 
+  # Payment setup — opens ontaskhq.com/setup in Safari (not in-app WebView) for PCI SAQ A.
+  url_launcher: ^6.3.1
+
   # Observability & Error Tracking (ARCH-30, ARCH-31)
   # sentry_flutter: Sentry-compatible SDK for GlitchTip DSN integration; captures unhandled Dart + Flutter errors.
   sentry_flutter: ^8.14.0
