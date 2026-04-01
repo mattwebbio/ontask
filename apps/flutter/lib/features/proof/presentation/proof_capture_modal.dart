@@ -15,6 +15,7 @@ import 'health_kit_proof_sub_view.dart';
 import 'screenshot_proof_sub_view.dart';
 import '../../now/domain/proof_mode.dart';
 import '../../watch_mode/presentation/watch_mode_sub_view.dart';
+import 'offline_proof_sub_view.dart';
 
 /// Modal bottom sheet for selecting a proof path when submitting task proof.
 ///
@@ -217,7 +218,8 @@ class _ProofCaptureModalState extends State<ProofCaptureModal> {
   /// Screenshot/document path: renders [ScreenshotProofSubView] (Story 7.3).
   /// Watch Mode path: renders [WatchModeSubView] (Story 7.4).
   /// HealthKit Auto path: renders [HealthKitProofSubView] (Story 7.5).
-  /// All other paths: stub placeholder (Stories 7.6+).
+  /// Offline path: renders [OfflineProofSubView] (Story 7.6).
+  /// All other paths: stub placeholder (Stories 7.7+).
   Widget _buildSubView(
     BuildContext context,
     OnTaskColors colors,
@@ -283,6 +285,26 @@ class _ProofCaptureModalState extends State<ProofCaptureModal> {
       }
     }
 
+    // ── Offline path — real implementation (Story 7.6) ────────────────────
+    if (path == ProofPath.offline) {
+      assert(
+        widget.taskId != null && widget.proofRepository != null,
+        'ProofCaptureModal: taskId and proofRepository are required for offline path.',
+      );
+      if (widget.taskId != null && widget.proofRepository != null) {
+        return OfflineProofSubView(
+          taskId: widget.taskId!,
+          taskName: widget.taskName,
+          proofRepository: widget.proofRepository!,
+          onQueued: () {
+            setState(() {
+              _submissionState = const ProofSubmissionSubmitted();
+            });
+          },
+        );
+      }
+    }
+
     // ── Screenshot/Document path — real implementation (Story 7.3) ──────────
     if (path == ProofPath.screenshot) {
       assert(
@@ -303,7 +325,7 @@ class _ProofCaptureModalState extends State<ProofCaptureModal> {
       }
     }
 
-    // ── Other paths — stub placeholder (Stories 7.4–7.6) ─────────────────
+    // ── Other paths — stub placeholder (Stories 7.7+) ─────────────────────
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,

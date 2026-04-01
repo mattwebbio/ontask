@@ -1,22 +1,27 @@
+import 'dart:convert' show jsonEncode;
+
 import 'package:camera/camera.dart';
 import 'package:dio/dio.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/network/api_client.dart';
+import '../../../core/storage/database.dart';
 import '../../../features/watch_mode/domain/watch_mode_session.dart';
 import '../domain/health_kit_verification_data.dart';
 import '../domain/proof_verification_result.dart';
 
+part 'proof_repository.g.dart';
+
 /// Data layer for proof submission operations.
 ///
-/// Constructor takes [ApiClient] via injection — consistent with
-/// [SharingRepository] and other data layer classes in this project.
-/// Do NOT use Riverpod code-gen for this repository (no generated
-/// providers in the proof/ feature).
-/// (Epic 7, Stories 7.2–7.5, FR31-32, FR35-36)
+/// Constructor takes [ApiClient] and [AppDatabase] via injection — consistent
+/// with [SharingRepository] and other data layer classes in this project.
+/// (Epic 7, Stories 7.2–7.6, FR31-32, FR35-36, FR37, ARCH-26)
 class ProofRepository {
-  ProofRepository(this._client);
+  ProofRepository(this._client, this._db);
 
   final ApiClient _client;
+  final AppDatabase _db;
 
   /// Submits a captured photo to the API for AI verification.
   ///
@@ -211,4 +216,66 @@ class ProofRepository {
       );
     }
   }
+
+  /// Enqueues a proof submission for offline sync.
+  ///
+  /// Writes a 'SUBMIT_PROOF' pending operation to the local Drift database
+  /// with [clientTimestamp] set at the moment of enqueueing — NEVER updated
+  /// at sync time (ARCH-26, FR37).
+  ///
+  /// The [SyncManager] will pick up this operation on reconnect and call
+  /// the API via [applyOperation] with the preserved [clientTimestamp].
+  Future<void> enqueueOfflineProof(String taskId) async {
+    final now = DateTime.now();
+    final payload = jsonEncode({
+      'taskId': taskId,
+      'proofType': 'offline',
+      'clientTimestamp': now.toIso8601String(),
+    });
+
+    await _db.into(_db.pendingOperations).insert(
+      PendingOperationsCompanion.insert(
+        type: 'SUBMIT_PROOF',
+        payload: payload,
+        createdAt: now,
+        clientTimestamp: now,
+        // status defaults to 'pending' via column default
+      ),
+    );
+  }
+
+  /// Submits a previously-queued offline proof to the API during sync.
+  ///
+  /// Called by [SyncManager.processQueue]'s [applyOperation] callback when
+  /// the 'SUBMIT_PROOF' operation type is processed on reconnect.
+  ///
+  /// The [clientTimestamp] is the original capture time, preserved from the
+  /// [PendingOperations] row — not the current time. This ensures the API
+  /// receives the timestamp predating the task deadline for charge reversal.
+  Future<void> submitOfflineProof(
+    String taskId,
+    DateTime clientTimestamp,
+  ) async {
+    final body = {
+      'clientTimestamp': clientTimestamp.toIso8601String(),
+    };
+
+    await _client.dio.post<Map<String, dynamic>>(
+      '/v1/tasks/$taskId/proof',
+      data: body,
+      queryParameters: {'proofType': 'offline'},
+    );
+    // Throws DioException on network/server failure — caller (SyncManager)
+    // handles retry and status update.
+  }
+}
+
+/// Provides [ProofRepository] with injected [ApiClient] and [AppDatabase].
+///
+/// keepAlive: true — proof repository must persist across route transitions.
+@Riverpod(keepAlive: true)
+ProofRepository proofRepository(Ref ref) {
+  final client = ref.read(apiClientProvider);
+  final db = ref.read(appDatabaseProvider);
+  return ProofRepository(client, db);
 }

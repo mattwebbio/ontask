@@ -1089,4 +1089,27 @@ class AppStrings {
 
   /// Badge shown on Now tab card when HealthKit buffer window expired without data (UX-DR31).
   static const String healthKitVerifyManuallyBadge = 'Verify manually';
+
+  // ── Offline Proof Queue (FR37, ARCH-26, Story 7.6) ──────────────────────────
+
+  /// OfflineProofSubView title.
+  static const String offlineProofTitle = 'Save for Later';
+
+  /// Body copy explaining offline queuing.
+  static const String offlineProofBody =
+      'Your proof will be saved on this device and submitted automatically when you\u2019re back online.';
+
+  /// CTA to save proof for later sync.
+  static const String offlineProofSaveCta = 'Save for Later';
+
+  /// Copy shown while the enqueue write is in progress.
+  static const String offlineProofQueueingCopy = 'Saving\u2026';
+
+  /// Confirmation shown after successful enqueue (NFR-UX1).
+  static const String offlineProofQueuedConfirmation =
+      'Proof saved \u2014 will sync when you\u2019re back online';
+
+  /// Error copy when enqueue write fails.
+  static const String offlineProofErrorCopy =
+      'Couldn\u2019t save your proof. Please try again.';
 }

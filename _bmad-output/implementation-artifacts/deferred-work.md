@@ -1,5 +1,14 @@
 # Deferred Work
 
+## Deferred from: code review of 7-5-healthkit-auto-verification (2026-04-01)
+
+- **`WatchModeSubView._onDone()` pops with non-null value, triggering `onComplete` when user exits without submitting proof** — `_onDone` returns `ProofPath.watchMode` (non-null), which causes `NowTaskCard` to call `onComplete?.call()` even when the user dismissed without submitting proof. Pre-existing from Story 7.4; this story only changed the enum value (healthKit → watchMode). Address when `WatchModeSubView` is revisited or when `NowTaskCard` handles proof-path return values more granularly. [`apps/flutter/lib/features/watch_mode/presentation/watch_mode_sub_view.dart:323`]
+- **Zero-duration HealthKit data points submitted to API** — When HealthKit returns a data point where `dateFrom == dateTo`, `durationSeconds` is 0, which is submitted to the API as valid proof data. Low severity; real API implementation should validate `durationSeconds > 0`. [`apps/flutter/lib/features/proof/presentation/health_kit_proof_sub_view.dart:161`]
+
+## Deferred from: code review of 7-2-photo-video-proof-with-ai-verification (2026-04-01)
+
+- **`index` listed in story spec schema imports but not imported or used** — `packages/core/src/schema/proof.ts` imports `pgTable, uuid, text, boolean, timestamp` from `drizzle-orm/pg-core` but not `index`; no indexes are defined on `proof_submissions`. Story spec listed `index` in the import tuple. Low impact — add indexes (e.g., on `task_id`, `user_id`) when DB integration is wired in a later story. [`packages/core/src/schema/proof.ts:1`]
+
 ## Deferred from: code review of 7-1-proof-capture-modal-foundation (2026-04-01)
 
 - **`ProofSubmissionState` sealed class defined but unused** — Modal uses raw `ProofPath?` nullable state; the sealed class is dead code until Stories 7.2–7.6 wire up real sub-view logic. Address when the first concrete sub-view (Story 7.2 photo capture) is implemented. [`apps/flutter/lib/features/proof/domain/proof_submission_state.dart`]
