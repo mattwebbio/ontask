@@ -29,7 +29,11 @@ export async function fetchGoogleCalendarEvents(
   windowEnd: Date,
   env: CloudflareBindings,
 ): Promise<CalendarEvent[]> {
-  const calendarTokenKey = env.CALENDAR_TOKEN_KEY ?? ''
+  const calendarTokenKey = env.CALENDAR_TOKEN_KEY
+  if (!calendarTokenKey) {
+    console.error('[calendar/google] CALENDAR_TOKEN_KEY not set')
+    return []
+  }
 
   try {
     const db = createDb(env.DATABASE_URL ?? '')
@@ -111,7 +115,17 @@ export async function fetchGoogleCalendarEvents(
 
     const data = (await response.json()) as GoogleCalendarEventsResponse
 
-    return (data.items ?? []).map((item) => mapGoogleEventToCalendarEvent(item))
+    const validItems = (data.items ?? []).filter((item) => {
+      const hasStart = item.start.dateTime || item.start.date
+      const hasEnd = item.end.dateTime || item.end.date
+      if (!hasStart || !hasEnd) {
+        console.error(`[calendar/google] Skipping event ${item.id} — missing start or end time`)
+        return false
+      }
+      return true
+    })
+
+    return validItems.map((item) => mapGoogleEventToCalendarEvent(item))
   } catch (error) {
     console.error(`[calendar/google] Unexpected error for connection ${connectionId}:`, error)
     return []

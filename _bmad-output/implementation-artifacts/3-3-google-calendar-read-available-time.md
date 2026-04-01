@@ -302,6 +302,14 @@ apps/api/wrangler.jsonc (modified)
 apps/api/worker-configuration.d.ts (modified)
 test/routes/calendar.test.ts (new)
 
+### Review Findings
+
+- [ ] [Review][Patch] Missing CALENDAR_TOKEN_KEY guard — silent null-key encryption [apps/api/src/routes/calendar.ts:74, apps/api/src/services/calendar/google.ts:33] — `c.env.CALENDAR_TOKEN_KEY ?? ''` silently falls back to an empty string if the secret is not set. AES-256-GCM with a key derived from `''` (padded to 32 null bytes) encrypts "successfully" with a predictable, known key. No guard returns an error when the key is absent. Fix: validate that `CALENDAR_TOKEN_KEY` is non-empty and non-null before calling `encryptToken`/`decryptToken`; return 500 / log error and return `[]` respectively.
+- [ ] [Review][Patch] fetchAllCalendarEvents outer DB query not wrapped in try/catch — throws on DB error [apps/api/src/services/calendar/index.ts:35] — The `db.select().from().where()` call that loads all connections is not inside a try/catch. If the DB is unreachable or DATABASE_URL is invalid, the exception propagates to `runScheduleForUser` and then to the scheduling route, returning 500. The partial-failure-tolerance requirement (AC9) is met for individual connections via `fetchGoogleCalendarEvents` but not for the initial query. Fix: wrap the outer DB query in a try/catch that logs and returns `[]`.
+- [ ] [Review][Patch] mapGoogleEventToCalendarEvent produces Invalid Date when both dateTime and date are absent [apps/api/src/services/calendar/google.ts, mapGoogleEventToCalendarEvent] — `new Date(item.start.dateTime ?? item.start.date ?? '')` evaluates to `new Date('')` which is `Invalid Date` (NaN timestamps) if both fields are missing. Fix: add a guard that filters or skips items missing both `start.dateTime` and `start.date`, logging the malformed event via `console.error`.
+- [x] [Review][Defer] Empty accountEmail silently stored when Google userinfo call fails [apps/api/src/routes/calendar.ts, exchangeGoogleCode] — If the userinfo endpoint returns non-200, `email` is set to `''` and the connection is stored with an empty `accountEmail`. The column is `notNull()` so no DB error, but data is silently degraded. Deferred — non-critical for scheduling correctness; can be addressed in a hardening pass or when email is used for display.
+- [x] [Review][Defer] Google refresh token rotation silently discarded [apps/api/src/services/calendar/google.ts, refreshGoogleToken] — Google occasionally issues a new refresh token in the refresh response. The current implementation does not capture or persist a rotated refresh token. Deferred — not standard behavior for server-side OAuth; acceptable for v1.
+
 ## Change Log
 
 - Story 3.3 implemented: Google Calendar read integration — Drizzle schemas, AES-256-GCM crypto helper, Google Calendar REST service layer, calendar OAuth routes, scheduling.ts wired to real calendar events. 17 new tests, 113 total passing. (Date: 2026-03-31)

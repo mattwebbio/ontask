@@ -31,35 +31,40 @@ export async function fetchAllCalendarEvents(
   windowEnd: Date,
   env: CloudflareBindings,
 ): Promise<CalendarEvent[]> {
-  const db = createDb(env.DATABASE_URL ?? '')
+  try {
+    const db = createDb(env.DATABASE_URL ?? '')
 
-  const connections = await db
-    .select({
-      id: calendarConnectionsTable.id,
-      provider: calendarConnectionsTable.provider,
-    })
-    .from(calendarConnectionsTable)
-    .where(
-      and(
-        eq(calendarConnectionsTable.userId, userId),
-        eq(calendarConnectionsTable.isRead, true),
-      ),
+    const connections = await db
+      .select({
+        id: calendarConnectionsTable.id,
+        provider: calendarConnectionsTable.provider,
+      })
+      .from(calendarConnectionsTable)
+      .where(
+        and(
+          eq(calendarConnectionsTable.userId, userId),
+          eq(calendarConnectionsTable.isRead, true),
+        ),
+      )
+
+    if (connections.length === 0) {
+      return []
+    }
+
+    const eventArrays = await Promise.all(
+      connections.map(async (connection) => {
+        if (connection.provider === 'google') {
+          return fetchGoogleCalendarEvents(connection.id, userId, windowStart, windowEnd, env)
+        }
+        // 'outlook' and 'apple' providers are stubs (v2)
+        return []
+      }),
     )
 
-  if (connections.length === 0) {
+    // Flatten all provider results into a single array
+    return eventArrays.flat()
+  } catch (error) {
+    console.error('[calendar] Failed to load connections:', error)
     return []
   }
-
-  const eventArrays = await Promise.all(
-    connections.map(async (connection) => {
-      if (connection.provider === 'google') {
-        return fetchGoogleCalendarEvents(connection.id, userId, windowStart, windowEnd, env)
-      }
-      // 'outlook' and 'apple' providers are stubs (v2)
-      return []
-    }),
-  )
-
-  // Flatten all provider results into a single array
-  return eventArrays.flat()
 }

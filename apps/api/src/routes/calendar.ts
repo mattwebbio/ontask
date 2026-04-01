@@ -85,7 +85,10 @@ app.openapi(postCalendarConnectRoute, async (c) => {
   const userId = c.req.header('x-user-id') ?? 'stub-user-id'
   const body = c.req.valid('json')
 
-  const calendarTokenKey = c.env.CALENDAR_TOKEN_KEY ?? ''
+  const calendarTokenKey = c.env.CALENDAR_TOKEN_KEY
+  if (!calendarTokenKey) {
+    return c.json(err('INTERNAL_ERROR', 'Calendar token key not configured'), 500)
+  }
 
   // Exchange authorization code for Google OAuth tokens
   const tokenResponse = await exchangeGoogleCode(

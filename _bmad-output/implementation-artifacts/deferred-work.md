@@ -85,3 +85,8 @@
 - **No unit tests for `apps/api/src/services/scheduling.ts`** — Pre-existing pattern; no API service unit tests in codebase. Story only requires 100% coverage for `packages/scheduling`. Address when API services get test scaffolding. [`apps/api/src/services/scheduling.ts`]
 - **Two separate `new Date()` calls in service layer for `windowStart` and `generatedAt`** — By-design stub pattern per dev notes; `generatedAt` may be a few milliseconds after `windowStart`. Will be resolved in Story 3.3 when real DB data and window calculation are wired. [`apps/api/src/services/scheduling.ts:22,31`]
 - **No integration test for morning-window + past-due-date constraint intersection** — 100% branch coverage confirmed. Would be an enhancement test, not a coverage gap. Low priority; consider adding in a future test-quality pass.
+
+## Deferred from: code review of 3-3-google-calendar-read-available-time (2026-03-31)
+
+- **Empty accountEmail silently stored when Google userinfo call fails** — `exchangeGoogleCode` in `apps/api/src/routes/calendar.ts` sets `email = ''` and continues if the userinfo endpoint returns non-200. The `accountEmail` DB column is `notNull()` so an empty string satisfies the constraint, but data is silently degraded. Non-critical for scheduling correctness; address in a hardening pass when email is used for display or audit purposes.
+- **Google refresh token rotation silently discarded** — `refreshGoogleToken` in `apps/api/src/services/calendar/google.ts` does not capture or persist a rotated refresh token if Google issues one in the refresh response. Not standard behavior for server-side OAuth2; acceptable for v1. Revisit if Google credentials become invalid unexpectedly in production.
