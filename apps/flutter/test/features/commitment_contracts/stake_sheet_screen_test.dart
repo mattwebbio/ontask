@@ -163,4 +163,160 @@ void main() {
       expect(find.text(AppStrings.stakeRemoveConfirmTitle), findsNothing);
     });
   });
+
+  // ── Modification window (Story 6.6) ──────────────────────────────────────
+
+  group('StakeSheetScreen — modification window (Story 6.6)', () {
+    testWidgets(
+        'shows modification window label when canModify is true',
+        (tester) async {
+      final mockRepo = MockCommitmentContractsRepository();
+      when(() => mockRepo.getPaymentStatus()).thenAnswer(
+        (_) async => const CommitmentPaymentStatus(
+          hasPaymentMethod: true,
+          last4: '4242',
+          brand: 'visa',
+          hasActiveStakes: true,
+        ),
+      );
+
+      // Deadline 24 hours in the future
+      final deadline = DateTime.now().toUtc().add(const Duration(hours: 24));
+      when(() => mockRepo.getTaskStake(any())).thenAnswer(
+        (_) async => TaskStake(
+          taskId: 'task-id',
+          stakeAmountCents: 2500,
+          stakeModificationDeadline: deadline.toLocal(),
+          canModify: true,
+        ),
+      );
+      // Also stub getDefaultCharity for the charity load
+      when(() => mockRepo.getDefaultCharity()).thenAnswer(
+        (_) async => throw Exception('no charity'),
+      );
+
+      await pumpStakeSheetScreen(
+        tester,
+        mockRepo: mockRepo,
+        existingStakeAmountCents: 2500,
+      );
+
+      expect(
+        find.textContaining(AppStrings.stakeModificationWindowPrefix),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets(
+        'disables controls and shows locked message when modification window is closed',
+        (tester) async {
+      final mockRepo = MockCommitmentContractsRepository();
+      when(() => mockRepo.getPaymentStatus()).thenAnswer(
+        (_) async => const CommitmentPaymentStatus(
+          hasPaymentMethod: true,
+          last4: '4242',
+          brand: 'visa',
+          hasActiveStakes: true,
+        ),
+      );
+
+      when(() => mockRepo.getTaskStake(any())).thenAnswer(
+        (_) async => const TaskStake(
+          taskId: 'task-id',
+          stakeAmountCents: 2500,
+          stakeModificationDeadline: null,
+          canModify: false,
+        ),
+      );
+      when(() => mockRepo.getDefaultCharity()).thenAnswer(
+        (_) async => throw Exception('no charity'),
+      );
+
+      await pumpStakeSheetScreen(
+        tester,
+        mockRepo: mockRepo,
+        existingStakeAmountCents: 2500,
+      );
+
+      // Locked message should be present
+      expect(find.text(AppStrings.stakeLockedMessage), findsOneWidget);
+
+      // IgnorePointer with ignoring: true should wrap the slider
+      // Use findsAtLeastNWidgets(1) since Flutter may have internal IgnorePointers
+      final ignorePointerFinder = find.byWidgetPredicate(
+        (widget) => widget is IgnorePointer && widget.ignoring,
+      );
+      expect(ignorePointerFinder, findsAtLeastNWidgets(1));
+
+      // Remove stake button should be present but disabled (onPressed == null)
+      expect(find.text(AppStrings.stakeRemoveConfirmTitle), findsOneWidget);
+    });
+
+    testWidgets(
+        'locked message AppStrings.stakeLockedMessage is shown when canModify == false',
+        (tester) async {
+      final mockRepo = MockCommitmentContractsRepository();
+      when(() => mockRepo.getPaymentStatus()).thenAnswer(
+        (_) async => const CommitmentPaymentStatus(
+          hasPaymentMethod: true,
+          last4: '4242',
+          brand: 'visa',
+          hasActiveStakes: true,
+        ),
+      );
+      when(() => mockRepo.getTaskStake(any())).thenAnswer(
+        (_) async => const TaskStake(
+          taskId: 'task-id',
+          stakeAmountCents: 2500,
+          canModify: false,
+        ),
+      );
+      when(() => mockRepo.getDefaultCharity()).thenAnswer(
+        (_) async => throw Exception('no charity'),
+      );
+
+      await pumpStakeSheetScreen(
+        tester,
+        mockRepo: mockRepo,
+        existingStakeAmountCents: 2500,
+      );
+
+      expect(find.text(AppStrings.stakeLockedMessage), findsOneWidget);
+    });
+
+    testWidgets(
+        'locked message absent when canModify == true',
+        (tester) async {
+      final mockRepo = MockCommitmentContractsRepository();
+      when(() => mockRepo.getPaymentStatus()).thenAnswer(
+        (_) async => const CommitmentPaymentStatus(
+          hasPaymentMethod: true,
+          last4: '4242',
+          brand: 'visa',
+          hasActiveStakes: true,
+        ),
+      );
+
+      final deadline = DateTime.now().toUtc().add(const Duration(hours: 24));
+      when(() => mockRepo.getTaskStake(any())).thenAnswer(
+        (_) async => TaskStake(
+          taskId: 'task-id',
+          stakeAmountCents: 2500,
+          stakeModificationDeadline: deadline.toLocal(),
+          canModify: true,
+        ),
+      );
+      when(() => mockRepo.getDefaultCharity()).thenAnswer(
+        (_) async => throw Exception('no charity'),
+      );
+
+      await pumpStakeSheetScreen(
+        tester,
+        mockRepo: mockRepo,
+        existingStakeAmountCents: 2500,
+      );
+
+      expect(find.text(AppStrings.stakeLockedMessage), findsNothing);
+    });
+  });
 }

@@ -26,6 +26,10 @@
  */
 export async function triggerOverdueCharges(env: CloudflareBindings): Promise<void> {
   // TODO(impl): implement DB query and queue dispatch
+  // CRITICAL: when querying tasks for overdue charges, EXCLUDE tasks where
+  // stakeModificationDeadline IS NULL (stake was cancelled or never set) OR
+  // stakeAmountCents IS NULL. Only charge if stakeAmountCents IS NOT NULL.
+  // The cancel endpoint sets stakeAmountCents = null, preventing spurious charges.
   // 1. createDb(env.DATABASE_URL) to get a Drizzle ORM instance
   // 2. Run the JOIN query above to find overdue tasks without existing charge events
   // 3. For each matching task, enqueue to env.CHARGE_TRIGGER_QUEUE:
