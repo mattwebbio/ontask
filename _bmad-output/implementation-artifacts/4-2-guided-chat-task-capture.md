@@ -427,6 +427,15 @@ No significant debug issues. All implementation proceeded without blockers.
 **Updated (sprint status):**
 - _bmad-output/implementation-artifacts/sprint-status.yaml
 
+### Review Findings
+
+- [ ] [Review][Patch] Opening call sends empty `messages` array → API returns 400 (AC 1 blocker) [`apps/flutter/lib/features/shell/presentation/guided_chat_sheet.dart`] — `_sendMessage('')` fires on init but builds `apiMessages` from the still-empty `_messages` list; `POST /v1/tasks/chat` enforces `messages.min(1)` and returns 400; the opening LLM question never arrives. Fix: seed `apiMessages` with a sentinel first message (e.g. `ChatMessage(role: 'user', content: 'Hi, I need to create a task')`) when the list is empty, OR relax the API validation to allow an empty array for the opening turn.
+- [ ] [Review][Patch] Missing coverage branch: `isComplete=true` with `extractedTask=null` returns `undefined` [`packages/ai/src/test/guided-chat-parser.test.ts`] — `guided-chat-parser.ts` line 177 has a ternary `object.isComplete && object.extractedTask ? {...} : undefined`. The `false` leg (isComplete=true, extractedTask=null) is not exercised. 100% branch threshold in `vitest.config.ts` will fail CI. Add a test: `mockLlmResponse({ isComplete: true, extractedTask: null })` and assert `result.extractedTask` is `undefined`.
+- [ ] [Review][Patch] Fake-timer tests not guarded against restore-on-failure [`packages/ai/src/test/guided-chat-parser.test.ts` lines ~163, ~194] — two tests call `vi.useFakeTimers()` / `vi.useRealTimers()` inline. If the assertion between them throws, `vi.useRealTimers()` is never called and subsequent tests hang. Wrap in `try/finally` or use `afterEach(() => vi.useRealTimers())` scoped to those describes.
+- [ ] [Review][Patch] `_ConfirmationCard` uses `dynamic draft` with untyped casts [`apps/flutter/lib/features/shell/presentation/guided_chat_sheet.dart` line ~390] — `final dynamic draft` is cast with `draft.title as String?` etc. No compile-time safety. Change the field type to `GuidedChatTaskDraft` and remove the casts.
+- [x] [Review][Defer] `_mode` never set to `_AddMode.guided` — dead code on submit button guard [`apps/flutter/lib/features/shell/presentation/add_tab_sheet.dart`] — deferred, pre-existing design; tapping Guided immediately calls `pop()` so `_mode` remains at its previous value; the `if (_mode != _AddMode.guided)` guard on the submit button is unreachable but harmless.
+- [x] [Review][Defer] Widget test `tasksProvider()` override brittle if `listId` is non-null [`apps/flutter/test/features/shell/guided_chat_sheet_test.dart` line 122] — deferred, pre-existing pattern from Story 4.1; current fixtures keep `listId` null so the override intercepts correctly; would break if a fixture returned a non-null `listId`.
+
 ## Change Log
 
 - 2026-03-31: Story 4.2 created — Guided Chat Task Capture
