@@ -6,7 +6,8 @@ import 'package:flutter/widgets.dart';
 /// - "The reveal" — sequential task appearance on initial list load
 /// - "The plan shifts" — highlight animation on schedule-changed task rows
 ///
-/// Epic 6 tokens ("The vault close", "The release") are NOT implemented here.
+/// Epic 6 tokens: "The vault close" is implemented here (Story 6.8).
+/// "The release" is NOT implemented here (future story).
 /// "The chapter break" was implemented separately in Story 2.13.
 ///
 /// All durations are in milliseconds to remain framework-agnostic.
@@ -28,6 +29,17 @@ class MotionTokens {
 
   /// Duration of the colour-flash animation on changed task rows (ms).
   static const int planShiftsDurationMs = 400;
+
+  // ── "The vault close" — commitment lock confirmed (UX-DR20) ─────────────
+  /// Total duration of "The vault close" animation (ms).
+  /// Weighted closing arc — weighty, deliberate, final.
+  /// Source: UX spec line 1700 — "Weighted closing arc, 600ms"
+  static const int vaultCloseDurationMs = 600;
+
+  /// Reduced-motion fallback duration for "The vault close" (ms).
+  /// Instant opacity change only.
+  /// Source: UX spec line 1700 — "Instant opacity change, 100ms"
+  static const int vaultCloseReducedMotionDurationMs = 100;
 }
 
 /// Returns true when the user has enabled "Reduce Motion" in iOS Accessibility.

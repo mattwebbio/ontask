@@ -10,6 +10,7 @@ import '../../../core/theme/app_theme.dart';
 import '../data/commitment_contracts_repository.dart';
 import '../domain/nonprofit.dart';
 import 'charity_sheet_screen.dart';
+import 'lock_confirmation_screen.dart';
 import 'payment_settings_screen.dart';
 import 'widgets/stake_slider_widget.dart';
 
@@ -25,10 +26,12 @@ class StakeSheetScreen extends ConsumerStatefulWidget {
   const StakeSheetScreen({
     super.key,
     required this.taskId,
+    required this.taskTitle,
     this.existingStakeAmountCents,
   });
 
   final String taskId;
+  final String taskTitle;
   final int? existingStakeAmountCents;
 
   @override
@@ -127,7 +130,22 @@ class _StakeSheetScreenState extends ConsumerState<StakeSheetScreen> {
       final repository = ref.read(commitmentContractsRepositoryProvider);
       await repository.setTaskStake(widget.taskId, cents);
       if (mounted) {
-        Navigator.of(context).pop(cents);
+        // Navigate to lock confirmation ceremony instead of popping immediately.
+        // LockConfirmationScreen will navigate to /chapter-break after animation.
+        await Navigator.of(context).push(
+          CupertinoPageRoute<void>(
+            builder: (_) => LockConfirmationScreen(
+              taskId: widget.taskId,
+              taskTitle: widget.taskTitle,
+              stakeAmountCents: cents,
+              charityName: _selectedCharity?.name ?? '',
+              charityId: _selectedCharity?.id ?? '',
+              deadline: DateTime.now().add(const Duration(days: 30)), // TODO: use actual task deadline when task deadline is available
+            ),
+          ),
+        );
+        // After ceremony, pop the stake sheet too (stack cleanup).
+        if (mounted) Navigator.of(context).pop(cents);
       }
     } on DioException catch (e) {
       if (!mounted) return;
