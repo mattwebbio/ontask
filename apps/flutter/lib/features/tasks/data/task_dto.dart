@@ -48,6 +48,9 @@ abstract class TaskDto with _$TaskDto {
     @JsonKey(defaultValue: null) String? listName,
     @JsonKey(defaultValue: 'standard') @Default('standard') String proofMode,
     @JsonKey(defaultValue: false) @Default(false) bool proofModeIsCustom,
+    @JsonKey(defaultValue: null) String? proofMediaUrl,
+    @JsonKey(defaultValue: false) @Default(false) bool proofRetained,
+    @JsonKey(defaultValue: null) String? completedByName,
   }) = _TaskDto;
 
   factory TaskDto.fromJson(Map<String, dynamic> json) => _$TaskDtoFromJson(json);
@@ -85,6 +88,9 @@ abstract class TaskDto with _$TaskDto {
         listName: listName,
         proofMode: ProofMode.fromJson(proofMode),
         proofModeIsCustom: proofModeIsCustom,
+        proofMediaUrl: proofMediaUrl,
+        proofRetained: proofRetained,
+        completedByName: completedByName,
       );
 
   static List<int>? _parseDaysOfWeek(String? value) {

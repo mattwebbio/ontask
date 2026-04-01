@@ -46,5 +46,12 @@ abstract class Task with _$Task {
     @Default(ProofMode.standard) ProofMode proofMode,
     // True when this task has a user-set proof mode override (differs from list/section default).
     @Default(false) bool proofModeIsCustom,
+    // Proof visibility fields (FR21, Story 5.5)
+    // URL to the proof media (photo/video/doc) — null when no retained proof.
+    String? proofMediaUrl,
+    // True when the user chose "Keep as completion record" (FR38, Story 7.7).
+    @Default(false) bool proofRetained,
+    // Display name of the member who completed this task; null when incomplete or unknown.
+    String? completedByName,
   }) = _Task;
 }

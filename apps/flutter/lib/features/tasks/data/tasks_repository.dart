@@ -212,6 +212,18 @@ class TasksRepository {
     return _parseBulkResult(response.data!);
   }
 
+  /// Retrieves proof media and completion metadata for a task (GET /v1/tasks/{taskId}/proof).
+  ///
+  /// Returns a raw map with keys: taskId, proofMediaUrl, proofRetained,
+  /// completedAt, completedByUserId, completedByName. (FR21, NFR-S4)
+  /// Access is scoped to members of the shared list only on the API side.
+  Future<Map<String, dynamic>> getTaskProof(String taskId) async {
+    final response = await _client.dio.get<Map<String, dynamic>>(
+      '/v1/tasks/$taskId/proof',
+    );
+    return response.data!['data'] as Map<String, dynamic>;
+  }
+
   /// Sets the per-task proof mode override (PATCH /v1/tasks/{id}/proof-mode).
   ///
   /// Sets proofModeIsCustom = true on the task, marking it as having a user-set override

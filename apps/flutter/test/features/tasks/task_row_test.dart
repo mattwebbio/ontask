@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ontask/core/l10n/strings.dart';
 import 'package:ontask/core/theme/app_theme.dart';
@@ -16,10 +17,12 @@ void main() {
   );
 
   Widget buildRow(Task task) {
-    return MaterialApp(
-      theme: AppTheme.light(ThemeVariant.clay, 'PlayfairDisplay'),
-      home: Scaffold(
-        body: TaskRow(task: task),
+    return ProviderScope(
+      child: MaterialApp(
+        theme: AppTheme.light(ThemeVariant.clay, 'PlayfairDisplay'),
+        home: Scaffold(
+          body: TaskRow(task: task),
+        ),
       ),
     );
   }
@@ -67,6 +70,67 @@ void main() {
       expect(find.text(AppStrings.accountabilityWatchMode), findsNothing);
       expect(find.text(AppStrings.accountabilityHealthKit), findsNothing);
       expect(find.text(AppStrings.accountabilityCustomBadge), findsNothing);
+    });
+  });
+
+  group('TaskRow — proof retained indicator (Story 5.5, AC1)', () {
+    testWidgets(
+        'shows "Jordan submitted proof" when completedAt set, proofRetained true, and completedByName is Jordan',
+        (tester) async {
+      final task = baseTask.copyWith(
+        completedAt: DateTime.utc(2026, 4, 1, 8),
+        proofRetained: true,
+        completedByName: 'Jordan',
+      );
+
+      await tester.pumpWidget(buildRow(task));
+
+      expect(
+        find.text('Jordan submitted proof'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets(
+        'shows "Proof submitted" when completedAt set, proofRetained true, and completedByName is null',
+        (tester) async {
+      final task = baseTask.copyWith(
+        completedAt: DateTime.utc(2026, 4, 1, 8),
+        proofRetained: true,
+        completedByName: null,
+      );
+
+      await tester.pumpWidget(buildRow(task));
+
+      expect(find.text(AppStrings.proofRetainedLabel), findsOneWidget);
+    });
+
+    testWidgets(
+        'shows no proof indicator when completedAt is set but proofRetained is false',
+        (tester) async {
+      final task = baseTask.copyWith(
+        completedAt: DateTime.utc(2026, 4, 1, 8),
+        proofRetained: false,
+      );
+
+      await tester.pumpWidget(buildRow(task));
+
+      expect(find.text(AppStrings.proofRetainedLabel), findsNothing);
+      expect(find.textContaining('submitted proof'), findsNothing);
+    });
+
+    testWidgets('shows no proof indicator when completedAt is null',
+        (tester) async {
+      final task = baseTask.copyWith(
+        completedAt: null,
+        proofRetained: true,
+        completedByName: 'Jordan',
+      );
+
+      await tester.pumpWidget(buildRow(task));
+
+      expect(find.text(AppStrings.proofRetainedLabel), findsNothing);
+      expect(find.textContaining('submitted proof'), findsNothing);
     });
   });
 }

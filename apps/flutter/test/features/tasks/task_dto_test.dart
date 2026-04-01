@@ -173,4 +173,57 @@ void main() {
       expect(dto.toDomain().proofModeIsCustom, isFalse);
     });
   });
+
+  group('TaskDto.fromJson — proofRetained, proofMediaUrl, completedByName (Story 5.5, AC1)', () {
+    const baseJson = {
+      'id': 'a0000000-0000-4000-8000-000000000001',
+      'title': 'Buy groceries',
+      'position': 0,
+      'createdAt': '2026-03-30T12:00:00.000Z',
+      'updatedAt': '2026-03-30T12:00:00.000Z',
+    };
+
+    test('parses proofRetained true and proofMediaUrl from JSON', () {
+      final json = {
+        ...baseJson,
+        'proofRetained': true,
+        'proofMediaUrl': 'https://example.com/proof.jpg',
+      };
+      final dto = TaskDto.fromJson(json);
+      expect(dto.proofRetained, isTrue);
+      expect(dto.proofMediaUrl, equals('https://example.com/proof.jpg'));
+      expect(dto.toDomain().proofRetained, isTrue);
+      expect(dto.toDomain().proofMediaUrl, equals('https://example.com/proof.jpg'));
+    });
+
+    test('parses proofRetained as false when field is absent', () {
+      final json = Map<String, dynamic>.from(baseJson);
+      // No proofRetained field — default via @JsonKey(defaultValue: false)
+      final dto = TaskDto.fromJson(json);
+      expect(dto.proofRetained, isFalse);
+      expect(dto.toDomain().proofRetained, isFalse);
+    });
+
+    test('parses proofMediaUrl as null when field is absent', () {
+      final json = Map<String, dynamic>.from(baseJson);
+      // No proofMediaUrl field — default via @JsonKey(defaultValue: null)
+      final dto = TaskDto.fromJson(json);
+      expect(dto.proofMediaUrl, isNull);
+      expect(dto.toDomain().proofMediaUrl, isNull);
+    });
+
+    test('parses completedByName when present', () {
+      final json = {...baseJson, 'completedByName': 'Jordan'};
+      final dto = TaskDto.fromJson(json);
+      expect(dto.completedByName, equals('Jordan'));
+      expect(dto.toDomain().completedByName, equals('Jordan'));
+    });
+
+    test('parses completedByName as null when field is absent', () {
+      final json = Map<String, dynamic>.from(baseJson);
+      final dto = TaskDto.fromJson(json);
+      expect(dto.completedByName, isNull);
+      expect(dto.toDomain().completedByName, isNull);
+    });
+  });
 }

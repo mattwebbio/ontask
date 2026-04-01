@@ -717,4 +717,26 @@ class AppStrings {
   // ── Proof mode display ───────────────────────────────────────────────────
   static const String proofModeStandard = 'Standard (no proof)';
   static const String proofModeCalendarEvent = 'Calendar event';
+
+  // ── Shared proof visibility (FR21) ──────────────────────────────────────────
+  /// Shown on task row when proof is retained (own task — completedByName is null).
+  static const String proofRetainedLabel = 'Proof submitted';
+
+  /// Shown on task row when another member submitted proof. Use {name} substitution.
+  static const String proofCompletedByLabel = '{name} submitted proof';
+
+  /// Metadata line in proof sheet. Use {name} and {dateTime} substitutions.
+  static const String proofCompletedByAtLabel = 'Completed by {name} · {dateTime}';
+
+  /// Bottom sheet header title.
+  static const String proofDetailTitle = 'Proof';
+
+  /// Shown in proof sheet when proofMediaUrl is null.
+  static const String proofNotAvailableMessage = 'Proof not available or was discarded.';
+
+  /// Error message when proof fails to load.
+  static const String proofLoadError = 'Could not load proof. Please try again.';
+
+  /// Footer note in proof sheet — privacy scoping (NFR-S4).
+  static const String proofPrivacyNote = 'Visible to list members only.';
 }
