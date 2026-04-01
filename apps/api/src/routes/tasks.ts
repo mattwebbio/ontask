@@ -504,7 +504,6 @@ const currentTaskSchema = taskSchema.extend({
   listName: z.string().nullable(),
   assignorName: z.string().nullable(),
   stakeAmountCents: z.number().int().nullable(),
-  proofMode: z.enum(['standard', 'photo', 'watchMode', 'healthKit', 'calendarEvent']),
 })
 
 const CurrentTaskResponseSchema = z.object({

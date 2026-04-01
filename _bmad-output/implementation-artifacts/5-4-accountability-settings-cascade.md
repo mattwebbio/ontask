@@ -497,7 +497,14 @@ From `ux-design-specification.md` (FR20 accountability cascade):
 
 ### Review Findings
 
-_(None yet — populated during code review)_
+- [ ] [Review][Decision] `currentTaskSchema` re-declares `proofMode` that now also exists on base `taskSchema` — `taskSchema` (line 88–92 of `tasks.ts`) now defines `proofMode: z.enum([5 values])`. `currentTaskSchema = taskSchema.extend({ ..., proofMode: z.enum([same 5 values]) })` (line 507). Zod `.extend()` silently overrides — functionally correct but redundant. Decide: remove the override from `currentTaskSchema` now that the base carries it, or leave it as an explicit marker. [`apps/api/src/routes/tasks.ts:507`]
+- [ ] [Review][Patch] Section action sheet has "Save as Template" instead of spec-required "Rename" + missing "Delete" option — doc comment says "rename, and delete" but code provides `onSaveAsTemplate` as the second action with no Delete action at all. [`apps/flutter/lib/features/lists/presentation/widgets/section_widget.dart:223-228`]
+- [ ] [Review][Patch] `accountabilityOverrideToStandardNote` string defined but never displayed — AC2 requires showing `AppStrings.accountabilityOverrideToStandardNote` when user selects Standard while the section/list has a non-null requirement. `_setProofMode()` has no logic to check the inherited requirement or render the note. [`apps/flutter/lib/features/tasks/presentation/widgets/task_edit_inline.dart:774`]
+- [ ] [Review][Patch] Proof picker "Standard" option label uses `assignmentStrategyNone` ("None") instead of a "Standard (no proof)" label — semantically incorrect reuse; the proof mode Standard is not the same concept as assignment strategy None. Add `AppStrings.proofModeStandard` or equivalent. [`apps/flutter/lib/features/tasks/presentation/widgets/task_edit_inline.dart:742`]
+- [ ] [Review][Patch] Hardcoded `'Calendar event'` string (not localized) — two occurrences in `_proofModeBadgeLabel()`. Should be an `AppStrings` constant. [`apps/flutter/lib/features/tasks/presentation/widgets/task_row.dart:445`, `apps/flutter/lib/features/tasks/presentation/widgets/task_edit_inline.dart:727`]
+- [ ] [Review][Patch] Hardcoded `'Error'` dialog title (not localized) — `CupertinoAlertDialog` uses `const Text('Error')`. Should use an `AppStrings` constant consistent with project conventions. [`apps/flutter/lib/features/lists/presentation/widgets/section_widget.dart:293`, `apps/flutter/lib/features/tasks/presentation/widgets/task_edit_inline.dart:789`]
+- [ ] [Review][Patch] `proofMode != ProofMode.standard` is redundant in `task_row.dart` outer `if` condition (line 138) — `_hasSchedulingHints` already returns `true` when this condition holds (line 370), so the explicit `|| task.proofMode != ProofMode.standard` at line 138 is dead code. [`apps/flutter/lib/features/tasks/presentation/widgets/task_row.dart:138`]
+- [x] [Review][Defer] `_journal.json` missing trailing newline at EOF [`packages/core/src/schema/migrations/meta/_journal.json`] — deferred, pre-existing (drizzle-kit generate output)
 
 ## Dev Agent Record
 

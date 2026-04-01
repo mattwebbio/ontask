@@ -710,4 +710,11 @@ class AppStrings {
   static const String actionNotImplemented =
       'This action is not yet available in this version.';
   static const String actionDelete = 'Delete';
+  static const String actionRename = 'Rename';
+  static const String actionOk = 'OK';
+  static const String dialogErrorTitle = 'Error';
+
+  // ── Proof mode display ───────────────────────────────────────────────────
+  static const String proofModeStandard = 'Standard (no proof)';
+  static const String proofModeCalendarEvent = 'Calendar event';
 }

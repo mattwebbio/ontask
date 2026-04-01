@@ -31,6 +31,8 @@ class SectionWidget extends ConsumerStatefulWidget {
     this.onTaskTap,
     this.onArchiveTask,
     this.onSaveAsTemplate,
+    this.onRename,
+    this.onDelete,
     super.key,
   });
 
@@ -45,6 +47,8 @@ class SectionWidget extends ConsumerStatefulWidget {
   final void Function(Task task)? onTaskTap;
   final void Function(Task task)? onArchiveTask;
   final void Function(Section section)? onSaveAsTemplate;
+  final void Function(Section section)? onRename;
+  final void Function(Section section)? onDelete;
 
   @override
   ConsumerState<SectionWidget> createState() => _SectionWidgetState();
@@ -223,9 +227,17 @@ class _SectionWidgetState extends ConsumerState<SectionWidget> {
           CupertinoActionSheetAction(
             onPressed: () {
               Navigator.of(ctx).pop();
-              widget.onSaveAsTemplate?.call(widget.section);
+              widget.onRename?.call(widget.section);
             },
-            child: const Text(AppStrings.templateSaveAsTemplate),
+            child: const Text(AppStrings.actionRename),
+          ),
+          CupertinoActionSheetAction(
+            isDestructiveAction: true,
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              widget.onDelete?.call(widget.section);
+            },
+            child: const Text(AppStrings.actionDelete),
           ),
         ],
         cancelButton: CupertinoActionSheetAction(
@@ -290,11 +302,11 @@ class _SectionWidgetState extends ConsumerState<SectionWidget> {
       showCupertinoDialog<void>(
         context: context,
         builder: (dialogCtx) => CupertinoAlertDialog(
-          title: const Text('Error'),
+          title: const Text(AppStrings.dialogErrorTitle),
           content: const Text(AppStrings.accountabilityUpdateError),
           actions: [
             CupertinoDialogAction(
-              child: const Text('OK'),
+              child: const Text(AppStrings.actionOk),
               onPressed: () => Navigator.of(dialogCtx).pop(),
             ),
           ],

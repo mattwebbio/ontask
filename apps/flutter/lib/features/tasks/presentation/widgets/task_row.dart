@@ -135,7 +135,7 @@ class TaskRow extends StatelessWidget {
                                 : null,
                           ),
                     ),
-                    if (task.dueDate != null || _hasSchedulingHints || task.recurrenceRule != null || dependsOn.isNotEmpty || blocks.isNotEmpty || task.proofMode != ProofMode.standard) ...[
+                    if (task.dueDate != null || _hasSchedulingHints || task.recurrenceRule != null || dependsOn.isNotEmpty || blocks.isNotEmpty) ...[
                       const SizedBox(height: AppSpacing.xs),
                       Wrap(
                         spacing: AppSpacing.sm,
@@ -442,7 +442,7 @@ class TaskRow extends StatelessWidget {
       case ProofMode.healthKit:
         return AppStrings.accountabilityHealthKit;
       case ProofMode.calendarEvent:
-        return 'Calendar event';
+        return AppStrings.proofModeCalendarEvent;
       case ProofMode.standard:
         return '';
     }

@@ -716,7 +716,7 @@ class _TaskEditInlineState extends ConsumerState<TaskEditInline> {
   String _proofModeLabel(ProofMode mode) {
     switch (mode) {
       case ProofMode.standard:
-        return AppStrings.assignmentStrategyNone;
+        return AppStrings.proofModeStandard;
       case ProofMode.photo:
         return AppStrings.accountabilityPhoto;
       case ProofMode.watchMode:
@@ -724,7 +724,7 @@ class _TaskEditInlineState extends ConsumerState<TaskEditInline> {
       case ProofMode.healthKit:
         return AppStrings.accountabilityHealthKit;
       case ProofMode.calendarEvent:
-        return 'Calendar event';
+        return AppStrings.proofModeCalendarEvent;
     }
   }
 
@@ -739,7 +739,7 @@ class _TaskEditInlineState extends ConsumerState<TaskEditInline> {
               Navigator.of(ctx).pop();
               _setProofMode('standard');
             },
-            child: const Text(AppStrings.assignmentStrategyNone),
+            child: const Text(AppStrings.proofModeStandard),
           ),
           CupertinoActionSheetAction(
             onPressed: () {
@@ -772,6 +772,10 @@ class _TaskEditInlineState extends ConsumerState<TaskEditInline> {
   }
 
   Future<void> _setProofMode(String proofMode) async {
+    // Detect override-to-standard before calling API (task still has old value).
+    final isOverridingToStandard = proofMode == 'standard' &&
+        widget.task.proofMode != ProofMode.standard &&
+        !widget.task.proofModeIsCustom;
     try {
       final repo = ref.read(tasksRepositoryProvider);
       await repo.setTaskProofMode(widget.task.id, proofMode);
@@ -780,17 +784,31 @@ class _TaskEditInlineState extends ConsumerState<TaskEditInline> {
         sectionId: widget.task.sectionId,
       ));
       setState(() {});
+      if (isOverridingToStandard && mounted) {
+        showCupertinoDialog<void>(
+          context: context,
+          builder: (dialogCtx) => CupertinoAlertDialog(
+            content: const Text(AppStrings.accountabilityOverrideToStandardNote),
+            actions: [
+              CupertinoDialogAction(
+                child: const Text(AppStrings.actionOk),
+                onPressed: () => Navigator.of(dialogCtx).pop(),
+              ),
+            ],
+          ),
+        );
+      }
     } catch (_) {
       if (!mounted) return;
       // Show inline error — do not dismiss the picker
       showCupertinoDialog<void>(
         context: context,
         builder: (dialogCtx) => CupertinoAlertDialog(
-          title: const Text('Error'),
+          title: const Text(AppStrings.dialogErrorTitle),
           content: const Text(AppStrings.accountabilityUpdateError),
           actions: [
             CupertinoDialogAction(
-              child: const Text('OK'),
+              child: const Text(AppStrings.actionOk),
               onPressed: () => Navigator.of(dialogCtx).pop(),
             ),
           ],
