@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../proof/data/proof_repository.dart';
 import '../../scheduling/presentation/widgets/nudge_input_sheet.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/storage/database.dart';
 import 'now_provider.dart';
 import 'timer_provider.dart';
 import 'widgets/now_card_skeleton.dart';
@@ -134,7 +135,10 @@ class _NowScreenState extends ConsumerState<NowScreen> {
   /// where [authStateProvider] is overridden as a value provider).
   ProofRepository? _tryCreateProofRepository() {
     try {
-      return ProofRepository(ref.read(apiClientProvider));
+      return ProofRepository(
+        ref.read(apiClientProvider),
+        ref.read(appDatabaseProvider),
+      );
     } catch (e) {
       return null;
     }

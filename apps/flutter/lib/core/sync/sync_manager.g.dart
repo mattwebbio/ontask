@@ -85,7 +85,7 @@ final class SyncManagerProvider extends $NotifierProvider<SyncManager, void> {
   }
 }
 
-String _$syncManagerHash() => r'8c3f8cc705f3399d5079aef28623203551ec1022';
+String _$syncManagerHash() => r'2929ebfb3adc35758eb4852a79cd0f4af9515007';
 
 /// Manages the offline operation queue and conflict resolution.
 ///

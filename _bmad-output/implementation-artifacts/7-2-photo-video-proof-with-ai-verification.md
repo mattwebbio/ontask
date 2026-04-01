@@ -352,6 +352,17 @@ Wrap the approved/rejected result widget in `Semantics(liveRegion: true)` so Voi
 - Story 7.1 dev notes (prior context): [`_bmad-output/implementation-artifacts/7-1-proof-capture-modal-foundation.md`]
 - Deferred work from Story 7.1: [`_bmad-output/implementation-artifacts/deferred-work.md`] lines 1–7
 
+### Review Findings
+
+- [ ] [Review][Decision] Photo path silently falls back to stub when `taskId` or `proofRepository` is null — AC1 requires photo path always routes to `PhotoCaptureSubView`, but the guard `if (path == ProofPath.photo && widget.taskId != null && widget.proofRepository != null)` silently shows the "coming soon" stub if either parameter is null. Need decision: should the modal assert/throw in this case, show a specific error state, or is the silent fallback acceptable for the stub phase? [`apps/flutter/lib/features/proof/presentation/proof_capture_modal.dart:212-214`]
+- [ ] [Review][Patch] `Image.network` used for local XFile path — thumbnail will not render on real device [`apps/flutter/lib/features/proof/presentation/photo_capture_sub_view.dart:388,452,517`]
+- [ ] [Review][Patch] Camera shutter error silently swallowed — no user feedback on `takePicture()` failure; `catch (e)` block at line 159 makes no `setState` call to surface an error [`apps/flutter/lib/features/proof/presentation/photo_capture_sub_view.dart:159`]
+- [ ] [Review][Patch] `catch (_)` in `_tryCreateProofRepository` violates project convention — story dev notes require `catch (e)` not `catch (_)` [`apps/flutter/lib/features/now/presentation/now_screen.dart:138`]
+- [ ] [Review][Patch] `ProofSubmissionSubmitted` never set — story task says "set `ProofSubmissionState.submitted(ProofPath.photo)` when approved"; no code path in the modal sets this state (field is `// ignore: unused_field`) [`apps/flutter/lib/features/proof/presentation/proof_capture_modal.dart:56`]
+- [ ] [Review][Patch] `permission_handler` added to pubspec but never imported or used anywhere in `lib/` — dead dependency [`apps/flutter/pubspec.yaml:67`]
+- [ ] [Review][Patch] Double-submit guard missing — rapid double-tap of Submit button in captured state can dispatch two parallel `submitPhotoProof` API calls before `_captureState` transitions to `verifying` [`apps/flutter/lib/features/proof/presentation/photo_capture_sub_view.dart:170`]
+- [x] [Review][Defer] `index` listed in story spec schema imports but not imported or used — no indexes defined; low impact [`packages/core/src/schema/proof.ts:1`] — deferred, pre-existing
+
 ## Dev Agent Record
 
 ### Agent Model Used

@@ -9,6 +9,7 @@ import 'package:window_manager/window_manager.dart';
 
 import 'core/config/app_config.dart';
 import 'core/router/app_router.dart';
+import 'core/sync/connectivity_sync_listener.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_provider.dart';
 import 'features/auth/presentation/auth_provider.dart';
@@ -53,7 +54,13 @@ void main() async {
         await Posthog().setup(posthogConfig);
       }
 
-      runApp(const ProviderScope(child: OnTaskApp()));
+      runApp(
+        const ProviderScope(
+          child: ConnectivitySyncListener(
+            child: OnTaskApp(),
+          ),
+        ),
+      );
     },
   );
 }

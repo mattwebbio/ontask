@@ -148,15 +148,30 @@ class SyncManager extends _$SyncManager {
                   ..where((t) => t.id.equals(op.id)))
                 .go();
           } catch (_) {
-            // Mark as failed — do not delete, allow retry later.
-            await (db.update(db.pendingOperations)
-                  ..where((t) => t.id.equals(op.id)))
-                .write(
-              PendingOperationsCompanion(
-                retryCount: Value(op.retryCount + 1),
-                status: const Value('failed'),
-              ),
-            );
+            // Enforce max 3 retries (ARCH-26, NFR-R5).
+            final nextRetryCount = op.retryCount + 1;
+            if (nextRetryCount >= 3) {
+              // Max retries exceeded — mark failed and notify.
+              await (db.update(db.pendingOperations)
+                    ..where((t) => t.id.equals(op.id)))
+                  .write(
+                PendingOperationsCompanion(
+                  retryCount: Value(nextRetryCount),
+                  status: const Value('failed'),
+                ),
+              );
+              _onOperationFailed(op);
+            } else {
+              // Stay in queue for next sync cycle with incremented retry count.
+              await (db.update(db.pendingOperations)
+                    ..where((t) => t.id.equals(op.id)))
+                  .write(
+                PendingOperationsCompanion(
+                  retryCount: Value(nextRetryCount),
+                  status: const Value('pending'),
+                ),
+              );
+            }
           }
 
         case ConflictResolutionOutcome.serverWins:
@@ -266,5 +281,15 @@ class SyncManager extends _$SyncManager {
     } catch (_) {
       return null;
     }
+  }
+
+  /// Called when an operation exceeds max retries.
+  /// Story 7.6: logs the failure. Real push notification deferred to Story 11.x.
+  void _onOperationFailed(PendingOperation op) {
+    debugPrint(
+      'SyncManager: operation ${op.type} (id=${op.id}) '
+      'exceeded max retries and is marked failed (ARCH-26, NFR-R5).',
+    );
+    // TODO(11.x): push a local notification to the user via flutter_local_notifications
   }
 }

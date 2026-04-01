@@ -3,9 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:ontask/core/l10n/strings.dart';
 import 'package:ontask/core/theme/app_theme.dart';
+import 'package:ontask/features/proof/data/proof_repository.dart';
 import 'package:ontask/features/proof/presentation/proof_capture_modal.dart';
+
+// ── Mocks ─────────────────────────────────────────────────────────────────────
+
+class MockProofRepository extends Mock implements ProofRepository {}
 
 // Widget tests for ProofCaptureModal — Story 7.1 (FR31, AC: 1–2).
 //
@@ -45,6 +51,8 @@ Future<void> pumpModal(
   WidgetTester tester, {
   String taskName = 'Exercise 30 minutes',
   bool isOffline = false,
+  String? taskId,
+  ProofRepository? proofRepository,
 }) async {
   _stubConnectivity(isOffline: isOffline);
 
@@ -54,7 +62,11 @@ Future<void> pumpModal(
         theme: AppTheme.light(ThemeVariant.clay, 'PlayfairDisplay'),
         home: Scaffold(
           body: Builder(
-            builder: (context) => ProofCaptureModal(taskName: taskName),
+            builder: (context) => ProofCaptureModal(
+              taskName: taskName,
+              taskId: taskId,
+              proofRepository: proofRepository,
+            ),
           ),
         ),
       ),
@@ -111,43 +123,54 @@ void main() {
       expect(find.text(AppStrings.proofPathOfflineTitle), findsNothing);
     });
 
-    testWidgets('tapping a path row shows sub-view with back button',
+    testWidgets('tapping a path row shows OfflineProofSubView content',
         (tester) async {
-      // Use offline path (always a stub) to test generic sub-view navigation.
-      // Screenshot path now shows ScreenshotProofSubView (Story 7.3).
-      // Photo path requires taskId + proofRepository.
-      await pumpModal(tester, isOffline: true);
+      // Use offline path with required params — Story 7.6 wired OfflineProofSubView.
+      final mockRepo = MockProofRepository();
+      await pumpModal(
+        tester,
+        isOffline: true,
+        taskId: 'task-001',
+        proofRepository: mockRepo,
+      );
 
-      // Tap offline path to verify stub sub-view navigation.
+      // Tap offline path to verify OfflineProofSubView navigation.
       await tester.tap(find.text(AppStrings.proofPathOfflineTitle));
       await tester.pump();
 
-      // Back button and coming-soon placeholder visible.
-      expect(find.text(AppStrings.proofModalBack), findsOneWidget);
-      expect(find.text(AppStrings.proofPathComingSoon), findsOneWidget);
-
-      // Path selector rows no longer visible.
-      expect(find.text(AppStrings.proofPathOfflineTitle), findsNothing);
+      // OfflineProofSubView is rendered — shows its body copy.
+      expect(find.text(AppStrings.offlineProofBody), findsOneWidget);
     });
 
-    testWidgets('tapping back from sub-view returns to path selector',
+    testWidgets('tapping back from OfflineProofSubView pops the modal',
         (tester) async {
-      // Use offline path (always a stub) to test generic back navigation.
-      await pumpModal(tester, isOffline: true);
+      // Use offline path with required params — Story 7.6 wired OfflineProofSubView.
+      // OfflineProofSubView back button calls Navigator.pop(context, null),
+      // which closes the modal (same pattern as other sub-views).
+      final mockRepo = MockProofRepository();
+      await pumpModal(
+        tester,
+        isOffline: true,
+        taskId: 'task-001',
+        proofRepository: mockRepo,
+      );
 
       // Navigate to sub-view via offline path.
       await tester.tap(find.text(AppStrings.proofPathOfflineTitle));
       await tester.pump();
-      expect(find.text(AppStrings.proofModalBack), findsOneWidget);
 
-      // Tap back.
-      await tester.tap(find.text(AppStrings.proofModalBack));
-      await tester.pump();
+      // OfflineProofSubView is shown — body copy visible.
+      expect(find.text(AppStrings.offlineProofBody), findsOneWidget);
 
-      // Back on path selector.
-      expect(find.text(AppStrings.proofPathPhotoTitle), findsOneWidget);
-      expect(find.text(AppStrings.proofPathScreenshotTitle), findsOneWidget);
-      expect(find.text(AppStrings.proofModalBack), findsNothing);
+      // Tap chevron_left back button — pops modal (Navigator.pop).
+      await tester.tap(find.byWidgetPredicate(
+        (w) => w is Icon && w.icon?.codePoint == 0xf3d2,
+        description: 'chevron_left icon',
+      ));
+      await tester.pumpAndSettle();
+
+      // Sub-view body no longer visible — modal was closed.
+      expect(find.text(AppStrings.offlineProofBody), findsNothing);
     });
 
     testWidgets('dismissing via X button does not call onComplete — returns null',
@@ -228,6 +251,47 @@ void main() {
         reason: 'HealthKit row should appear at most once — no duplicate or '
             'broken affordance regardless of platform.',
       );
+    });
+  });
+
+  // ── Story 7.6: Offline path renders OfflineProofSubView ──────────────────────
+
+  group('ProofCaptureModal — offline path (Story 7.6, AC: 4)', () {
+    testWidgets(
+        'selecting offline path when isOffline=true and taskId/proofRepository provided '
+        'renders OfflineProofSubView content (offlineProofTitle visible)',
+        (tester) async {
+      final mockRepo = MockProofRepository();
+      _stubConnectivity(isOffline: true);
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            theme: AppTheme.light(ThemeVariant.clay, 'PlayfairDisplay'),
+            home: Scaffold(
+              body: Builder(
+                builder: (context) => ProofCaptureModal(
+                  taskName: 'Exercise 30 minutes',
+                  taskId: 'task-offline-001',
+                  proofRepository: mockRepo,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      // Allow async _checkConnectivity to complete.
+      await tester.pump();
+
+      // Tap the offline path row.
+      await tester.tap(find.text(AppStrings.proofPathOfflineTitle));
+      await tester.pump();
+
+      // OfflineProofSubView should be rendered — shows offlineProofTitle.
+      // offlineProofTitle == 'Save for Later'; it appears as title + button text.
+      expect(find.text(AppStrings.offlineProofTitle), findsWidgets);
+      expect(find.text(AppStrings.offlineProofBody), findsOneWidget);
     });
   });
 }
