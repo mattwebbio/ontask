@@ -84,3 +84,10 @@ export class NoActiveStakeError extends AppError {
     super('NO_ACTIVE_STAKE', 422, message, details)
   }
 }
+
+/** 422 — Task does not belong to a shared list (FR29, Story 6.7) */
+export class NotSharedListError extends AppError {
+  constructor(message = 'This task is not in a shared list', details?: Record<string, unknown>) {
+    super('NOT_SHARED_LIST', 422, message, details)
+  }
+}

@@ -554,6 +554,241 @@ app.openapi(getImpactRoute, (c) => {
   return c.json(ok(_stubImpactData), 200)
 })
 
+// ── Group commitment schemas ──────────────────────────────────────────────────
+
+const groupCommitmentMemberSchema = z.object({
+  userId: z.string().uuid(),
+  stakeAmountCents: z.number().int().min(500).nullable(),
+  approved: z.boolean(),
+  poolModeOptIn: z.boolean(),
+})
+
+const groupCommitmentSchema = z.object({
+  id: z.string().uuid(),
+  listId: z.string().uuid(),
+  taskId: z.string().uuid(),
+  proposedByUserId: z.string().uuid(),
+  status: z.enum(['pending', 'active', 'cancelled']),
+  members: z.array(groupCommitmentMemberSchema),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+})
+
+const proposeGroupCommitmentBodySchema = z.object({
+  listId: z.string().uuid(),
+  taskId: z.string().uuid(),
+})
+
+const approveGroupCommitmentBodySchema = z.object({
+  stakeAmountCents: z.number().int().min(500),
+})
+
+const poolModeOptInBodySchema = z.object({
+  optIn: z.boolean(),
+})
+
+// ── POST /v1/group-commitments ────────────────────────────────────────────────
+// Propose a group commitment for a shared list task (FR29, Story 6.7).
+
+const proposeGroupCommitmentRoute = createRoute({
+  method: 'post',
+  path: '/v1/group-commitments',
+  tags: ['GroupCommitments'],
+  summary: 'Propose a group commitment for a shared list task',
+  description:
+    'Creates a group commitment proposal for a task in a shared list. ' +
+    'All list members are notified and must approve individually. ' +
+    'The commitment activates only when all members have explicitly approved (FR29, Story 6.7).',
+  request: {
+    body: {
+      content: { 'application/json': { schema: proposeGroupCommitmentBodySchema } },
+      required: true,
+    },
+  },
+  responses: {
+    201: {
+      content: { 'application/json': { schema: z.object({ data: groupCommitmentSchema }) } },
+      description: 'Group commitment proposal created',
+    },
+    404: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'List or task not found',
+    },
+    422: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Task is not in the specified shared list, or list has no members',
+    },
+  },
+})
+
+app.openapi(proposeGroupCommitmentRoute, async (c) => {
+  const body = c.req.valid('json')
+  const groupCommitmentId = '00000000-0000-0000-0000-000000000001'
+  const now = new Date().toISOString()
+  // TODO(impl): verify listId exists and taskId belongs to listId; verify authenticated user is a member
+  // TODO(impl): insert into group_commitments (status='pending', proposedByUserId = JWT sub)
+  // TODO(impl): insert one group_commitment_members row per list member (approved=false, poolModeOptIn=false)
+  // TODO(impl): send notification to all list members (deferred to Story 8.4)
+  return c.json(ok({
+    id: groupCommitmentId,
+    listId: body.listId,
+    taskId: body.taskId,
+    proposedByUserId: '00000000-0000-0000-0000-000000000099',
+    status: 'pending' as const,
+    members: [],
+    createdAt: now,
+    updatedAt: now,
+  }), 201)
+})
+
+// ── GET /v1/group-commitments/:groupCommitmentId ──────────────────────────────
+// Get group commitment details (FR29, Story 6.7).
+
+const getGroupCommitmentRoute = createRoute({
+  method: 'get',
+  path: '/v1/group-commitments/:groupCommitmentId',
+  tags: ['GroupCommitments'],
+  summary: 'Get group commitment details',
+  description:
+    'Returns the group commitment with all member stakes, approval statuses, and pool mode opt-ins. ' +
+    'Used to show the review screen to each member (FR29, Story 6.7).',
+  request: {
+    params: z.object({ groupCommitmentId: z.string().uuid() }),
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: z.object({ data: groupCommitmentSchema }) } },
+      description: 'Group commitment details',
+    },
+    404: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Group commitment not found',
+    },
+  },
+})
+
+app.openapi(getGroupCommitmentRoute, async (c) => {
+  const { groupCommitmentId } = c.req.valid('param')
+  const now = new Date().toISOString()
+  // TODO(impl): query group_commitments join group_commitment_members where id = groupCommitmentId
+  // TODO(impl): verify authenticated user is a member of the associated list
+  return c.json(ok({
+    id: groupCommitmentId,
+    listId: '00000000-0000-0000-0000-000000000002',
+    taskId: '00000000-0000-0000-0000-000000000003',
+    proposedByUserId: '00000000-0000-0000-0000-000000000099',
+    status: 'pending' as const,
+    members: [],
+    createdAt: now,
+    updatedAt: now,
+  }), 200)
+})
+
+// ── POST /v1/group-commitments/:groupCommitmentId/approve ─────────────────────
+// Member approves group commitment and sets individual stake (FR29, Story 6.7).
+
+const approveGroupCommitmentRoute = createRoute({
+  method: 'post',
+  path: '/v1/group-commitments/:groupCommitmentId/approve',
+  tags: ['GroupCommitments'],
+  summary: 'Approve a group commitment and set individual stake',
+  description:
+    'The authenticated member approves the group commitment and sets their individual stake amount. ' +
+    'When all members have approved, the group commitment status transitions to "active". ' +
+    'Approval is separate from pool mode opt-in (FR29, FR30, Story 6.7).',
+  request: {
+    params: z.object({ groupCommitmentId: z.string().uuid() }),
+    body: {
+      content: { 'application/json': { schema: approveGroupCommitmentBodySchema } },
+      required: true,
+    },
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: z.object({ data: groupCommitmentSchema }) } },
+      description: 'Approval recorded; returns updated group commitment',
+    },
+    404: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Group commitment not found',
+    },
+    422: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Commitment is not pending, or member has no payment method',
+    },
+  },
+})
+
+app.openapi(approveGroupCommitmentRoute, async (c) => {
+  const { groupCommitmentId } = c.req.valid('param')
+  const body = c.req.valid('json')
+  const now = new Date().toISOString()
+  // TODO(impl): set group_commitment_members.approved = true, stakeAmountCents = body.stakeAmountCents
+  //             WHERE groupCommitmentId AND userId = JWT sub
+  // TODO(impl): check if ALL members have approved; if so, set group_commitments.status = 'active'
+  //             AND set tasks.stakeAmountCents and tasks.stakeModificationDeadline for each member's task
+  // TODO(impl): verify member has a payment method (commitment_contracts row with stripePaymentMethodId set)
+  //             If not, return 422 with code 'NO_PAYMENT_METHOD'
+  return c.json(ok({
+    id: groupCommitmentId,
+    listId: '00000000-0000-0000-0000-000000000002',
+    taskId: '00000000-0000-0000-0000-000000000003',
+    proposedByUserId: '00000000-0000-0000-0000-000000000099',
+    status: 'pending' as const,
+    members: [{ userId: '00000000-0000-0000-0000-000000000099', stakeAmountCents: body.stakeAmountCents, approved: true, poolModeOptIn: false }],
+    createdAt: now,
+    updatedAt: now,
+  }), 200)
+})
+
+// ── POST /v1/group-commitments/:groupCommitmentId/pool-mode ───────────────────
+// Opt in or out of pool mode for a group commitment (FR30, Story 6.7).
+
+const poolModeOptInRoute = createRoute({
+  method: 'post',
+  path: '/v1/group-commitments/:groupCommitmentId/pool-mode',
+  tags: ['GroupCommitments'],
+  summary: 'Opt in or out of pool mode for a group commitment',
+  description:
+    'Explicitly sets pool mode opt-in for the authenticated member. ' +
+    'Pool mode is NOT inherited from group commitment approval — it requires a separate explicit opt-in. ' +
+    'Members who opt in understand: any opted-in member failing triggers charges for ALL opted-in members (FR30, Story 6.7).',
+  request: {
+    params: z.object({ groupCommitmentId: z.string().uuid() }),
+    body: {
+      content: { 'application/json': { schema: poolModeOptInBodySchema } },
+      required: true,
+    },
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: z.object({ data: z.object({ groupCommitmentId: z.string().uuid(), userId: z.string().uuid(), poolModeOptIn: z.boolean() }) }) } },
+      description: 'Pool mode preference recorded',
+    },
+    404: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Group commitment not found',
+    },
+    422: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Group commitment is not active (must be approved before opting into pool mode)',
+    },
+  },
+})
+
+app.openapi(poolModeOptInRoute, async (c) => {
+  const { groupCommitmentId } = c.req.valid('param')
+  const body = c.req.valid('json')
+  // TODO(impl): set group_commitment_members.poolModeOptIn = body.optIn
+  //             WHERE groupCommitmentId AND userId = JWT sub
+  // TODO(impl): verify group_commitments.status = 'active' (cannot opt in on pending/cancelled)
+  return c.json(ok({
+    groupCommitmentId,
+    userId: '00000000-0000-0000-0000-000000000099',
+    poolModeOptIn: body.optIn,
+  }), 200)
+})
+
 // ── POST /v1/webhooks/stripe ──────────────────────────────────────────────────
 // Receives raw Stripe webhook events. No auth middleware — Stripe's webhook
 // secret (STRIPE_WEBHOOK_SECRET) is the authentication mechanism (ARCH-24, AC: 3).

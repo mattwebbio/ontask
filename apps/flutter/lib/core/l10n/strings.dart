@@ -875,4 +875,23 @@ class AppStrings {
   static const String impactTotalDonatedLabel = 'donated to charity';
   static const String impactCommitmentsKeptLabel = 'commitments kept';
   static const String settingsImpact = 'Impact';
+
+  // ── Group commitments & pool mode (FR29, FR30) ──────────────────────────────
+  static const String groupCommitmentProposalTitle = 'Group commitment';
+  static const String groupCommitmentReviewTitle = 'Review commitment';
+  static const String groupCommitmentApproveButton = 'Approve & set stake';
+  static const String groupCommitmentPendingStatus = 'Pending approval';
+  static const String groupCommitmentActiveStatus = 'All approved';
+  static const String groupCommitmentMembersApprovedLabel = 'members approved';
+  static const String groupCommitmentProposeError =
+      'Could not propose group commitment. Please try again.';
+  static const String groupCommitmentApproveError =
+      'Could not approve commitment. Please try again.';
+  static const String poolModeSectionTitle = 'Pool mode';
+  static const String poolModeDescription =
+      'In pool mode, everyone is charged if any opted-in member misses their task. '
+      "This is separate from approving the commitment — opt in only if you're sure.";
+  static const String poolModeToggleLabel = 'Join pool mode';
+  static const String poolModeOptInError =
+      'Could not update pool mode preference. Please try again.';
 }
