@@ -40,5 +40,6 @@ abstract class Task with _$Task {
     int? durationMinutes,
     DateTime? scheduledStartTime,
     String? assignedToUserId,
+    String? listName,
   }) = _Task;
 }

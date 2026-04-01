@@ -652,6 +652,20 @@ class AppStrings {
   static const String assignmentStrategyUpdateError = 'Could not update strategy. Please try again.';
   static const String taskAssignedToLabel = 'Assigned';
 
+  // ── Shared tasks in personal schedule (FR19) ─────────────────────────────
+  /// Today-tab attribution chip for tasks from shared lists.
+  static const String taskFromListLabel = 'from {listName}';
+
+  /// Accessibility label for assignor attribution on an assigned task.
+  static const String taskAssignedByLabel = 'Assigned by {name}';
+
+  /// Feedback toast after successfully unassigning a task.
+  static const String taskUnassignSuccess = 'Task unassigned.';
+
+  /// Error message shown when unassignment fails.
+  static const String taskUnassignError =
+      'Could not unassign task. Please try again.';
+
   // ── Shared actions ──────────────────────────────────────────────────────
   static const String actionNotImplemented =
       'This action is not yet available in this version.';

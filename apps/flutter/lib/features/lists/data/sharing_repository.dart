@@ -82,6 +82,17 @@ class SharingRepository {
     return response.data!['data'] as Map<String, dynamic>;
   }
 
+  /// Removes the assignment from a task, clearing it from the previous assignee's
+  /// personal schedule (FR19, AC3).
+  ///
+  /// Returns `{ taskId, listId, previousAssigneeId }`.
+  Future<Map<String, dynamic>> unassignTask(String listId, String taskId) async {
+    final response = await _client.dio.delete<Map<String, dynamic>>(
+      '/v1/lists/$listId/tasks/$taskId/assignment',
+    );
+    return response.data!['data'] as Map<String, dynamic>;
+  }
+
   /// Triggers strategy-based auto-assignment for all unassigned tasks (FR17).
   ///
   /// Returns `{ assigned, strategy, assignments: [{ taskId, assignedToUserId }] }`.

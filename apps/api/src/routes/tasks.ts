@@ -87,6 +87,7 @@ const taskSchema = z.object({
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
   assignedToUserId: z.string().uuid().nullable(),
+  listName: z.string().nullable(),
 })
 
 const TaskResponseSchema = z.object({ data: taskSchema })
@@ -191,6 +192,7 @@ function stubTask(overrides: Partial<z.infer<typeof taskSchema>> = {}): z.infer<
     createdAt: now,
     updatedAt: now,
     assignedToUserId: null,
+    listName: null,
     ...overrides,
   }
 }
@@ -377,8 +379,15 @@ const getTasksRoute = createRoute({
 })
 
 app.openapi(getTasksRoute, async (c) => {
-  // TODO(impl): filter by userId from JWT, apply list/section/archive filters, cursor-based pagination
-  return c.json(list([stubTask()], null, false), 200)
+  // TODO(impl): query tasks WHERE assignedToUserId = jwt.sub UNION tasks WHERE userId = jwt.sub; join lists table for listName
+  const assignedTask = stubTask({
+    id: 'a0000000-0000-4000-8000-000000000002',
+    title: 'Clean the kitchen',
+    assignedToUserId: 'd0000000-0000-4000-8000-000000000002',
+    listId: 'b0000000-0000-4000-8000-000000000001',
+    listName: 'Household',
+  })
+  return c.json(list([stubTask(), assignedTask], null, false), 200)
 })
 
 // ── GET /v1/tasks/today ──────────────────────────────────────────────────────
@@ -505,7 +514,13 @@ const getCurrentTaskRoute = createRoute({
   summary: 'Get the current task for the Now tab',
   description:
     'Returns the single current task enriched with list name, assignor, stake amount, and proof mode. ' +
-    'Returns { data: null } when no current task (rest state).',
+    'Returns { data: null } when no current task (rest state). ' +
+    'Pass ?demo=assigned to exercise the attribution path (stub only).',
+  request: {
+    query: z.object({
+      demo: z.string().optional(),
+    }),
+  },
   responses: {
     200: {
       content: { 'application/json': { schema: CurrentTaskResponseSchema } },
@@ -516,9 +531,27 @@ const getCurrentTaskRoute = createRoute({
 
 app.openapi(getCurrentTaskRoute, async (c) => {
   // TODO(impl): determine actual current task from scheduling engine
-  // Stub: return first task from today with enriched fields
+  // TODO(impl): look up assignorName from list_members where userId = task.assignedByUserId; resolve listName from lists table
+  const { demo } = c.req.valid('query')
   const dateStr = new Date().toISOString().split('T')[0]
   const task = stubTask({ dueDate: `${dateStr}T09:00:00.000Z` })
+
+  if (demo === 'assigned') {
+    // Stub: exercise the assigned-task attribution path (AC2)
+    return c.json(
+      ok({
+        ...task,
+        title: 'Clean the kitchen',
+        listId: 'b0000000-0000-4000-8000-000000000001',
+        listName: 'Household',
+        assignorName: 'Jordan',
+        stakeAmountCents: null,
+        proofMode: 'standard' as const,
+      }),
+      200,
+    )
+  }
+
   return c.json(
     ok({
       ...task,
