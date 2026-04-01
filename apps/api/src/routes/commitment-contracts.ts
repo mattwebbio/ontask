@@ -415,4 +415,88 @@ app.openapi(getCharitiesRoute, async (c) => {
   return c.json(ok({ nonprofits: _stubNonprofits, total: _stubNonprofits.length }), 200)
 })
 
+// ── Impact schemas (FR27, Story 6.4) ─────────────────────────────────────────
+
+const milestoneSchema = z.object({
+  id: z.string(),              // e.g. 'first-donation', 'first-kept', 'hundred-donated'
+  title: z.string(),           // milestone label — affirming framing
+  body: z.string(),            // New York voice copy — "evidence of who you've become"
+  earnedAt: z.string(),        // ISO 8601 UTC string
+  shareText: z.string(),       // pre-composed share copy for native share sheet
+})
+
+const impactSummarySchema = z.object({
+  totalDonatedCents: z.number().int(),
+  commitmentsKept: z.number().int(),
+  commitmentsMissed: z.number().int(),
+  charityBreakdown: z.array(z.object({
+    charityName: z.string(),
+    donatedCents: z.number().int(),
+  })),
+  milestones: z.array(milestoneSchema),
+})
+
+const ImpactResponseSchema = z.object({ data: impactSummarySchema })
+
+// ── GET /v1/impact ────────────────────────────────────────────────────────────
+// Returns the authenticated user's impact summary and earned milestones.
+
+const getImpactRoute = createRoute({
+  method: 'get',
+  path: '/v1/impact',
+  tags: ['Impact'],
+  summary: 'Get user impact summary',
+  description:
+    "Returns the authenticated user's impact summary: total amount donated, " +
+    'commitments kept/missed, charity breakdown, and earned milestones. ' +
+    'Milestones use "evidence of who you\'ve become" framing (FR27, UX-DR19). ' +
+    'Stub implementation (Story 6.4).',
+  responses: {
+    200: {
+      content: { 'application/json': { schema: ImpactResponseSchema } },
+      description: 'Impact summary with milestones',
+    },
+  },
+})
+
+// Stub impact data — returns valid-looking data so Flutter UI renders correctly.
+// TODO(impl): query commitment_contracts and task_stakes for userId = JWT sub;
+//             aggregate totalDonatedCents, commitmentsKept, commitmentsMissed;
+//             query charity breakdown; resolve earned milestones
+const _stubImpactData = {
+  totalDonatedCents: 2500, // $25.00
+  commitmentsKept: 3,
+  commitmentsMissed: 1,
+  charityBreakdown: [
+    { charityName: 'American Red Cross', donatedCents: 2500 },
+  ],
+  milestones: [
+    {
+      id: 'first-kept',
+      title: 'First commitment kept.',
+      body: 'You showed up when it mattered.',
+      earnedAt: new Date().toISOString(),
+      shareText: 'I kept my first commitment with On Task. Your past self makes plans. Your future self keeps them.',
+    },
+    {
+      id: 'first-donation',
+      title: 'First donation made.',
+      body: 'Even a missed commitment moved something good into the world.',
+      earnedAt: new Date().toISOString(),
+      shareText: 'I donated $25 to the American Red Cross through On Task accountability.',
+    },
+    {
+      id: 'hundred-donated',
+      title: '$100 donated.',
+      body: "Look how far you've come.",
+      earnedAt: new Date().toISOString(),
+      shareText: "I've donated over $100 to charity through On Task. Accountability that does good.",
+    },
+  ],
+}
+
+app.openapi(getImpactRoute, (c) => {
+  return c.json({ data: _stubImpactData }, 200)
+})
+
 export { app as commitmentContractsRouter }

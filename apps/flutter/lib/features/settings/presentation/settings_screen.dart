@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/l10n/strings.dart';
 import '../../../core/theme/app_theme.dart';
@@ -94,6 +95,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   builder: (_) => const PaymentSettingsScreen(),
                 ),
               ),
+            ),
+            // ── Impact Dashboard (Epic 6, Story 6.4) ────────────────────────────────────
+            _SettingsTile(
+              label: AppStrings.settingsImpact,
+              icon: CupertinoIcons.heart_fill,
+              onTap: () => context.push('/settings/impact'),
             ),
           ],
         ),

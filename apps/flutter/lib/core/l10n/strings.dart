@@ -851,4 +851,15 @@ class AppStrings {
   static const String charityLoadError = 'Could not load nonprofits. Please try again.';
   static const String charitySetError = 'Could not save your charity selection. Please try again.';
   static const String charitySearchEmpty = 'No nonprofits found. Try a different search.';
+
+  // ── Impact Dashboard (FR27, UX-DR19) ──────────────────────────────────────
+  static const String impactDashboardTitle = 'Your impact';
+  static const String impactLoadError = 'Could not load your impact data. Please try again.';
+  static const String impactEmptyMessage =
+      'Your story is just beginning. Complete your first staked commitment to see your impact here.';
+  static const String impactShareButton = 'Share';
+  static const String impactCharityBreakdownTitle = 'Where your money went';
+  static const String impactTotalDonatedLabel = 'donated to charity';
+  static const String impactCommitmentsKeptLabel = 'commitments kept';
+  static const String settingsImpact = 'Impact';
 }
