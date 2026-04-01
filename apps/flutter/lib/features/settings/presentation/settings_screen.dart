@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/l10n/strings.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../commitment_contracts/presentation/payment_settings_screen.dart';
 import 'account_settings_screen.dart';
 import 'appearance_settings_screen.dart';
 import 'sessions_screen.dart';
@@ -81,6 +82,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               onTap: () => Navigator.of(context).push(
                 CupertinoPageRoute<void>(
                   builder: (_) => const AccountSettingsScreen(),
+                ),
+              ),
+            ),
+            // ── Payments (Epic 6) ───────────────────────────────────────────
+            _SettingsTile(
+              label: AppStrings.settingsPayments,
+              icon: CupertinoIcons.creditcard,
+              onTap: () => Navigator.of(context).push(
+                CupertinoPageRoute<void>(
+                  builder: (_) => const PaymentSettingsScreen(),
                 ),
               ),
             ),

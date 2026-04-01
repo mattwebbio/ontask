@@ -85,6 +85,13 @@
       "when": 1743638400001,
       "tag": "0011_shared_proof_visibility",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1775056048076,
+      "tag": "0012_commitment_contracts",
+      "breakpoints": true
     }
   ]
 }

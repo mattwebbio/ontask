@@ -1,6 +1,6 @@
 # Story 6.1: Payment Method Setup
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -18,9 +18,9 @@ so that On Task can charge me if I miss a commitment without ever handling my ca
 
 ### Backend: DB schema — create `commitment_contracts` table with payment method fields in `packages/core/src/schema/commitment-contracts.ts` (AC: 1, 2)
 
-- [ ] Create `packages/core/src/schema/commitment-contracts.ts` — new file (AC: 1, 2)
-  - [ ] Export `commitmentContractsTable` using Drizzle pgTable
-  - [ ] Columns (camelCase in schema, Drizzle generates snake_case DDL automatically):
+- [x] Create `packages/core/src/schema/commitment-contracts.ts` — new file (AC: 1, 2)
+  - [x] Export `commitmentContractsTable` using Drizzle pgTable
+  - [x] Columns (camelCase in schema, Drizzle generates snake_case DDL automatically):
     - `id: uuid().primaryKey().defaultRandom()`
     - `userId: uuid().notNull()` — FK to users (enforce in impl; stub omits FK constraint)
     - `stripeCustomerId: text()` — nullable; Stripe customer ID (set on first payment method setup)
@@ -32,30 +32,30 @@ so that On Task can charge me if I miss a commitment without ever handling my ca
     - `setupSessionExpiresAt: timestamp()` — nullable; token expiry (5-minute TTL)
     - `createdAt: timestamp().defaultNow().notNull()`
     - `updatedAt: timestamp().defaultNow().notNull()`
-  - [ ] Follow existing Drizzle pattern: `import { pgTable, uuid, text, boolean, timestamp } from 'drizzle-orm/pg-core'`
-  - [ ] No manual `name()` overrides — `casing: 'camelCase'` handles the camelCase→snake_case transformation
+  - [x] Follow existing Drizzle pattern: `import { pgTable, uuid, text, boolean, timestamp } from 'drizzle-orm/pg-core'`
+  - [x] No manual `name()` overrides — `casing: 'camelCase'` handles the camelCase→snake_case transformation
 
-- [ ] Export from `packages/core/src/schema/index.ts` (AC: 1, 2)
-  - [ ] Add: `export { commitmentContractsTable } from './commitment-contracts.js'`
+- [x] Export from `packages/core/src/schema/index.ts` (AC: 1, 2)
+  - [x] Add: `export { commitmentContractsTable } from './commitment-contracts.js'`
 
-- [ ] Generate migration `packages/core/src/schema/migrations/0012_commitment_contracts.sql` (AC: 1, 2)
-  - [ ] Run `pnpm drizzle-kit generate` from `packages/core/` to produce the migration
-  - [ ] Commit generated SQL, updated `meta/_journal.json`, and `meta/0012_snapshot.json`
-  - [ ] Migration creates `commitment_contracts` table with all columns above
+- [x] Generate migration `packages/core/src/schema/migrations/0012_commitment_contracts.sql` (AC: 1, 2)
+  - [x] Run `pnpm drizzle-kit generate` from `packages/core/` to produce the migration
+  - [x] Commit generated SQL, updated `meta/_journal.json`, and `meta/0012_snapshot.json`
+  - [x] Migration creates `commitment_contracts` table with all columns above
 
 ### Backend: API — create `apps/api/src/routes/commitment-contracts.ts` (AC: 1, 2)
 
-- [ ] Create `apps/api/src/routes/commitment-contracts.ts` — new file (AC: 1, 2)
-  - [ ] Use `OpenAPIHono` + `createRoute` pattern (same as `users.ts`, `sharing.ts`) — no untyped routes
-  - [ ] Import pattern: `import { ok, err } from '../lib/response.js'` — `.js` extensions on all local imports
-  - [ ] Define `paymentMethodSchema`:
+- [x] Create `apps/api/src/routes/commitment-contracts.ts` — new file (AC: 1, 2)
+  - [x] Use `OpenAPIHono` + `createRoute` pattern (same as `users.ts`, `sharing.ts`) — no untyped routes
+  - [x] Import pattern: `import { ok, err } from '../lib/response.js'` — `.js` extensions on all local imports
+  - [x] Define `paymentMethodSchema`:
     ```typescript
     const paymentMethodSchema = z.object({
       last4: z.string().nullable(),
       brand: z.string().nullable(),
     })
     ```
-  - [ ] Define `paymentStatusSchema` (returned by GET /v1/payment-method):
+  - [x] Define `paymentStatusSchema` (returned by GET /v1/payment-method):
     ```typescript
     const paymentStatusSchema = z.object({
       hasPaymentMethod: z.boolean(),
@@ -63,51 +63,51 @@ so that On Task can charge me if I miss a commitment without ever handling my ca
       hasActiveStakes: z.boolean(),
     })
     ```
-  - [ ] Export `commitmentContractsRouter`
+  - [x] Export `commitmentContractsRouter`
 
-- [ ] Add `GET /v1/payment-method` — get current user's stored payment method status (AC: 2)
-  - [ ] Response 200: `{ data: paymentStatusSchema }`
-  - [ ] Stub: return `{ hasPaymentMethod: false, paymentMethod: null, hasActiveStakes: false }`
-  - [ ] Add `TODO(impl): query commitment_contracts for userId = JWT sub; return real values`
-  - [ ] Tag: `'PaymentMethod'`
+- [x] Add `GET /v1/payment-method` — get current user's stored payment method status (AC: 2)
+  - [x] Response 200: `{ data: paymentStatusSchema }`
+  - [x] Stub: return `{ hasPaymentMethod: false, paymentMethod: null, hasActiveStakes: false }`
+  - [x] Add `TODO(impl): query commitment_contracts for userId = JWT sub; return real values`
+  - [x] Tag: `'PaymentMethod'`
 
-- [ ] Add `POST /v1/payment-method/setup-session` — generate session token and return setup URL (AC: 1)
-  - [ ] Request body: empty `{}`
-  - [ ] Response 201: `{ data: { setupUrl: z.string(), sessionToken: z.string() } }`
-  - [ ] `setupUrl` = `https://ontaskhq.com/setup?sessionToken=xxx`
-  - [ ] Stub: return `{ setupUrl: 'https://ontaskhq.com/setup?sessionToken=stub-token', sessionToken: 'stub-token' }`
-  - [ ] Add `TODO(impl): generate cryptographically random token, store in commitment_contracts.setupSessionToken with 5-minute expiry, build real URL`
-  - [ ] Tag: `'PaymentMethod'`
+- [x] Add `POST /v1/payment-method/setup-session` — generate session token and return setup URL (AC: 1)
+  - [x] Request body: empty `{}`
+  - [x] Response 201: `{ data: { setupUrl: z.string(), sessionToken: z.string() } }`
+  - [x] `setupUrl` = `https://ontaskhq.com/setup?sessionToken=xxx`
+  - [x] Stub: return `{ setupUrl: 'https://ontaskhq.com/setup?sessionToken=stub-token', sessionToken: 'stub-token' }`
+  - [x] Add `TODO(impl): generate cryptographically random token, store in commitment_contracts.setupSessionToken with 5-minute expiry, build real URL`
+  - [x] Tag: `'PaymentMethod'`
 
-- [ ] Add `POST /v1/payment-method/confirm` — exchange session token after Universal Link callback (AC: 1)
-  - [ ] Request body schema: `{ sessionToken: z.string() }`
-  - [ ] Response 200: `{ data: paymentStatusSchema }`
-  - [ ] Response 404: session token not found or expired
-  - [ ] Stub: return 200 with `{ hasPaymentMethod: true, paymentMethod: { last4: '4242', brand: 'visa' }, hasActiveStakes: false }`
-  - [ ] Add `TODO(impl): validate sessionToken against commitment_contracts.setupSessionToken + setupSessionExpiresAt; call Stripe API to retrieve PaymentMethod from SetupIntent; store stripePaymentMethodId, paymentMethodLast4, paymentMethodBrand`
-  - [ ] Tag: `'PaymentMethod'`
+- [x] Add `POST /v1/payment-method/confirm` — exchange session token after Universal Link callback (AC: 1)
+  - [x] Request body schema: `{ sessionToken: z.string() }`
+  - [x] Response 200: `{ data: paymentStatusSchema }`
+  - [x] Response 404: session token not found or expired
+  - [x] Stub: return 200 with `{ hasPaymentMethod: true, paymentMethod: { last4: '4242', brand: 'visa' }, hasActiveStakes: false }`
+  - [x] Add `TODO(impl): validate sessionToken against commitment_contracts.setupSessionToken + setupSessionExpiresAt; call Stripe API to retrieve PaymentMethod from SetupIntent; store stripePaymentMethodId, paymentMethodLast4, paymentMethodBrand`
+  - [x] Tag: `'PaymentMethod'`
 
-- [ ] Add `DELETE /v1/payment-method` — remove stored payment method (AC: 2)
-  - [ ] Request body: empty `{}`
-  - [ ] Response 200: `{ data: { removed: z.boolean() } }`
-  - [ ] Response 422: `{ error: { code: 'ACTIVE_STAKES_PREVENT_REMOVAL', message: '...' } }` — blocked if `hasActiveStakes = true`
-  - [ ] Stub: return 200 with `{ removed: true }`
-  - [ ] Add `TODO(impl): check hasActiveStakes for userId; if true return 422; else null out stripePaymentMethodId, paymentMethodLast4, paymentMethodBrand in commitment_contracts; detach from Stripe API`
-  - [ ] Tag: `'PaymentMethod'`
+- [x] Add `DELETE /v1/payment-method` — remove stored payment method (AC: 2)
+  - [x] Request body: empty `{}`
+  - [x] Response 200: `{ data: { removed: z.boolean() } }`
+  - [x] Response 422: `{ error: { code: 'ACTIVE_STAKES_PREVENT_REMOVAL', message: '...' } }` — blocked if `hasActiveStakes = true`
+  - [x] Stub: return 200 with `{ removed: true }`
+  - [x] Add `TODO(impl): check hasActiveStakes for userId; if true return 422; else null out stripePaymentMethodId, paymentMethodLast4, paymentMethodBrand in commitment_contracts; detach from Stripe API`
+  - [x] Tag: `'PaymentMethod'`
 
-- [ ] Route registration order (specific before parameterized rule applies even within this router):
+- [x] Route registration order (specific before parameterized rule applies even within this router):
   - Order: `GET /v1/payment-method`, `POST /v1/payment-method/setup-session`, `POST /v1/payment-method/confirm`, `DELETE /v1/payment-method`
   - No parameterized routes in this story — order is informational
 
 ### Backend: Register router in `apps/api/src/index.ts` (AC: 1, 2)
 
-- [ ] Import `commitmentContractsRouter` from `'./routes/commitment-contracts.js'`
-- [ ] Mount: `app.route('/', commitmentContractsRouter)` — same pattern as other routers
-- [ ] Position: add after existing route registrations (no ordering conflict — unique paths)
+- [x] Import `commitmentContractsRouter` from `'./routes/commitment-contracts.js'`
+- [x] Mount: `app.route('/', commitmentContractsRouter)` — same pattern as other routers
+- [x] Position: add after existing route registrations (no ordering conflict — unique paths)
 
 ### Flutter: Domain model — `CommitmentPaymentStatus` in `apps/flutter/lib/features/commitment_contracts/domain/` (AC: 1, 2)
 
-- [ ] Create directory `apps/flutter/lib/features/commitment_contracts/` with full feature anatomy:
+- [x] Create directory `apps/flutter/lib/features/commitment_contracts/` with full feature anatomy:
   ```
   lib/features/commitment_contracts/
   ├── data/
@@ -121,94 +121,94 @@ so that On Task can charge me if I miss a commitment without ever handling my ca
       └── payment_settings_screen.dart              # see Flutter tasks below
   ```
 
-- [ ] Create `apps/flutter/lib/features/commitment_contracts/domain/commitment_payment_status.dart` (AC: 2)
-  - [ ] Freezed model with fields:
+- [x] Create `apps/flutter/lib/features/commitment_contracts/domain/commitment_payment_status.dart` (AC: 2)
+  - [x] Freezed model with fields:
     - `bool hasPaymentMethod`
     - `String? last4` — nullable
     - `String? brand` — nullable
     - `bool hasActiveStakes`
-  - [ ] Add `@freezed` annotation; generate `commitment_payment_status.freezed.dart`
-  - [ ] Run `dart run build_runner build --delete-conflicting-outputs` and commit generated file
+  - [x] Add `@freezed` annotation; generate `commitment_payment_status.freezed.dart`
+  - [x] Run `dart run build_runner build --delete-conflicting-outputs` and commit generated file
 
 ### Flutter: Repository — `CommitmentContractsRepository` (AC: 1, 2)
 
-- [ ] Create `apps/flutter/lib/features/commitment_contracts/data/commitment_contracts_repository.dart` (AC: 1, 2)
-  - [ ] `@riverpod` annotation on class — generates `commitmentContractsRepositoryProvider`
-  - [ ] Constructor: `CommitmentContractsRepository(this._client)` where `_client` is `ApiClient` injected via `ref.watch(apiClientProvider)`
-  - [ ] Methods:
+- [x] Create `apps/flutter/lib/features/commitment_contracts/data/commitment_contracts_repository.dart` (AC: 1, 2)
+  - [x] `@riverpod` annotation on class — generates `commitmentContractsRepositoryProvider`
+  - [x] Constructor: `CommitmentContractsRepository(this._client)` where `_client` is `ApiClient` injected via `ref.watch(apiClientProvider)`
+  - [x] Methods:
     - `Future<CommitmentPaymentStatus> getPaymentStatus()` — `GET /v1/payment-method`
     - `Future<Map<String, dynamic>> createSetupSession()` — `POST /v1/payment-method/setup-session`; returns raw map with `setupUrl` and `sessionToken`
     - `Future<CommitmentPaymentStatus> confirmSetup(String sessionToken)` — `POST /v1/payment-method/confirm`
     - `Future<void> removePaymentMethod()` — `DELETE /v1/payment-method`; throws on 422 (active stakes)
-  - [ ] Use `_client.dio.get/post/delete<Map<String, dynamic>>(...)` pattern (same as `SharingRepository`)
-  - [ ] Parse response: `CommitmentPaymentStatus(hasPaymentMethod: data['hasPaymentMethod'], last4: data['paymentMethod']?['last4'], brand: data['paymentMethod']?['brand'], hasActiveStakes: data['hasActiveStakes'])`
-  - [ ] Commit generated `commitment_contracts_repository.g.dart`
+  - [x] Use `_client.dio.get/post/delete<Map<String, dynamic>>(...)` pattern (same as `SharingRepository`)
+  - [x] Parse response: `CommitmentPaymentStatus(hasPaymentMethod: data['hasPaymentMethod'], last4: data['paymentMethod']?['last4'], brand: data['paymentMethod']?['brand'], hasActiveStakes: data['hasActiveStakes'])`
+  - [x] Commit generated `commitment_contracts_repository.g.dart`
 
 ### Flutter: Presentation — `PaymentSettingsScreen` (AC: 1, 2)
 
-- [ ] Create `apps/flutter/lib/features/commitment_contracts/presentation/payment_settings_screen.dart` (AC: 1, 2)
-  - [ ] `ConsumerStatefulWidget` — fetches `commitmentContractsRepositoryProvider` and `getPaymentStatus()`
-  - [ ] Use `FutureProvider` or `ref.watch` with `AsyncValue<CommitmentPaymentStatus>` — never raw `Future<T>`
-  - [ ] **When `hasPaymentMethod == false`**: Show `CupertinoButton` "Set up payment method" (primary styled)
+- [x] Create `apps/flutter/lib/features/commitment_contracts/presentation/payment_settings_screen.dart` (AC: 1, 2)
+  - [x] `ConsumerStatefulWidget` — fetches `commitmentContractsRepositoryProvider` and `getPaymentStatus()`
+  - [x] Use `FutureProvider` or `ref.watch` with `AsyncValue<CommitmentPaymentStatus>` — never raw `Future<T>`
+  - [x] **When `hasPaymentMethod == false`**: Show `CupertinoButton` "Set up payment method" (primary styled)
     - On tap: call `repository.createSetupSession()` → receive `setupUrl` → open via `url_launcher` package (`launchUrl(Uri.parse(setupUrl), mode: LaunchMode.externalApplication)`)
     - Add `// TODO(impl): deep link handler in AppRouter will intercept ontaskhq.com/payment-setup-complete Universal Link; call confirmSetup(sessionToken)`
-  - [ ] **When `hasPaymentMethod == true`**: Show stored method display row: `'${brand?.toUpperCase() ?? 'Card'} ending in $last4'`
+  - [x] **When `hasPaymentMethod == true`**: Show stored method display row: `'${brand?.toUpperCase() ?? 'Card'} ending in $last4'`
     - "Update payment method" `CupertinoButton` → same setup flow as above
     - "Remove payment method" `CupertinoButton` (destructive) — show only when `!hasActiveStakes`
     - When `hasActiveStakes == true`: show disabled "Remove" button with note `AppStrings.paymentRemoveBlockedByStakes`
     - Removal: show `CupertinoAlertDialog` confirm → title `AppStrings.paymentRemoveConfirmTitle`, message `AppStrings.paymentRemoveConfirmMessage`, actions: Cancel + `AppStrings.actionDelete` (destructive) → call `repository.removePaymentMethod()` → refresh
-  - [ ] Loading state: `_isLoading` bool (same `setState` pattern as `ListSettingsScreen._isManagingMember`)
-  - [ ] Error state: `CupertinoAlertDialog` with `AppStrings.dialogErrorTitle` + `AppStrings.paymentSetupError`
-  - [ ] Background: `colors.surfacePrimary`
-  - [ ] `minimumSize: const Size(44, 44)` on all `CupertinoButton` instances
+  - [x] Loading state: `_isLoading` bool (same `setState` pattern as `ListSettingsScreen._isManagingMember`)
+  - [x] Error state: `CupertinoAlertDialog` with `AppStrings.dialogErrorTitle` + `AppStrings.paymentSetupError`
+  - [x] Background: `colors.surfacePrimary`
+  - [x] `minimumSize: const Size(44, 44)` on all `CupertinoButton` instances
 
 ### Flutter: Deep link handler stub — Universal Link return (AC: 1)
 
-- [ ] Add `// TODO(impl): register ontaskhq.com/payment-setup-complete deep link handler in AppRouter` comment in `apps/flutter/lib/features/commitment_contracts/presentation/payment_settings_screen.dart`
+- [x] Add `// TODO(impl): register ontaskhq.com/payment-setup-complete deep link handler in AppRouter` comment in `apps/flutter/lib/features/commitment_contracts/presentation/payment_settings_screen.dart`
   - Architecture note: Universal Link `https://ontaskhq.com/payment-setup-complete?sessionToken=xxx` and fallback URL scheme `ontaskhq://payment-setup-complete?sessionToken=xxx` are already registered in `Info.plist` and `Runner.entitlements` (architecture.md Gap 1 resolved). The AppRouter deep link handler that intercepts this URL and calls `confirmSetup(sessionToken)` is deferred to when AASA is deployed (Story 13.1).
   - Add `TODO(impl): when deep link received, extract sessionToken from URI query params, call commitmentContractsRepository.confirmSetup(sessionToken), navigate to PaymentSettingsScreen` in relevant location
 
 ### Flutter: Settings screen — add Payments tile (AC: 2)
 
-- [ ] Extend `apps/flutter/lib/features/settings/presentation/settings_screen.dart` (AC: 2)
-  - [ ] Import `payment_settings_screen.dart`
-  - [ ] Add `_SettingsTile` for `AppStrings.settingsPayments` with `CupertinoIcons.creditcard` icon
-  - [ ] Navigate: `CupertinoPageRoute` → `PaymentSettingsScreen()`
-  - [ ] Position: below the "Account" tile, above any stub tiles at the bottom
-  - [ ] Comment: `// ── Payments (Epic 6) ───────────────────────────────────────`
+- [x] Extend `apps/flutter/lib/features/settings/presentation/settings_screen.dart` (AC: 2)
+  - [x] Import `payment_settings_screen.dart`
+  - [x] Add `_SettingsTile` for `AppStrings.settingsPayments` with `CupertinoIcons.creditcard` icon
+  - [x] Navigate: `CupertinoPageRoute` → `PaymentSettingsScreen()`
+  - [x] Position: below the "Account" tile, above any stub tiles at the bottom
+  - [x] Comment: `// ── Payments (Epic 6) ───────────────────────────────────────`
 
 ### Flutter: l10n strings (AC: 1, 2)
 
-- [ ] Add to `apps/flutter/lib/core/l10n/strings.dart` under a new `// ── Payment method setup (FR23, FR64) ──` section (AC: 1, 2)
-  - [ ] `static const String settingsPayments = 'Payments';` — Settings tile label
-  - [ ] `static const String paymentSetupTitle = 'Payment Method';` — screen title
-  - [ ] `static const String paymentSetupButton = 'Set up payment method';` — CTA when no method stored
-  - [ ] `static const String paymentUpdateButton = 'Update payment method';` — CTA when method exists
-  - [ ] `static const String paymentRemoveButton = 'Remove payment method';` — destructive action
-  - [ ] `static const String paymentRemoveConfirmTitle = 'Remove payment method?';`
-  - [ ] `static const String paymentRemoveConfirmMessage = 'Your stored card will be removed. You will need to set up a new payment method before adding a commitment stake.';`
-  - [ ] `static const String paymentRemoveBlockedByStakes = 'You have active commitment stakes. Remove all stakes before removing your payment method.';`
-  - [ ] `static const String paymentSetupError = 'Could not complete payment setup. Please try again.';`
-  - [ ] `static const String paymentMethodDisplay = 'Payment method';` — section label
-  - [ ] NOTE: `AppStrings.actionDelete`, `AppStrings.dialogErrorTitle`, `AppStrings.actionCancel` already exist — do NOT recreate
+- [x] Add to `apps/flutter/lib/core/l10n/strings.dart` under a new `// ── Payment method setup (FR23, FR64) ──` section (AC: 1, 2)
+  - [x] `static const String settingsPayments = 'Payments';` — Settings tile label
+  - [x] `static const String paymentSetupTitle = 'Payment Method';` — screen title
+  - [x] `static const String paymentSetupButton = 'Set up payment method';` — CTA when no method stored
+  - [x] `static const String paymentUpdateButton = 'Update payment method';` — CTA when method exists
+  - [x] `static const String paymentRemoveButton = 'Remove payment method';` — destructive action
+  - [x] `static const String paymentRemoveConfirmTitle = 'Remove payment method?';`
+  - [x] `static const String paymentRemoveConfirmMessage = 'Your stored card will be removed. You will need to set up a new payment method before adding a commitment stake.';`
+  - [x] `static const String paymentRemoveBlockedByStakes = 'You have active commitment stakes. Remove all stakes before removing your payment method.';`
+  - [x] `static const String paymentSetupError = 'Could not complete payment setup. Please try again.';`
+  - [x] `static const String paymentMethodDisplay = 'Payment method';` — section label
+  - [x] NOTE: `AppStrings.actionDelete`, `AppStrings.dialogErrorTitle`, `AppStrings.actionCancel` already exist — do NOT recreate
 
 ### Tests
 
-- [ ] Unit test for `CommitmentContractsRepository` in `apps/flutter/test/features/commitment_contracts/commitment_contracts_repository_test.dart` (AC: 1, 2)
-  - [ ] Create new test file — this is the first Epic 6 test
-  - [ ] Test: `getPaymentStatus()` fires `GET /v1/payment-method` and maps `hasPaymentMethod`, `last4`, `brand`, `hasActiveStakes`
-  - [ ] Test: `createSetupSession()` fires `POST /v1/payment-method/setup-session` and returns `setupUrl` + `sessionToken`
-  - [ ] Test: `confirmSetup('stub-token')` fires `POST /v1/payment-method/confirm` with body `{'sessionToken': 'stub-token'}`
-  - [ ] Test: `removePaymentMethod()` fires `DELETE /v1/payment-method`
-  - [ ] Use same `mocktail` + `MockDio` pattern established in `sharing_repository_test.dart` (Story 5.3)
+- [x] Unit test for `CommitmentContractsRepository` in `apps/flutter/test/features/commitment_contracts/commitment_contracts_repository_test.dart` (AC: 1, 2)
+  - [x] Create new test file — this is the first Epic 6 test
+  - [x] Test: `getPaymentStatus()` fires `GET /v1/payment-method` and maps `hasPaymentMethod`, `last4`, `brand`, `hasActiveStakes`
+  - [x] Test: `createSetupSession()` fires `POST /v1/payment-method/setup-session` and returns `setupUrl` + `sessionToken`
+  - [x] Test: `confirmSetup('stub-token')` fires `POST /v1/payment-method/confirm` with body `{'sessionToken': 'stub-token'}`
+  - [x] Test: `removePaymentMethod()` fires `DELETE /v1/payment-method`
+  - [x] Use same `mocktail` + `MockDio` pattern established in `sharing_repository_test.dart` (Story 5.3)
 
-- [ ] Widget test for `PaymentSettingsScreen` in `apps/flutter/test/features/commitment_contracts/payment_settings_screen_test.dart` (AC: 1, 2)
-  - [ ] Test: "Set up payment method" button renders when `hasPaymentMethod == false`
-  - [ ] Test: card display row renders when `hasPaymentMethod == true` (shows last4 and brand)
-  - [ ] Test: "Remove payment method" button renders when `hasPaymentMethod == true` AND `hasActiveStakes == false`
-  - [ ] Test: "Remove" button is absent or disabled when `hasActiveStakes == true`
-  - [ ] Override `commitmentContractsRepositoryProvider` with a stub — same `ProviderContainer` pattern as Stories 5.4/5.6
-  - [ ] Wrap in `MaterialApp` with `OnTaskTheme` to resolve `OnTaskColors` extension
+- [x] Widget test for `PaymentSettingsScreen` in `apps/flutter/test/features/commitment_contracts/payment_settings_screen_test.dart` (AC: 1, 2)
+  - [x] Test: "Set up payment method" button renders when `hasPaymentMethod == false`
+  - [x] Test: card display row renders when `hasPaymentMethod == true` (shows last4 and brand)
+  - [x] Test: "Remove payment method" button renders when `hasPaymentMethod == true` AND `hasActiveStakes == false`
+  - [x] Test: "Remove" button is absent or disabled when `hasActiveStakes == true`
+  - [x] Override `commitmentContractsRepositoryProvider` with a stub — same `ProviderContainer` pattern as Stories 5.4/5.6
+  - [x] Wrap in `MaterialApp` with `OnTaskTheme` to resolve `OnTaskColors` extension
 
 ## Dev Notes
 
@@ -361,4 +361,38 @@ claude-sonnet-4-6
 
 ### Completion Notes List
 
+Story 6.1 implemented as stub story per Epic 6 dev notes. All Stripe API calls are `TODO(impl)` markers. Key decisions:
+
+- DB schema: `commitment_contracts` table created via Drizzle with camelCase fields; migration `0012_commitment_contracts.sql` generated from API `drizzle.config.ts` (the config lives in `apps/api/`, not `packages/core/`).
+- API: 4 stub endpoints (`GET /v1/payment-method`, `POST /v1/payment-method/setup-session`, `POST /v1/payment-method/confirm`, `DELETE /v1/payment-method`) all with `TODO(impl)` markers for real Stripe integration.
+- Flutter: `CommitmentPaymentStatus` Freezed model + `CommitmentContractsRepository` (Riverpod) + `PaymentSettingsScreen` (ConsumerStatefulWidget with `_isLoading` state pattern). `url_launcher: ^6.3.1` added to pubspec.
+- Deep link handler for Universal Link return is explicitly stubbed with `TODO(impl)` comments referencing Story 13.1.
+- Settings screen has Payments tile added below Account tile.
+- All 10 new tests pass; full suite (676 tests) passes with no regressions.
+
 ### File List
+
+packages/core/src/schema/commitment-contracts.ts (new)
+packages/core/src/schema/index.ts (modified)
+packages/core/src/schema/migrations/0012_commitment_contracts.sql (new, generated)
+packages/core/src/schema/migrations/meta/_journal.json (modified, generated)
+packages/core/src/schema/migrations/meta/0012_snapshot.json (new, generated)
+apps/api/src/routes/commitment-contracts.ts (new)
+apps/api/src/index.ts (modified)
+apps/flutter/pubspec.yaml (modified)
+apps/flutter/lib/features/commitment_contracts/domain/commitment_payment_status.dart (new)
+apps/flutter/lib/features/commitment_contracts/domain/commitment_payment_status.freezed.dart (new, generated)
+apps/flutter/lib/features/commitment_contracts/data/commitment_contracts_repository.dart (new)
+apps/flutter/lib/features/commitment_contracts/data/commitment_contracts_repository.g.dart (new, generated)
+apps/flutter/lib/features/commitment_contracts/presentation/payment_settings_screen.dart (new)
+apps/flutter/lib/features/settings/presentation/settings_screen.dart (modified)
+apps/flutter/lib/core/l10n/strings.dart (modified)
+apps/flutter/test/features/commitment_contracts/commitment_contracts_repository_test.dart (new)
+apps/flutter/test/features/commitment_contracts/payment_settings_screen_test.dart (new)
+
+## Change Log
+
+- Story 6.1 implemented — payment method setup stub (Date: 2026-04-01)
+  - Backend: `commitment_contracts` DB table, migration 0012, and 4 stub API endpoints (all Stripe calls are `TODO(impl)`)
+  - Flutter: `CommitmentPaymentStatus` domain model, `CommitmentContractsRepository`, `PaymentSettingsScreen`, Payments tile in Settings, 10 l10n strings, `url_launcher` dependency added
+  - Tests: 6 repository unit tests + 4 widget tests; 676 total passing, no regressions
