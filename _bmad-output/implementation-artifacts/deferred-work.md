@@ -1,5 +1,11 @@
 # Deferred Work
 
+## Deferred from: code review of 6-1-payment-method-setup (2026-04-01)
+
+- **Manual "Tap to confirm setup" stub button absent** — Dev Notes for Story 6.1 suggest a manual confirm button in `PaymentSettingsScreen` so testers can invoke `confirmSetup()` before Story 13.1 deep links are live. Screen omits this. Revisit in Story 13.1 or add as a debug-only affordance before Epic 6 QA.
+- **`catch (_)` in `_removePaymentMethod` gives generic error on 422** — If cached `hasActiveStakes` is stale, a server-side 422 `ACTIVE_STAKES_PREVENT_REMOVAL` is swallowed into the generic `paymentSetupError` dialog. Add 422-specific error handling when Epic 6 real Stripe integration lands.
+- **Widget test missing `onPressed == null` assertion for disabled Remove button** — `payment_settings_screen_test.dart` verifies the blocked-by-stakes note text but does not assert `CupertinoButton.onPressed == null`. Add explicit assertion when the screen is hardened in Epic 6.
+
 ## Deferred from: code review of 1-1-monorepo-project-scaffold (2026-03-29)
 
 - **tsconfig.base.json NodeNext/ESNext tension** — Base config sets `module: NodeNext` / `moduleResolution: NodeNext` which all app tsconfigs override with `ESNext` / `Bundler`. Packages inherit NodeNext. Matches spec today but will create real type-resolution tension when packages get actual code in Story 1.3. Revisit when adding imports to packages/core.
