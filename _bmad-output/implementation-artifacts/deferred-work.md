@@ -1,5 +1,21 @@
 # Deferred Work
 
+## Deferred from: code review of 6-7-group-commitment-arrangements-pool-mode (2026-04-01)
+
+- **`status` column uses unconstrained text, no DB-level enum/CHECK** — `group_commitments.status` allows any string. Application-level enforcement only; add `pgEnum` or CHECK constraint in a future schema hardening pass.
+- **`proposedByUserId` and `group_commitment_members.userId` have no FK constraints** — Orphaned rows possible if users are deleted. Add `references()` in a future schema hardening pass (consistent with how other user-ref columns are treated).
+- **No unique constraint on `(listId, taskId)` in `group_commitments`** — Multiple concurrent proposals for the same task are not prevented at the DB layer. Enforce at the application layer in real `TODO(impl)` handlers.
+- **`GroupCommitmentReviewScreen` displays `member.userId` (UUID) instead of display name** — Real implementation should call `SharingRepository.getListMembers(listId)` to resolve names/avatars. Deferred until SharingRepository integration is wired.
+- **`_poolModeOptIn` not seeded from current user's member row** — Requires auth context (current userId) not available in the widget stub. Seed correctly in real implementation when auth context is threaded through.
+- **No widget tests for `GroupCommitmentProposalScreen`** — Loading state and error/pop path have no test coverage. Add in a future test hardening pass.
+- **`approveGroupCommitment` has no idempotency guard in UI** — Already-approved user can tap "Approve" again; stub API doesn't prevent re-approval. Add guard in real implementation.
+- **`setPoolModeOptIn` discards server response** — Optimistic update only; server disagreement is silently ignored. Use returned `poolModeOptIn` value in real implementation.
+- **`groupCommitmentMemberSchema` `stakeAmountCents.min(500).nullable()` ordering** — `.nullable()` after `.min(500)` may reject null depending on Zod version. Fix to `z.union([z.null(), z.number().int().min(500)])` in real implementation.
+
+## Deferred from: code review of 6-6-stake-modification-cancellation (2026-04-01)
+
+- **Widget test `findsAtLeastNWidgets(1)` for `IgnorePointer` is a loose assertion** — `stake_sheet_screen_test.dart` verifies the locked slider wrapping using `findsAtLeastNWidgets(1)` which can match Flutter's own internal `IgnorePointer` instances. Acceptable for current test coverage; tighten the assertion (e.g., match only the `IgnorePointer` that wraps `StakeSliderWidget`) in a future test hardening pass.
+
 ## Deferred from: code review of 6-5-automated-charge-processing-charity-disbursement (2026-04-01)
 
 - **`charge-scheduler.ts` query is a stub** — `triggerOverdueCharges()` has a `TODO(impl)` DB query; the cron fires but does nothing until the query is wired. Implement when real task/stake DB data is available in a future hardening story.

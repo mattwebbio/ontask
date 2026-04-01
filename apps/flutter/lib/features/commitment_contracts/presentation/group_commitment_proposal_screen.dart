@@ -13,7 +13,6 @@ import 'group_commitment_review_screen.dart';
 /// Immediately calls `POST /v1/group-commitments` on mount and navigates
 /// to [GroupCommitmentReviewScreen] on success.
 ///
-/// The [_isLoading] flag defaults to true to avoid a blank first frame.
 class GroupCommitmentProposalScreen extends ConsumerStatefulWidget {
   const GroupCommitmentProposalScreen({
     super.key,
@@ -31,8 +30,6 @@ class GroupCommitmentProposalScreen extends ConsumerStatefulWidget {
 
 class _GroupCommitmentProposalScreenState
     extends ConsumerState<GroupCommitmentProposalScreen> {
-  bool _isLoading = true;
-
   @override
   void initState() {
     super.initState();
@@ -54,8 +51,7 @@ class _GroupCommitmentProposalScreenState
       );
     } catch (e) {
       if (!mounted) return;
-      setState(() => _isLoading = false);
-      showCupertinoDialog<void>(
+      await showCupertinoDialog<void>(
         context: context,
         builder: (context) => CupertinoAlertDialog(
           title: const Text(AppStrings.dialogErrorTitle),
@@ -68,6 +64,8 @@ class _GroupCommitmentProposalScreenState
           ],
         ),
       );
+      if (!mounted) return;
+      Navigator.of(context).pop();
     }
   }
 
