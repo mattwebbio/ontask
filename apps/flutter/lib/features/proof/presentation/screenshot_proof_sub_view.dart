@@ -139,6 +139,13 @@ class _ScreenshotProofSubViewState extends State<ScreenshotProofSubView>
     }
 
     final platformFile = result.files.single;
+    final filePath = platformFile.path;
+
+    if (filePath == null) {
+      // Path is null on some platforms (e.g., web) — treat as cancelled.
+      return;
+    }
+
     const maxBytes = 25 * 1024 * 1024; // 25 MB
 
     if (platformFile.size > maxBytes) {
@@ -147,7 +154,7 @@ class _ScreenshotProofSubViewState extends State<ScreenshotProofSubView>
     }
 
     setState(() {
-      _pickedFile = XFile(platformFile.path!);
+      _pickedFile = XFile(filePath);
       _screenshotState = _ScreenshotState.preview;
     });
   }
@@ -171,6 +178,7 @@ class _ScreenshotProofSubViewState extends State<ScreenshotProofSubView>
   void _onChooseAnother() {
     setState(() {
       _pickedFile = null;
+      _isSubmitting = false;
       _screenshotState = _ScreenshotState.picking;
     });
   }
@@ -216,7 +224,10 @@ class _ScreenshotProofSubViewState extends State<ScreenshotProofSubView>
 
     switch (result) {
       case ProofVerificationApproved():
-        setState(() => _screenshotState = _ScreenshotState.approved);
+        setState(() {
+          _screenshotState = _ScreenshotState.approved;
+          _isSubmitting = false;
+        });
         _approvalFadeController.forward();
         widget.onApproved?.call();
         // Auto-dismiss after 2 seconds.
