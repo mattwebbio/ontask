@@ -42,7 +42,7 @@ class _PrivacySettingsScreenState
       child: SafeArea(
         child: retainAsync.when(
           loading: () => const Center(child: CupertinoActivityIndicator()),
-          error: (_, __) => const SizedBox.shrink(),
+          error: (_, _) => const SizedBox.shrink(),
           data: (retainDefault) => ListView(
             padding: const EdgeInsets.all(20),
             children: [

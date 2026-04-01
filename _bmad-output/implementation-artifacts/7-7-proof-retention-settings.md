@@ -450,6 +450,12 @@ Offline proof does not have an immediate AI verification result — the proof is
 - [x] Deferred items documented
 - [x] Status set to ready-for-dev
 
+### Review Findings
+
+- [ ] [Review][Patch] Remove `flutter_riverpod` import from `proof_prefs_provider.dart` — use only `riverpod_annotation` [`apps/flutter/lib/features/proof/data/proof_prefs_provider.dart:1`]
+- [ ] [Review][Patch] Fix `PrivacySettingsScreen` error handler double-underscore `__` → single `_` in committed code [`apps/flutter/lib/features/settings/presentation/privacy_settings_screen.dart:45`]
+- [x] [Review][Defer] `WatchModeSubView._onDone()` deferred bug — pops with non-null `ProofPath.watchMode` even without verified proof [`apps/flutter/lib/features/watch_mode/presentation/watch_mode_sub_view.dart`] — deferred, pre-existing
+
 ## Dev Agent Record
 
 ### Agent Model Used
