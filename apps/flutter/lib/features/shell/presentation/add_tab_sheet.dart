@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/l10n/strings.dart';
+import '../../../core/motion/motion_tokens.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../lists/domain/task_list.dart';
@@ -12,14 +15,19 @@ import '../../tasks/domain/recurrence_rule.dart';
 import '../../tasks/domain/task_priority.dart';
 import '../../tasks/domain/time_window.dart';
 import '../../tasks/presentation/tasks_provider.dart';
+import '../data/nlp_task_repository.dart';
+import '../domain/task_parse_result.dart';
+
+/// Add mode toggle — Quick Capture (NLP default) or Form.
+enum _AddMode { quickCapture, form }
 
 /// Modal sheet shown when the Add action tab is tapped.
 ///
 /// Opened by [AppShell] via [showModalBottomSheet] — this is NOT a persistent
 /// navigation destination. The Add tab is an action tab, not a content tab.
 ///
-/// Contains a task creation form: title field (required), notes field
-/// (optional), due date picker, list picker, and submit button.
+/// Story 4.1: Upgraded to support Quick Capture NLP mode (FR1b).
+/// Default mode is Quick Capture. Form mode preserves all existing fields.
 class AddTabSheet extends ConsumerStatefulWidget {
   const AddTabSheet({super.key});
 
@@ -28,6 +36,7 @@ class AddTabSheet extends ConsumerStatefulWidget {
 }
 
 class _AddTabSheetState extends ConsumerState<AddTabSheet> {
+  // ── Form mode state ──────────────────────────────────────────────────────
   final _titleController = TextEditingController();
   final _notesController = TextEditingController();
   DateTime? _dueDate;
@@ -43,11 +52,102 @@ class _AddTabSheetState extends ConsumerState<AddTabSheet> {
   bool _isSubmitting = false;
   String? _titleError;
 
+  // ── NLP Quick Capture state ──────────────────────────────────────────────
+  _AddMode _mode = _AddMode.quickCapture;
+  final _nlpController = TextEditingController();
+  Timer? _debounceTimer;
+  bool _isParsingNlp = false;
+  TaskParseResult? _parsedResult;
+  bool _nlpLowConfidence = false;
+  bool _nlpError = false;
+
   @override
   void dispose() {
     _titleController.dispose();
     _notesController.dispose();
+    _nlpController.dispose();
+    _debounceTimer?.cancel();
     super.dispose();
+  }
+
+  // ── NLP parsing logic ────────────────────────────────────────────────────
+
+  void _onNlpInputChanged(String value) {
+    _debounceTimer?.cancel();
+    if (value.trim().isEmpty) {
+      setState(() {
+        _parsedResult = null;
+        _nlpLowConfidence = false;
+        _nlpError = false;
+      });
+      return;
+    }
+    _debounceTimer = Timer(const Duration(milliseconds: 600), () {
+      _callNlpParse(value);
+    });
+  }
+
+  Future<void> _callNlpParse(String utterance) async {
+    if (!mounted) return;
+    setState(() {
+      _isParsingNlp = true;
+      _nlpLowConfidence = false;
+      _nlpError = false;
+      _parsedResult = null;
+    });
+
+    try {
+      final repo = ref.read(nlpTaskRepositoryProvider);
+      final result = await repo.parseUtterance(utterance);
+      if (!mounted) return;
+
+      if (result.confidence == 'low') {
+        setState(() {
+          _isParsingNlp = false;
+          _nlpLowConfidence = true;
+          _parsedResult = null;
+        });
+        return;
+      }
+
+      setState(() {
+        _isParsingNlp = false;
+        _parsedResult = result;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isParsingNlp = false;
+        _nlpError = true;
+        _parsedResult = null;
+      });
+    }
+  }
+
+  Future<void> _createTaskFromNlp() async {
+    final result = _parsedResult;
+    final title = result?.title ?? _nlpController.text.trim();
+    if (title.isEmpty) return;
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      await ref
+          .read(tasksProvider(listId: result?.listId).notifier)
+          .createTask(
+            title: title,
+            dueDate: result?.dueDate,
+            listId: result?.listId,
+            energyRequirement: result?.energyRequirement,
+          );
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
   }
 
   Future<void> _createTask() async {
@@ -79,9 +179,7 @@ class _AddTabSheetState extends ConsumerState<AddTabSheet> {
             priority: _priority?.toJson(),
             recurrenceRule: _recurrenceRule?.toJson(),
             recurrenceInterval: _recurrenceInterval,
-            recurrenceDaysOfWeek: _recurrenceDaysOfWeek != null
-                ? _recurrenceDaysOfWeek.toString()
-                : null,
+            recurrenceDaysOfWeek: _recurrenceDaysOfWeek?.toString(),
           );
       if (mounted) {
         Navigator.of(context).pop();
@@ -658,6 +756,148 @@ class _AddTabSheetState extends ConsumerState<AddTabSheet> {
                 ),
                 const SizedBox(height: AppSpacing.lg),
 
+                // ── Mode toggle row ─────────────────────────────────────
+                Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => setState(() => _mode = _AddMode.quickCapture),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                          decoration: BoxDecoration(
+                            color: _mode == _AddMode.quickCapture
+                                ? colors.surfaceSecondary
+                                : colors.surfacePrimary,
+                            borderRadius: const BorderRadius.horizontal(
+                              left: Radius.circular(AppSpacing.sm),
+                            ),
+                            border: Border.all(color: colors.surfaceSecondary),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(CupertinoIcons.sparkles, size: 14, color: colors.textSecondary),
+                              const SizedBox(width: AppSpacing.xs),
+                              Text(
+                                AppStrings.addTaskModeQuickCapture,
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: colors.textPrimary,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _mode = _AddMode.form;
+                            // Pre-fill title from NLP-resolved title if available
+                            if (_parsedResult != null && _titleController.text.isEmpty) {
+                              _titleController.text = _parsedResult!.title;
+                            }
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                          decoration: BoxDecoration(
+                            color: _mode == _AddMode.form
+                                ? colors.surfaceSecondary
+                                : colors.surfacePrimary,
+                            borderRadius: const BorderRadius.horizontal(
+                              right: Radius.circular(AppSpacing.sm),
+                            ),
+                            border: Border.all(color: colors.surfaceSecondary),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(CupertinoIcons.square_grid_2x2, size: 14, color: colors.textSecondary),
+                              const SizedBox(width: AppSpacing.xs),
+                              Text(
+                                AppStrings.addTaskModeForm,
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: colors.textPrimary,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.lg),
+
+                // ── Quick Capture mode ──────────────────────────────────
+                if (_mode == _AddMode.quickCapture) ...[
+                  CupertinoTextField(
+                    controller: _nlpController,
+                    placeholder: AppStrings.addTaskNlpPlaceholder,
+                    autofocus: true,
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: colors.textPrimary,
+                        ),
+                    onChanged: _onNlpInputChanged,
+                    onSubmitted: (v) {
+                      _debounceTimer?.cancel();
+                      if (v.trim().isNotEmpty) _callNlpParse(v);
+                    },
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+
+                  // Loading state
+                  if (_isParsingNlp) ...[
+                    const Center(child: CupertinoActivityIndicator()),
+                    const SizedBox(height: AppSpacing.md),
+                  ],
+
+                  // Low confidence warning
+                  if (_nlpLowConfidence) ...[
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        AppStrings.addTaskNlpLowConfidence,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: colors.textSecondary,
+                            ),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                  ],
+
+                  // Error state
+                  if (_nlpError) ...[
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        AppStrings.addTaskNlpError,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: CupertinoColors.destructiveRed,
+                            ),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                  ],
+
+                  // Parsed field pills
+                  if (_parsedResult != null) ...[
+                    _ParsedFieldPillRow(
+                      result: _parsedResult!,
+                      onTapTitle: null,
+                      onTapDueDate: _showDatePicker,
+                      onTapList: lists.isNotEmpty ? () => _showListPicker(lists) : null,
+                      onTapTime: _showTimeWindowPicker,
+                      onTapEnergy: _showEnergyPicker,
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                  ],
+                ],
+
+                // ── Form mode ───────────────────────────────────────────
+                if (_mode == _AddMode.form) ...[
                 // Title field (required)
                 CupertinoTextField(
                   controller: _titleController,
@@ -876,12 +1116,17 @@ class _AddTabSheetState extends ConsumerState<AddTabSheet> {
                   ),
                 ),
                 const SizedBox(height: AppSpacing.md),
+                ], // end Form mode
 
-                // Submit button
+                // ── Submit button (both modes) ──────────────────────────
                 SizedBox(
                   width: double.infinity,
                   child: CupertinoButton.filled(
-                    onPressed: _isSubmitting ? null : _createTask,
+                    onPressed: _isSubmitting
+                        ? null
+                        : (_mode == _AddMode.quickCapture
+                            ? _createTaskFromNlp
+                            : _createTask),
                     child: Text(
                       _isSubmitting ? AppStrings.submittingIndicator : AppStrings.addTaskCreateButton,
                     ),
@@ -895,4 +1140,295 @@ class _AddTabSheetState extends ConsumerState<AddTabSheet> {
       ),
     );
   }
+}
+
+// ── _ParsedFieldPillRow ───────────────────────────────────────────────────────
+
+/// Displays parsed task fields as labelled pills with staggered fade-in.
+///
+/// Respects Reduce Motion — skips stagger when [MediaQuery.disableAnimations].
+class _ParsedFieldPillRow extends StatelessWidget {
+  final TaskParseResult result;
+  final VoidCallback? onTapTitle;
+  final VoidCallback? onTapDueDate;
+  final VoidCallback? onTapList;
+  final VoidCallback? onTapTime;
+  final VoidCallback? onTapEnergy;
+
+  const _ParsedFieldPillRow({
+    required this.result,
+    this.onTapTitle,
+    this.onTapDueDate,
+    this.onTapList,
+    this.onTapTime,
+    this.onTapEnergy,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final reduced = isReducedMotion(context);
+
+    final pills = <Widget>[];
+
+    // Title pill (always shown)
+    pills.add(_ParsedFieldPill(
+      label: AppStrings.addTaskNlpTitle,
+      value: result.title,
+      confidence: result.fieldConfidences['title'] ?? 'high',
+      onTap: onTapTitle,
+    ));
+
+    if (result.dueDate != null) {
+      final date = DateTime.tryParse(result.dueDate!);
+      pills.add(_ParsedFieldPill(
+        label: AppStrings.addTaskNlpDueDate,
+        value: date != null
+            ? '${date.month}/${date.day}/${date.year}'
+            : result.dueDate!,
+        confidence: result.fieldConfidences['dueDate'] ?? 'high',
+        onTap: onTapDueDate,
+      ));
+    }
+
+    if (result.estimatedDurationMinutes != null) {
+      pills.add(_ParsedFieldPill(
+        label: AppStrings.addTaskNlpDuration,
+        value: '${result.estimatedDurationMinutes}min',
+        confidence: result.fieldConfidences['estimatedDurationMinutes'] ?? 'high',
+        onTap: null,
+      ));
+    }
+
+    if (result.energyRequirement != null) {
+      pills.add(_ParsedFieldPill(
+        label: AppStrings.addTaskNlpEnergy,
+        value: result.energyRequirement!.replaceAll('_', ' '),
+        confidence: result.fieldConfidences['energyRequirement'] ?? 'high',
+        onTap: onTapEnergy,
+      ));
+    }
+
+    if (result.listId != null) {
+      pills.add(_ParsedFieldPill(
+        label: AppStrings.addTaskNlpList,
+        value: result.listId!,
+        confidence: result.fieldConfidences['listId'] ?? 'high',
+        onTap: onTapList,
+      ));
+    }
+
+    return Wrap(
+      spacing: AppSpacing.sm,
+      runSpacing: AppSpacing.sm,
+      children: [
+        for (int i = 0; i < pills.length; i++)
+          reduced
+              ? pills[i]
+              : _StaggeredFadePill(
+                  index: i,
+                  child: pills[i],
+                ),
+      ],
+    );
+  }
+}
+
+// ── _StaggeredFadePill ────────────────────────────────────────────────────────
+
+/// Wraps a pill with a staggered fade-in animation (UX-DR29, 150ms per step).
+class _StaggeredFadePill extends StatefulWidget {
+  final int index;
+  final Widget child;
+
+  const _StaggeredFadePill({required this.index, required this.child});
+
+  @override
+  State<_StaggeredFadePill> createState() => _StaggeredFadePillState();
+}
+
+class _StaggeredFadePillState extends State<_StaggeredFadePill>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _opacity;
+  bool _started = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: Duration(milliseconds: MotionTokens.revealDurationMs),
+      vsync: this,
+    );
+    _opacity = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_started) {
+      _started = true;
+      final delay = Duration(milliseconds: widget.index * 150);
+      Future.delayed(delay, () {
+        if (mounted) _controller.forward();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(opacity: _opacity, child: widget.child);
+  }
+}
+
+// ── _ParsedFieldPill ──────────────────────────────────────────────────────────
+
+/// A labelled pill showing a single parsed field from NLP task capture.
+///
+/// High-confidence: solid border with [colors.surfaceSecondary] background.
+/// Low-confidence: same background but dashed border (1pt, [colors.textSecondary] at 60%).
+///
+/// Tapping the pill opens the corresponding field picker.
+class _ParsedFieldPill extends StatelessWidget {
+  final String label;
+  final String value;
+  final String confidence; // 'high' | 'low'
+  final VoidCallback? onTap;
+
+  const _ParsedFieldPill({
+    required this.label,
+    required this.value,
+    required this.confidence,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<OnTaskColors>()!;
+    final isLow = confidence == 'low';
+
+    return GestureDetector(
+      onTap: onTap,
+      child: isLow
+          ? CustomPaint(
+              painter: _DashedBorderPainter(
+                color: colors.textSecondary.withAlpha(153), // 60% opacity
+                borderRadius: 20,
+              ),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: colors.surfaceSecondary,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: _PillContent(label: label, value: value, colors: colors),
+              ),
+            )
+          : Container(
+              decoration: BoxDecoration(
+                color: colors.surfaceSecondary,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: colors.surfaceSecondary),
+              ),
+              child: _PillContent(label: label, value: value, colors: colors),
+            ),
+    );
+  }
+}
+
+class _PillContent extends StatelessWidget {
+  final String label;
+  final String value;
+  final OnTaskColors colors;
+
+  const _PillContent({
+    required this.label,
+    required this.value,
+    required this.colors,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      child: RichText(
+        text: TextSpan(
+          style: const TextStyle(fontSize: 12, fontFamily: 'SFPro'),
+          children: [
+            TextSpan(
+              text: '$label: ',
+              style: TextStyle(color: colors.textSecondary),
+            ),
+            TextSpan(
+              text: value,
+              style: TextStyle(
+                color: colors.textPrimary,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── _DashedBorderPainter ──────────────────────────────────────────────────────
+
+/// CustomPainter that draws a dashed rounded-rectangle border.
+///
+/// Used for low-confidence parsed field pills (UX-DR29).
+class _DashedBorderPainter extends CustomPainter {
+  final Color color;
+  final double borderRadius;
+
+  const _DashedBorderPainter({
+    required this.color,
+    required this.borderRadius,
+  });
+
+  static const double _dashWidth = 4;
+  static const double _dashGap = 3;
+  static const double _strokeWidth = 1;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = _strokeWidth
+      ..style = PaintingStyle.stroke;
+
+    final rect = Rect.fromLTWH(
+      _strokeWidth / 2,
+      _strokeWidth / 2,
+      size.width - _strokeWidth,
+      size.height - _strokeWidth,
+    );
+    final rrect = RRect.fromRectAndRadius(rect, Radius.circular(borderRadius));
+
+    // Convert rounded rect to a path and dash it
+    final path = Path()..addRRect(rrect);
+    _drawDashedPath(canvas, paint, path);
+  }
+
+  void _drawDashedPath(Canvas canvas, Paint paint, Path path) {
+    final metrics = path.computeMetrics();
+    for (final metric in metrics) {
+      double distance = 0;
+      while (distance < metric.length) {
+        final start = distance;
+        final end = (distance + _dashWidth).clamp(0.0, metric.length);
+        canvas.drawPath(metric.extractPath(start, end), paint);
+        distance += _dashWidth + _dashGap;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DashedBorderPainter old) =>
+      old.color != color || old.borderRadius != borderRadius;
 }

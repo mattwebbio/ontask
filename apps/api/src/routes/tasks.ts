@@ -2,6 +2,7 @@ import { OpenAPIHono, createRoute } from '@hono/zod-openapi'
 import { z } from 'zod'
 import { ok, list, err } from '../lib/response.js'
 import { runScheduleForUser } from '../services/scheduling.js'
+import { parseTaskUtterance } from '@ontask/ai'
 
 // ── Tasks router ────────────────────────────────────────────────────────────
 // CRUD routes for task management (FR1, FR55, FR57, FR58, FR59).
@@ -89,6 +90,25 @@ const taskSchema = z.object({
 
 const TaskResponseSchema = z.object({ data: taskSchema })
 
+// ── NLP parse schemas (FR1b) ─────────────────────────────────────────────────
+
+const TaskParseRequestSchema = z.object({
+  utterance: z.string().min(1).openapi({ example: 'call the dentist Thursday at 2pm' }),
+})
+
+const TaskParseResponseSchema = z.object({
+  data: z.object({
+    title: z.string(),
+    confidence: z.enum(['high', 'low']),
+    dueDate: z.string().nullable().optional(),
+    scheduledTime: z.string().nullable().optional(),
+    estimatedDurationMinutes: z.number().nullable().optional(),
+    energyRequirement: z.enum(['high_focus', 'low_energy', 'flexible']).nullable().optional(),
+    listId: z.string().nullable().optional(),
+    fieldConfidences: z.record(z.string(), z.enum(['high', 'low'])),
+  }),
+})
+
 const TaskListResponseSchema = z.object({
   data: z.array(taskSchema),
   pagination: z.object({
@@ -141,6 +161,65 @@ function stubTask(overrides: Partial<z.infer<typeof taskSchema>> = {}): z.infer<
     ...overrides,
   }
 }
+
+// ── POST /v1/tasks/parse ─────────────────────────────────────────────────────
+// IMPORTANT: Must be registered BEFORE GET /v1/tasks/:id to prevent Hono from
+// interpreting "parse" as a task ID. (Dev Notes: route placement critical)
+
+const postTaskParseRoute = createRoute({
+  method: 'post',
+  path: '/v1/tasks/parse',
+  tags: ['Tasks'],
+  summary: 'Parse a natural language task utterance (FR1b)',
+  description:
+    'Parses a natural language utterance into structured task properties using AI. ' +
+    'Does NOT create a task — returns parsed fields for user review before confirmation. ' +
+    'Returns 422 when confidence is low or the LLM times out.',
+  request: {
+    body: { content: { 'application/json': { schema: TaskParseRequestSchema } }, required: true },
+  },
+  responses: {
+    200: { content: { 'application/json': { schema: TaskParseResponseSchema } }, description: 'Parsed task fields' },
+    422: { content: { 'application/json': { schema: ErrorSchema } }, description: 'Low confidence or timeout' },
+    400: { content: { 'application/json': { schema: ErrorSchema } }, description: 'Validation error' },
+  },
+})
+
+app.openapi(postTaskParseRoute, async (c) => {
+  const body = c.req.valid('json')
+  // Auth stub: x-user-id header (same pattern as other task routes)
+  const userId = c.req.header('x-user-id') ?? 'stub-user-id'
+
+  try {
+    const result = await parseTaskUtterance(
+      {
+        utterance: body.utterance,
+        userId,
+        availableLists: [], // TODO(impl): fetch from DB when available
+        now: new Date(),
+      },
+      c.env,
+    )
+
+    if (result.confidence === 'low') {
+      return c.json(
+        err('UNPROCESSABLE', "Could not understand your task — try describing it differently"),
+        422,
+      )
+    }
+
+    return c.json(ok(result), 200)
+  } catch (e) {
+    const error = e as NodeJS.ErrnoException
+    if (error.code === 'TIMEOUT') {
+      return c.json(
+        err('UNPROCESSABLE', 'Task assistant timed out — try a simpler phrase'),
+        422,
+      )
+    }
+    throw e
+  }
+})
 
 // ── POST /v1/tasks ──────────────────────────────────────────────────────────
 
