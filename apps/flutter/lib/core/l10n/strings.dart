@@ -479,6 +479,7 @@ class AppStrings {
   static const String timerStopVoiceOver = 'Stop timer';
   static const String timerAnnouncementTemplate = '{time} elapsed on {task}';
   static const String todayRowStartTimer = 'Start timer';
+  static const String todayRowWhyHere = 'Why is this scheduled here?';
 
   // ── Prediction badge ─────────────────────────────────────────────────────
   static const String predictionBadgeOnTrack = 'On track · {date}';
