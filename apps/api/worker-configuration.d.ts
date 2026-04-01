@@ -24,6 +24,16 @@ declare namespace Cloudflare {
 		CALENDAR_WEBHOOK_SECRET?: string;
 		/** Cloudflare AI Gateway base URL for routing LLM requests (Story 3.7). Set via `wrangler secret put AI_GATEWAY_URL`. */
 		AI_GATEWAY_URL?: string;
+		/** Stripe API secret key for creating off-session PaymentIntents (Story 6.5). Set via `wrangler secret put STRIPE_SECRET_KEY`. */
+		STRIPE_SECRET_KEY?: string;
+		/** Stripe webhook signing secret for verifying webhook event signatures (Story 6.5). Set via `wrangler secret put STRIPE_WEBHOOK_SECRET`. */
+		STRIPE_WEBHOOK_SECRET?: string;
+		/** Every.org Partner Funds API key for charity disbursements (Story 6.5). Set via `wrangler secret put EVERY_ORG_API_KEY`. */
+		EVERY_ORG_API_KEY?: string;
+		/** Cloudflare Queue binding for charge trigger messages (Story 6.5). */
+		CHARGE_TRIGGER_QUEUE: Queue;
+		/** Cloudflare Queue binding for Every.org disbursement messages (Story 6.5). */
+		EVERY_ORG_QUEUE: Queue;
 	}
 }
 interface CloudflareBindings extends Cloudflare.Env {}

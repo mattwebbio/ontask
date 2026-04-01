@@ -1,6 +1,7 @@
 import { OpenAPIHono, createRoute } from '@hono/zod-openapi'
 import { z } from 'zod'
 import { ok, err } from '../lib/response.js'
+import { verifyWebhookSignature } from '../services/stripe.js'
 
 // ── Commitment contracts router ───────────────────────────────────────────────
 // Payment method setup endpoints for commitment stakes (Epic 6, FR23, FR64).
@@ -497,6 +498,57 @@ const _stubImpactData = {
 
 app.openapi(getImpactRoute, (c) => {
   return c.json(ok(_stubImpactData), 200)
+})
+
+// ── POST /v1/webhooks/stripe ──────────────────────────────────────────────────
+// Receives raw Stripe webhook events. No auth middleware — Stripe's webhook
+// secret (STRIPE_WEBHOOK_SECRET) is the authentication mechanism (ARCH-24, AC: 3).
+//
+// IMPORTANT: Raw body must be read BEFORE any JSON parsing for signature
+// verification. Do NOT use createRoute body schema parsing here.
+//
+// Must respond within 30 seconds of receipt (NFR-I4).
+// Duplicate webhook delivery does NOT result in duplicate charges (NFR-R2) —
+// idempotency is enforced in the charge-trigger consumer.
+
+app.post('/v1/webhooks/stripe', async (c) => {
+  // Step 1: Read raw body (must be before any JSON parsing for signature verification)
+  const rawBody = await c.req.text()
+
+  // Step 2: Get Stripe signature header
+  const sig = c.req.header('Stripe-Signature') ?? ''
+
+  // Step 3: Verify webhook signature
+  const valid = verifyWebhookSignature(rawBody, sig, c.env)
+  if (!valid) {
+    return c.json({ error: 'Invalid signature' }, 400)
+  }
+
+  // Step 4: Parse event
+  let event: { type: string; data: unknown }
+  try {
+    event = JSON.parse(rawBody) as { type: string; data: unknown }
+  } catch {
+    return c.json({ error: 'Invalid JSON payload' }, 400)
+  }
+
+  // Step 5: Handle event types
+  // TODO(impl): distinguish webhook event types; handle payment_intent.succeeded,
+  //             payment_intent.payment_failed; enqueue status update messages
+  //
+  // Current handling: acknowledge all events immediately to meet <30s SLA (NFR-I4).
+  // The primary charge trigger is enqueued by the scheduled cron (charge-scheduler.ts)
+  // when deadline passes. The Stripe webhook is the confirmation signal that
+  // updates charge_events.status — not the primary trigger.
+  //
+  // On payment_intent.succeeded: enqueue an UPDATE_CHARGE_STATUS message or update
+  //   charge_events inline if latency budget allows (must be < 30s total).
+  // On payment_intent.payment_failed: update charge_events.status = 'failed',
+  //   store stripeError from the event's last_payment_error.message.
+  void event
+
+  // Step 6: Return 200 immediately after acknowledging — must be within 30s (NFR-I4)
+  return c.json({ received: true }, 200)
 })
 
 export { app as commitmentContractsRouter }
