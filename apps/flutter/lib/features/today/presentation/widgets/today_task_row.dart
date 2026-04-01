@@ -58,6 +58,12 @@ class TodayTaskRow extends StatelessWidget {
   /// many elapsed seconds. Shows an elapsed indicator instead of Start button.
   final int? timerElapsedSeconds;
 
+  /// If non-null, shows a list attribution label below the task title (FR19).
+  ///
+  /// Displayed for tasks assigned from a shared list. Format: "from [List Name]"
+  /// using [AppStrings.taskFromListLabel]. Display-only; no tap action in v1.
+  final String? listName;
+
   const TodayTaskRow({
     required this.taskId,
     required this.title,
@@ -69,6 +75,7 @@ class TodayTaskRow extends StatelessWidget {
     this.onWhyHere,
     this.onNudge,
     this.timerElapsedSeconds,
+    this.listName,
     super.key,
   });
 
@@ -119,20 +126,39 @@ class TodayTaskRow extends StatelessWidget {
               ),
             ),
             const SizedBox(width: AppSpacing.md),
-            // Task title
+            // Task title (and optional list attribution for assigned tasks)
             Expanded(
-              child: Text(
-                title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: textTheme.bodyLarge?.copyWith(
-                  color: isMuted
-                      ? colors.textPrimary.withValues(alpha: 0.5)
-                      : colors.textPrimary,
-                  decoration:
-                      isCompleted ? TextDecoration.lineThrough : null,
-                  fontSize: 15,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: textTheme.bodyLarge?.copyWith(
+                      color: isMuted
+                          ? colors.textPrimary.withValues(alpha: 0.5)
+                          : colors.textPrimary,
+                      decoration:
+                          isCompleted ? TextDecoration.lineThrough : null,
+                      fontSize: 15,
+                    ),
+                  ),
+                  if (listName != null)
+                    Text(
+                      AppStrings.taskFromListLabel
+                          .replaceAll('{listName}', listName!),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: textTheme.bodySmall?.copyWith(
+                        color: isMuted
+                            ? colors.textSecondary.withValues(alpha: 0.5)
+                            : colors.textSecondary,
+                        fontSize: 13,
+                      ),
+                    ),
+                ],
               ),
             ),
             // Timer indicator or start action

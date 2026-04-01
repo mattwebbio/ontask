@@ -388,6 +388,63 @@ app.openapi(autoAssignRoute, async (c) => {
   )
 })
 
+// ── DELETE /v1/lists/:id/tasks/:taskId/assignment ────────────────────────────
+// Removes the assignment from a task, clearing the previous assignee's schedule entry.
+// IMPORTANT: Registered BEFORE GET /v1/lists/{id}/members to avoid path conflicts.
+// Route path: /v1/lists/{id}/tasks/{taskId}/assignment — nested resource deletion.
+
+const unassignTaskResponseSchema = z.object({
+  taskId: z.string().uuid(),
+  listId: z.string().uuid(),
+  previousAssigneeId: z.string().uuid().nullable(),
+})
+
+const UnassignTaskResponseSchema = z.object({ data: unassignTaskResponseSchema })
+
+const unassignTaskRoute = createRoute({
+  method: 'delete',
+  path: '/v1/lists/{id}/tasks/{taskId}/assignment',
+  tags: ['Sharing'],
+  summary: 'Unassign a task from a member',
+  description:
+    'Removes the assignment from a task, clearing it from the previous assignee\'s personal schedule (FR19, AC3). ' +
+    'Returns the taskId, listId, and previousAssigneeId for client-side state invalidation.',
+  request: {
+    params: z.object({
+      id: z.string().uuid(),
+      taskId: z.string().uuid(),
+    }),
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: UnassignTaskResponseSchema } },
+      description: 'Task unassigned',
+    },
+    404: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'List or task not found',
+    },
+    422: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Task does not belong to this list',
+    },
+  },
+})
+
+app.openapi(unassignTaskRoute, async (c) => {
+  // TODO(impl): read current assignedToUserId, set to NULL, trigger schedule recalculation for previousAssigneeId
+  const { id, taskId } = c.req.valid('param')
+  console.log(`[stub] Unassigning task ${taskId} from list ${id}`)
+  return c.json(
+    ok({
+      taskId,
+      listId: id,
+      previousAssigneeId: 'd0000000-0000-4000-8000-000000000002',
+    }),
+    200,
+  )
+})
+
 // ── GET /v1/lists/:id/members ────────────────────────────────────────────────
 // Returns all members of a shared list.
 

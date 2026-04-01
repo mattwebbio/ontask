@@ -304,6 +304,12 @@ None (all new functionality extends existing files or adds new endpoints to exis
 **`apps/flutter/test/features/tasks/`:**
 - `task_dto_test.dart` (extend existing — created in Story 5.2)
 
+### Review Findings
+
+- [ ] [Review][Patch] Unused `proof_mode.dart` import in `now_task_card_test.dart` [`apps/flutter/test/features/now/now_task_card_test.dart:6`] — `import 'package:ontask/features/now/domain/proof_mode.dart'` is imported but `ProofMode` is never referenced in the file. Will trigger `unused_import` lint warning. Remove the import.
+- [ ] [Review][Patch] `sharing_repository_test.dart` tests a fake override, not the real `dio.delete()` call [`apps/flutter/test/features/lists/sharing_repository_test.dart`] — `_RecordingFakeRepository` overrides `unassignTask()` entirely, so the test never exercises the actual `_client.dio.delete('/v1/lists/$listId/tasks/$taskId/assignment')` call in `SharingRepository`. Critical check #9 (verify DELETE fires to correct URL) is not met. Replace with a `MockDio`/`mocktail` setup or `HttpMock` that intercepts the real HTTP call, similar to the approach in Story 5.2 test patterns — or at minimum add a test that instantiates a real `SharingRepository` with a mock `Dio` and verifies the URL and method.
+- [ ] [Review][Patch] `today_screen.dart` never passes `listName` to `TodayTaskRow` — attribution chip never renders [`apps/flutter/lib/features/today/presentation/today_screen.dart:523`] — `TodayTaskRow(...)` call in `today_screen.dart` does not pass `listName: task.listName`. The attribution chip added to the widget is wired up correctly in the widget itself, but the call site omits the field, so the chip will never appear for assigned tasks. Add `listName: task.listName` to the `TodayTaskRow` constructor call.
+
 ## Dev Agent Record
 
 ### Agent Model Used
