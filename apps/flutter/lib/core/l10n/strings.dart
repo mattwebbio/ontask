@@ -581,6 +581,30 @@ class AppStrings {
   /// Pill label for the parsed list assignment.
   static const String addTaskNlpList = 'List';
 
+  // ── Guided Chat task capture (FR14/UX-DR15) ──────────────────────────────
+
+  /// Mode toggle label for Guided Chat mode.
+  static const String addTaskModeGuided = 'Guided';
+
+  /// Placeholder for the Guided Chat reply input field.
+  static const String guidedChatInputPlaceholder = 'Reply\u2026';
+
+  /// Generic error shown when the guided chat request fails unexpectedly.
+  static const String guidedChatError = 'Something went wrong. Please try again.';
+
+  /// Error shown when the guided chat LLM times out.
+  static const String guidedChatTimeoutError = 'The assistant timed out. Please try again.';
+
+  /// Label for the create task button shown in the guided chat confirmation card.
+  static const String guidedChatCreateButton = 'Create task';
+
+  /// Brief description shown in the AddTabSheet body when Guided mode is active.
+  /// "Future self" voice (UX spec line 1488).
+  static const String guidedChatDescription = 'Let\u2019s build your task together.';
+
+  /// VoiceOver announcement when guided chat is dismissed without saving.
+  static const String guidedChatDismissed = 'Chat dismissed.';
+
   // ── Scheduling nudge (FR14) ──────────────────────────────────────────────
   /// CTA label on TodayTaskRow swipe action that opens the AI nudge sheet.
   static const String todayRowNudge = 'Reschedule with AI';

@@ -96,3 +96,8 @@
 
 - **Empty accountEmail silently stored when Google userinfo call fails** — `exchangeGoogleCode` in `apps/api/src/routes/calendar.ts` sets `email = ''` and continues if the userinfo endpoint returns non-200. The `accountEmail` DB column is `notNull()` so an empty string satisfies the constraint, but data is silently degraded. Non-critical for scheduling correctness; address in a hardening pass when email is used for display or audit purposes.
 - **Google refresh token rotation silently discarded** — `refreshGoogleToken` in `apps/api/src/services/calendar/google.ts` does not capture or persist a rotated refresh token if Google issues one in the refresh response. Not standard behavior for server-side OAuth2; acceptable for v1. Revisit if Google credentials become invalid unexpectedly in production.
+
+## Deferred from: code review of 4-2-guided-chat-task-capture (2026-03-31)
+
+- **`_mode` never set to `_AddMode.guided` — dead code on submit button guard** [`apps/flutter/lib/features/shell/presentation/add_tab_sheet.dart`] — Tapping Guided immediately calls `pop()` so `_mode` remains at its previous value; the `if (_mode != _AddMode.guided)` guard on the submit button is unreachable but harmless. No user impact; clean up in a future refactor pass.
+- **Widget test `tasksProvider()` override brittle if `listId` is non-null** [`apps/flutter/test/features/shell/guided_chat_sheet_test.dart` line 122] — Pre-existing pattern from Story 4.1; current fixtures keep `listId` null so the override intercepts correctly. Would silently break if a test fixture returned a non-null `listId`. Harden when adding more complete task-creation test scenarios.
