@@ -242,6 +242,14 @@ claude-sonnet-4-6
 - _bmad-output/implementation-artifacts/sprint-status.yaml (modified)
 - _bmad-output/implementation-artifacts/4-3-natural-language-scheduling-adjustment.md (modified)
 
+### Review Findings
+
+- [ ] [Review][Decision] Nudge button appears for `calendarEvent` proof mode tasks — `NowScreen` always passes a non-null `onNudge`, so the "Reschedule with AI" button renders even when all other action buttons are hidden for calendar event tasks. Clarify: should the nudge button be suppressed for `calendarEvent` tasks (pass `onNudge: task.proofMode != ProofMode.calendarEvent ? () => _openNudgeSheet(...) : null`) or is rescheduling a calendar event intentionally allowed? [apps/flutter/lib/features/now/presentation/now_screen.dart:116, apps/flutter/lib/features/now/presentation/widgets/now_task_card.dart:250]
+
+- [ ] [Review][Patch] Test file committed with unused `import 'package:flutter/cupertino.dart'` alongside `import 'package:flutter/material.dart'` — violates story constraint #9; working tree already has the fix but it is not committed [apps/flutter/test/features/now/now_task_card_nudge_test.dart:1]
+
+- [ ] [Review][Patch] Third widget test (`tapping fires onNudge callback`) has no `pump()` or `pumpAndSettle()` after `tester.tap(...)` before the assertion — `nudgeCalled` is synchronous so tests pass, but adding a `pump()` after tap is required by the existing `now_task_card_timer_test.dart` pattern and defends against future async changes [apps/flutter/test/features/now/now_task_card_nudge_test.dart:69]
+
 ## Change Log
 
 - 2026-03-31: Story 4.3 implemented — added `onNudge` callback to `NowTaskCard`, wired `_openNudgeSheet()` in `NowScreen`, added 3 widget tests for nudge button visibility and callback. No backend, l10n, or Today tab changes required.
