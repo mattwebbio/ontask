@@ -1,6 +1,6 @@
 # Story 5.2: Task Assignment Strategies
 
-Status: review
+Status: in-progress
 
 ## Story
 
@@ -439,6 +439,15 @@ const autoAssignResponseSchema = z.object({
 - `Task.energyRequirement` field for AI-assisted input — [Source: `packages/core/src/schema/tasks.ts:24`; `apps/flutter/lib/features/tasks/domain/task.dart`]
 - `Task.durationMinutes` field for AI-assisted input — [Source: `apps/flutter/lib/features/tasks/domain/task.dart:40`]
 - `@Default(0) int roundRobinIndex` Freezed syntax — [Source: Story 5.1 Dev Notes; `apps/flutter/lib/features/lists/domain/task_list.dart`]
+
+### Review Findings
+
+- [ ] [Review][Patch] `_journal.json` trailing newline removed [packages/core/src/schema/migrations/meta/_journal.json]
+- [ ] [Review][Patch] `ListSettingsScreen` renders no loading/null guard when `listsProvider` hasn't resolved — `list` is silently null until the async provider settles; user sees all strategies unchecked during cold-start load [apps/flutter/lib/features/lists/presentation/list_settings_screen.dart:33]
+- [x] [Review][Defer] `console.log` in production API stub handlers [apps/api/src/routes/sharing.ts] — deferred, pre-existing pattern consistent with all other stubs in the file
+- [x] [Review][Defer] Fake test repos instantiate real `ApiClient` / `AuthInterceptor` in constructor — no real network calls are made (all methods overridden), but the wiring is fragile [apps/flutter/test/features/lists/list_settings_screen_test.dart] — deferred, pre-existing pattern from Story 5.1
+- [x] [Review][Defer] `TaskList.assignmentStrategy` is `String?` with no enum validation in Flutter domain — unknown strategy values silently pass through [apps/flutter/lib/features/lists/domain/task_list.dart] — deferred, consistent with no-enum-in-domain project approach; Zod validates at API boundary
+- [x] [Review][Defer] Brief UI flash after `ref.invalidate(listsProvider)` during strategy update — selected checkmark may briefly revert before provider refetches [apps/flutter/lib/features/lists/presentation/list_settings_screen.dart] — deferred, minor polish not called out in spec
 
 ## Dev Agent Record
 
