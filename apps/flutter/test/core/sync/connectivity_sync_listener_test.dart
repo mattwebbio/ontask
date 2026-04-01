@@ -7,7 +7,6 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:ontask/core/storage/database.dart';
 import 'package:ontask/core/sync/connectivity_sync_listener.dart';
-import 'package:ontask/core/sync/sync_manager.dart';
 import 'package:ontask/features/proof/data/proof_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -166,12 +165,12 @@ void main() {
       );
       addTearDown(db.close);
 
-      // Stub submitOfflineProof to throw — this simulates a network error
-      // during sync. The error is caught in _triggerSync and logged.
+      // Stub submitOfflineProof in case any queued ops exist.
       when(() => mockRepo.submitOfflineProof(any(), any()))
           .thenThrow(Exception('network error'));
 
-      // Trigger sync with no actual pending ops — listener shouldn't crash.
+      // Trigger connectivity change — _triggerSync catches all errors so the
+      // widget must remain alive regardless of sync outcome.
       await _emitConnectivityChange(tester, 'wifi');
 
       // Widget is still alive — error was caught.

@@ -2,8 +2,6 @@ import 'dart:convert' show jsonEncode;
 
 import 'package:camera/camera.dart';
 import 'package:dio/dio.dart';
-import 'package:drift/drift.dart' show Value;
-import 'package:riverpod/riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/network/api_client.dart';

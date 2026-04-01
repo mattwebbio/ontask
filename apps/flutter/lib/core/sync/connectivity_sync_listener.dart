@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../features/proof/data/proof_repository.dart';
@@ -52,6 +51,7 @@ class _ConnectivitySyncListenerState
       _wasPreviouslyOnline = results.any((r) => r != ConnectivityResult.none);
     } catch (e) {
       debugPrint('ConnectivitySyncListener: init connectivity check error: $e');
+      if (!mounted) return;
     }
 
     _connectivitySub = Connectivity().onConnectivityChanged.listen(
@@ -85,8 +85,7 @@ class _ConnectivitySyncListenerState
           if (type == 'SUBMIT_PROOF') {
             final taskId = payload['taskId'] as String;
             final clientTs = DateTime.parse(
-              payload['clientTimestamp'] as String? ??
-                  DateTime.now().toIso8601String(),
+              payload['clientTimestamp'] as String,
             );
             await proofRepo.submitOfflineProof(taskId, clientTs);
           }
