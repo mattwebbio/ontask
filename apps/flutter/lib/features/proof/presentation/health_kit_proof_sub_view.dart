@@ -2,67 +2,53 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
 
-import 'package:camera/camera.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' show Theme;
+import 'package:health/health.dart';
 
 import '../../../core/l10n/strings.dart';
 import '../../../core/motion/motion_tokens.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../now/presentation/widgets/now_task_card.dart';
-import '../../proof/data/proof_repository.dart';
-import '../../proof/domain/proof_path.dart';
-import '../../proof/domain/proof_verification_result.dart';
-import '../domain/watch_mode_session.dart';
+import '../data/proof_repository.dart';
+import '../domain/health_kit_verification_data.dart';
+import '../domain/proof_path.dart';
+import '../domain/proof_verification_result.dart';
 
 // ── State machine ─────────────────────────────────────────────────────────────
 
-/// States for the Watch Mode live session flow.
-enum _WatchModeState {
+/// States for the HealthKit Auto-Verify flow.
+enum _HealthKitState {
   idle,
-  starting,
-  active,
-  ending,
-  summary,
+  requesting,
+  reading,
+  found,
+  notFound,
   submitting,
   approved,
   rejected,
   timeout,
 }
 
-// ── Constants ─────────────────────────────────────────────────────────────────
-
-/// Frame polling interval in seconds — midpoint of 30–60s per ARCH-32.
-const int _pollIntervalSeconds = 45;
-
 // ── Widget ────────────────────────────────────────────────────────────────────
 
-/// Watch Mode live session sub-view for the Proof Capture Modal healthKit path.
+/// HealthKit Auto-Verify sub-view for the Proof Capture Modal healthKit path.
 ///
-/// Manages its own state machine: idle → starting → active → ending → summary
-/// → submitting → result.
+/// Reads Apple Health data to automatically verify task completion
+/// for activities like workouts and meditation.
 ///
 /// This is a [StatefulWidget] (NOT [ConsumerStatefulWidget]) — no Riverpod
 /// provider reads are needed at widget level. The [ProofRepository] is
-/// injected via constructor. Pattern established in Stories 7.2–7.3.
+/// injected via constructor. Pattern established in Stories 7.2–7.4.
 ///
-/// Watch Mode is a focus mode — NOT a proof-filing mode (UX spec line 1031–1032).
-/// The active state deliberately shows NO camera preview — only a minimal overlay.
-///
-/// Frames are captured silently and immediately discarded after stub analysis
-/// (NFR-S3 — no frame stored at any point).
-///
-/// Watch Mode is iOS-only (UX-DR10). The [assert] in [build] fires in debug
+/// HealthKit is iOS-only (UX-DR31). The [assert] in [build] fires in debug
 /// builds if this widget is somehow constructed on macOS.
 ///
-/// On successful verification, calls [Navigator.pop(context, ProofPath.watchMode)]
+/// On successful verification, calls [Navigator.pop(context, ProofPath.healthKit)]
 /// so the caller ([ProofCaptureModal]) can trigger [onApproved].
-/// Note: Prior to Story 7.5, this popped with [ProofPath.healthKit]. Updated
-/// as part of the ProofPath enum split (Story 7.5).
-/// (Epic 7, Story 7.4, AC: 1–4, FR33-34, FR66-67, UX-DR10)
-class WatchModeSubView extends StatefulWidget {
-  const WatchModeSubView({
+/// (Epic 7, Story 7.5, AC: 1–5, FR35, FR47, UX-DR31)
+class HealthKitProofSubView extends StatefulWidget {
+  const HealthKitProofSubView({
     super.key,
     required this.taskId,
     required this.taskName,
@@ -76,49 +62,34 @@ class WatchModeSubView extends StatefulWidget {
   final VoidCallback? onApproved;
 
   @override
-  State<WatchModeSubView> createState() => _WatchModeSubViewState();
+  State<HealthKitProofSubView> createState() => _HealthKitProofSubViewState();
 }
 
-class _WatchModeSubViewState extends State<WatchModeSubView>
+class _HealthKitProofSubViewState extends State<HealthKitProofSubView>
     with TickerProviderStateMixin {
   // ── State machine ──────────────────────────────────────────────────────────
-  _WatchModeState _watchState = _WatchModeState.idle;
+  _HealthKitState _state = _HealthKitState.idle;
 
   // ── Submission guard ───────────────────────────────────────────────────────
   bool _isSubmitting = false;
 
-  // ── Camera ─────────────────────────────────────────────────────────────────
-  CameraController? _cameraController;
-  String? _cameraError;
-
-  // ── Session tracking ───────────────────────────────────────────────────────
-  DateTime? _startedAt;
-  WatchModeSession? _session;
-  int _elapsedSeconds = 0;
-  int _totalFrames = 0;
-  int _detectedActivityFrames = 0;
+  // ── HealthKit data ─────────────────────────────────────────────────────────
+  HealthKitVerificationData? _verificationData;
+  String? _rejectionReason;
 
   // ── Timers ─────────────────────────────────────────────────────────────────
-  Timer? _sessionTimer;
-  Timer? _framePollingTimer;
   Timer? _timeoutTimer;
 
   // ── Animation controllers ──────────────────────────────────────────────────
-  /// Pulsing arc — submitting state (same pattern as PhotoCaptureSubView).
+  /// Pulsing arc — submitting state (same pattern as other sub-views).
   late AnimationController _arcController;
 
   /// Approval fade-in — approved state (300ms ease-in).
   late AnimationController _approvalFadeController;
   late Animation<double> _approvalFadeAnimation;
 
-  /// Camera indicator pulse — active state (red dot, 1s period).
-  late AnimationController _cameraIndicatorController;
-
   // ── Motion ─────────────────────────────────────────────────────────────────
   bool _reducedMotion = false;
-
-  // ── Rejection reason ───────────────────────────────────────────────────────
-  String? _rejectionReason;
 
   @override
   void initState() {
@@ -134,10 +105,6 @@ class _WatchModeSubViewState extends State<WatchModeSubView>
     _approvalFadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _approvalFadeController, curve: Curves.easeIn),
     );
-    _cameraIndicatorController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 1),
-    );
   }
 
   @override
@@ -148,120 +115,88 @@ class _WatchModeSubViewState extends State<WatchModeSubView>
 
   @override
   void dispose() {
-    _sessionTimer?.cancel();
-    _framePollingTimer?.cancel();
     _timeoutTimer?.cancel();
     _arcController.dispose();
     _approvalFadeController.dispose();
-    _cameraIndicatorController.dispose();
-    _cameraController?.dispose();
     super.dispose();
   }
 
-  // ── Camera init ────────────────────────────────────────────────────────────
+  // ── HealthKit read flow ────────────────────────────────────────────────────
 
-  Future<void> _initWatchMode() async {
-    setState(() => _watchState = _WatchModeState.starting);
+  Future<void> _checkHealthKit() async {
+    // iOS guard — HealthKit unavailable on macOS or other platforms.
+    if (!Platform.isIOS) {
+      setState(() => _state = _HealthKitState.notFound);
+      return;
+    }
+
+    setState(() => _state = _HealthKitState.requesting);
+
     try {
-      final cameras = await availableCameras();
+      final health = Health();
+      await health.requestAuthorization(
+        [HealthDataType.WORKOUT, HealthDataType.MINDFULNESS],
+        permissions: [HealthDataAccess.READ],
+      );
       if (!mounted) return;
-      if (cameras.isEmpty) {
-        setState(() {
-          _cameraError = AppStrings.watchModeNoCameraError;
-          _watchState = _WatchModeState.idle;
-        });
+
+      setState(() => _state = _HealthKitState.reading);
+
+      final data = await health.getHealthDataFromTypes(
+        startTime: DateTime.now().subtract(const Duration(hours: 2)),
+        endTime: DateTime.now(),
+        types: [HealthDataType.WORKOUT, HealthDataType.MINDFULNESS],
+      );
+      if (!mounted) return;
+
+      if (data.isEmpty) {
+        setState(() => _state = _HealthKitState.notFound);
         return;
       }
-      final controller = CameraController(
-        cameras.first,
-        ResolutionPreset.low,
-        enableAudio: false,
-      );
-      _cameraController = controller;
-      await controller.initialize();
-      if (!mounted) return;
-      _startedAt = DateTime.now();
-      setState(() => _watchState = _WatchModeState.active);
-      _sessionTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-        if (!mounted) return;
-        setState(() => _elapsedSeconds++);
-      });
-      if (!_reducedMotion) {
-        _cameraIndicatorController.repeat(reverse: true);
+
+      final point = data.first;
+      final durationSeconds =
+          point.dateTo.difference(point.dateFrom).inSeconds.abs();
+
+      double? calories;
+      String activityType = point.type.name.toLowerCase();
+
+      if (point.value is WorkoutHealthValue) {
+        final workout = point.value as WorkoutHealthValue;
+        activityType = workout.workoutActivityType.name.toLowerCase();
+        if (workout.totalEnergyBurned != null) {
+          calories = workout.totalEnergyBurned!.toDouble();
+        }
       }
-      _startFramePolling();
+
+      _verificationData = HealthKitVerificationData(
+        activityType: activityType,
+        durationSeconds: durationSeconds,
+        startedAt: point.dateFrom,
+        endedAt: point.dateTo,
+        calories: calories,
+      );
+
+      setState(() => _state = _HealthKitState.found);
     } catch (e) {
+      debugPrint('HealthKitProofSubView: HealthKit read error: $e');
       if (!mounted) return;
       setState(() {
-        _cameraError = AppStrings.watchModeNoCameraError;
-        _watchState = _WatchModeState.idle;
+        _state = _HealthKitState.notFound;
       });
     }
-  }
-
-  // ── Frame polling ──────────────────────────────────────────────────────────
-
-  void _startFramePolling() {
-    _framePollingTimer = Timer.periodic(
-      Duration(seconds: _pollIntervalSeconds),
-      (_) {
-        if (_watchState != _WatchModeState.active) {
-          _framePollingTimer?.cancel();
-          return;
-        }
-        _captureAndAnalyzeFrame();
-      },
-    );
-  }
-
-  Future<void> _captureAndAnalyzeFrame() async {
-    final controller = _cameraController;
-    if (controller == null || !controller.value.isInitialized) return;
-    try {
-      final frame = await controller.takePicture();
-      // Stub AI analysis — real call deferred.
-      // TODO(impl): call packages/ai/src/watch-mode.ts via API for real frame analysis
-      _totalFrames++;
-      if (math.Random().nextBool()) _detectedActivityFrames++;
-      // Discard frame immediately — NFR-S3: no frame stored at any point.
-      try {
-        File(frame.path).deleteSync();
-      } catch (e) {
-        /* ignore delete errors */
-      }
-      if (!mounted) return;
-    } catch (e) {
-      debugPrint('WatchModeSubView: frame capture error: $e');
-    }
-  }
-
-  // ── End session ────────────────────────────────────────────────────────────
-
-  void _onEndSession() {
-    _sessionTimer?.cancel();
-    _framePollingTimer?.cancel();
-    _cameraIndicatorController.stop();
-    final endedAt = DateTime.now();
-    _session = WatchModeSession(
-      taskId: widget.taskId,
-      taskName: widget.taskName,
-      startedAt: _startedAt ?? endedAt,
-      endedAt: endedAt,
-      detectedActivityFrames: _detectedActivityFrames,
-      totalFrames: _totalFrames,
-    );
-    setState(() => _watchState = _WatchModeState.summary);
   }
 
   // ── Submit proof ───────────────────────────────────────────────────────────
 
-  Future<void> _onSubmitProof() async {
+  Future<void> _onSubmit() async {
     if (_isSubmitting) return;
-    final session = _session;
-    if (session == null) return;
+    final data = _verificationData;
+    if (data == null) return;
+
     setState(() {
       _isSubmitting = true;
-      _watchState = _WatchModeState.submitting;
+      _state = _HealthKitState.submitting;
     });
 
     if (!_reducedMotion) {
@@ -271,16 +206,16 @@ class _WatchModeSubViewState extends State<WatchModeSubView>
     // Start 10s timeout.
     _timeoutTimer = Timer(const Duration(seconds: 10), () {
       if (!mounted) return;
-      if (_watchState == _WatchModeState.submitting) {
+      if (_state == _HealthKitState.submitting) {
         _arcController.stop();
         _timeoutTimer = null;
-        setState(() => _watchState = _WatchModeState.timeout);
+        setState(() => _state = _HealthKitState.timeout);
       }
     });
 
-    final result = await widget.proofRepository.submitWatchModeProof(
+    final result = await widget.proofRepository.submitHealthKitProof(
       widget.taskId,
-      session,
+      data,
     );
     if (!mounted) return;
 
@@ -290,29 +225,30 @@ class _WatchModeSubViewState extends State<WatchModeSubView>
     _arcController.stop();
 
     // Guard: don't overwrite timeout state if it fired first.
-    if (_watchState != _WatchModeState.submitting) return;
+    if (_state != _HealthKitState.submitting) return;
 
     switch (result) {
       case ProofVerificationApproved():
         setState(() {
-          _watchState = _WatchModeState.approved;
+          _state = _HealthKitState.approved;
           _isSubmitting = false;
         });
         _approvalFadeController.forward();
         Future.delayed(const Duration(seconds: 2), () {
-          if (!mounted) return;
-          widget.onApproved?.call();
-          Navigator.pop(context, ProofPath.watchMode);
+          if (mounted) {
+            widget.onApproved?.call();
+            Navigator.pop(context, ProofPath.healthKit);
+          }
         });
       case ProofVerificationRejected(:final reason):
         setState(() {
-          _watchState = _WatchModeState.rejected;
+          _state = _HealthKitState.rejected;
           _rejectionReason = reason;
           _isSubmitting = false;
         });
       case ProofVerificationError(:final message):
         setState(() {
-          _watchState = _WatchModeState.rejected;
+          _state = _HealthKitState.rejected;
           _rejectionReason = message;
           _isSubmitting = false;
         });
@@ -320,11 +256,25 @@ class _WatchModeSubViewState extends State<WatchModeSubView>
   }
 
   void _onDone() {
-    Navigator.pop(context, ProofPath.watchMode);
+    Navigator.pop(context, null);
+  }
+
+  void _onTryAgain() {
+    _timeoutTimer?.cancel();
+    _timeoutTimer = null;
+    setState(() {
+      _state =
+          _verificationData != null ? _HealthKitState.found : _HealthKitState.idle;
+    });
   }
 
   void _onBack() {
     Navigator.pop(context, null);
+  }
+
+  void _onPhotoFallback() {
+    // TODO(7.6): consider deep-linking directly to photo sub-view on fallback
+    Navigator.pop(context, ProofPath.photo);
   }
 
   void _onRequestReview() {
@@ -332,21 +282,14 @@ class _WatchModeSubViewState extends State<WatchModeSubView>
     Navigator.pop(context, null);
   }
 
-  void _onTryAgain() {
-    _timeoutTimer?.cancel();
-    _timeoutTimer = null;
-    setState(() => _watchState = _WatchModeState.summary);
-  }
-
   // ── Build ──────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
-    // macOS guard — debug-mode safety net (UX-DR10).
-    // Skipped in test environments where Platform.isMacOS may be true.
+    // macOS guard — HealthKit unavailable on macOS (debug-mode safety net).
     assert(
       Platform.environment.containsKey('FLUTTER_TEST') || !Platform.isMacOS,
-      'WatchModeSubView must not be constructed on macOS (UX-DR10)',
+      'HealthKitProofSubView must not be constructed on macOS',
     );
     final colors = Theme.of(context).extension<OnTaskColors>()!;
     return Column(
@@ -360,7 +303,7 @@ class _WatchModeSubViewState extends State<WatchModeSubView>
   }
 
   Widget _buildHeader(OnTaskColors colors) {
-    final showBack = _watchState == _WatchModeState.idle;
+    final showBack = _state == _HealthKitState.idle;
     return Padding(
       padding: const EdgeInsets.fromLTRB(4, 12, 4, 4),
       child: Row(
@@ -385,24 +328,23 @@ class _WatchModeSubViewState extends State<WatchModeSubView>
   }
 
   Widget _buildBody(OnTaskColors colors) {
-    switch (_watchState) {
-      case _WatchModeState.idle:
+    switch (_state) {
+      case _HealthKitState.idle:
         return _buildIdleState(colors);
-      case _WatchModeState.starting:
-        return _buildStartingState(colors);
-      case _WatchModeState.active:
-        return _buildActiveState(colors);
-      case _WatchModeState.ending:
-        return _buildEndingState(colors);
-      case _WatchModeState.summary:
-        return _buildSummaryState(colors);
-      case _WatchModeState.submitting:
+      case _HealthKitState.requesting:
+      case _HealthKitState.reading:
+        return _buildLoadingState(colors);
+      case _HealthKitState.found:
+        return _buildFoundState(colors);
+      case _HealthKitState.notFound:
+        return _buildNotFoundState(colors);
+      case _HealthKitState.submitting:
         return _buildSubmittingState(colors);
-      case _WatchModeState.approved:
+      case _HealthKitState.approved:
         return _buildApprovedState(colors);
-      case _WatchModeState.rejected:
+      case _HealthKitState.rejected:
         return _buildRejectedState(colors);
-      case _WatchModeState.timeout:
+      case _HealthKitState.timeout:
         return _buildTimeoutState(colors);
     }
   }
@@ -417,7 +359,7 @@ class _WatchModeSubViewState extends State<WatchModeSubView>
         children: [
           const SizedBox(height: 8),
           Text(
-            AppStrings.watchModeTitle,
+            AppStrings.healthKitProofTitle,
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w600,
@@ -427,20 +369,111 @@ class _WatchModeSubViewState extends State<WatchModeSubView>
           ),
           const SizedBox(height: AppSpacing.md),
           Text(
-            AppStrings.watchModePrivacyNote,
+            AppStrings.healthKitProofBody,
             style: TextStyle(
               fontSize: 15,
               color: colors.textSecondary,
             ),
             textAlign: TextAlign.center,
           ),
-          if (_cameraError != null) ...[
+          const SizedBox(height: AppSpacing.xl),
+          SizedBox(
+            width: double.infinity,
+            child: CupertinoButton(
+              minimumSize: const Size(44, 44),
+              color: colors.accentPrimary,
+              borderRadius: BorderRadius.circular(AppSpacing.md),
+              onPressed: _checkHealthKit,
+              child: Text(
+                AppStrings.healthKitProofCheckCta,
+                style: TextStyle(
+                  color: colors.surfacePrimary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+        ],
+      ),
+    );
+  }
+
+  // ── Loading state (requesting / reading) ───────────────────────────────────
+
+  Widget _buildLoadingState(OnTaskColors colors) {
+    final label = _state == _HealthKitState.reading
+        ? 'Reading Apple Health\u2026'
+        : null;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 48),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CupertinoActivityIndicator(color: colors.accentPrimary),
+          if (label != null) ...[
             const SizedBox(height: AppSpacing.sm),
             Text(
-              _cameraError!,
+              label,
+              style: TextStyle(color: colors.textSecondary),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  // ── Found state ────────────────────────────────────────────────────────────
+
+  Widget _buildFoundState(OnTaskColors colors) {
+    final data = _verificationData!;
+    final durationLabel = data.durationSeconds >= 60
+        ? '${data.durationSeconds ~/ 60} min'
+        : '${data.durationSeconds}s';
+    final calLabel =
+        data.calories != null ? '${data.calories!.round()} cal' : null;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: AppSpacing.md),
+          Text(
+            AppStrings.healthKitProofFoundTitle,
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w600,
+              color: colors.textPrimary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            data.activityType,
+            style: TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w500,
+              color: colors.textPrimary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            durationLabel,
+            style: TextStyle(
+              fontSize: 15,
+              color: colors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          if (calLabel != null) ...[
+            const SizedBox(height: 2),
+            Text(
+              calLabel,
               style: TextStyle(
-                fontSize: 14,
-                color: colors.scheduleCritical,
+                fontSize: 15,
+                color: colors.textSecondary,
               ),
               textAlign: TextAlign.center,
             ),
@@ -452,185 +485,7 @@ class _WatchModeSubViewState extends State<WatchModeSubView>
               minimumSize: const Size(44, 44),
               color: colors.accentPrimary,
               borderRadius: BorderRadius.circular(AppSpacing.md),
-              onPressed: _initWatchMode,
-              child: Text(
-                AppStrings.watchModeStartCta,
-                style: TextStyle(
-                  color: colors.surfacePrimary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.md),
-        ],
-      ),
-    );
-  }
-
-  // ── Starting state ─────────────────────────────────────────────────────────
-
-  Widget _buildStartingState(OnTaskColors colors) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 48),
-      child: Center(
-        child: CupertinoActivityIndicator(color: colors.accentPrimary),
-      ),
-    );
-  }
-
-  // ── Active state ───────────────────────────────────────────────────────────
-
-  Widget _buildActiveState(OnTaskColors colors) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const SizedBox(height: AppSpacing.md),
-          // Camera indicator — pulsing red dot (UX-DR10).
-          _buildCameraIndicator(colors),
-          const SizedBox(height: AppSpacing.md),
-          // Task name.
-          Text(
-            widget.taskName,
-            style: TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w600,
-              color: colors.textPrimary,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          // Elapsed timer — M:SS format.
-          Text(
-            NowTaskCard.formatElapsed(_elapsedSeconds),
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w500,
-              color: colors.textSecondary,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: AppSpacing.xl),
-          // End Session button — secondary/critical style.
-          CupertinoButton(
-            minimumSize: const Size(44, 44),
-            color: colors.scheduleCritical,
-            borderRadius: BorderRadius.circular(AppSpacing.md),
-            onPressed: _onEndSession,
-            child: Text(
-              AppStrings.watchModeEndSessionCta,
-              style: TextStyle(
-                color: colors.surfacePrimary,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.md),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCameraIndicator(OnTaskColors colors) {
-    final dot = Container(
-      width: 12,
-      height: 12,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: colors.scheduleCritical,
-      ),
-    );
-    if (_reducedMotion) {
-      return dot;
-    }
-    return AnimatedBuilder(
-      animation: _cameraIndicatorController,
-      builder: (context, child) {
-        // Scale from 1.0 to ~1.17 (12pt → 14pt).
-        final scale = 1.0 + (_cameraIndicatorController.value * 0.167);
-        return Transform.scale(scale: scale, child: child);
-      },
-      child: dot,
-    );
-  }
-
-  // ── Ending state ───────────────────────────────────────────────────────────
-
-  Widget _buildEndingState(OnTaskColors colors) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 48),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          CupertinoActivityIndicator(color: colors.accentPrimary),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            AppStrings.watchModeEndingCopy,
-            style: TextStyle(color: colors.textSecondary),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── Summary state ──────────────────────────────────────────────────────────
-
-  Widget _buildSummaryState(OnTaskColors colors) {
-    final session = _session;
-    final durationLabel = session != null
-        ? session.elapsed.inMinutes >= 1
-            ? '${session.elapsed.inMinutes} min'
-            : '${session.elapsed.inSeconds}s'
-        : '0s';
-    final activityLabel = session != null
-        ? '${session.activityPercentage.round()}% activity detected'
-        : '0% activity detected';
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const SizedBox(height: AppSpacing.md),
-          Text(
-            AppStrings.watchModeSummaryTitle,
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w600,
-              color: colors.textPrimary,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: AppSpacing.md),
-          Text(
-            durationLabel,
-            style: TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w500,
-              color: colors.textPrimary,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          Text(
-            activityLabel,
-            style: TextStyle(
-              fontSize: 15,
-              color: colors.textSecondary,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: AppSpacing.xl),
-          // Submit as proof button — shown for staked tasks (always shown in Story 7.4).
-          SizedBox(
-            width: double.infinity,
-            child: CupertinoButton(
-              minimumSize: const Size(44, 44),
-              color: colors.accentPrimary,
-              borderRadius: BorderRadius.circular(AppSpacing.md),
-              onPressed: _onSubmitProof,
+              onPressed: _onSubmit,
               child: Text(
                 AppStrings.watchModeSubmitProofCta,
                 style: TextStyle(
@@ -641,12 +496,71 @@ class _WatchModeSubViewState extends State<WatchModeSubView>
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
-          // Done button — secondary, exits without submitting.
           CupertinoButton(
             minimumSize: const Size(44, 44),
             onPressed: _onDone,
             child: Text(
               AppStrings.watchModeDoneCta,
+              style: TextStyle(color: colors.accentPrimary),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+        ],
+      ),
+    );
+  }
+
+  // ── Not-found state ────────────────────────────────────────────────────────
+
+  Widget _buildNotFoundState(OnTaskColors colors) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: AppSpacing.md),
+          Text(
+            AppStrings.healthKitProofNotFoundTitle,
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w600,
+              color: colors.textPrimary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Text(
+            AppStrings.healthKitProofNotFoundBody,
+            style: TextStyle(
+              fontSize: 15,
+              color: colors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          SizedBox(
+            width: double.infinity,
+            child: CupertinoButton(
+              minimumSize: const Size(44, 44),
+              color: colors.accentPrimary,
+              borderRadius: BorderRadius.circular(AppSpacing.md),
+              onPressed: _onPhotoFallback,
+              child: Text(
+                AppStrings.healthKitProofPhotoFallbackCta,
+                style: TextStyle(
+                  color: colors.surfacePrimary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          CupertinoButton(
+            minimumSize: const Size(44, 44),
+            onPressed: _onRequestReview,
+            child: Text(
+              AppStrings.proofDisputeCta,
+              // TODO(7.8): wire dispute flow
               style: TextStyle(color: colors.accentPrimary),
             ),
           ),
@@ -694,7 +608,7 @@ class _WatchModeSubViewState extends State<WatchModeSubView>
           ),
           const SizedBox(height: 16),
           Text(
-            AppStrings.watchModeSubmittingCopy,
+            AppStrings.proofVerifyingCopy,
             style: TextStyle(
               fontSize: 15,
               color: colors.textSecondary,
@@ -731,7 +645,7 @@ class _WatchModeSubViewState extends State<WatchModeSubView>
           Semantics(
             liveRegion: true,
             child: Text(
-              AppStrings.watchModeApprovedLabel,
+              AppStrings.proofAcceptedLabel,
               style: TextStyle(
                 fontSize: 17,
                 fontWeight: FontWeight.w600,
@@ -777,6 +691,15 @@ class _WatchModeSubViewState extends State<WatchModeSubView>
             ),
             const SizedBox(height: 20),
           ],
+          Text(
+            AppStrings.proofRejectedLabel,
+            style: TextStyle(
+              fontSize: 15,
+              color: colors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 20),
           CupertinoButton(
             minimumSize: const Size(44, 44),
             color: colors.scheduleCritical,
@@ -844,12 +767,12 @@ class _WatchModeSubViewState extends State<WatchModeSubView>
   }
 }
 
-// ── Custom Painter — pulsing arc (UX-DR30) ────────────────────────────────────
+// ── Custom Painter — pulsing arc ──────────────────────────────────────────────
 
 /// Draws a sweeping arc during the submitting state.
 ///
-/// Kept per-file per established pattern (not shared with [PhotoCaptureSubView]
-/// or [ScreenshotProofSubView]).
+/// Kept per-file per established pattern (not shared with [PhotoCaptureSubView],
+/// [ScreenshotProofSubView], or [WatchModeSubView]).
 ///
 /// In normal mode, [progress] is driven by [AnimationController] sweeping
 /// 0 → 1 (mapped to 0 → 2π). In reduced-motion mode, [progress] is fixed

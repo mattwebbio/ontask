@@ -11,6 +11,7 @@ import '../data/proof_repository.dart';
 import '../domain/proof_path.dart';
 import '../domain/proof_submission_state.dart';
 import 'photo_capture_sub_view.dart';
+import 'health_kit_proof_sub_view.dart';
 import 'screenshot_proof_sub_view.dart';
 import '../../now/domain/proof_mode.dart';
 import '../../watch_mode/presentation/watch_mode_sub_view.dart';
@@ -167,7 +168,17 @@ class _ProofCaptureModalState extends State<ProofCaptureModal> {
           onTap: () => _onPathSelected(ProofPath.photo),
         ),
 
-        // HealthKit — iOS only (hidden on macOS per AC2)
+        // Watch Mode — iOS only (hidden on macOS per UX-DR10)
+        if (!Platform.isMacOS)
+          _ProofPathRow(
+            icon: CupertinoIcons.eye,
+            title: AppStrings.proofPathWatchModeTitle,
+            subtitle: AppStrings.proofPathWatchModeSubtitle,
+            colors: colors,
+            onTap: () => _onPathSelected(ProofPath.watchMode),
+          ),
+
+        // HealthKit Auto — iOS only (hidden on macOS per UX-DR31)
         if (!Platform.isMacOS)
           _ProofPathRow(
             icon: CupertinoIcons.heart,
@@ -204,7 +215,9 @@ class _ProofCaptureModalState extends State<ProofCaptureModal> {
   ///
   /// Photo path: renders [PhotoCaptureSubView] (Story 7.2).
   /// Screenshot/document path: renders [ScreenshotProofSubView] (Story 7.3).
-  /// All other paths: stub placeholder (Stories 7.4–7.6).
+  /// Watch Mode path: renders [WatchModeSubView] (Story 7.4).
+  /// HealthKit Auto path: renders [HealthKitProofSubView] (Story 7.5).
+  /// All other paths: stub placeholder (Stories 7.6+).
   Widget _buildSubView(
     BuildContext context,
     OnTaskColors colors,
@@ -230,8 +243,28 @@ class _ProofCaptureModalState extends State<ProofCaptureModal> {
       }
     }
 
-    // ── Watch Mode / Live Session path — real implementation (Story 7.4) ──────────
+    // ── HealthKit Auto-Verification path — real implementation (Story 7.5) ──────────
     if (path == ProofPath.healthKit) {
+      assert(
+        widget.taskId != null && widget.proofRepository != null,
+        'ProofCaptureModal: taskId and proofRepository are required for HealthKit path.',
+      );
+      if (widget.taskId != null && widget.proofRepository != null) {
+        return HealthKitProofSubView(
+          taskId: widget.taskId!,
+          taskName: widget.taskName,
+          proofRepository: widget.proofRepository!,
+          onApproved: () {
+            setState(() {
+              _submissionState = const ProofSubmissionSubmitted();
+            });
+          },
+        );
+      }
+    }
+
+    // ── Watch Mode / Live Session path — real implementation (Story 7.4) ──────────
+    if (path == ProofPath.watchMode) {
       assert(
         widget.taskId != null && widget.proofRepository != null,
         'ProofCaptureModal: taskId and proofRepository are required for Watch Mode path.',

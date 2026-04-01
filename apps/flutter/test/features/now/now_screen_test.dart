@@ -212,6 +212,8 @@ void main() {
     });
 
     testWidgets('renders HealthKit CTA', (tester) async {
+      // Story 7.5: ProofMode.healthKit now shows nowCardProofHealthKit ("HealthKit")
+      // with a heart icon, and opens ProofCaptureModal (not marks done directly).
       final hkTask = NowTask(
         id: 'task-hk',
         title: 'Go for a run',
@@ -222,7 +224,7 @@ void main() {
       await tester.pumpWidget(buildCard(task: hkTask));
       await tester.pumpAndSettle();
 
-      expect(find.text(AppStrings.nowCardMarkDone), findsOneWidget);
+      expect(find.text(AppStrings.nowCardProofHealthKit), findsAtLeast(1));
       expect(find.byIcon(CupertinoIcons.heart), findsAtLeast(1));
     });
 

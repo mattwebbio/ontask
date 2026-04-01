@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 
 import '../../../core/network/api_client.dart';
 import '../../../features/watch_mode/domain/watch_mode_session.dart';
+import '../domain/health_kit_verification_data.dart';
 import '../domain/proof_verification_result.dart';
 
 /// Data layer for proof submission operations.
@@ -11,7 +12,7 @@ import '../domain/proof_verification_result.dart';
 /// [SharingRepository] and other data layer classes in this project.
 /// Do NOT use Riverpod code-gen for this repository (no generated
 /// providers in the proof/ feature).
-/// (Epic 7, Stories 7.2–7.3, FR31-32, FR36)
+/// (Epic 7, Stories 7.2–7.5, FR31-32, FR35-36)
 class ProofRepository {
   ProofRepository(this._client);
 
@@ -107,6 +108,56 @@ class ProofRepository {
     } catch (e) {
       return ProofVerificationError(
         message: 'Unexpected error during session submission.',
+      );
+    }
+  }
+
+  /// Submits HealthKit activity data to the API for auto-verification.
+  ///
+  /// Posts a JSON body to `POST /v1/tasks/{taskId}/proof` with
+  /// `proofType=healthKit` query param.
+  ///
+  /// Returns [ProofVerificationApproved] on success, [ProofVerificationRejected]
+  /// with the API-provided reason on failure, or [ProofVerificationError]
+  /// on network/unexpected errors.
+  /// (Epic 7, Story 7.5, FR35, FR47)
+  Future<ProofVerificationResult> submitHealthKitProof(
+    String taskId,
+    HealthKitVerificationData data,
+  ) async {
+    try {
+      final body = {
+        'activityType': data.activityType,
+        'durationSeconds': data.durationSeconds,
+        'startedAt': data.startedAt.toIso8601String(),
+        'endedAt': data.endedAt.toIso8601String(),
+        'calorie': data.calories,
+      };
+
+      final response = await _client.dio.post<Map<String, dynamic>>(
+        '/v1/tasks/$taskId/proof',
+        data: body,
+        queryParameters: {'proofType': 'healthKit'},
+      );
+
+      final responseData = response.data!['data'] as Map<String, dynamic>;
+      final verified = responseData['verified'] as bool;
+      final reason = responseData['reason'] as String?;
+
+      if (verified) {
+        return const ProofVerificationApproved();
+      } else {
+        return ProofVerificationRejected(
+          reason: reason ?? 'HealthKit data could not be verified.',
+        );
+      }
+    } on DioException catch (e) {
+      return ProofVerificationError(
+        message: e.message ?? 'Network error during HealthKit proof submission.',
+      );
+    } catch (e) {
+      return ProofVerificationError(
+        message: 'Unexpected error during HealthKit proof submission.',
       );
     }
   }

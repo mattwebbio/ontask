@@ -1052,4 +1052,41 @@ class AppStrings {
 
   /// "Try again" CTA in Watch Mode timeout state.
   static const String watchModeTryAgainCta = 'Try again';
+
+  // ── Watch Mode path selector strings (Story 7.5 enum split) ────────────────
+  /// Watch Mode path row title in path selector (was proofPathHealthKitTitle pre-7.5 split).
+  static const String proofPathWatchModeTitle = 'Watch Mode';
+
+  /// Watch Mode path row subtitle in path selector.
+  static const String proofPathWatchModeSubtitle = 'Focus session with camera';
+
+  // ── HealthKit Auto-Verification (FR35, FR47, Story 7.5) ─────────────────────
+  /// HealthKit proof sub-view title.
+  static const String healthKitProofTitle = 'HealthKit Auto-Verify';
+
+  /// Body copy shown in idle state.
+  static const String healthKitProofBody =
+      'We\u2019ll check your recent Apple Health data to verify this task was completed.';
+
+  /// CTA to trigger HealthKit permission + read.
+  static const String healthKitProofCheckCta = 'Check Apple Health';
+
+  /// Title shown when matching HealthKit data was found.
+  static const String healthKitProofFoundTitle = 'Activity found';
+
+  /// Title shown when no matching HealthKit data was found.
+  static const String healthKitProofNotFoundTitle = 'No activity found';
+
+  /// Body copy shown in not-found state.
+  static const String healthKitProofNotFoundBody =
+      'We couldn\u2019t find matching Apple Health data. Try submitting photo proof instead.';
+
+  /// CTA to fall back to photo proof when HealthKit data is not found.
+  static const String healthKitProofPhotoFallbackCta = 'Submit photo instead';
+
+  /// Badge shown on Now tab card while HealthKit verification is in-progress (UX-DR31).
+  static const String healthKitVerifyingBadge = 'Verifying';
+
+  /// Badge shown on Now tab card when HealthKit buffer window expired without data (UX-DR31).
+  static const String healthKitVerifyManuallyBadge = 'Verify manually';
 }

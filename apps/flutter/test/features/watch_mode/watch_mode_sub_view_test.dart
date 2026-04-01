@@ -278,11 +278,12 @@ void main() {
 
   group('WatchModeSubView — Done button navigation (AC: 3)', () {
     testWidgets(
-        '13. "Done" button in summary state pops modal with ProofPath.healthKit',
+        '13. "Done" button in summary state pops modal with ProofPath.watchMode',
         (tester) async {
-      // Verify the ProofPath.healthKit constant is the correct pop value.
-      expect(ProofPath.healthKit, ProofPath.healthKit);
-      // The _onDone handler calls Navigator.pop(context, ProofPath.healthKit).
+      // Story 7.5: The _onDone handler was updated from ProofPath.healthKit to
+      // ProofPath.watchMode as part of the ProofPath enum split.
+      expect(ProofPath.watchMode, ProofPath.watchMode);
+      // The _onDone handler calls Navigator.pop(context, ProofPath.watchMode).
       // This is verified via the implementation in watch_mode_sub_view.dart.
     });
   });
