@@ -11,6 +11,7 @@ import '../data/proof_repository.dart';
 import '../domain/proof_path.dart';
 import '../domain/proof_submission_state.dart';
 import 'photo_capture_sub_view.dart';
+import 'screenshot_proof_sub_view.dart';
 import '../../now/domain/proof_mode.dart';
 
 /// Modal bottom sheet for selecting a proof path when submitting task proof.
@@ -51,8 +52,7 @@ class _ProofCaptureModalState extends State<ProofCaptureModal> {
   ProofPath? _selectedPath;
   bool _isOffline = false;
   // Tracks overall modal submission state — used to distinguish idle/path-selected/submitted
-  // and will be consumed for analytics and stake integration in Story 7.3+.
-  // ignore: unused_field
+  // and consumed by photo and screenshot proof paths (Stories 7.2–7.3).
   ProofSubmissionState _submissionState = const ProofSubmissionIdle();
 
   @override
@@ -202,7 +202,8 @@ class _ProofCaptureModalState extends State<ProofCaptureModal> {
   /// Builds the sub-view for the selected [path].
   ///
   /// Photo path: renders [PhotoCaptureSubView] (Story 7.2).
-  /// All other paths: stub placeholder (Stories 7.3–7.6).
+  /// Screenshot/document path: renders [ScreenshotProofSubView] (Story 7.3).
+  /// All other paths: stub placeholder (Stories 7.4–7.6).
   Widget _buildSubView(
     BuildContext context,
     OnTaskColors colors,
@@ -228,7 +229,27 @@ class _ProofCaptureModalState extends State<ProofCaptureModal> {
       }
     }
 
-    // ── Other paths — stub placeholder (Stories 7.3–7.6) ─────────────────
+    // ── Screenshot/Document path — real implementation (Story 7.3) ──────────
+    if (path == ProofPath.screenshot) {
+      assert(
+        widget.taskId != null && widget.proofRepository != null,
+        'ProofCaptureModal: taskId and proofRepository are required for screenshot path.',
+      );
+      if (widget.taskId != null && widget.proofRepository != null) {
+        return ScreenshotProofSubView(
+          taskId: widget.taskId!,
+          taskName: widget.taskName,
+          proofRepository: widget.proofRepository!,
+          onApproved: () {
+            setState(() {
+              _submissionState = const ProofSubmissionSubmitted();
+            });
+          },
+        );
+      }
+    }
+
+    // ── Other paths — stub placeholder (Stories 7.4–7.6) ─────────────────
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
