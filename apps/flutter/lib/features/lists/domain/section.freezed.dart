@@ -14,7 +14,9 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Section {
 
- String get id; String get listId; String? get parentSectionId; String get title; DateTime? get defaultDueDate; int get position; DateTime get createdAt; DateTime get updatedAt;
+ String get id; String get listId; String? get parentSectionId; String get title; DateTime? get defaultDueDate; int get position; DateTime get createdAt; DateTime get updatedAt;// Proof requirement for tasks in this section (FR20). Null = inherit from parent list.
+// Valid values: 'none' | 'photo' | 'watchMode' | 'healthKit' | null
+ String? get proofRequirement;
 /// Create a copy of Section
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +27,16 @@ $SectionCopyWith<Section> get copyWith => _$SectionCopyWithImpl<Section>(this as
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Section&&(identical(other.id, id) || other.id == id)&&(identical(other.listId, listId) || other.listId == listId)&&(identical(other.parentSectionId, parentSectionId) || other.parentSectionId == parentSectionId)&&(identical(other.title, title) || other.title == title)&&(identical(other.defaultDueDate, defaultDueDate) || other.defaultDueDate == defaultDueDate)&&(identical(other.position, position) || other.position == position)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Section&&(identical(other.id, id) || other.id == id)&&(identical(other.listId, listId) || other.listId == listId)&&(identical(other.parentSectionId, parentSectionId) || other.parentSectionId == parentSectionId)&&(identical(other.title, title) || other.title == title)&&(identical(other.defaultDueDate, defaultDueDate) || other.defaultDueDate == defaultDueDate)&&(identical(other.position, position) || other.position == position)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.proofRequirement, proofRequirement) || other.proofRequirement == proofRequirement));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,listId,parentSectionId,title,defaultDueDate,position,createdAt,updatedAt);
+int get hashCode => Object.hash(runtimeType,id,listId,parentSectionId,title,defaultDueDate,position,createdAt,updatedAt,proofRequirement);
 
 @override
 String toString() {
-  return 'Section(id: $id, listId: $listId, parentSectionId: $parentSectionId, title: $title, defaultDueDate: $defaultDueDate, position: $position, createdAt: $createdAt, updatedAt: $updatedAt)';
+  return 'Section(id: $id, listId: $listId, parentSectionId: $parentSectionId, title: $title, defaultDueDate: $defaultDueDate, position: $position, createdAt: $createdAt, updatedAt: $updatedAt, proofRequirement: $proofRequirement)';
 }
 
 
@@ -45,7 +47,7 @@ abstract mixin class $SectionCopyWith<$Res>  {
   factory $SectionCopyWith(Section value, $Res Function(Section) _then) = _$SectionCopyWithImpl;
 @useResult
 $Res call({
- String id, String listId, String? parentSectionId, String title, DateTime? defaultDueDate, int position, DateTime createdAt, DateTime updatedAt
+ String id, String listId, String? parentSectionId, String title, DateTime? defaultDueDate, int position, DateTime createdAt, DateTime updatedAt, String? proofRequirement
 });
 
 
@@ -62,7 +64,7 @@ class _$SectionCopyWithImpl<$Res>
 
 /// Create a copy of Section
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? listId = null,Object? parentSectionId = freezed,Object? title = null,Object? defaultDueDate = freezed,Object? position = null,Object? createdAt = null,Object? updatedAt = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? listId = null,Object? parentSectionId = freezed,Object? title = null,Object? defaultDueDate = freezed,Object? position = null,Object? createdAt = null,Object? updatedAt = null,Object? proofRequirement = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,listId: null == listId ? _self.listId : listId // ignore: cast_nullable_to_non_nullable
@@ -72,7 +74,8 @@ as String,defaultDueDate: freezed == defaultDueDate ? _self.defaultDueDate : def
 as DateTime?,position: null == position ? _self.position : position // ignore: cast_nullable_to_non_nullable
 as int,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
-as DateTime,
+as DateTime,proofRequirement: freezed == proofRequirement ? _self.proofRequirement : proofRequirement // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
@@ -157,10 +160,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String listId,  String? parentSectionId,  String title,  DateTime? defaultDueDate,  int position,  DateTime createdAt,  DateTime updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String listId,  String? parentSectionId,  String title,  DateTime? defaultDueDate,  int position,  DateTime createdAt,  DateTime updatedAt,  String? proofRequirement)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Section() when $default != null:
-return $default(_that.id,_that.listId,_that.parentSectionId,_that.title,_that.defaultDueDate,_that.position,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.listId,_that.parentSectionId,_that.title,_that.defaultDueDate,_that.position,_that.createdAt,_that.updatedAt,_that.proofRequirement);case _:
   return orElse();
 
 }
@@ -178,10 +181,10 @@ return $default(_that.id,_that.listId,_that.parentSectionId,_that.title,_that.de
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String listId,  String? parentSectionId,  String title,  DateTime? defaultDueDate,  int position,  DateTime createdAt,  DateTime updatedAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String listId,  String? parentSectionId,  String title,  DateTime? defaultDueDate,  int position,  DateTime createdAt,  DateTime updatedAt,  String? proofRequirement)  $default,) {final _that = this;
 switch (_that) {
 case _Section():
-return $default(_that.id,_that.listId,_that.parentSectionId,_that.title,_that.defaultDueDate,_that.position,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.listId,_that.parentSectionId,_that.title,_that.defaultDueDate,_that.position,_that.createdAt,_that.updatedAt,_that.proofRequirement);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -198,10 +201,10 @@ return $default(_that.id,_that.listId,_that.parentSectionId,_that.title,_that.de
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String listId,  String? parentSectionId,  String title,  DateTime? defaultDueDate,  int position,  DateTime createdAt,  DateTime updatedAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String listId,  String? parentSectionId,  String title,  DateTime? defaultDueDate,  int position,  DateTime createdAt,  DateTime updatedAt,  String? proofRequirement)?  $default,) {final _that = this;
 switch (_that) {
 case _Section() when $default != null:
-return $default(_that.id,_that.listId,_that.parentSectionId,_that.title,_that.defaultDueDate,_that.position,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.listId,_that.parentSectionId,_that.title,_that.defaultDueDate,_that.position,_that.createdAt,_that.updatedAt,_that.proofRequirement);case _:
   return null;
 
 }
@@ -213,7 +216,7 @@ return $default(_that.id,_that.listId,_that.parentSectionId,_that.title,_that.de
 
 
 class _Section implements Section {
-  const _Section({required this.id, required this.listId, this.parentSectionId, required this.title, this.defaultDueDate, required this.position, required this.createdAt, required this.updatedAt});
+  const _Section({required this.id, required this.listId, this.parentSectionId, required this.title, this.defaultDueDate, required this.position, required this.createdAt, required this.updatedAt, this.proofRequirement});
   
 
 @override final  String id;
@@ -224,6 +227,9 @@ class _Section implements Section {
 @override final  int position;
 @override final  DateTime createdAt;
 @override final  DateTime updatedAt;
+// Proof requirement for tasks in this section (FR20). Null = inherit from parent list.
+// Valid values: 'none' | 'photo' | 'watchMode' | 'healthKit' | null
+@override final  String? proofRequirement;
 
 /// Create a copy of Section
 /// with the given fields replaced by the non-null parameter values.
@@ -235,16 +241,16 @@ _$SectionCopyWith<_Section> get copyWith => __$SectionCopyWithImpl<_Section>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Section&&(identical(other.id, id) || other.id == id)&&(identical(other.listId, listId) || other.listId == listId)&&(identical(other.parentSectionId, parentSectionId) || other.parentSectionId == parentSectionId)&&(identical(other.title, title) || other.title == title)&&(identical(other.defaultDueDate, defaultDueDate) || other.defaultDueDate == defaultDueDate)&&(identical(other.position, position) || other.position == position)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Section&&(identical(other.id, id) || other.id == id)&&(identical(other.listId, listId) || other.listId == listId)&&(identical(other.parentSectionId, parentSectionId) || other.parentSectionId == parentSectionId)&&(identical(other.title, title) || other.title == title)&&(identical(other.defaultDueDate, defaultDueDate) || other.defaultDueDate == defaultDueDate)&&(identical(other.position, position) || other.position == position)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.proofRequirement, proofRequirement) || other.proofRequirement == proofRequirement));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,listId,parentSectionId,title,defaultDueDate,position,createdAt,updatedAt);
+int get hashCode => Object.hash(runtimeType,id,listId,parentSectionId,title,defaultDueDate,position,createdAt,updatedAt,proofRequirement);
 
 @override
 String toString() {
-  return 'Section(id: $id, listId: $listId, parentSectionId: $parentSectionId, title: $title, defaultDueDate: $defaultDueDate, position: $position, createdAt: $createdAt, updatedAt: $updatedAt)';
+  return 'Section(id: $id, listId: $listId, parentSectionId: $parentSectionId, title: $title, defaultDueDate: $defaultDueDate, position: $position, createdAt: $createdAt, updatedAt: $updatedAt, proofRequirement: $proofRequirement)';
 }
 
 
@@ -255,7 +261,7 @@ abstract mixin class _$SectionCopyWith<$Res> implements $SectionCopyWith<$Res> {
   factory _$SectionCopyWith(_Section value, $Res Function(_Section) _then) = __$SectionCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String listId, String? parentSectionId, String title, DateTime? defaultDueDate, int position, DateTime createdAt, DateTime updatedAt
+ String id, String listId, String? parentSectionId, String title, DateTime? defaultDueDate, int position, DateTime createdAt, DateTime updatedAt, String? proofRequirement
 });
 
 
@@ -272,7 +278,7 @@ class __$SectionCopyWithImpl<$Res>
 
 /// Create a copy of Section
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? listId = null,Object? parentSectionId = freezed,Object? title = null,Object? defaultDueDate = freezed,Object? position = null,Object? createdAt = null,Object? updatedAt = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? listId = null,Object? parentSectionId = freezed,Object? title = null,Object? defaultDueDate = freezed,Object? position = null,Object? createdAt = null,Object? updatedAt = null,Object? proofRequirement = freezed,}) {
   return _then(_Section(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,listId: null == listId ? _self.listId : listId // ignore: cast_nullable_to_non_nullable
@@ -282,7 +288,8 @@ as String,defaultDueDate: freezed == defaultDueDate ? _self.defaultDueDate : def
 as DateTime?,position: null == position ? _self.position : position // ignore: cast_nullable_to_non_nullable
 as int,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
-as DateTime,
+as DateTime,proofRequirement: freezed == proofRequirement ? _self.proofRequirement : proofRequirement // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 

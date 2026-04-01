@@ -18,6 +18,7 @@ abstract class SectionDto with _$SectionDto {
     required int position,
     required String createdAt,
     required String updatedAt,
+    @JsonKey(defaultValue: null) String? proofRequirement,
   }) = _SectionDto;
 
   factory SectionDto.fromJson(Map<String, dynamic> json) =>
@@ -34,5 +35,6 @@ abstract class SectionDto with _$SectionDto {
         position: position,
         createdAt: DateTime.parse(createdAt),
         updatedAt: DateTime.parse(updatedAt),
+        proofRequirement: proofRequirement,
       );
 }

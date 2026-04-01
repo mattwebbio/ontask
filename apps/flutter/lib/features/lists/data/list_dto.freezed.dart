@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$ListDto {
 
- String get id; String get title; String? get defaultDueDate; int get position; String? get archivedAt; String get createdAt; String get updatedAt;@JsonKey(defaultValue: false) bool get isShared;@JsonKey(defaultValue: 1) int get memberCount;@JsonKey(defaultValue: <String>[]) List<String> get memberAvatarInitials;@JsonKey(defaultValue: null) String? get assignmentStrategy;
+ String get id; String get title; String? get defaultDueDate; int get position; String? get archivedAt; String get createdAt; String get updatedAt;@JsonKey(defaultValue: false) bool get isShared;@JsonKey(defaultValue: 1) int get memberCount;@JsonKey(defaultValue: <String>[]) List<String> get memberAvatarInitials;@JsonKey(defaultValue: null) String? get assignmentStrategy;@JsonKey(defaultValue: null) String? get proofRequirement;
 /// Create a copy of ListDto
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $ListDtoCopyWith<ListDto> get copyWith => _$ListDtoCopyWithImpl<ListDto>(this as
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ListDto&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.defaultDueDate, defaultDueDate) || other.defaultDueDate == defaultDueDate)&&(identical(other.position, position) || other.position == position)&&(identical(other.archivedAt, archivedAt) || other.archivedAt == archivedAt)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.isShared, isShared) || other.isShared == isShared)&&(identical(other.memberCount, memberCount) || other.memberCount == memberCount)&&const DeepCollectionEquality().equals(other.memberAvatarInitials, memberAvatarInitials)&&(identical(other.assignmentStrategy, assignmentStrategy) || other.assignmentStrategy == assignmentStrategy));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ListDto&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.defaultDueDate, defaultDueDate) || other.defaultDueDate == defaultDueDate)&&(identical(other.position, position) || other.position == position)&&(identical(other.archivedAt, archivedAt) || other.archivedAt == archivedAt)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.isShared, isShared) || other.isShared == isShared)&&(identical(other.memberCount, memberCount) || other.memberCount == memberCount)&&const DeepCollectionEquality().equals(other.memberAvatarInitials, memberAvatarInitials)&&(identical(other.assignmentStrategy, assignmentStrategy) || other.assignmentStrategy == assignmentStrategy)&&(identical(other.proofRequirement, proofRequirement) || other.proofRequirement == proofRequirement));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,title,defaultDueDate,position,archivedAt,createdAt,updatedAt,isShared,memberCount,const DeepCollectionEquality().hash(memberAvatarInitials),assignmentStrategy);
+int get hashCode => Object.hash(runtimeType,id,title,defaultDueDate,position,archivedAt,createdAt,updatedAt,isShared,memberCount,const DeepCollectionEquality().hash(memberAvatarInitials),assignmentStrategy,proofRequirement);
 
 @override
 String toString() {
-  return 'ListDto(id: $id, title: $title, defaultDueDate: $defaultDueDate, position: $position, archivedAt: $archivedAt, createdAt: $createdAt, updatedAt: $updatedAt, isShared: $isShared, memberCount: $memberCount, memberAvatarInitials: $memberAvatarInitials, assignmentStrategy: $assignmentStrategy)';
+  return 'ListDto(id: $id, title: $title, defaultDueDate: $defaultDueDate, position: $position, archivedAt: $archivedAt, createdAt: $createdAt, updatedAt: $updatedAt, isShared: $isShared, memberCount: $memberCount, memberAvatarInitials: $memberAvatarInitials, assignmentStrategy: $assignmentStrategy, proofRequirement: $proofRequirement)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $ListDtoCopyWith<$Res>  {
   factory $ListDtoCopyWith(ListDto value, $Res Function(ListDto) _then) = _$ListDtoCopyWithImpl;
 @useResult
 $Res call({
- String id, String title, String? defaultDueDate, int position, String? archivedAt, String createdAt, String updatedAt,@JsonKey(defaultValue: false) bool isShared,@JsonKey(defaultValue: 1) int memberCount,@JsonKey(defaultValue: <String>[]) List<String> memberAvatarInitials,@JsonKey(defaultValue: null) String? assignmentStrategy
+ String id, String title, String? defaultDueDate, int position, String? archivedAt, String createdAt, String updatedAt,@JsonKey(defaultValue: false) bool isShared,@JsonKey(defaultValue: 1) int memberCount,@JsonKey(defaultValue: <String>[]) List<String> memberAvatarInitials,@JsonKey(defaultValue: null) String? assignmentStrategy,@JsonKey(defaultValue: null) String? proofRequirement
 });
 
 
@@ -65,7 +65,7 @@ class _$ListDtoCopyWithImpl<$Res>
 
 /// Create a copy of ListDto
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? defaultDueDate = freezed,Object? position = null,Object? archivedAt = freezed,Object? createdAt = null,Object? updatedAt = null,Object? isShared = null,Object? memberCount = null,Object? memberAvatarInitials = null,Object? assignmentStrategy = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? defaultDueDate = freezed,Object? position = null,Object? archivedAt = freezed,Object? createdAt = null,Object? updatedAt = null,Object? isShared = null,Object? memberCount = null,Object? memberAvatarInitials = null,Object? assignmentStrategy = freezed,Object? proofRequirement = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
@@ -78,6 +78,7 @@ as String,isShared: null == isShared ? _self.isShared : isShared // ignore: cast
 as bool,memberCount: null == memberCount ? _self.memberCount : memberCount // ignore: cast_nullable_to_non_nullable
 as int,memberAvatarInitials: null == memberAvatarInitials ? _self.memberAvatarInitials : memberAvatarInitials // ignore: cast_nullable_to_non_nullable
 as List<String>,assignmentStrategy: freezed == assignmentStrategy ? _self.assignmentStrategy : assignmentStrategy // ignore: cast_nullable_to_non_nullable
+as String?,proofRequirement: freezed == proofRequirement ? _self.proofRequirement : proofRequirement // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }
@@ -163,10 +164,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String title,  String? defaultDueDate,  int position,  String? archivedAt,  String createdAt,  String updatedAt, @JsonKey(defaultValue: false)  bool isShared, @JsonKey(defaultValue: 1)  int memberCount, @JsonKey(defaultValue: <String>[])  List<String> memberAvatarInitials, @JsonKey(defaultValue: null)  String? assignmentStrategy)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String title,  String? defaultDueDate,  int position,  String? archivedAt,  String createdAt,  String updatedAt, @JsonKey(defaultValue: false)  bool isShared, @JsonKey(defaultValue: 1)  int memberCount, @JsonKey(defaultValue: <String>[])  List<String> memberAvatarInitials, @JsonKey(defaultValue: null)  String? assignmentStrategy, @JsonKey(defaultValue: null)  String? proofRequirement)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ListDto() when $default != null:
-return $default(_that.id,_that.title,_that.defaultDueDate,_that.position,_that.archivedAt,_that.createdAt,_that.updatedAt,_that.isShared,_that.memberCount,_that.memberAvatarInitials,_that.assignmentStrategy);case _:
+return $default(_that.id,_that.title,_that.defaultDueDate,_that.position,_that.archivedAt,_that.createdAt,_that.updatedAt,_that.isShared,_that.memberCount,_that.memberAvatarInitials,_that.assignmentStrategy,_that.proofRequirement);case _:
   return orElse();
 
 }
@@ -184,10 +185,10 @@ return $default(_that.id,_that.title,_that.defaultDueDate,_that.position,_that.a
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String title,  String? defaultDueDate,  int position,  String? archivedAt,  String createdAt,  String updatedAt, @JsonKey(defaultValue: false)  bool isShared, @JsonKey(defaultValue: 1)  int memberCount, @JsonKey(defaultValue: <String>[])  List<String> memberAvatarInitials, @JsonKey(defaultValue: null)  String? assignmentStrategy)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String title,  String? defaultDueDate,  int position,  String? archivedAt,  String createdAt,  String updatedAt, @JsonKey(defaultValue: false)  bool isShared, @JsonKey(defaultValue: 1)  int memberCount, @JsonKey(defaultValue: <String>[])  List<String> memberAvatarInitials, @JsonKey(defaultValue: null)  String? assignmentStrategy, @JsonKey(defaultValue: null)  String? proofRequirement)  $default,) {final _that = this;
 switch (_that) {
 case _ListDto():
-return $default(_that.id,_that.title,_that.defaultDueDate,_that.position,_that.archivedAt,_that.createdAt,_that.updatedAt,_that.isShared,_that.memberCount,_that.memberAvatarInitials,_that.assignmentStrategy);case _:
+return $default(_that.id,_that.title,_that.defaultDueDate,_that.position,_that.archivedAt,_that.createdAt,_that.updatedAt,_that.isShared,_that.memberCount,_that.memberAvatarInitials,_that.assignmentStrategy,_that.proofRequirement);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -204,10 +205,10 @@ return $default(_that.id,_that.title,_that.defaultDueDate,_that.position,_that.a
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String title,  String? defaultDueDate,  int position,  String? archivedAt,  String createdAt,  String updatedAt, @JsonKey(defaultValue: false)  bool isShared, @JsonKey(defaultValue: 1)  int memberCount, @JsonKey(defaultValue: <String>[])  List<String> memberAvatarInitials, @JsonKey(defaultValue: null)  String? assignmentStrategy)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String title,  String? defaultDueDate,  int position,  String? archivedAt,  String createdAt,  String updatedAt, @JsonKey(defaultValue: false)  bool isShared, @JsonKey(defaultValue: 1)  int memberCount, @JsonKey(defaultValue: <String>[])  List<String> memberAvatarInitials, @JsonKey(defaultValue: null)  String? assignmentStrategy, @JsonKey(defaultValue: null)  String? proofRequirement)?  $default,) {final _that = this;
 switch (_that) {
 case _ListDto() when $default != null:
-return $default(_that.id,_that.title,_that.defaultDueDate,_that.position,_that.archivedAt,_that.createdAt,_that.updatedAt,_that.isShared,_that.memberCount,_that.memberAvatarInitials,_that.assignmentStrategy);case _:
+return $default(_that.id,_that.title,_that.defaultDueDate,_that.position,_that.archivedAt,_that.createdAt,_that.updatedAt,_that.isShared,_that.memberCount,_that.memberAvatarInitials,_that.assignmentStrategy,_that.proofRequirement);case _:
   return null;
 
 }
@@ -219,7 +220,7 @@ return $default(_that.id,_that.title,_that.defaultDueDate,_that.position,_that.a
 @JsonSerializable()
 
 class _ListDto extends ListDto {
-  const _ListDto({required this.id, required this.title, this.defaultDueDate, required this.position, this.archivedAt, required this.createdAt, required this.updatedAt, @JsonKey(defaultValue: false) this.isShared = false, @JsonKey(defaultValue: 1) this.memberCount = 1, @JsonKey(defaultValue: <String>[]) final  List<String> memberAvatarInitials = const <String>[], @JsonKey(defaultValue: null) this.assignmentStrategy}): _memberAvatarInitials = memberAvatarInitials,super._();
+  const _ListDto({required this.id, required this.title, this.defaultDueDate, required this.position, this.archivedAt, required this.createdAt, required this.updatedAt, @JsonKey(defaultValue: false) this.isShared = false, @JsonKey(defaultValue: 1) this.memberCount = 1, @JsonKey(defaultValue: <String>[]) final  List<String> memberAvatarInitials = const <String>[], @JsonKey(defaultValue: null) this.assignmentStrategy, @JsonKey(defaultValue: null) this.proofRequirement}): _memberAvatarInitials = memberAvatarInitials,super._();
   factory _ListDto.fromJson(Map<String, dynamic> json) => _$ListDtoFromJson(json);
 
 @override final  String id;
@@ -239,6 +240,7 @@ class _ListDto extends ListDto {
 }
 
 @override@JsonKey(defaultValue: null) final  String? assignmentStrategy;
+@override@JsonKey(defaultValue: null) final  String? proofRequirement;
 
 /// Create a copy of ListDto
 /// with the given fields replaced by the non-null parameter values.
@@ -253,16 +255,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ListDto&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.defaultDueDate, defaultDueDate) || other.defaultDueDate == defaultDueDate)&&(identical(other.position, position) || other.position == position)&&(identical(other.archivedAt, archivedAt) || other.archivedAt == archivedAt)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.isShared, isShared) || other.isShared == isShared)&&(identical(other.memberCount, memberCount) || other.memberCount == memberCount)&&const DeepCollectionEquality().equals(other._memberAvatarInitials, _memberAvatarInitials)&&(identical(other.assignmentStrategy, assignmentStrategy) || other.assignmentStrategy == assignmentStrategy));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ListDto&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.defaultDueDate, defaultDueDate) || other.defaultDueDate == defaultDueDate)&&(identical(other.position, position) || other.position == position)&&(identical(other.archivedAt, archivedAt) || other.archivedAt == archivedAt)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.isShared, isShared) || other.isShared == isShared)&&(identical(other.memberCount, memberCount) || other.memberCount == memberCount)&&const DeepCollectionEquality().equals(other._memberAvatarInitials, _memberAvatarInitials)&&(identical(other.assignmentStrategy, assignmentStrategy) || other.assignmentStrategy == assignmentStrategy)&&(identical(other.proofRequirement, proofRequirement) || other.proofRequirement == proofRequirement));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,title,defaultDueDate,position,archivedAt,createdAt,updatedAt,isShared,memberCount,const DeepCollectionEquality().hash(_memberAvatarInitials),assignmentStrategy);
+int get hashCode => Object.hash(runtimeType,id,title,defaultDueDate,position,archivedAt,createdAt,updatedAt,isShared,memberCount,const DeepCollectionEquality().hash(_memberAvatarInitials),assignmentStrategy,proofRequirement);
 
 @override
 String toString() {
-  return 'ListDto(id: $id, title: $title, defaultDueDate: $defaultDueDate, position: $position, archivedAt: $archivedAt, createdAt: $createdAt, updatedAt: $updatedAt, isShared: $isShared, memberCount: $memberCount, memberAvatarInitials: $memberAvatarInitials, assignmentStrategy: $assignmentStrategy)';
+  return 'ListDto(id: $id, title: $title, defaultDueDate: $defaultDueDate, position: $position, archivedAt: $archivedAt, createdAt: $createdAt, updatedAt: $updatedAt, isShared: $isShared, memberCount: $memberCount, memberAvatarInitials: $memberAvatarInitials, assignmentStrategy: $assignmentStrategy, proofRequirement: $proofRequirement)';
 }
 
 
@@ -273,7 +275,7 @@ abstract mixin class _$ListDtoCopyWith<$Res> implements $ListDtoCopyWith<$Res> {
   factory _$ListDtoCopyWith(_ListDto value, $Res Function(_ListDto) _then) = __$ListDtoCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String title, String? defaultDueDate, int position, String? archivedAt, String createdAt, String updatedAt,@JsonKey(defaultValue: false) bool isShared,@JsonKey(defaultValue: 1) int memberCount,@JsonKey(defaultValue: <String>[]) List<String> memberAvatarInitials,@JsonKey(defaultValue: null) String? assignmentStrategy
+ String id, String title, String? defaultDueDate, int position, String? archivedAt, String createdAt, String updatedAt,@JsonKey(defaultValue: false) bool isShared,@JsonKey(defaultValue: 1) int memberCount,@JsonKey(defaultValue: <String>[]) List<String> memberAvatarInitials,@JsonKey(defaultValue: null) String? assignmentStrategy,@JsonKey(defaultValue: null) String? proofRequirement
 });
 
 
@@ -290,7 +292,7 @@ class __$ListDtoCopyWithImpl<$Res>
 
 /// Create a copy of ListDto
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? title = null,Object? defaultDueDate = freezed,Object? position = null,Object? archivedAt = freezed,Object? createdAt = null,Object? updatedAt = null,Object? isShared = null,Object? memberCount = null,Object? memberAvatarInitials = null,Object? assignmentStrategy = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? title = null,Object? defaultDueDate = freezed,Object? position = null,Object? archivedAt = freezed,Object? createdAt = null,Object? updatedAt = null,Object? isShared = null,Object? memberCount = null,Object? memberAvatarInitials = null,Object? assignmentStrategy = freezed,Object? proofRequirement = freezed,}) {
   return _then(_ListDto(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
@@ -303,6 +305,7 @@ as String,isShared: null == isShared ? _self.isShared : isShared // ignore: cast
 as bool,memberCount: null == memberCount ? _self.memberCount : memberCount // ignore: cast_nullable_to_non_nullable
 as int,memberAvatarInitials: null == memberAvatarInitials ? _self._memberAvatarInitials : memberAvatarInitials // ignore: cast_nullable_to_non_nullable
 as List<String>,assignmentStrategy: freezed == assignmentStrategy ? _self.assignmentStrategy : assignmentStrategy // ignore: cast_nullable_to_non_nullable
+as String?,proofRequirement: freezed == proofRequirement ? _self.proofRequirement : proofRequirement // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }

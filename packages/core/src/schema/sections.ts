@@ -13,6 +13,7 @@ export const sectionsTable = pgTable('sections', {
   title: text().notNull(),
   defaultDueDate: timestamp({ withTimezone: true }),
   position: integer().default(0).notNull(),
+  proofRequirement: text(), // 'none' | 'photo' | 'watchMode' | 'healthKit' | null (null = inherit from parent list)
   createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
 })

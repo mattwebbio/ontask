@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import '../domain/energy_requirement.dart';
 import '../domain/recurrence_rule.dart';
+import '../../now/domain/proof_mode.dart';
 import '../domain/task.dart';
 import '../domain/task_priority.dart';
 import '../domain/time_window.dart';
@@ -45,6 +46,8 @@ abstract class TaskDto with _$TaskDto {
     String? scheduledStartTime,
     @JsonKey(defaultValue: null) String? assignedToUserId,
     @JsonKey(defaultValue: null) String? listName,
+    @JsonKey(defaultValue: 'standard') @Default('standard') String proofMode,
+    @JsonKey(defaultValue: false) @Default(false) bool proofModeIsCustom,
   }) = _TaskDto;
 
   factory TaskDto.fromJson(Map<String, dynamic> json) => _$TaskDtoFromJson(json);
@@ -80,6 +83,8 @@ abstract class TaskDto with _$TaskDto {
             : null,
         assignedToUserId: assignedToUserId,
         listName: listName,
+        proofMode: ProofMode.fromJson(proofMode),
+        proofModeIsCustom: proofModeIsCustom,
       );
 
   static List<int>? _parseDaysOfWeek(String? value) {

@@ -5,6 +5,7 @@ import '../../../../core/l10n/strings.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../lists/domain/list_member.dart';
+import '../../../now/domain/proof_mode.dart';
 import '../../../prediction/presentation/widgets/prediction_badge_async.dart';
 import '../../domain/energy_requirement.dart';
 import '../../domain/recurrence_rule.dart';
@@ -134,7 +135,7 @@ class TaskRow extends StatelessWidget {
                                 : null,
                           ),
                     ),
-                    if (task.dueDate != null || _hasSchedulingHints || task.recurrenceRule != null || dependsOn.isNotEmpty || blocks.isNotEmpty) ...[
+                    if (task.dueDate != null || _hasSchedulingHints || task.recurrenceRule != null || dependsOn.isNotEmpty || blocks.isNotEmpty || task.proofMode != ProofMode.standard) ...[
                       const SizedBox(height: AppSpacing.xs),
                       Wrap(
                         spacing: AppSpacing.sm,
@@ -282,6 +283,57 @@ class TaskRow extends StatelessWidget {
                                 ),
                               ],
                             ),
+                          // Proof mode indicator — shown when proofMode != standard (AC1, AC2)
+                          if (task.proofMode != ProofMode.standard)
+                            Semantics(
+                              label: task.proofModeIsCustom
+                                  ? AppStrings.accountabilityCustomBadge
+                                  : AppStrings.accountabilityInheritedLabel,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    CupertinoIcons.shield,
+                                    size: 12,
+                                    color: colors.textSecondary,
+                                  ),
+                                  const SizedBox(width: 2),
+                                  Text(
+                                    _proofModeBadgeLabel(),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall
+                                        ?.copyWith(
+                                          color: colors.textSecondary,
+                                          fontSize: 13,
+                                        ),
+                                  ),
+                                  if (task.proofModeIsCustom) ...[
+                                    const SizedBox(width: 4),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 4,
+                                        vertical: 1,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: colors.surfaceSecondary,
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Text(
+                                        AppStrings.accountabilityCustomBadge,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall
+                                            ?.copyWith(
+                                              color: colors.textSecondary,
+                                              fontSize: 11,
+                                            ),
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
                         ],
                       ),
                     ],
@@ -314,7 +366,8 @@ class TaskRow extends StatelessWidget {
   bool get _hasSchedulingHints =>
       (task.priority == TaskPriority.high || task.priority == TaskPriority.critical) ||
       task.timeWindow != null ||
-      task.energyRequirement != null;
+      task.energyRequirement != null ||
+      task.proofMode != ProofMode.standard;
 
   String _formatDueDate(DateTime date) {
     return '${date.month}/${date.day}/${date.year}';
@@ -376,6 +429,22 @@ class TaskRow extends StatelessWidget {
         return AppStrings.taskEnergyLowEnergy;
       case EnergyRequirement.flexible:
         return AppStrings.taskEnergyFlexible;
+    }
+  }
+
+  /// Returns the display label for the proof mode badge in the task row metadata.
+  String _proofModeBadgeLabel() {
+    switch (task.proofMode) {
+      case ProofMode.photo:
+        return AppStrings.accountabilityPhoto;
+      case ProofMode.watchMode:
+        return AppStrings.accountabilityWatchMode;
+      case ProofMode.healthKit:
+        return AppStrings.accountabilityHealthKit;
+      case ProofMode.calendarEvent:
+        return 'Calendar event';
+      case ProofMode.standard:
+        return '';
     }
   }
 }

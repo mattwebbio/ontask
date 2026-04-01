@@ -666,6 +666,46 @@ class AppStrings {
   static const String taskUnassignError =
       'Could not unassign task. Please try again.';
 
+  // ── Accountability settings cascade (FR20) ──────────────────────────────
+  /// Section header in List Settings and section accountability pickers.
+  static const String accountabilitySettingsLabel = 'Proof requirement';
+
+  /// No proof required option.
+  static const String accountabilityNone = 'None';
+
+  /// Photo proof option.
+  static const String accountabilityPhoto = 'Photo proof';
+
+  /// Watch Mode option.
+  static const String accountabilityWatchMode = 'Watch Mode';
+
+  /// HealthKit option.
+  static const String accountabilityHealthKit = 'HealthKit';
+
+  /// Description for None option.
+  static const String accountabilityNoneDesc = 'No proof required for tasks in this list.';
+
+  /// Description for Photo proof option.
+  static const String accountabilityPhotoDesc = 'Members must submit a photo when completing tasks.';
+
+  /// Description for Watch Mode option.
+  static const String accountabilityWatchModeDesc = 'Tasks require a Watch Mode session to complete.';
+
+  /// Description for HealthKit option.
+  static const String accountabilityHealthKitDesc = 'Completion is verified via HealthKit data.';
+
+  /// Badge shown on task row when proofModeIsCustom = true.
+  static const String accountabilityCustomBadge = 'Custom';
+
+  /// Accessibility label for inherited proof mode indicators.
+  static const String accountabilityInheritedLabel = 'Inherited';
+
+  /// Error message when proof requirement update fails.
+  static const String accountabilityUpdateError = 'Could not update proof requirement. Please try again.';
+
+  /// Note shown in task edit when user overrides to None/standard while section has a requirement.
+  static const String accountabilityOverrideToStandardNote = 'This overrides the section default.';
+
   // ── Shared actions ──────────────────────────────────────────────────────
   static const String actionNotImplemented =
       'This action is not yet available in this version.';

@@ -63,6 +63,20 @@ class ListsRepository {
     await _client.dio.delete('/v1/lists/$id/archive');
   }
 
+  /// Updates the proof requirement for a list (PATCH /v1/lists/{id}/accountability).
+  ///
+  /// Pass [proofRequirement] as `'none'`, `'photo'`, `'watchMode'`, `'healthKit'`, or `null` to remove.
+  /// In production, cascades to tasks where proofModeIsCustom = false.
+  Future<TaskList> updateListAccountability(String listId, String? proofRequirement) async {
+    final response = await _client.dio.patch<Map<String, dynamic>>(
+      '/v1/lists/$listId/accountability',
+      data: {'proofRequirement': proofRequirement},
+    );
+    return ListDto.fromJson(
+      response.data!['data'] as Map<String, dynamic>,
+    ).toDomain();
+  }
+
   /// Updates the assignment strategy for a list (PATCH /v1/lists/{id}/settings).
   ///
   /// Pass [strategy] as `'round-robin'`, `'least-busy'`, `'ai-assisted'`, or `null` to disable.

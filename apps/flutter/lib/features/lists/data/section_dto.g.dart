@@ -15,6 +15,7 @@ _SectionDto _$SectionDtoFromJson(Map<String, dynamic> json) => _SectionDto(
   position: (json['position'] as num).toInt(),
   createdAt: json['createdAt'] as String,
   updatedAt: json['updatedAt'] as String,
+  proofRequirement: json['proofRequirement'] as String?,
 );
 
 Map<String, dynamic> _$SectionDtoToJson(_SectionDto instance) =>
@@ -27,4 +28,5 @@ Map<String, dynamic> _$SectionDtoToJson(_SectionDto instance) =>
       'position': instance.position,
       'createdAt': instance.createdAt,
       'updatedAt': instance.updatedAt,
+      'proofRequirement': instance.proofRequirement,
     };

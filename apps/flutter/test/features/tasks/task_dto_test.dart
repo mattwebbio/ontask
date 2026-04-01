@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ontask/features/now/domain/proof_mode.dart';
 import 'package:ontask/features/tasks/data/task_dto.dart';
 
 void main() {
@@ -125,6 +126,51 @@ void main() {
       final task = TaskDto.fromJson(json).toDomain();
 
       expect(task.listName, isNull);
+    });
+  });
+
+  group('TaskDto.fromJson — proofMode and proofModeIsCustom (Story 5.4, AC1, AC2)', () {
+    const baseJson = {
+      'id': 'a0000000-0000-4000-8000-000000000001',
+      'title': 'Buy groceries',
+      'position': 0,
+      'createdAt': '2026-03-30T12:00:00.000Z',
+      'updatedAt': '2026-03-30T12:00:00.000Z',
+    };
+
+    test('parses proofMode photo correctly', () {
+      final json = {...baseJson, 'proofMode': 'photo'};
+      final dto = TaskDto.fromJson(json);
+      expect(dto.proofMode, equals('photo'));
+      expect(dto.toDomain().proofMode, equals(ProofMode.photo));
+    });
+
+    test('parses proofMode watchMode correctly', () {
+      final json = {...baseJson, 'proofMode': 'watchMode'};
+      final dto = TaskDto.fromJson(json);
+      expect(dto.toDomain().proofMode, equals(ProofMode.watchMode));
+    });
+
+    test('parses proofMode as standard when field is absent (old API stub)', () {
+      final json = Map<String, dynamic>.from(baseJson);
+      // No proofMode field — old API response
+      final dto = TaskDto.fromJson(json);
+      expect(dto.proofMode, equals('standard'));
+      expect(dto.toDomain().proofMode, equals(ProofMode.standard));
+    });
+
+    test('parses proofModeIsCustom as true when present', () {
+      final json = {...baseJson, 'proofMode': 'photo', 'proofModeIsCustom': true};
+      final dto = TaskDto.fromJson(json);
+      expect(dto.proofModeIsCustom, isTrue);
+      expect(dto.toDomain().proofModeIsCustom, isTrue);
+    });
+
+    test('parses proofModeIsCustom as false when field is absent', () {
+      final json = Map<String, dynamic>.from(baseJson);
+      final dto = TaskDto.fromJson(json);
+      expect(dto.proofModeIsCustom, isFalse);
+      expect(dto.toDomain().proofModeIsCustom, isFalse);
     });
   });
 }

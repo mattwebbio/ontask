@@ -7,6 +7,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/l10n/strings.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../now/domain/proof_mode.dart';
+import '../../data/tasks_repository.dart';
 import '../../domain/energy_requirement.dart';
 import '../../domain/recurrence_rule.dart';
 import '../../domain/task.dart';
@@ -711,6 +713,92 @@ class _TaskEditInlineState extends ConsumerState<TaskEditInline> {
     }
   }
 
+  String _proofModeLabel(ProofMode mode) {
+    switch (mode) {
+      case ProofMode.standard:
+        return AppStrings.assignmentStrategyNone;
+      case ProofMode.photo:
+        return AppStrings.accountabilityPhoto;
+      case ProofMode.watchMode:
+        return AppStrings.accountabilityWatchMode;
+      case ProofMode.healthKit:
+        return AppStrings.accountabilityHealthKit;
+      case ProofMode.calendarEvent:
+        return 'Calendar event';
+    }
+  }
+
+  void _showProofModePicker() {
+    showCupertinoModalPopup<void>(
+      context: context,
+      builder: (ctx) => CupertinoActionSheet(
+        title: const Text(AppStrings.accountabilitySettingsLabel),
+        actions: [
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              _setProofMode('standard');
+            },
+            child: const Text(AppStrings.assignmentStrategyNone),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              _setProofMode('photo');
+            },
+            child: const Text(AppStrings.accountabilityPhoto),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              _setProofMode('watchMode');
+            },
+            child: const Text(AppStrings.accountabilityWatchMode),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              _setProofMode('healthKit');
+            },
+            child: const Text(AppStrings.accountabilityHealthKit),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          onPressed: () => Navigator.of(ctx).pop(),
+          child: const Text(AppStrings.actionCancel),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _setProofMode(String proofMode) async {
+    try {
+      final repo = ref.read(tasksRepositoryProvider);
+      await repo.setTaskProofMode(widget.task.id, proofMode);
+      ref.invalidate(tasksProvider(
+        listId: widget.task.listId,
+        sectionId: widget.task.sectionId,
+      ));
+      setState(() {});
+    } catch (_) {
+      if (!mounted) return;
+      // Show inline error — do not dismiss the picker
+      showCupertinoDialog<void>(
+        context: context,
+        builder: (dialogCtx) => CupertinoAlertDialog(
+          title: const Text('Error'),
+          content: const Text(AppStrings.accountabilityUpdateError),
+          actions: [
+            CupertinoDialogAction(
+              child: const Text('OK'),
+              onPressed: () => Navigator.of(dialogCtx).pop(),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
   String _energyLabel(EnergyRequirement energy) {
     switch (energy) {
       case EnergyRequirement.highFocus:
@@ -842,6 +930,45 @@ class _TaskEditInlineState extends ConsumerState<TaskEditInline> {
                         color: colors.textSecondary,
                       ),
                 ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+
+          // Proof mode picker (AC2 — per-task override of list/section proof requirement)
+          GestureDetector(
+            onTap: _showProofModePicker,
+            child: Row(
+              children: [
+                Icon(
+                  CupertinoIcons.shield,
+                  size: 18,
+                  color: colors.textSecondary,
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Text(
+                  '${AppStrings.accountabilitySettingsLabel}: ${_proofModeLabel(widget.task.proofMode)}',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: colors.textSecondary,
+                      ),
+                ),
+                if (widget.task.proofModeIsCustom) ...[
+                  const SizedBox(width: AppSpacing.sm),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                    decoration: BoxDecoration(
+                      color: colors.surfaceSecondary,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      AppStrings.accountabilityCustomBadge,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: colors.textSecondary,
+                            fontSize: 11,
+                          ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

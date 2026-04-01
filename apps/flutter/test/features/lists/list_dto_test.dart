@@ -121,5 +121,41 @@ void main() {
 
       expect(dto.assignmentStrategy, isNull);
     });
+
+    test('parses proofRequirement correctly when present (Story 5.4, AC1)', () {
+      final json = {
+        'id': 'b0000000-0000-4000-8000-000000000001',
+        'title': 'Photo List',
+        'defaultDueDate': null,
+        'position': 0,
+        'archivedAt': null,
+        'createdAt': '2026-03-30T12:00:00.000Z',
+        'updatedAt': '2026-03-30T12:00:00.000Z',
+        'proofRequirement': 'photo',
+      };
+
+      final dto = ListDto.fromJson(json);
+
+      expect(dto.proofRequirement, equals('photo'));
+      expect(dto.toDomain().proofRequirement, equals('photo'));
+    });
+
+    test('parses proofRequirement as null when field is absent (Story 5.4, AC1)', () {
+      final json = {
+        'id': 'b0000000-0000-4000-8000-000000000001',
+        'title': 'Simple List',
+        'defaultDueDate': null,
+        'position': 0,
+        'archivedAt': null,
+        'createdAt': '2026-03-30T12:00:00.000Z',
+        'updatedAt': '2026-03-30T12:00:00.000Z',
+        // No proofRequirement field — old API stub
+      };
+
+      final dto = ListDto.fromJson(json);
+
+      expect(dto.proofRequirement, isNull);
+      expect(dto.toDomain().proofRequirement, isNull);
+    });
   });
 }

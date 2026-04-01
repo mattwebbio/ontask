@@ -22,6 +22,7 @@ _ListDto _$ListDtoFromJson(Map<String, dynamic> json) => _ListDto(
           .toList() ??
       [],
   assignmentStrategy: json['assignmentStrategy'] as String?,
+  proofRequirement: json['proofRequirement'] as String?,
 );
 
 Map<String, dynamic> _$ListDtoToJson(_ListDto instance) => <String, dynamic>{
@@ -36,4 +37,5 @@ Map<String, dynamic> _$ListDtoToJson(_ListDto instance) => <String, dynamic>{
   'memberCount': instance.memberCount,
   'memberAvatarInitials': instance.memberAvatarInitials,
   'assignmentStrategy': instance.assignmentStrategy,
+  'proofRequirement': instance.proofRequirement,
 };

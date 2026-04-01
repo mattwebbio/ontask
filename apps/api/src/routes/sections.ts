@@ -31,6 +31,7 @@ const sectionSchema = z.object({
   position: z.number().int(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
+  proofRequirement: z.enum(['none', 'photo', 'watchMode', 'healthKit']).nullable(),
 })
 
 const SectionResponseSchema = z.object({ data: sectionSchema })
@@ -61,6 +62,7 @@ function stubSection(overrides: Partial<z.infer<typeof sectionSchema>> = {}): z.
     position: 0,
     createdAt: now,
     updatedAt: now,
+    proofRequirement: null,
     ...overrides,
   }
 }
@@ -168,6 +170,42 @@ app.openapi(getSectionPredictionRoute, async (c) => {
     }),
     200,
   )
+})
+
+// ── PATCH /v1/sections/:id/accountability ───────────────────────────────────
+// IMPORTANT: Registered BEFORE PATCH /v1/sections/{id} (catch-all) to prevent
+// Hono from matching "accountability" as a section ID.
+
+const updateSectionAccountabilitySchema = z.object({
+  proofRequirement: z.enum(['none', 'photo', 'watchMode', 'healthKit']).nullable(),
+})
+
+const patchSectionAccountabilityRoute = createRoute({
+  method: 'patch',
+  path: '/v1/sections/{id}/accountability',
+  tags: ['Lists'],
+  summary: 'Update section proof requirement (accountability)',
+  description:
+    'Sets the proof requirement for all tasks in a section (FR20). ' +
+    'Pass null to remove the section-level requirement (tasks inherit from list). ' +
+    'In production, cascades to tasks in this section where proofModeIsCustom = false.',
+  request: {
+    params: z.object({ id: z.string().uuid() }),
+    body: { content: { 'application/json': { schema: updateSectionAccountabilitySchema } }, required: true },
+  },
+  responses: {
+    200: { content: { 'application/json': { schema: SectionResponseSchema } }, description: 'Accountability updated' },
+    403: { content: { 'application/json': { schema: ErrorSchema } }, description: 'Not list owner' },
+    404: { content: { 'application/json': { schema: ErrorSchema } }, description: 'Section not found' },
+    422: { content: { 'application/json': { schema: ErrorSchema } }, description: 'Validation error' },
+  },
+})
+
+app.openapi(patchSectionAccountabilityRoute, async (c) => {
+  // TODO(impl): verify caller is list owner via list_members, update sections table, cascade to tasks in this section where proofModeIsCustom = false
+  const { id } = c.req.valid('param')
+  const body = c.req.valid('json')
+  return c.json(ok(stubSection({ id, proofRequirement: body.proofRequirement })), 200)
 })
 
 // ── PATCH /v1/sections/:id ──────────────────────────────────────────────────

@@ -17,5 +17,8 @@ abstract class Section with _$Section {
     required int position,
     required DateTime createdAt,
     required DateTime updatedAt,
+    // Proof requirement for tasks in this section (FR20). Null = inherit from parent list.
+    // Valid values: 'none' | 'photo' | 'watchMode' | 'healthKit' | null
+    String? proofRequirement,
   }) = _Section;
 }
