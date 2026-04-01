@@ -1,6 +1,6 @@
 # Story 5.1: List Sharing & Invitations
 
-Status: review
+Status: in-progress
 
 ## Story
 
@@ -18,291 +18,465 @@ So that my household or team can coordinate tasks in one place.
 
 ## Tasks / Subtasks
 
-### DB: Add `list_members` and `list_invitations` tables
+### Backend: New DB tables in `packages/core`
 
-- [x] Create `packages/core/src/schema/list-members.ts` (AC: 1, 2, 3)
-  - [x] `listMembersTable` — columns: `id` (uuid PK), `listId` (uuid FK → lists), `userId` (uuid), `role` (text `'owner'|'member'`), `joinedAt` (timestamp), `createdAt`, `updatedAt`
-- [x] Create `packages/core/src/schema/list-invitations.ts` (AC: 1, 2)
-  - [x] `listInvitationsTable` — columns: `id` (uuid PK), `listId` (uuid FK → lists), `invitedByUserId` (uuid), `inviteeEmail` (text not null), `token` (text not null unique — secure random), `status` (text `'pending'|'accepted'|'declined'`), `expiresAt` (timestamp), `createdAt`, `updatedAt`
-- [x] Export both new tables from `packages/core/src/schema/index.ts`
-- [x] Write migration `packages/core/src/schema/migrations/0008_list_sharing.sql` — `CREATE TABLE list_members`, `CREATE TABLE list_invitations`
+- [ ] Add `list_members` table to `packages/core/src/schema/list-members.ts` (AC: 1, 2, 3)
+  - [ ] Columns: `id` (uuid PK), `list_id` (uuid NOT NULL), `user_id` (uuid NOT NULL), `role` (text NOT NULL — `'owner'` | `'member'`), `created_at` (timestamptz), `updated_at` (timestamptz)
+  - [ ] Unique constraint on `(list_id, user_id)` — one membership row per user per list
+  - [ ] Export as `listMembersTable` from `packages/core/src/schema/list-members.ts`
 
-### API: Share endpoint and invitation acceptance
+- [ ] Add `list_invitations` table to `packages/core/src/schema/list-invitations.ts` (AC: 1, 2)
+  - [ ] Columns: `id` (uuid PK), `list_id` (uuid NOT NULL), `invited_by_user_id` (uuid NOT NULL), `invitee_email` (text NOT NULL), `token` (text NOT NULL UNIQUE — secure random, used in deep link), `status` (text NOT NULL DEFAULT `'pending'` — `'pending'` | `'accepted'` | `'revoked'`), `created_at` (timestamptz), `updated_at` (timestamptz), `expires_at` (timestamptz NOT NULL — 7 days from creation)
+  - [ ] Unique constraint on `(list_id, invitee_email)` WHERE `status = 'pending'` — prevent duplicate pending invites to the same email for the same list (partial index)
+  - [ ] Export as `listInvitationsTable` from `packages/core/src/schema/list-invitations.ts`
 
-- [x] Create `apps/api/src/routes/sharing.ts` with stub implementations (AC: 1, 2)
-  - [x] `POST /v1/lists/:id/share` — accepts `{ email: string }`, creates a stub invitation record, returns `{ data: { invitationId, listId, inviteeEmail, status: 'pending' } }` (stub: logs "TODO: send email", returns 201)
-  - [x] `POST /v1/invitations/:token/accept` — accepts the invitation token from the deep link, returns `{ data: { listId, listTitle, inviterName, memberCount } }` (stub: returns plausible fixture data)
-  - [x] `GET /v1/lists/:id/members` — returns paginated member list `{ data: [{ userId, displayName, avatarInitials, role, joinedAt }], pagination }` (stub: returns fixture with 2 members including the current user)
-  - [x] All routes use `@hono/zod-openapi` schemas — no untyped routes
-- [x] Register `sharingRouter` in `apps/api/src/index.ts`
+- [ ] Export both new tables from `packages/core/src/schema/index.ts` (AC: 1, 2, 3)
+  - [ ] Add `export { listMembersTable } from './list-members.js'`
+  - [ ] Add `export { listInvitationsTable } from './list-invitations.js'`
 
-### Flutter: Share sheet widget
+- [ ] Generate migration `packages/core/src/schema/migrations/0008_list_sharing.sql` (AC: 1, 2, 3)
+  - [ ] Run `pnpm drizzle-kit generate` from `packages/core/` to produce the migration file
+  - [ ] Commit the generated SQL file and updated `meta/_journal.json`
+  - [ ] Migration must create both `list_members` and `list_invitations` tables with all constraints
 
-- [x] Create `apps/flutter/lib/features/lists/presentation/widgets/share_list_sheet.dart` (AC: 1)
-  - [x] `ShareListSheet` — `StatefulWidget`, accepts `listId`, `listTitle`
-  - [x] Email input field (`CupertinoTextField`) with "Send invitation" button (`CupertinoButton.filled`)
-  - [x] On submit: calls `sharingRepository.shareList(listId, email)`, shows inline success ("Invitation sent to {email}.") or inline error
-  - [x] Validate email format before submitting (show "Enter a valid email address." if empty/invalid)
-  - [x] All strings via `AppStrings` constants
-  - [x] All colours via `Theme.of(context).extension<OnTaskColors>()!` — use `colors.accentPrimary` for avatar circles and primary buttons; `colors.surfaceSecondary` for sheet background; `colors.textSecondary` for secondary text
-- [x] Add "Share" action to `list_detail_screen.dart` `_showMoreActions` action sheet (AC: 1)
-  - [x] Append a new `CupertinoActionSheetAction` with label `AppStrings.shareListAction`
-  - [x] On tap: close action sheet, then `showModalBottomSheet(..., builder: (_) => ShareListSheet(listId: widget.listId, listTitle: list?.title ?? ''))`
+### Backend: `listSchema` extension in `apps/api/src/routes/lists.ts`
 
-### Flutter: Invitation accept screen
+- [ ] Extend `listSchema` to include sharing fields (AC: 1, 3)
+  - [ ] Add `isShared: z.boolean()` — true when `memberCount > 1`
+  - [ ] Add `memberCount: z.number().int()` — number of accepted members
+  - [ ] Add `memberAvatarInitials: z.array(z.string()).max(3)` — first letter of each member's display name, capped at 3 for UI avatars (stub: empty array)
+  - [ ] Update `stubList()` helper with `isShared: false, memberCount: 1, memberAvatarInitials: []`
+  - [ ] `GET /v1/lists` stub response now includes these fields on every list item
+  - [ ] `GET /v1/lists/:id` stub response now includes these fields
 
-- [x] Create `apps/flutter/lib/features/lists/presentation/accept_invitation_screen.dart` (AC: 2)
-  - [x] `AcceptInvitationScreen` — `ConsumerStatefulWidget`, accepts `token` string param
-  - [x] On init: calls `sharingRepository.getInvitationDetails(token)` — shows loading, then renders: list name (large text), "Invited by {inviterName}" (secondary text), "Accept" button, "Decline" button
-  - [x] "Accept" → calls `sharingRepository.acceptInvitation(token)` → on success: navigates to `/lists` (or `/onboarding` if not yet subscribed — stub logic: always go to `/lists`)
-  - [x] "Decline" → calls `sharingRepository.declineInvitation(token)` → navigates back / closes
-  - [x] Error state: show "This invitation has expired or is no longer valid." with a "Go to Lists" button
-  - [x] All strings via `AppStrings`; all colours via `OnTaskColors`
-- [x] Register `/invite/:token` route in `apps/flutter/lib/core/router/app_router.dart`
-  - [x] Add `GoRoute(path: '/invite/:token', ...)` inside the `StatefulShellRoute` lists branch under `/lists`, or as a top-level route accessible without shell (matching `chapter-break` pattern) — use top-level route so no tab bar appears
-  - [x] Pass `state.pathParameters['token']!` to `AcceptInvitationScreen`
+### Backend: New sharing endpoints in `apps/api/src/routes/lists.ts`
 
-### Flutter: Shared list indicator in ListsScreen
+All new routes must be registered BEFORE the parameterized `GET /v1/lists/{id}` route (specific paths before `/:id`).
 
-- [x] Modify `apps/flutter/lib/features/lists/presentation/lists_screen.dart` to show shared indicator (AC: 3)
-  - [x] Watch `listMembersProvider(listId)` per list row — `AsyncValue<List<ListMember>>`
-  - [x] When `memberCount >= 2`: show a `Row` of `_MemberAvatar` widgets (first 3 max) and a member count label alongside the list title
-  - [x] `_MemberAvatar` — private widget: 20×20 circular `Container`, background `colors.accentPrimary`, foreground `colors.surfacePrimary`, shows 1–2 initial characters of `avatarInitials`
-  - [x] When `memberCount < 2` (personal list): show no shared indicator (unchanged layout)
-  - [x] Do NOT break the existing chevron-right icon or onTap behaviour
+- [ ] `POST /v1/lists/{id}/share` — send invitation (AC: 1)
+  - [ ] Request body schema: `{ email: z.string().email() }`
+  - [ ] Response 201: `{ data: { invitationId, listId, inviteeEmail, status, expiresAt } }`
+  - [ ] Response 404: list not found
+  - [ ] Response 409: invitation already pending for this email+list
+  - [ ] Response 422: invitee is already a member
+  - [ ] Stub: return 201 with plausible static data; add `TODO(impl): insert into list_invitations, send email via email service (deferred), check ownership`
+  - [ ] Tag: `'Lists'`
 
-### Flutter: Sharing data layer
+- [ ] `GET /v1/lists/{id}/members` — list members (AC: 3)
+  - [ ] Response 200: `{ data: [{ userId, email, displayName, role, joinedAt }], pagination: { cursor, hasMore } }`
+  - [ ] Response 404: list not found
+  - [ ] Stub: return 200 with one stub owner member
+  - [ ] Tag: `'Lists'`
 
-- [x] Create `apps/flutter/lib/features/lists/domain/list_member.dart` (AC: 3)
-  - [x] `ListMember` — `@freezed` with fields: `userId`, `displayName`, `avatarInitials`, `role` (String), `joinedAt` (DateTime)
-- [x] Create `apps/flutter/lib/features/lists/data/sharing_repository.dart` (AC: 1, 2, 3)
-  - [x] `SharingRepository` — Riverpod `@riverpod` provider wrapping `ApiClient`
-  - [x] `shareList(String listId, String email)` — `POST /v1/lists/:id/share`
-  - [x] `getInvitationDetails(String token)` — `GET /v1/invitations/:token` (returns `InvitationDetails` — inline class: `listTitle`, `inviterName`)
-  - [x] `acceptInvitation(String token)` — `POST /v1/invitations/:token/accept`
-  - [x] `declineInvitation(String token)` — `POST /v1/invitations/:token/decline` (stub endpoint, returns 204)
-  - [x] `getListMembers(String listId)` — `GET /v1/lists/:id/members`
-- [x] Create `apps/flutter/lib/features/lists/presentation/list_members_provider.dart` (AC: 3)
-  - [x] `@riverpod` `ListMembersNotifier` — family keyed by `listId`, calls `sharingRepository.getListMembers(listId)`, returns `AsyncValue<List<ListMember>>`
+- [ ] `POST /v1/invitations/{token}/accept` — accept invitation via deep link (AC: 2)
+  - [ ] This route is NOT under `/v1/lists/` — it is a standalone resource at `/v1/invitations/:token/accept`
+  - [ ] Request body: empty (`{}`)
+  - [ ] Response 200: `{ data: { listId, listTitle, invitedByName, membershipId } }` — after acceptance, return enough for Flutter to navigate to the list
+  - [ ] Response 404: token not found or expired
+  - [ ] Response 409: already a member
+  - [ ] Response 410: invitation revoked
+  - [ ] Stub: return 200 with static data; add `TODO(impl): validate token, check expiry, insert list_members row, update invitation status to 'accepted', trigger FR86 onboarding if user not subscribed`
+  - [ ] Tag: `'Invitations'`
+  - [ ] Register this route in a NEW router file `apps/api/src/routes/invitations.ts` — do NOT add it to `lists.ts`
+  - [ ] Mount the new router in `apps/api/src/index.ts`
+
+- [ ] `GET /v1/invitations/{token}` — get invitation preview (AC: 2)
+  - [ ] Used by the Flutter deep link handler to show "X invited you to list Y" BEFORE the user taps Accept
+  - [ ] Response 200: `{ data: { listId, listTitle, invitedByName, inviteeEmail, status, expiresAt } }`
+  - [ ] Response 404: token not found or expired
+  - [ ] Stub: return 200 with static preview data
+  - [ ] Tag: `'Invitations'`
+  - [ ] In same `apps/api/src/routes/invitations.ts` file, registered BEFORE `/v1/invitations/{token}/accept`
+
+### Flutter: Domain models
+
+- [ ] Add `ListMember` domain model to `apps/flutter/lib/features/lists/domain/list_member.dart` (AC: 3)
+  - [ ] Freezed class with fields: `userId` (String), `email` (String), `displayName` (String), `role` (String — `'owner'` | `'member'`), `joinedAt` (DateTime)
+  - [ ] `part 'list_member.freezed.dart'` — run `build_runner` and commit generated files
+
+- [ ] Add `ListInvitation` domain model to `apps/flutter/lib/features/lists/domain/list_invitation.dart` (AC: 1, 2)
+  - [ ] Freezed class with fields: `invitationId` (String), `listId` (String), `listTitle` (String), `invitedByName` (String), `inviteeEmail` (String), `status` (String), `expiresAt` (DateTime)
+  - [ ] `part 'list_invitation.freezed.dart'` — run `build_runner` and commit generated files
+
+- [ ] Extend `TaskList` domain model in `apps/flutter/lib/features/lists/domain/task_list.dart` (AC: 1, 3)
+  - [ ] Add `isShared` (bool, default false), `memberCount` (int, default 1), `memberAvatarInitials` (List\<String\>, default const [])
+  - [ ] Mark with `@Default(false)`, `@Default(1)`, `@Default(<String>[])` — Freezed default syntax
+  - [ ] Regenerate `task_list.freezed.dart` — commit
+
+### Flutter: DTOs
+
+- [ ] Add `ListMemberDto` to `apps/flutter/lib/features/lists/data/list_member_dto.dart` (AC: 3)
+  - [ ] Freezed + `json_serializable` with `fromJson`/`toDomain()` mapping to `ListMember`
+  - [ ] Commit generated `.freezed.dart` and `.g.dart`
+
+- [ ] Add `ListInvitationDto` to `apps/flutter/lib/features/lists/data/list_invitation_dto.dart` (AC: 1, 2)
+  - [ ] Freezed + `json_serializable` with `fromJson`/`toDomain()` mapping to `ListInvitation`
+  - [ ] Commit generated `.freezed.dart` and `.g.dart`
+
+- [ ] Extend `ListDto` in `apps/flutter/lib/features/lists/data/list_dto.dart` (AC: 1, 3)
+  - [ ] Add `isShared` (bool with `@JsonKey(defaultValue: false)`), `memberCount` (int with `@JsonKey(defaultValue: 1)`), `memberAvatarInitials` (List\<String\> with `@JsonKey(defaultValue: []`)
+  - [ ] Extend `toDomain()` to pass these fields through
+  - [ ] Regenerate `list_dto.freezed.dart` and `list_dto.g.dart` — commit
+
+### Flutter: Repository methods
+
+- [ ] Add sharing methods to `apps/flutter/lib/features/lists/data/lists_repository.dart` (AC: 1, 3)
+  - [ ] `Future<ListInvitation> inviteToList(String listId, String email)` — `POST /v1/lists/$listId/share`
+  - [ ] `Future<List<ListMember>> getListMembers(String listId)` — `GET /v1/lists/$listId/members`
+  - [ ] Parse `response.data!['data']` using `ListInvitationDto.fromJson` / `ListMemberDto.fromJson` respectively
+
+- [ ] Add invitation repository `apps/flutter/lib/features/lists/data/invitations_repository.dart` (AC: 2)
+  - [ ] `Future<ListInvitation> getInvitation(String token)` — `GET /v1/invitations/$token`
+  - [ ] `Future<ListInvitation> acceptInvitation(String token)` — `POST /v1/invitations/$token/accept`
+  - [ ] `@riverpod InvitationsRepository invitationsRepository(Ref ref)` provider — follow `listsRepository` provider pattern
+  - [ ] Commit generated `invitations_repository.g.dart`
+
+### Flutter: Share sheet (bottom sheet)
+
+- [ ] Create `apps/flutter/lib/features/lists/presentation/widgets/share_list_sheet.dart` (AC: 1)
+  - [ ] `StatefulWidget` (not `ConsumerWidget`) that accepts `listId` and `listTitle` as constructor params
+  - [ ] Shows a text field for email input with a `CupertinoTextField`
+  - [ ] "Send Invite" `CupertinoButton` — calls `listsRepository.inviteToList(listId, email)` via a callback from the parent `ConsumerStatefulWidget` that mounts this sheet
+  - [ ] Shows loading spinner while request is in flight, success message on 201, error message on failure
+  - [ ] Uses `colors.surfacePrimary` as background; `colors.textSecondary` for placeholder text
+  - [ ] `minimumSize: const Size(44, 44)` on any `CupertinoButton`
+
+### Flutter: Invitation acceptance screen
+
+- [ ] Create `apps/flutter/lib/features/lists/presentation/invitation_accept_screen.dart` (AC: 2)
+  - [ ] `ConsumerStatefulWidget` — receives `token` param via GoRouter
+  - [ ] On mount: calls `invitationsRepository.getInvitation(token)` — shows loading state
+  - [ ] Shows: list name, name of person who invited them, "Accept" and "Decline" buttons
+  - [ ] "Accept" calls `invitationsRepository.acceptInvitation(token)` — on success navigates to the list (`context.go('/lists/${invitation.listId}')`)
+  - [ ] If recipient is not subscribed, show info text: `AppStrings.invitationTrialNote` pointing to the onboarding path (FR86 — actual subscription routing implemented in Story 9.6; this story stubs it with the info text only)
+  - [ ] "Decline" simply pops the screen
+  - [ ] Error states: expired token → `AppStrings.invitationExpired`; already member → `AppStrings.invitationAlreadyMember`
+
+### Flutter: GoRouter deep link registration
+
+- [ ] Register `/invitation/:token` route in `apps/flutter/lib/core/router/app_router.dart` (AC: 2)
+  - [ ] Route path: `/invitation/:token`
+  - [ ] Builder: `InvitationAcceptScreen(token: state.pathParameters['token']!)`
+  - [ ] Deep link entry — no auth guard required (accept flow may be for a new user); stub: always show the acceptance screen
+  - [ ] Note: The AASA deep link wiring (Universal Links from email) is an infrastructure concern handled in Story 13.1. This story only registers the GoRouter route so the app handles `/invitation/:token` navigation correctly.
+
+### Flutter: `ListDetailScreen` "Share" entry point
+
+- [ ] Add "Share" button to `apps/flutter/lib/features/lists/presentation/list_detail_screen.dart` (AC: 1)
+  - [ ] Add a trailing `CupertinoButton` in the `CupertinoNavigationBar` — icon: `CupertinoIcons.person_badge_plus` or text "Share" (use text, consistent with existing nav bar buttons)
+  - [ ] Only show "Share" button when NOT in multi-select mode (`_isMultiSelectMode == false`)
+  - [ ] On tap: open `ShareListSheet` via `showModalBottomSheet(context: context, backgroundColor: Colors.transparent, builder: (_) => ShareListSheet(listId: widget.listId, listTitle: list?.title ?? ''))`
+  - [ ] Import `'package:flutter/material.dart' show showModalBottomSheet, Colors'` selectively — `list_detail_screen.dart` already imports Material; verify `showModalBottomSheet` is accessible
+
+### Flutter: Shared list indicator in `ListsScreen`
+
+- [ ] Update list row rendering in `apps/flutter/lib/features/lists/presentation/lists_screen.dart` (AC: 3)
+  - [ ] For lists where `list.isShared == true`, show a "shared" badge or member avatars beside the list title
+  - [ ] Member avatar initials: show up to 3 circles with `memberAvatarInitials` text, styled with `colors.accentPrimary` background
+  - [ ] Member count label: e.g. `"${list.memberCount} members"` in `colors.textSecondary` style
+  - [ ] Use `AppStrings.listSharedBadge` for accessibility label (new string, see l10n below)
 
 ### Flutter: l10n strings
 
-- [x] Add to `apps/flutter/lib/core/l10n/strings.dart` under `// ── Lists tab` (AC: 1, 2, 3)
-  - [x] `shareListAction = 'Share list'`
-  - [x] `shareListTitle = 'Invite someone'`
-  - [x] `shareListEmailPlaceholder = 'Email address'`
-  - [x] `shareListSendButton = 'Send invitation'`
-  - [x] `shareListSuccessMessage = 'Invitation sent to {email}.'`
-  - [x] `shareListErrorInvalidEmail = 'Enter a valid email address.'`
-  - [x] `shareListErrorGeneric = 'Something went wrong. Please try again.'`
-  - [x] `inviteAcceptTitle = 'You\u2019re invited'`
-  - [x] `inviteAcceptSubtitle = 'Invited by {inviterName}'`
-  - [x] `inviteAcceptButton = 'Accept & join list'`
-  - [x] `inviteDeclineButton = 'Decline'`
-  - [x] `inviteExpiredMessage = 'This invitation has expired or is no longer valid.'`
-  - [x] `inviteGoToLists = 'Go to Lists'`
-  - [x] `listSharedIndicator = 'Shared'`
-  - [x] `listMemberCount = '{count} members'`
+- [ ] Add to `apps/flutter/lib/core/l10n/strings.dart` under a new `// ── Shared lists (FR15-16) ──` section (AC: 1, 2, 3)
+  - [ ] `static const String listShareButton = 'Share';` — nav bar button label
+  - [ ] `static const String listShareSheetTitle = 'Invite to list';` — bottom sheet heading
+  - [ ] `static const String listShareEmailPlaceholder = 'Email address';` — text field placeholder
+  - [ ] `static const String listShareSendButton = 'Send Invite';` — CTA button
+  - [ ] `static const String listShareSuccess = 'Invitation sent!';` — success feedback
+  - [ ] `static const String listShareError = 'Could not send invitation. Please try again.';`
+  - [ ] `static const String listSharedBadge = 'Shared list';` — accessibility label for shared indicator
+  - [ ] `static const String invitationTitle = 'You're invited';` — acceptance screen header
+  - [ ] `static const String invitationAcceptButton = 'Accept invitation';`
+  - [ ] `static const String invitationDeclineButton = 'Decline';`
+  - [ ] `static const String invitationExpired = 'This invitation has expired or is no longer valid.';`
+  - [ ] `static const String invitationAlreadyMember = 'You are already a member of this list.';`
+  - [ ] `static const String invitationTrialNote = 'Start a free trial to join this list and access all features.';`
 
 ### Tests
 
-- [x] Write widget tests for `ShareListSheet` in `apps/flutter/test/features/lists/share_list_sheet_test.dart` (AC: 1)
-  - [x] Shows email field and send button
-  - [x] Shows validation error when email is empty on submit
-  - [x] Shows validation error when email format is invalid (no `@`)
-  - [x] Calls `sharingRepository.shareList` on valid submission
-  - [x] Shows success message after successful submission
-  - [x] Use `_FakeSharingRepository` (stub that completes immediately) for provider override
-- [x] Write widget tests for `AcceptInvitationScreen` in `apps/flutter/test/features/lists/accept_invitation_screen_test.dart` (AC: 2)
-  - [x] Shows loading indicator while fetching invitation details
-  - [x] Shows list name and inviter name from response
-  - [x] Accept button triggers `sharingRepository.acceptInvitation`
-  - [x] Decline button triggers `sharingRepository.declineInvitation`
-  - [x] Shows error message when invitation is invalid (repo throws)
-- [x] Write widget tests for shared list indicator in `apps/flutter/test/features/lists/lists_screen_shared_indicator_test.dart` (AC: 3)
-  - [x] Shows member avatars when list has 2+ members
-  - [x] Shows no shared indicator for personal list (1 member or none)
-  - [x] Shows first initial of each member in avatar circle
+- [ ] Widget tests for `ShareListSheet` in `apps/flutter/test/features/lists/share_list_sheet_test.dart` (AC: 1)
+  - [ ] Sheet renders email text field and "Send Invite" button
+  - [ ] Tapping "Send Invite" with empty email does NOT fire network call (validate empty input)
+  - [ ] Tapping "Send Invite" with valid email triggers `inviteToList` — stub the repository with a `mocktail` mock
+  - [ ] Do NOT mount `ListDetailScreen` in these tests; test the bare `ShareListSheet` widget
+
+- [ ] Widget tests for `InvitationAcceptScreen` in `apps/flutter/test/features/lists/invitation_accept_screen_test.dart` (AC: 2)
+  - [ ] Loading state shown on mount
+  - [ ] Invitation details rendered after `getInvitation` returns
+  - [ ] "Accept" button calls `acceptInvitation`
+  - [ ] Override `invitationsRepositoryProvider` with a stub notifier — same pattern as `listsRepositoryProvider` overrides from Stories 4.1/4.2: extend `InvitationsRepository` with stub overrides that prevent real Dio calls
+
+- [ ] Verify `ListDto.fromJson` handles `isShared`, `memberCount`, `memberAvatarInitials` correctly — add unit test in `apps/flutter/test/features/lists/list_dto_test.dart` (AC: 3)
+  - [ ] JSON with all new fields parses correctly
+  - [ ] JSON WITHOUT new fields (old API stub) parses correctly using `@JsonKey(defaultValue:)` defaults
 
 ## Dev Notes
 
-### Color Tokens Confirmed — `colors.accentPrimary` EXISTS
+### CRITICAL: Route registration order — specific before parameterized
 
-`OnTaskColors` (in `apps/flutter/lib/core/theme/app_theme.dart`) exposes the following tokens:
-- `surfacePrimary` — page/sheet background
-- `surfaceSecondary` — secondary surface (dividers, avatar circle background alternative)
-- `accentPrimary` — confirmed present, use for avatar circles and primary interactive elements
-- `accentCommitment` — for commitment/financial context (not relevant here)
-- `accentCompletion` — for completion context (not relevant here)
-- `textPrimary` — main text
-- `textSecondary` — secondary / hint text
-- Schedule health and stake zone colours (not relevant here)
+`apps/api/src/routes/lists.ts` currently has routes in this order (existing, do NOT change):
+1. `POST /v1/lists`
+2. `GET /v1/lists`
+3. `GET /v1/lists/{id}/prediction` ← specific before `{id}`
+4. `GET /v1/lists/{id}`
+5. `PATCH /v1/lists/{id}`
+6. `DELETE /v1/lists/{id}/archive`
 
-For avatar circles: `backgroundColor: colors.accentPrimary`, `foreground: colors.surfacePrimary`.
+New sharing endpoints in `lists.ts` MUST be added BEFORE the `GET /v1/lists/{id}` handler (after `GET /v1/lists/{id}/prediction`). Add:
+- `POST /v1/lists/{id}/share` — before `GET /v1/lists/{id}`
+- `GET /v1/lists/{id}/members` — before `GET /v1/lists/{id}`
 
-### Architecture: Stub-first, FR15-16 only
+The invitation routes (`GET /v1/invitations/{token}` and `POST /v1/invitations/{token}/accept`) go in a separate `apps/api/src/routes/invitations.ts` file; within that file, register `GET /v1/invitations/{token}` BEFORE `POST /v1/invitations/{token}/accept` to prevent path shadowing.
 
-This story implements the **sharing flow stub**: invite, deep-link accept, member list display. No email delivery service is wired (stub logs to console / returns success). No real database writes for invitation tokens — all stub fixtures. Real Drizzle implementation and email service integration are deferred until infrastructure is confirmed.
+### CRITICAL: New invitations router must be mounted in `apps/api/src/index.ts`
 
-The story explicitly excludes:
-- Real email delivery (Resend / SendGrid — infrastructure decision not yet made)
-- Task assignment strategies (Story 5.2)
-- Cascade of shared tasks into personal schedule (Story 5.3)
-- Member removal / ownership transfer (Story 5.6)
+After creating `apps/api/src/routes/invitations.ts` with an `invitationsRouter` export, mount it in `apps/api/src/index.ts` alongside the existing route mounts. Follow the same pattern as other routers already mounted there.
 
-### Deep Link Route: Top-level `/invite/:token`
+### CRITICAL: Drizzle schema — `casing: 'camelCase'` handles column name mapping
 
-The invitation acceptance screen must NOT render inside the authenticated tab shell (same reasoning as `/chapter-break` and `/auth/sign-in`). A recipient who hasn't signed up yet needs to reach this route. Register as a top-level `GoRoute` OUTSIDE `StatefulShellRoute.indexedStack`. The redirect logic already passes unauthenticated users to `/auth/sign-in` — so an unauthenticated recipient clicking the link will land at sign-in first, then be redirected back after auth. This is acceptable for the stub; deep-link re-entry after auth is a later enhancement.
+Do NOT add manual field mapping in schema or repository. Column names in SQL are snake_case (e.g., `list_id`, `invited_by_user_id`). Drizzle with `casing: 'camelCase'` (in `apps/api/src/db/index.ts`) transforms these automatically to camelCase in TypeScript. Write Drizzle schema columns in camelCase — `listId: uuid().notNull()` — and Drizzle generates the correct snake_case DDL.
 
-Route registration pattern (matches `chapter-break`):
+### CRITICAL: `z.record()` requires TWO arguments
+
+If any Zod schema in the new routes uses `z.record(...)`, it must be `z.record(z.string(), z.string())` — this Zod version requires both key AND value type arguments.
+
+### CRITICAL: All local TS imports must use `.js` extensions
+
+Every `import` in the new `invitations.ts` route file must use `.js` extension for local files (e.g., `import { ok, err } from '../lib/response.js'`). TypeScript NodeNext module resolution requires this. Follow every existing route file as reference.
+
+### CRITICAL: `listSchema` extension is additive — do NOT break existing API consumers
+
+The existing `listSchema` in `apps/api/src/routes/lists.ts` has: `id, userId, title, defaultDueDate, position, archivedAt, createdAt, updatedAt`. Add the three new sharing fields (`isShared`, `memberCount`, `memberAvatarInitials`) to this schema with sensible defaults in all existing stub responses (`stubList()` helper). Existing tests that mock this response must continue to pass.
+
+### CRITICAL: Flutter — Freezed default syntax for optional fields with defaults
+
+When adding new fields to existing Freezed classes (e.g., `TaskList`, `ListDto`), use `@Default(value)` annotation, NOT a nullable type, to keep the API clean:
 ```dart
-GoRoute(
-  path: '/invite/:token',
-  builder: (context, state) => AcceptInvitationScreen(
-    token: state.pathParameters['token']!,
-  ),
-),
+@Default(false) bool isShared,
+@Default(1) int memberCount,
+@Default(<String>[]) List<String> memberAvatarInitials,
+```
+Freezed generates correct serialization for these. For `ListDto` specifically, pair with `@JsonKey(defaultValue: ...)` to handle old API stubs that may not include the field.
+
+### CRITICAL: Committed generated files
+
+All `.freezed.dart` and `.g.dart` files MUST be committed to the repo. The `.gitignore` explicitly does NOT ignore them (confirmed in architecture). Run `flutter pub run build_runner build --delete-conflicting-outputs` after any Dart model changes and commit all generated output.
+
+### CRITICAL: `surfacePrimary` not `backgroundPrimary`
+
+`OnTaskColors` does NOT have `backgroundPrimary`. Use `colors.surfacePrimary` for sheet/screen backgrounds and `colors.textSecondary` for placeholder/secondary text. This applies to `ShareListSheet`, `InvitationAcceptScreen`, and any new widgets.
+
+### CRITICAL: `minimumSize: const Size(44, 44)` on `CupertinoButton` — `minSize` is deprecated
+
+Use `minimumSize: const Size(44, 44)` not `minSize`. Consistent with Stories 3.7, 4.1, 4.2, 4.3.
+
+### CRITICAL: Widget tests need Riverpod overrides to prevent real Dio calls
+
+Tests that use `ConsumerWidget`s or mount screens with providers MUST override repositories with stub notifiers. Pattern from Story 4.1/4.2:
+```dart
+final container = ProviderContainer(
+  overrides: [
+    listsRepositoryProvider.overrideWithValue(FakeListsRepository()),
+    invitationsRepositoryProvider.overrideWithValue(FakeInvitationsRepository()),
+  ],
+);
+```
+For `ShareListSheet` (plain `StatefulWidget`) — test via callback injection, no provider override needed.
+
+### CRITICAL: `InvitationAcceptScreen` is the deep link landing page — no auth guard for this route
+
+The invitation acceptance flow must work for new users arriving via email deep link. In v1, stub the auth check in the router (no guard on `/invitation/:token`). The actual auth-before-accept flow is a detail for Story 9.6 (invited user onboarding). For Story 5.1, simply show the acceptance screen and let the API stub return 200.
+
+### API: `invitations.ts` route file structure
+
+```typescript
+// apps/api/src/routes/invitations.ts
+import { OpenAPIHono, createRoute } from '@hono/zod-openapi'
+import { z } from 'zod'
+import { ok, err } from '../lib/response.js'
+
+const app = new OpenAPIHono<{ Bindings: CloudflareBindings }>()
+
+// GET /v1/invitations/{token}  — REGISTERED FIRST
+// POST /v1/invitations/{token}/accept  — REGISTERED SECOND
+
+export { app as invitationsRouter }
 ```
 
-### API: New `sharing.ts` route file
+### DB schema: `list_members` and `list_invitations` — no FK to users table yet
 
-Follow existing route file pattern (`lists.ts`, `calendar.ts`). All new routes use `@hono/zod-openapi`. New endpoints:
-- `POST /v1/lists/:id/share` — body: `{ email: string }`, response: `{ data: { invitationId, listId, inviteeEmail, status } }`
-- `GET /v1/invitations/:token` — response: `{ data: { listTitle, inviterName, inviterAvatarInitials, status } }`
-- `POST /v1/invitations/:token/accept` — response: `{ data: { listId, listTitle, memberCount } }`
-- `POST /v1/invitations/:token/decline` — response: 204
-- `GET /v1/lists/:id/members` — response: `{ data: [ListMember], pagination }`
+The `users` table FK constraint pattern is deferred (see `TODO(story-TBD)` in `lists.ts` — `userId` on `listsTable` still has no FK). Follow the same pattern: define `userId`, `invitedByUserId` as `uuid().notNull()` without an FK reference. Add `// TODO(story-TBD): FK to users table when users schema is finalized` comment.
 
-Register `sharingRouter` in `apps/api/src/index.ts` after `listsRouter`.
+### DB: Partial unique index for pending invitations
 
-IMPORTANT: `POST /v1/invitations/:token/accept` must be registered BEFORE `GET /v1/invitations/:token` in Hono to avoid path conflict (Hono matches in registration order).
+The constraint "no duplicate pending invites to the same email+list" is ideally a partial unique index: `UNIQUE (list_id, invitee_email) WHERE status = 'pending'`. Drizzle's `pgTable` supports this via `.unique()` with a conditional expression. If the Drizzle version in the project doesn't cleanly support conditional indexes in the schema definition, implement the uniqueness check in the API route logic and add a `TODO` comment.
 
-### Flutter: `list_members_provider` — family provider pattern
+### Flutter: `task_list.freezed.dart` regeneration will cascade
 
-Follow the `tasksProvider(listId: ...)` family pattern from `tasks_provider.dart`. The `ListMembersNotifier` is a `@riverpod` family notifier taking `listId` as a positional argument. Generated provider name: `listMembersProvider`.
+Modifying `TaskList` in `task_list.dart` (adding `isShared`, `memberCount`, `memberAvatarInitials`) will regenerate `task_list.freezed.dart`. This is expected and correct. After running `build_runner`, verify that ALL `.g.dart` and `.freezed.dart` files that were re-generated are committed.
 
-### Flutter: `SharingRepository` provider
+### Flutter: GoRouter `/invitation/:token` deep link path
 
-Follow `ListsRepository` / `listsRepositoryProvider` pattern. Inject `ApiClient` via `ref.watch(apiClientProvider)`. Stub implementations should return hardcoded fixture data rather than making real network calls — use `Future.value(...)` to return immediately.
+The GoRouter path uses `:token` (Hono/GoRouter style). Retrieve it with `state.pathParameters['token']!`. The Universal Link email domain path (`ontaskhq.com/invitation/:token`) mapping to the app is an AASA concern handled in Story 13.1 — this story only registers the app-side route.
 
-Fixture stub for `getListMembers`:
+### Flutter: `listsRepository` already uses `apiClientProvider` — follow that exact import chain
+
+`apps/flutter/lib/features/lists/data/lists_repository.dart` shows the authoritative pattern for new `@riverpod`-annotated repository providers:
 ```dart
-Future<List<ListMember>> getListMembers(String listId) async {
-  // TODO(impl): real GET /v1/lists/:id/members
-  return [
-    ListMember(userId: 'user-1', displayName: 'Jordan', avatarInitials: 'J', role: 'owner', joinedAt: DateTime(2026, 3, 31)),
-    ListMember(userId: 'user-2', displayName: 'Sam', avatarInitials: 'S', role: 'member', joinedAt: DateTime(2026, 3, 31)),
-  ];
+@riverpod
+ListsRepository listsRepository(Ref ref) {
+  final client = ref.watch(apiClientProvider);
+  return ListsRepository(client);
 }
 ```
+Use the same pattern in `invitations_repository.dart` with `InvitationsRepository`.
 
-Fixture stub for `getInvitationDetails`:
-```dart
-Future<InvitationDetails> getInvitationDetails(String token) async {
-  // TODO(impl): real GET /v1/invitations/:token
-  return InvitationDetails(listTitle: 'Household Chores', inviterName: 'Jordan');
-}
-```
+### UX: Shared list indicator in `ListsScreen`
 
-### Flutter: `list_member.dart` domain model
+The shared indicator should be lightweight — a small row of coloured circles (avatar initials, max 3) and a member count. Do not create a custom painter; use `Container` + `Text` inside a `Row`. Style the avatar circles with `colors.accentPrimary` background and white text. The existing `ListsScreen` list uses `CupertinoListTile` or similar; match the existing row widget shape.
 
-Use `@freezed` annotation. Include `part 'list_member.freezed.dart'`. Run `flutter pub run build_runner build --delete-conflicting-outputs` after creating the file to generate the freezed classes.
+### Files to Create
 
-```dart
-@freezed
-abstract class ListMember with _$ListMember {
-  const factory ListMember({
-    required String userId,
-    required String displayName,
-    required String avatarInitials,
-    required String role,
-    required DateTime joinedAt,
-  }) = _ListMember;
-}
-```
+**`packages/core/src/schema/`:**
+- `list-members.ts` (new)
+- `list-invitations.ts` (new)
+- `migrations/0008_list_sharing.sql` (generated by `drizzle-kit generate`)
+- `migrations/meta/0008_snapshot.json` (generated)
+- `migrations/meta/_journal.json` (updated by generator)
 
-`InvitationDetails` is a simple non-freezed class used only within `SharingRepository` — no need for code generation:
-```dart
-class InvitationDetails {
-  final String listTitle;
-  final String inviterName;
-  const InvitationDetails({required this.listTitle, required this.inviterName});
-}
-```
+**`apps/api/src/routes/`:**
+- `invitations.ts` (new)
 
-### Flutter: `ShareListSheet` follows `CreateListScreen` pattern
+**`apps/flutter/lib/features/lists/domain/`:**
+- `list_member.dart` (new)
+- `list_member.freezed.dart` (generated)
+- `list_invitation.dart` (new)
+- `list_invitation.freezed.dart` (generated)
 
-`CreateListScreen` is a `StatefulWidget` shown as a modal bottom sheet. Follow the same structure for `ShareListSheet`. It wraps in `SafeArea`, uses `CupertinoTextField` for input, and `CupertinoButton.filled` for the primary action.
+**`apps/flutter/lib/features/lists/data/`:**
+- `list_member_dto.dart` (new)
+- `list_member_dto.freezed.dart` (generated)
+- `list_member_dto.g.dart` (generated)
+- `list_invitation_dto.dart` (new)
+- `list_invitation_dto.freezed.dart` (generated)
+- `list_invitation_dto.g.dart` (generated)
+- `invitations_repository.dart` (new)
+- `invitations_repository.g.dart` (generated)
 
-Email validation — simple check: `email.contains('@') && email.contains('.')`.
+**`apps/flutter/lib/features/lists/presentation/`:**
+- `invitation_accept_screen.dart` (new)
+- `widgets/share_list_sheet.dart` (new)
 
-### Flutter: `ListsScreen` must keep existing tests passing
+**`apps/flutter/test/features/lists/`:**
+- `share_list_sheet_test.dart` (new)
+- `invitation_accept_screen_test.dart` (new)
+- `list_dto_test.dart` (new)
 
-`apps/flutter/test/features/lists/lists_screen_test.dart` has 5 tests. Adding `listMembersProvider` watches to each list row will cause the provider to be called. Override `listMembersProvider` in the test setup with a stub that returns an empty list (personal list behaviour) — or return a list with 1 member. Do NOT break existing tests.
+### Files to Modify
 
-The `listMembersProvider` is a family provider. Override it using:
-```dart
-listMembersProvider('list-1').overrideWith(() => _FakeListMembersNotifier(const AsyncData([]))),
-```
+**`packages/core/src/schema/`:**
+- `index.ts` — add exports for `listMembersTable`, `listInvitationsTable`
 
-However, for the existing `lists_screen_test.dart`, since we don't know the list IDs in advance in all tests, the safest approach is to make the shared indicator display graceful on loading state (shows nothing if members are loading or erroring). The existing tests don't need modification if the indicator is hidden when `membersState` is not `AsyncData` with 2+ members.
+**`apps/api/src/`:**
+- `routes/lists.ts` — extend `listSchema` and `stubList()`, add `POST /v1/lists/{id}/share`, `GET /v1/lists/{id}/members`
+- `index.ts` — mount `invitationsRouter`
 
-### DB: Migration naming
+**`apps/flutter/lib/features/lists/`:**
+- `domain/task_list.dart` — add `isShared`, `memberCount`, `memberAvatarInitials` fields
+- `domain/task_list.freezed.dart` — regenerated
+- `data/list_dto.dart` — extend with new sharing fields + `toDomain()` mapping
+- `data/list_dto.freezed.dart` — regenerated
+- `data/list_dto.g.dart` — regenerated
+- `data/lists_repository.dart` — add `inviteToList()`, `getListMembers()`
+- `data/lists_repository.g.dart` — regenerated (provider hash update)
+- `presentation/list_detail_screen.dart` — add "Share" nav bar button
+- `presentation/lists_screen.dart` — show shared indicator + member avatars
 
-Next migration index is `0008`. File: `packages/core/src/schema/migrations/0008_list_sharing.sql`. The journal file (`meta/_journal.json`) and snapshot must be updated manually — Drizzle Kit generates these. For this story, write the SQL manually as `0008_list_sharing.sql` and add a journal entry.  Schema snapshot (`0008_snapshot.json`) is NOT required for this story's stub implementation — skip the snapshot file.
+**`apps/flutter/lib/core/l10n/strings.dart` — add sharing strings section**
 
-### CRITICAL: Freezed code generation
+**`apps/flutter/lib/core/router/app_router.dart` — add `/invitation/:token` route**
 
-After creating `list_member.dart`, run:
-```
-cd apps/flutter && flutter pub run build_runner build --delete-conflicting-outputs
-```
+**`_bmad-output/implementation-artifacts/sprint-status.yaml` — update `5-1-list-sharing-invitations` from `backlog` to `ready-for-dev`**
 
-This generates `list_member.freezed.dart`. The generated file must be committed. If the build_runner cannot run in the implementation environment, create a minimal manual implementation of the freezed class (matching the pattern in `task_list.freezed.dart`).
+### Project Structure Notes
 
-### CRITICAL: Riverpod code generation for new providers
+- Sharing feature stays within `apps/flutter/lib/features/lists/` — no new top-level feature directory needed
+- `invitations_repository.dart` lives in `lists/data/` not a standalone `invitations/` feature directory — invitations are part of the lists domain
+- `InvitationAcceptScreen` lives in `lists/presentation/` for the same reason
+- The API `invitations.ts` route file is a new file alongside existing route files in `apps/api/src/routes/` — separate from `lists.ts` to keep file size manageable
+- No changes to `packages/scheduling/`, `packages/ai/`, `apps/mcp/`, or `apps/admin/`
+- 100% test coverage NOT enforced for `apps/api` or `apps/flutter` (only `packages/ai` and `packages/scheduling` require 100%)
 
-After creating `list_members_provider.dart` and `sharing_repository.dart` with `@riverpod` annotations, run build_runner to generate `.g.dart` files. If build_runner cannot run, write the `.g.dart` file manually following the pattern in `lists_provider.g.dart`.
+### References
 
-### Previous Story Learnings
+- FR15: Users can share any list by email invitation — [Source: _bmad-output/planning-artifacts/epics.md#Story-5.1]
+- FR16: Invitation recipient sees list name and inviter name; accepting adds them as member with full task visibility — [Source: _bmad-output/planning-artifacts/epics.md#Story-5.1]
+- FR86: Invited non-subscribed users are routed through independent trial onboarding — [Source: _bmad-output/planning-artifacts/epics.md#Story-5.1]
+- Route registration: specific paths before parameterized `/:id` routes — [Source: _bmad-output/planning-artifacts/architecture.md#Implementation Patterns — Naming Conventions; Story 4.1 Dev Notes]
+- `casing: 'camelCase'` — [Source: _bmad-output/planning-artifacts/architecture.md#Database Driver]
+- `z.record()` requires two arguments — [Source: Story 4.1 key context]
+- `.js` extensions in TS imports — [Source: Story 4.1 key context]
+- `surfacePrimary` not `backgroundPrimary` — [Source: Stories 3.6, 4.1, 4.2, 4.3 Dev Notes]
+- `minimumSize: const Size(44, 44)` — [Source: Stories 3.7, 4.3 Dev Notes]
+- Generated `.freezed.dart` and `.g.dart` committed to repo — [Source: _bmad-output/planning-artifacts/architecture.md#CI/CD]
+- Widget tests with stub notifiers — [Source: Stories 4.1, 4.2, 4.3 Dev Notes]
+- `packages/core/src/schema/index.ts` — existing schema exports pattern; `list-members.ts` and `list-invitations.ts` follow same export style
+- `apps/api/src/routes/lists.ts` — existing lists route as template for new sharing endpoints
+- `apps/flutter/lib/features/lists/data/lists_repository.dart` — authoritative repository pattern for this feature
+- `apps/flutter/lib/features/lists/domain/task_list.dart` — extend with Freezed `@Default` syntax
+- Migration numbering: last migration is `0007_google_webhook_channel.sql` → next is `0008_list_sharing.sql` — [Source: packages/core/src/schema/migrations/meta/_journal.json]
+- Story 9.6 (invited user onboarding path) is deferred dependency for FR86 full implementation — stub with `invitationTrialNote` info text in this story only
 
-- Use `ref.watch(apiClientProvider)` (not `ref.read`) in `@riverpod` providers that construct repositories — consistent with all previous stories.
-- All `CupertinoButton` usage: use `minimumSize: const Size(44, 44)` not deprecated `minSize`.
-- `showModalBottomSheet` requires `import 'package:flutter/material.dart' show showModalBottomSheet, Colors;` if the file only imports `cupertino.dart`.
-- `OnTaskColors` does NOT have `backgroundPrimary`. Use `colors.surfacePrimary`.
-- Import ordering in Dart: dart: → package: → relative. Keep linter happy.
-- `@riverpod` family providers: positional args generate `providerName(arg)` — e.g., `listMembersProvider('list-1')`.
-- Test repository fakes must extend `SharingRepository` using `super(ApiClient(baseUrl: 'http://fake'))` — not `super(null as dynamic)`.
-- Loading state tests: use `Completer<T>().future` (never resolves, no timer) instead of `Future.delayed` (leaves timer pending, causes assertion error).
-- Test fake base type should be `SharingRepository?` (not the concrete fake subclass) when `buildScreen` needs to accept multiple fake subclasses.
+## Review Findings
 
-### Files to Create / Modify
+### Decision-Needed
 
-**New files:**
-- `packages/core/src/schema/list-members.ts`
-- `packages/core/src/schema/list-invitations.ts`
-- `packages/core/src/schema/migrations/0008_list_sharing.sql`
-- `apps/api/src/routes/sharing.ts`
-- `apps/flutter/lib/features/lists/domain/list_member.dart`
-- `apps/flutter/lib/features/lists/domain/list_member.freezed.dart` (manually authored — build_runner unavailable)
-- `apps/flutter/lib/features/lists/data/sharing_repository.dart`
-- `apps/flutter/lib/features/lists/data/sharing_repository.g.dart` (manually authored)
-- `apps/flutter/lib/features/lists/presentation/list_members_provider.dart`
-- `apps/flutter/lib/features/lists/presentation/list_members_provider.g.dart` (manually authored)
-- `apps/flutter/lib/features/lists/presentation/widgets/share_list_sheet.dart`
-- `apps/flutter/lib/features/lists/presentation/accept_invitation_screen.dart`
-- `apps/flutter/test/features/lists/share_list_sheet_test.dart`
-- `apps/flutter/test/features/lists/accept_invitation_screen_test.dart`
-- `apps/flutter/test/features/lists/lists_screen_shared_indicator_test.dart`
+- [ ] [Review][Decision] Route file naming deviation: `sharing.ts` / `sharingRouter` vs spec's `invitations.ts` / `invitationsRouter` — Dev combined all sharing + invitation endpoints into one `sharing.ts` file instead of a separate `invitations.ts`. This is a structural deviation but functionally correct. Decide: (a) rename/split to match spec exactly, or (b) accept the combined approach and update spec accordingly.
 
-**Modified files:**
-- `packages/core/src/schema/index.ts`
-- `packages/core/src/schema/migrations/meta/_journal.json`
-- `apps/api/src/index.ts`
-- `apps/flutter/lib/core/l10n/strings.dart`
-- `apps/flutter/lib/core/router/app_router.dart`
-- `apps/flutter/lib/features/lists/presentation/list_detail_screen.dart`
-- `apps/flutter/lib/features/lists/presentation/lists_screen.dart`
+- [ ] [Review][Decision] Invitation status enum uses `'declined'` not `'revoked'` — Spec requires `'pending' | 'accepted' | 'revoked'` but impl uses `'pending' | 'accepted' | 'declined'`. The acceptance screen "Decline" button also calls `declineInvitation()`, so the whole flow is internally consistent with `'declined'`. Decide: (a) change to `'revoked'` throughout per spec, or (b) accept `'declined'` as the correct terminology and update spec.
+
+- [ ] [Review][Decision] `ShareListSheet` is `ConsumerStatefulWidget` not `StatefulWidget` — Spec says "StatefulWidget (not ConsumerWidget) that accepts listId and listTitle … calls listsRepository.inviteToList via a callback from the parent ConsumerStatefulWidget". Impl uses ConsumerStatefulWidget directly and calls `sharingRepository.shareList()`. Decide: (a) refactor to StatefulWidget with callback injection per spec, or (b) accept ConsumerStatefulWidget as the correct approach.
+
+- [ ] [Review][Decision] `lists_repository.dart` not modified — Spec required adding `inviteToList()` and `getListMembers()` to `ListsRepository`. Impl created `sharing_repository.dart` (`SharingRepository`) instead. Functionally equivalent but deviates from spec's data layer architecture. Decide: (a) add methods to `lists_repository.dart` and deprecate `sharing_repository.dart`, or (b) accept `SharingRepository` as a standalone repository.
+
+- [ ] [Review][Decision] GoRouter path is `/invite/:token` not `/invitation/:token` — Spec requires `/invitation/:token` and deep-link note also says `ontaskhq.com/invitation/:token`. Impl registers `/invite/:token`. Decide: (a) change to `/invitation/:token` throughout, or (b) confirm `/invite/:token` is the intended path.
+
+### Patches
+
+- [ ] [Review][Patch] `listSchema` in `lists.ts` not extended with sharing fields — `isShared`, `memberCount`, `memberAvatarInitials` missing from `listSchema` and `stubList()`. AC3 spec: "stub: `isShared: false, memberCount: 1, memberAvatarInitials: []`". Existing API tests will receive responses without these fields. [apps/api/src/routes/lists.ts:26]
+
+- [ ] [Review][Patch] `TaskList` domain model not extended — `isShared` (bool), `memberCount` (int), `memberAvatarInitials` (List<String>) absent from `task_list.dart`; `task_list.freezed.dart` was regenerated but without these fields. [apps/flutter/lib/features/lists/domain/task_list.dart]
+
+- [ ] [Review][Patch] `ListDto` not extended with sharing fields — `isShared`, `memberCount`, `memberAvatarInitials` absent from `list_dto.dart`; `toDomain()` does not pass them through. `list_dto.freezed.dart` and `list_dto.g.dart` were regenerated but are stale relative to what is needed. [apps/flutter/lib/features/lists/data/list_dto.dart]
+
+- [ ] [Review][Patch] `list_dto_test.dart` not created — Spec required unit tests for `ListDto.fromJson` handling new fields with and without defaults. [apps/flutter/test/features/lists/list_dto_test.dart — missing]
+
+- [ ] [Review][Patch] `ListInvitation` domain model and generated files missing — `list_invitation.dart` and `list_invitation.freezed.dart` not committed. Spec required a Freezed domain model for invitation data. [apps/flutter/lib/features/lists/domain/list_invitation.dart — missing]
+
+- [ ] [Review][Patch] `list_member_dto.dart`, `list_invitation_dto.dart` and their generated files missing — Spec required full DTO layer for both member and invitation responses with `fromJson`/`toDomain()`. None of these files exist on the branch. [apps/flutter/lib/features/lists/data/ — multiple files missing]
+
+- [ ] [Review][Patch] `POST /v1/lists/{id}/share` missing 409 response — Spec requires 409 for "invitation already pending for this email+list". Route definition only has 201, 404, 422. [apps/api/src/routes/sharing.ts:100–130]
+
+- [ ] [Review][Patch] `invitationSchema` missing `expiresAt` — Spec 201 response: `{ invitationId, listId, inviteeEmail, status, expiresAt }`. Actual schema omits `expiresAt`. [apps/api/src/routes/sharing.ts:13]
+
+- [ ] [Review][Patch] `invitationDetailsSchema` field mismatches — Spec: `{ listId, listTitle, invitedByName, inviteeEmail, status, expiresAt }`. Actual: `{ listTitle, inviterName, inviterAvatarInitials, status }` — missing `listId`, `inviteeEmail`, `expiresAt`; uses `inviterName` not `invitedByName`. Repository reads `data['inviterName']` which is consistent with current API schema but diverges from spec. [apps/api/src/routes/sharing.ts:22]
+
+- [ ] [Review][Patch] `acceptInvitationResponseSchema` missing `membershipId` — Spec: `{ listId, listTitle, invitedByName, membershipId }`. Actual: `{ listId, listTitle, memberCount }` — `membershipId` absent, `memberCount` not in spec. [apps/api/src/routes/sharing.ts:29]
+
+- [ ] [Review][Patch] `minimumSize: const Size(44, 44)` absent on CupertinoButton instances — All `CupertinoButton` and `CupertinoButton.filled` widgets in new files lack `minimumSize: const Size(44, 44)`. Spec critical note and story patterns 3.7/4.1–4.3 require it. [apps/flutter/lib/features/lists/presentation/widgets/share_list_sheet.dart:174, apps/flutter/lib/features/lists/presentation/accept_invitation_screen.dart:136,179,193]
+
+- [ ] [Review][Patch] After accepting invitation, navigates to `/lists` not `/lists/${invitation.listId}` — Spec: `context.go('/lists/${invitation.listId}')`. Actual: `context.go('/lists')`. The `acceptInvitation()` response includes `listId` but it is not used for navigation. [apps/flutter/lib/features/lists/presentation/accept_invitation_screen.dart:78]
+
+- [ ] [Review][Patch] `invitationTrialNote` string missing and not shown in acceptance screen — Spec: show `AppStrings.invitationTrialNote` for non-subscribed users. String not in `strings.dart`; acceptance screen has a TODO comment but no UI for it. [apps/flutter/lib/core/l10n/strings.dart, apps/flutter/lib/features/lists/presentation/accept_invitation_screen.dart]
+
+- [ ] [Review][Patch] `list_members` schema missing unique constraint `(list_id, user_id)` — Spec: "Unique constraint on `(list_id, user_id)`". Neither `list-members.ts` nor `0008_list_sharing.sql` includes this constraint. [packages/core/src/schema/list-members.ts, packages/core/src/schema/migrations/0008_list_sharing.sql]
+
+- [ ] [Review][Patch] `list_invitations` schema missing partial unique constraint `(list_id, invitee_email)` WHERE `status = 'pending'` — Spec requires this constraint (or API-level check with TODO). Neither schema nor migration includes it. [packages/core/src/schema/list-invitations.ts, packages/core/src/schema/migrations/0008_list_sharing.sql]
+
+### Deferred
+
+- [x] [Review][Defer] `SharingRepository.getInvitationDetails` accesses `data['inviterName']` — field name diverges from spec's `invitedByName`. Linked to `invitationDetailsSchema` patch above; resolve both together. [apps/flutter/lib/features/lists/data/sharing_repository.dart:43] — deferred, pre-existing coupling to the schema patch
 
 ## Dev Agent Record
 
@@ -312,61 +486,6 @@ claude-sonnet-4-6
 
 ### Debug Log References
 
-1. `_FakeSharingRepository.getListMembers` initially returned `Future<List<dynamic>>` — fixed to `Future<List<ListMember>>` with correct import.
-2. `super(null as dynamic)` caused runtime type error — fixed to `super(ApiClient(baseUrl: 'http://fake'))` matching established test pattern.
-3. Loading state test used `Future.delayed(Duration(hours: 1))` causing `timersPending` assertion failure — fixed to `Completer<InvitationDetails>().future`.
-4. `buildScreen` parameter typed as `_FakeSharingRepository?` could not accept `_SlowSharingRepository` — fixed to `SharingRepository?`.
-
 ### Completion Notes List
 
-- All 15 new DB/API/Flutter/test files created; all 7 existing files modified as specified.
-- Freezed and Riverpod `.g.dart` files authored manually (build_runner unavailable in worktree environment), precisely following existing generated-file patterns (`task_list.freezed.dart`, `lists_repository.g.dart`, `sections_provider.g.dart`).
-- `_SharedIndicator` widget gracefully renders `SizedBox.shrink()` on loading/error/personal states — existing `lists_screen_test.dart` (5 tests) pass without modification.
-- TypeScript typechecks pass: `pnpm --filter @ontask/api typecheck` and `pnpm --filter @ontask/core typecheck` both clean.
-- Full Flutter regression suite: **596 tests passed, 0 failures**.
-- `POST /v1/invitations/:token/accept` registered before `GET /v1/invitations/:token` in Hono to avoid path shadowing.
-- Migration journal updated at index 8; snapshot file skipped (stub implementation, not required for story).
-
 ### File List
-
-**New files created:**
-- `packages/core/src/schema/list-members.ts`
-- `packages/core/src/schema/list-invitations.ts`
-- `packages/core/src/schema/migrations/0008_list_sharing.sql`
-- `apps/api/src/routes/sharing.ts`
-- `apps/flutter/lib/features/lists/domain/list_member.dart`
-- `apps/flutter/lib/features/lists/domain/list_member.freezed.dart`
-- `apps/flutter/lib/features/lists/data/sharing_repository.dart`
-- `apps/flutter/lib/features/lists/data/sharing_repository.g.dart`
-- `apps/flutter/lib/features/lists/presentation/list_members_provider.dart`
-- `apps/flutter/lib/features/lists/presentation/list_members_provider.g.dart`
-- `apps/flutter/lib/features/lists/presentation/widgets/share_list_sheet.dart`
-- `apps/flutter/lib/features/lists/presentation/accept_invitation_screen.dart`
-- `apps/flutter/test/features/lists/share_list_sheet_test.dart`
-- `apps/flutter/test/features/lists/accept_invitation_screen_test.dart`
-- `apps/flutter/test/features/lists/lists_screen_shared_indicator_test.dart`
-
-**Modified files:**
-- `packages/core/src/schema/index.ts`
-- `packages/core/src/schema/migrations/meta/_journal.json`
-- `apps/api/src/index.ts`
-- `apps/flutter/lib/core/l10n/strings.dart`
-- `apps/flutter/lib/core/router/app_router.dart`
-- `apps/flutter/lib/features/lists/presentation/list_detail_screen.dart`
-- `apps/flutter/lib/features/lists/presentation/lists_screen.dart`
-
-### Change Log
-
-- 2026-03-31: Story implemented by claude-sonnet-4-6.
-  - Added `list_members` and `list_invitations` DB schema tables with migration `0008_list_sharing.sql`.
-  - Added 5 stub API routes in `apps/api/src/routes/sharing.ts` (share list, get/accept/decline invitation, list members).
-  - Added 15 new `AppStrings` constants for the sharing/invitation UI.
-  - Created `ListMember` freezed domain model with manually authored generated files.
-  - Created `SharingRepository` with stub fixture data and manually authored `.g.dart`.
-  - Created `ListMembersNotifier` family provider with manually authored `.g.dart`.
-  - Created `ShareListSheet` modal bottom sheet widget (email input, validation, success/error states).
-  - Created `AcceptInvitationScreen` (loading/content/error states, accept/decline actions).
-  - Registered `/invite/:token` top-level GoRoute (no shell chrome, matches `chapter-break` pattern).
-  - Added `_SharedIndicator` + `_MemberAvatar` to `ListsScreen` — shows stacked avatars and member count for shared lists (2+ members); gracefully hidden for personal/loading/error states.
-  - Added "Share list" action to `ListDetailScreen` more-actions sheet.
-  - 19 new widget tests added (7 share sheet, 6 accept screen, 6 shared indicator); 596/596 tests pass.

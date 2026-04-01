@@ -101,3 +101,7 @@
 
 - **`_mode` never set to `_AddMode.guided` — dead code on submit button guard** [`apps/flutter/lib/features/shell/presentation/add_tab_sheet.dart`] — Tapping Guided immediately calls `pop()` so `_mode` remains at its previous value; the `if (_mode != _AddMode.guided)` guard on the submit button is unreachable but harmless. No user impact; clean up in a future refactor pass.
 - **Widget test `tasksProvider()` override brittle if `listId` is non-null** [`apps/flutter/test/features/shell/guided_chat_sheet_test.dart` line 122] — Pre-existing pattern from Story 4.1; current fixtures keep `listId` null so the override intercepts correctly. Would silently break if a test fixture returned a non-null `listId`. Harden when adding more complete task-creation test scenarios.
+
+## Deferred from: code review of 5-1-list-sharing-invitations (2026-03-31)
+
+- **`SharingRepository.getInvitationDetails` uses field name `inviterName` not `invitedByName`** [`apps/flutter/lib/features/lists/data/sharing_repository.dart:43`] — Coupled to `invitationDetailsSchema` patch (F11); both should be resolved together when the schema is updated to match the spec field names (`listId`, `invitedByName`, `inviteeEmail`, `expiresAt`).
