@@ -14,7 +14,9 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$TaskStake {
 
- String get taskId; int? get stakeAmountCents;
+ String get taskId; int? get stakeAmountCents;// null = no stake
+ DateTime? get stakeModificationDeadline;// null when no stake or not yet computed
+ bool get canModify;
 /// Create a copy of TaskStake
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +27,16 @@ $TaskStakeCopyWith<TaskStake> get copyWith => _$TaskStakeCopyWithImpl<TaskStake>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is TaskStake&&(identical(other.taskId, taskId) || other.taskId == taskId)&&(identical(other.stakeAmountCents, stakeAmountCents) || other.stakeAmountCents == stakeAmountCents));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is TaskStake&&(identical(other.taskId, taskId) || other.taskId == taskId)&&(identical(other.stakeAmountCents, stakeAmountCents) || other.stakeAmountCents == stakeAmountCents)&&(identical(other.stakeModificationDeadline, stakeModificationDeadline) || other.stakeModificationDeadline == stakeModificationDeadline)&&(identical(other.canModify, canModify) || other.canModify == canModify));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,taskId,stakeAmountCents);
+int get hashCode => Object.hash(runtimeType,taskId,stakeAmountCents,stakeModificationDeadline,canModify);
 
 @override
 String toString() {
-  return 'TaskStake(taskId: $taskId, stakeAmountCents: $stakeAmountCents)';
+  return 'TaskStake(taskId: $taskId, stakeAmountCents: $stakeAmountCents, stakeModificationDeadline: $stakeModificationDeadline, canModify: $canModify)';
 }
 
 
@@ -45,7 +47,7 @@ abstract mixin class $TaskStakeCopyWith<$Res>  {
   factory $TaskStakeCopyWith(TaskStake value, $Res Function(TaskStake) _then) = _$TaskStakeCopyWithImpl;
 @useResult
 $Res call({
- String taskId, int? stakeAmountCents
+ String taskId, int? stakeAmountCents, DateTime? stakeModificationDeadline, bool canModify
 });
 
 
@@ -62,11 +64,13 @@ class _$TaskStakeCopyWithImpl<$Res>
 
 /// Create a copy of TaskStake
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? taskId = null,Object? stakeAmountCents = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? taskId = null,Object? stakeAmountCents = freezed,Object? stakeModificationDeadline = freezed,Object? canModify = null,}) {
   return _then(_self.copyWith(
 taskId: null == taskId ? _self.taskId : taskId // ignore: cast_nullable_to_non_nullable
 as String,stakeAmountCents: freezed == stakeAmountCents ? _self.stakeAmountCents : stakeAmountCents // ignore: cast_nullable_to_non_nullable
-as int?,
+as int?,stakeModificationDeadline: freezed == stakeModificationDeadline ? _self.stakeModificationDeadline : stakeModificationDeadline // ignore: cast_nullable_to_non_nullable
+as DateTime?,canModify: null == canModify ? _self.canModify : canModify // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 
@@ -151,10 +155,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String taskId,  int? stakeAmountCents)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String taskId,  int? stakeAmountCents,  DateTime? stakeModificationDeadline,  bool canModify)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _TaskStake() when $default != null:
-return $default(_that.taskId,_that.stakeAmountCents);case _:
+return $default(_that.taskId,_that.stakeAmountCents,_that.stakeModificationDeadline,_that.canModify);case _:
   return orElse();
 
 }
@@ -172,10 +176,10 @@ return $default(_that.taskId,_that.stakeAmountCents);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String taskId,  int? stakeAmountCents)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String taskId,  int? stakeAmountCents,  DateTime? stakeModificationDeadline,  bool canModify)  $default,) {final _that = this;
 switch (_that) {
 case _TaskStake():
-return $default(_that.taskId,_that.stakeAmountCents);case _:
+return $default(_that.taskId,_that.stakeAmountCents,_that.stakeModificationDeadline,_that.canModify);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -192,10 +196,10 @@ return $default(_that.taskId,_that.stakeAmountCents);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String taskId,  int? stakeAmountCents)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String taskId,  int? stakeAmountCents,  DateTime? stakeModificationDeadline,  bool canModify)?  $default,) {final _that = this;
 switch (_that) {
 case _TaskStake() when $default != null:
-return $default(_that.taskId,_that.stakeAmountCents);case _:
+return $default(_that.taskId,_that.stakeAmountCents,_that.stakeModificationDeadline,_that.canModify);case _:
   return null;
 
 }
@@ -207,11 +211,15 @@ return $default(_that.taskId,_that.stakeAmountCents);case _:
 
 
 class _TaskStake implements TaskStake {
-  const _TaskStake({required this.taskId, this.stakeAmountCents});
+  const _TaskStake({required this.taskId, this.stakeAmountCents, this.stakeModificationDeadline, this.canModify = false});
   
 
 @override final  String taskId;
 @override final  int? stakeAmountCents;
+// null = no stake
+@override final  DateTime? stakeModificationDeadline;
+// null when no stake or not yet computed
+@override@JsonKey() final  bool canModify;
 
 /// Create a copy of TaskStake
 /// with the given fields replaced by the non-null parameter values.
@@ -223,16 +231,16 @@ _$TaskStakeCopyWith<_TaskStake> get copyWith => __$TaskStakeCopyWithImpl<_TaskSt
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _TaskStake&&(identical(other.taskId, taskId) || other.taskId == taskId)&&(identical(other.stakeAmountCents, stakeAmountCents) || other.stakeAmountCents == stakeAmountCents));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _TaskStake&&(identical(other.taskId, taskId) || other.taskId == taskId)&&(identical(other.stakeAmountCents, stakeAmountCents) || other.stakeAmountCents == stakeAmountCents)&&(identical(other.stakeModificationDeadline, stakeModificationDeadline) || other.stakeModificationDeadline == stakeModificationDeadline)&&(identical(other.canModify, canModify) || other.canModify == canModify));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,taskId,stakeAmountCents);
+int get hashCode => Object.hash(runtimeType,taskId,stakeAmountCents,stakeModificationDeadline,canModify);
 
 @override
 String toString() {
-  return 'TaskStake(taskId: $taskId, stakeAmountCents: $stakeAmountCents)';
+  return 'TaskStake(taskId: $taskId, stakeAmountCents: $stakeAmountCents, stakeModificationDeadline: $stakeModificationDeadline, canModify: $canModify)';
 }
 
 
@@ -243,7 +251,7 @@ abstract mixin class _$TaskStakeCopyWith<$Res> implements $TaskStakeCopyWith<$Re
   factory _$TaskStakeCopyWith(_TaskStake value, $Res Function(_TaskStake) _then) = __$TaskStakeCopyWithImpl;
 @override @useResult
 $Res call({
- String taskId, int? stakeAmountCents
+ String taskId, int? stakeAmountCents, DateTime? stakeModificationDeadline, bool canModify
 });
 
 
@@ -260,11 +268,13 @@ class __$TaskStakeCopyWithImpl<$Res>
 
 /// Create a copy of TaskStake
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? taskId = null,Object? stakeAmountCents = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? taskId = null,Object? stakeAmountCents = freezed,Object? stakeModificationDeadline = freezed,Object? canModify = null,}) {
   return _then(_TaskStake(
 taskId: null == taskId ? _self.taskId : taskId // ignore: cast_nullable_to_non_nullable
 as String,stakeAmountCents: freezed == stakeAmountCents ? _self.stakeAmountCents : stakeAmountCents // ignore: cast_nullable_to_non_nullable
-as int?,
+as int?,stakeModificationDeadline: freezed == stakeModificationDeadline ? _self.stakeModificationDeadline : stakeModificationDeadline // ignore: cast_nullable_to_non_nullable
+as DateTime?,canModify: null == canModify ? _self.canModify : canModify // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 

@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../../../core/l10n/strings.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -42,12 +43,41 @@ class _StakeSheetScreenState extends ConsumerState<StakeSheetScreen> {
   // ── Charity selection (Epic 6, Story 6.3) ────────────────────────────────
   Nonprofit? _selectedCharity;
 
+  // ── Stake modification window (FR63, Story 6.6) ───────────────────────────
+  DateTime? _modificationDeadline;
+  bool _canModify = false;
+
   @override
   void initState() {
     super.initState();
     _stakeAmountCents = widget.existingStakeAmountCents;
     _checkPaymentMethod();
     _loadDefaultCharity();
+    if (widget.existingStakeAmountCents != null) {
+      _loadModificationWindow();
+    }
+  }
+
+  Future<void> _loadModificationWindow() async {
+    try {
+      final repository = ref.read(commitmentContractsRepositoryProvider);
+      final stake = await repository.getTaskStake(widget.taskId);
+      if (!mounted) return;
+      setState(() {
+        _modificationDeadline = stake.stakeModificationDeadline;
+        _canModify = stake.canModify;
+      });
+    } catch (e) {
+      // Safe fallback: treat as locked on error — prevents accidental modification
+      if (mounted) setState(() => _canModify = false);
+    }
+  }
+
+  String _formatModificationDeadline(DateTime dt) {
+    // Format: "Apr 2 at 3:00 PM" — use intl package DateFormat
+    final datePart = DateFormat('MMM d').format(dt);
+    final timePart = DateFormat('h:mm a').format(dt);
+    return '${AppStrings.stakeModificationWindowPrefix} $datePart ${AppStrings.stakeModificationWindowAt} $timePart';
   }
 
   Future<void> _loadDefaultCharity() async {
@@ -76,7 +106,7 @@ class _StakeSheetScreenState extends ConsumerState<StakeSheetScreen> {
       setState(() {
         _hasPaymentMethod = status.hasPaymentMethod;
       });
-    } catch (_) {
+    } catch (e) {
       // Default to showing payment gate on error — safe fallback.
       setState(() {
         _hasPaymentMethod = false;
@@ -107,7 +137,7 @@ class _StakeSheetScreenState extends ConsumerState<StakeSheetScreen> {
             ? AppStrings.stakePaymentMethodRequired
             : AppStrings.stakeSetError,
       );
-    } catch (_) {
+    } catch (e) {
       if (mounted) {
         _showErrorDialog(AppStrings.stakeSetError);
       }
@@ -118,42 +148,68 @@ class _StakeSheetScreenState extends ConsumerState<StakeSheetScreen> {
     }
   }
 
-  Future<void> _onRemove() async {
+  Future<void> _handleCancelStake() async {
+    if (!_canModify) return; // Guard: should not be reachable if UI is correct
     final confirmed = await showCupertinoDialog<bool>(
       context: context,
-      builder: (ctx) => CupertinoAlertDialog(
+      builder: (_) => CupertinoAlertDialog(
         title: const Text(AppStrings.stakeRemoveConfirmTitle),
         content: const Text(AppStrings.stakeRemoveConfirmMessage),
         actions: [
           CupertinoDialogAction(
-            onPressed: () => Navigator.of(ctx).pop(false),
+            onPressed: () => Navigator.pop(context, false),
             child: const Text(AppStrings.actionCancel),
           ),
           CupertinoDialogAction(
             isDestructiveAction: true,
-            onPressed: () => Navigator.of(ctx).pop(true),
+            onPressed: () => Navigator.pop(context, true),
             child: const Text(AppStrings.actionDelete),
           ),
         ],
       ),
     );
-    if (confirmed != true) return;
-
+    if (confirmed != true || !mounted) return;
     setState(() => _isLoading = true);
     try {
       final repository = ref.read(commitmentContractsRepositoryProvider);
-      await repository.removeTaskStake(widget.taskId);
-      if (mounted) {
-        Navigator.of(context).pop(null);
-      }
-    } catch (_) {
-      if (mounted) {
-        _showErrorDialog(AppStrings.stakeSetError);
-      }
+      await repository.cancelStake(widget.taskId);
+      if (mounted) Navigator.pop(context, null);
+    } on DioException catch (e) {
+      if (!mounted) return;
+      final errorCode = e.response?.data?['error']?['code'] as String?;
+      final message = errorCode == 'STAKE_LOCKED'
+          ? AppStrings.stakeLockedError
+          : AppStrings.stakeCancelError;
+      await showCupertinoDialog<void>(
+        context: context,
+        builder: (_) => CupertinoAlertDialog(
+          title: const Text(AppStrings.dialogErrorTitle),
+          content: Text(message),
+          actions: [
+            CupertinoDialogAction(
+              onPressed: () => Navigator.pop(context),
+              child: const Text(AppStrings.actionOk),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      await showCupertinoDialog<void>(
+        context: context,
+        builder: (_) => CupertinoAlertDialog(
+          title: const Text(AppStrings.dialogErrorTitle),
+          content: const Text(AppStrings.stakeCancelError),
+          actions: [
+            CupertinoDialogAction(
+              onPressed: () => Navigator.pop(context),
+              child: const Text(AppStrings.actionOk),
+            ),
+          ],
+        ),
+      );
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -246,14 +302,57 @@ class _StakeSheetScreenState extends ConsumerState<StakeSheetScreen> {
                       child: const Text(AppStrings.stakeSetupPaymentCta),
                     ),
                   ] else ...[
+                    // ── Modification window label (FR63, Story 6.6) ──────
+                    if (widget.existingStakeAmountCents != null &&
+                        _modificationDeadline != null) ...[
+                      Text(
+                        _formatModificationDeadline(_modificationDeadline!),
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: colors.textSecondary,
+                              fontSize: 13,
+                            ),
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                    ],
+
                     // ── Stake slider ─────────────────────────────────────
-                    StakeSliderWidget(
-                      stakeAmountCents: _stakeAmountCents,
-                      onChanged: (cents) {
-                        setState(() => _stakeAmountCents = cents);
-                      },
-                      onConfirm: _isLoading ? null : _onConfirm,
-                    ),
+                    // When locked, wrap in IgnorePointer + Opacity
+                    if (widget.existingStakeAmountCents != null && !_canModify)
+                      IgnorePointer(
+                        ignoring: true,
+                        child: Opacity(
+                          opacity: 0.5,
+                          child: StakeSliderWidget(
+                            stakeAmountCents: _stakeAmountCents,
+                            onChanged: (cents) {
+                              setState(() => _stakeAmountCents = cents);
+                            },
+                            onConfirm: null,
+                          ),
+                        ),
+                      )
+                    else
+                      StakeSliderWidget(
+                        stakeAmountCents: _stakeAmountCents,
+                        onChanged: (cents) {
+                          setState(() => _stakeAmountCents = cents);
+                        },
+                        onConfirm: _isLoading ? null : _onConfirm,
+                      ),
+
+                    // ── Locked message (FR63, Story 6.6) ─────────────────
+                    if (widget.existingStakeAmountCents != null && !_canModify) ...[
+                      const SizedBox(height: AppSpacing.sm),
+                      Text(
+                        AppStrings.stakeLockedMessage,
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: colors.textSecondary,
+                              fontSize: 13,
+                            ),
+                      ),
+                    ],
 
                     // ── Charity selection (Epic 6, Story 6.3) ────────────
                     const SizedBox(height: AppSpacing.md),
@@ -341,12 +440,19 @@ class _StakeSheetScreenState extends ConsumerState<StakeSheetScreen> {
                           ),
 
                     // ── Remove stake (only if existing stake) ────────────
+                    // When locked (!_canModify), show button disabled.
+                    // When window open (_canModify), use cancelStake endpoint.
+                    // Hide "Lock it in." confirm button when locked.
                     if (widget.existingStakeAmountCents != null) ...[
                       const SizedBox(height: AppSpacing.md),
                       CupertinoButton(
                         minimumSize: const Size(44, 44),
-                        color: CupertinoColors.destructiveRed,
-                        onPressed: _isLoading ? null : _onRemove,
+                        color: _canModify
+                            ? CupertinoColors.destructiveRed
+                            : CupertinoColors.inactiveGray,
+                        onPressed: (_isLoading || !_canModify)
+                            ? null
+                            : _handleCancelStake,
                         child: const Text(
                           AppStrings.stakeRemoveConfirmTitle,
                           style: TextStyle(color: CupertinoColors.white),

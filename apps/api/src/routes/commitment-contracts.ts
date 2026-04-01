@@ -199,6 +199,8 @@ const stakeSchema = z.object({
 const stakeResponseSchema = z.object({
   taskId: z.string().uuid(),
   stakeAmountCents: z.number().int().nullable(),
+  stakeModificationDeadline: z.string().datetime().nullable(), // ISO 8601 UTC; null when no stake
+  canModify: z.boolean(),   // true when stake exists AND now < stakeModificationDeadline
 })
 
 const StakeResponseSchema = z.object({ data: stakeResponseSchema })
@@ -228,8 +230,13 @@ const getTaskStakeRoute = createRoute({
 
 app.openapi(getTaskStakeRoute, async (c) => {
   const { taskId } = c.req.valid('param')
-  // TODO(impl): query tasks table for stakeAmountCents where id = taskId AND userId = JWT sub
-  return c.json(ok({ taskId, stakeAmountCents: null }), 200)
+  // TODO(impl): query tasks table for stakeAmountCents, stakeModificationDeadline where id = taskId AND userId = JWT sub; compute canModify = stakeAmountCents != null && new Date() < new Date(stakeModificationDeadline)
+  return c.json(ok({
+    taskId,
+    stakeAmountCents: null,
+    stakeModificationDeadline: null,
+    canModify: false,
+  }), 200)
 })
 
 // ── PUT /v1/tasks/:taskId/stake ───────────────────────────────────────────────
@@ -264,7 +271,14 @@ app.openapi(putTaskStakeRoute, async (c) => {
   const body = c.req.valid('json')
   // TODO(impl): check commitment_contracts.stripePaymentMethodId for userId; if null return 422 NO_PAYMENT_METHOD;
   //             else upsert tasks.stakeAmountCents; set commitment_contracts.hasActiveStakes = true
-  return c.json(ok({ taskId: body.taskId, stakeAmountCents: body.stakeAmountCents }), 200)
+  // TODO(impl): after upserting stakeAmountCents, set tasks.stakeModificationDeadline = task.dueDate - 24h
+  // Compute modification deadline: dueDate - 24h (caller must provide dueDate or API computes from task)
+  return c.json(ok({
+    taskId: body.taskId,
+    stakeAmountCents: body.stakeAmountCents,
+    stakeModificationDeadline: null,  // TODO(impl): set to task.dueDate - 24h; persist to tasks table
+    canModify: true,
+  }), 200)
 })
 
 // ── DELETE /v1/tasks/:taskId/stake ────────────────────────────────────────────
@@ -292,6 +306,46 @@ const deleteTaskStakeRoute = createRoute({
 app.openapi(deleteTaskStakeRoute, async (c) => {
   // TODO(impl): set tasks.stakeAmountCents = null; recheck commitment_contracts.hasActiveStakes across all tasks for userId
   return c.json(ok({ removed: true }), 200)
+})
+
+// ── POST /v1/tasks/:taskId/stake/cancel ───────────────────────────────────────
+// Cancels the stake on a task if the modification window is open (FR63, Story 6.6).
+// Separate from DELETE /v1/tasks/:taskId/stake (Story 6.2) — this endpoint enforces
+// the modification window; DELETE is unrestricted (used by internal/admin flows).
+
+const cancelStakeRoute = createRoute({
+  method: 'post',
+  path: '/v1/tasks/:taskId/stake/cancel',
+  tags: ['Stake'],
+  summary: 'Cancel the stake on a task',
+  description:
+    'Cancels the stake on the given task if the modification window is open. ' +
+    'Returns 422 STAKE_LOCKED if the modification window has closed. ' +
+    'Returns 422 NO_ACTIVE_STAKE if no stake is set.',
+  request: {
+    params: z.object({ taskId: z.string().uuid() }),
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: z.object({ data: z.object({ cancelled: z.boolean() }) }) } },
+      description: 'Stake cancelled successfully',
+    },
+    422: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Stake locked or no active stake',
+    },
+  },
+})
+
+app.openapi(cancelStakeRoute, async (c) => {
+  const { taskId } = c.req.valid('param')
+  // TODO(impl): check tasks.stakeAmountCents != null for taskId+userId; if null return 422 NO_ACTIVE_STAKE
+  // TODO(impl): check tasks.stakeModificationDeadline; if now >= stakeModificationDeadline return 422 STAKE_LOCKED
+  // TODO(impl): set tasks.stakeAmountCents = null AND tasks.stakeModificationDeadline = null
+  // TODO(impl): recheck commitment_contracts.hasActiveStakes across all tasks for userId
+  // TODO(impl): if a charge_events row exists with status='pending' for this task, cancel/ignore it (check for active charges before clearing)
+  void taskId
+  return c.json(ok({ cancelled: true }), 200)
 })
 
 // ── Charity schemas ────────────────────────────────────────────────────────────

@@ -792,4 +792,217 @@ void main() {
       expect(breakdown.donatedCents, equals(2500));
     });
   });
+
+  // ── getTaskStake with modification window (Story 6.6) ─────────────────────
+
+  group('CommitmentContractsRepository.getTaskStake with modification window (Story 6.6)', () {
+    test('maps stakeModificationDeadline as DateTime when stake is active', () async {
+      final mockDio = MockDio();
+      final mockClient = MockApiClient();
+      when(() => mockClient.dio).thenReturn(mockDio);
+
+      const expectedPath = '/v1/tasks/task-id/stake';
+      final deadlineUtc = DateTime.utc(2026, 4, 3, 15, 0, 0);
+      final deadlineIso = deadlineUtc.toIso8601String();
+
+      when(
+        () => mockDio.get<Map<String, dynamic>>(any()),
+      ).thenAnswer(
+        (_) async => Response(
+          requestOptions: RequestOptions(path: expectedPath),
+          statusCode: 200,
+          data: {
+            'data': {
+              'taskId': 'task-id',
+              'stakeAmountCents': 2500,
+              'stakeModificationDeadline': deadlineIso,
+              'canModify': true,
+            },
+          },
+        ),
+      );
+
+      final repo = CommitmentContractsRepository(mockClient);
+      final result = await repo.getTaskStake('task-id');
+
+      expect(result.stakeAmountCents, equals(2500));
+      expect(result.stakeModificationDeadline, isNotNull);
+      expect(result.canModify, isTrue);
+    });
+
+    test('sets canModify = false and stakeModificationDeadline = null when no stake', () async {
+      final mockDio = MockDio();
+      final mockClient = MockApiClient();
+      when(() => mockClient.dio).thenReturn(mockDio);
+
+      when(
+        () => mockDio.get<Map<String, dynamic>>(any()),
+      ).thenAnswer(
+        (_) async => Response(
+          requestOptions: RequestOptions(path: '/v1/tasks/task-id/stake'),
+          statusCode: 200,
+          data: {
+            'data': {
+              'taskId': 'task-id',
+              'stakeAmountCents': null,
+              'stakeModificationDeadline': null,
+              'canModify': false,
+            },
+          },
+        ),
+      );
+
+      final repo = CommitmentContractsRepository(mockClient);
+      final result = await repo.getTaskStake('task-id');
+
+      expect(result.stakeAmountCents, isNull);
+      expect(result.stakeModificationDeadline, isNull);
+      expect(result.canModify, isFalse);
+    });
+
+    test('sets canModify = false when deadline is in the past (window closed)', () async {
+      final mockDio = MockDio();
+      final mockClient = MockApiClient();
+      when(() => mockClient.dio).thenReturn(mockDio);
+
+      // Deadline 1 hour ago
+      final pastDeadline = DateTime.now().toUtc().subtract(const Duration(hours: 1));
+      final pastDeadlineIso = pastDeadline.toIso8601String();
+
+      when(
+        () => mockDio.get<Map<String, dynamic>>(any()),
+      ).thenAnswer(
+        (_) async => Response(
+          requestOptions: RequestOptions(path: '/v1/tasks/task-id/stake'),
+          statusCode: 200,
+          data: {
+            'data': {
+              'taskId': 'task-id',
+              'stakeAmountCents': 2500,
+              'stakeModificationDeadline': pastDeadlineIso,
+              'canModify': false,
+            },
+          },
+        ),
+      );
+
+      final repo = CommitmentContractsRepository(mockClient);
+      final result = await repo.getTaskStake('task-id');
+
+      expect(result.canModify, isFalse);
+      expect(result.stakeModificationDeadline, isNotNull);
+    });
+  });
+
+  // ── cancelStake (Story 6.6) ───────────────────────────────────────────────
+
+  group('CommitmentContractsRepository.cancelStake (Story 6.6)', () {
+    test("cancelStake('task-id') fires POST /v1/tasks/task-id/stake/cancel with empty body", () async {
+      final mockDio = MockDio();
+      final mockClient = MockApiClient();
+      when(() => mockClient.dio).thenReturn(mockDio);
+
+      const expectedPath = '/v1/tasks/task-id/stake/cancel';
+      Map<String, dynamic>? capturedBody;
+
+      when(
+        () => mockDio.post<Map<String, dynamic>>(
+          any(),
+          data: any(named: 'data'),
+        ),
+      ).thenAnswer((invocation) async {
+        capturedBody =
+            invocation.namedArguments[const Symbol('data')] as Map<String, dynamic>;
+        return Response(
+          requestOptions: RequestOptions(path: expectedPath),
+          statusCode: 200,
+          data: {
+            'data': {'cancelled': true},
+          },
+        );
+      });
+
+      final repo = CommitmentContractsRepository(mockClient);
+      await repo.cancelStake('task-id');
+
+      final captured = verify(
+        () => mockDio.post<Map<String, dynamic>>(
+          captureAny(),
+          data: any(named: 'data'),
+        ),
+      ).captured;
+      expect(captured.single, equals(expectedPath));
+      expect(capturedBody, isEmpty);
+    });
+
+    test('cancelStake propagates DioException with 422 STAKE_LOCKED when window closed', () async {
+      final mockDio = MockDio();
+      final mockClient = MockApiClient();
+      when(() => mockClient.dio).thenReturn(mockDio);
+
+      when(
+        () => mockDio.post<Map<String, dynamic>>(
+          any(),
+          data: any(named: 'data'),
+        ),
+      ).thenThrow(
+        DioException(
+          requestOptions: RequestOptions(path: '/v1/tasks/task-id/stake/cancel'),
+          response: Response(
+            requestOptions: RequestOptions(path: '/v1/tasks/task-id/stake/cancel'),
+            statusCode: 422,
+            data: {
+              'error': {
+                'code': 'STAKE_LOCKED',
+                'message': 'Stake is locked — the deadline is too close to change it',
+              },
+            },
+          ),
+          type: DioExceptionType.badResponse,
+        ),
+      );
+
+      final repo = CommitmentContractsRepository(mockClient);
+
+      await expectLater(
+        () => repo.cancelStake('task-id'),
+        throwsA(isA<DioException>()),
+      );
+    });
+
+    test('cancelStake propagates DioException with 422 NO_ACTIVE_STAKE when no stake', () async {
+      final mockDio = MockDio();
+      final mockClient = MockApiClient();
+      when(() => mockClient.dio).thenReturn(mockDio);
+
+      when(
+        () => mockDio.post<Map<String, dynamic>>(
+          any(),
+          data: any(named: 'data'),
+        ),
+      ).thenThrow(
+        DioException(
+          requestOptions: RequestOptions(path: '/v1/tasks/task-id/stake/cancel'),
+          response: Response(
+            requestOptions: RequestOptions(path: '/v1/tasks/task-id/stake/cancel'),
+            statusCode: 422,
+            data: {
+              'error': {
+                'code': 'NO_ACTIVE_STAKE',
+                'message': 'No active stake on this task',
+              },
+            },
+          ),
+          type: DioExceptionType.badResponse,
+        ),
+      );
+
+      final repo = CommitmentContractsRepository(mockClient);
+
+      await expectLater(
+        () => repo.cancelStake('task-id'),
+        throwsA(isA<DioException>()),
+      );
+    });
+  });
 }

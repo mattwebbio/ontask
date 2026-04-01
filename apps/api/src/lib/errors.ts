@@ -70,3 +70,17 @@ export class RateLimitError extends AppError {
     super('RATE_LIMIT_EXCEEDED', 429, message, details)
   }
 }
+
+/** 422 — Stake is locked; modification window has closed (FR63, Story 6.6) */
+export class StakeLockedError extends AppError {
+  constructor(message = 'Stake is locked — the deadline is too close to change it', details?: Record<string, unknown>) {
+    super('STAKE_LOCKED', 422, message, details)
+  }
+}
+
+/** 422 — No active stake exists on the task (FR63, Story 6.6) */
+export class NoActiveStakeError extends AppError {
+  constructor(message = 'No active stake on this task', details?: Record<string, unknown>) {
+    super('NO_ACTIVE_STAKE', 422, message, details)
+  }
+}

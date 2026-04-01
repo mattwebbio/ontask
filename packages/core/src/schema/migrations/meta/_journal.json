@@ -113,6 +113,13 @@
       "when": 1775063915159,
       "tag": "0015_charge_events",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1775065943522,
+      "tag": "0016_stake_modification_deadline",
+      "breakpoints": true
     }
   ]
 }

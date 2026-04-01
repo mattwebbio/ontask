@@ -842,6 +842,19 @@ class AppStrings {
   // NOTE: AppStrings.nowCardStakeLabel ('at stake') and
   //       AppStrings.chapterBreakStakeLabel already exist.
 
+  // ── Stake modification & cancellation (FR63) ──────────────────────────────
+  /// Prefix for the modification window label. Full text rendered as:
+  /// "You can adjust or cancel this stake until Apr 2 at 3:00 PM"
+  static const String stakeModificationWindowPrefix =
+      'You can adjust or cancel this stake until';
+  static const String stakeModificationWindowAt = 'at';
+  static const String stakeLockedMessage =
+      "This stake is locked — the deadline is too close to change it";
+  static const String stakeLockedError =
+      'This stake is locked and can no longer be modified.';
+  static const String stakeCancelError =
+      'Could not cancel stake. Please try again.';
+
   // ── Charity selection (FR26, UX-DR8) ──────────────────────────────────────
   static const String charitySheetTitle = 'Choose a cause';
   static const String charitySearchPlaceholder = 'Search nonprofits…';

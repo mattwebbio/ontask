@@ -82,7 +82,7 @@ class CommitmentContractsRepository {
 
   // ── Stake methods (FR22, Story 6.2) ────────────────────────────────────────
 
-  /// Fetches the current stake amount for a task.
+  /// Fetches the current stake amount and modification window for a task.
   ///
   /// `GET /v1/tasks/:taskId/stake`
   Future<TaskStake> getTaskStake(String taskId) async {
@@ -90,9 +90,13 @@ class CommitmentContractsRepository {
       '/v1/tasks/$taskId/stake',
     );
     final data = response.data!['data'] as Map<String, dynamic>;
+    final deadlineStr = data['stakeModificationDeadline'] as String?;
     return TaskStake(
       taskId: data['taskId'] as String,
       stakeAmountCents: data['stakeAmountCents'] as int?,
+      stakeModificationDeadline:
+          deadlineStr != null ? DateTime.parse(deadlineStr).toLocal() : null,
+      canModify: data['canModify'] as bool? ?? false,
     );
   }
 
@@ -106,9 +110,13 @@ class CommitmentContractsRepository {
       data: {'taskId': taskId, 'stakeAmountCents': stakeAmountCents},
     );
     final data = response.data!['data'] as Map<String, dynamic>;
+    final deadlineStr = data['stakeModificationDeadline'] as String?;
     return TaskStake(
       taskId: data['taskId'] as String,
       stakeAmountCents: data['stakeAmountCents'] as int?,
+      stakeModificationDeadline:
+          deadlineStr != null ? DateTime.parse(deadlineStr).toLocal() : null,
+      canModify: data['canModify'] as bool? ?? false,
     );
   }
 
@@ -118,6 +126,17 @@ class CommitmentContractsRepository {
   Future<void> removeTaskStake(String taskId) async {
     await _client.dio.delete<Map<String, dynamic>>(
       '/v1/tasks/$taskId/stake',
+    );
+  }
+
+  /// Cancels the active stake on a task if the modification window is open.
+  ///
+  /// `POST /v1/tasks/:taskId/stake/cancel`
+  /// Throws [DioException] with status 422 if stake is locked or no stake set.
+  Future<void> cancelStake(String taskId) async {
+    await _client.dio.post<Map<String, dynamic>>(
+      '/v1/tasks/$taskId/stake/cancel',
+      data: <String, dynamic>{},
     );
   }
 
