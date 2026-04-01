@@ -3,10 +3,11 @@ import { z } from 'zod'
 import { ok, err } from '../lib/response.js'
 
 // ── Proof submission router ───────────────────────────────────────────────────
-// Stub endpoint for AI-verified photo, screenshot/document, or Watch Mode proof submission
-// (Epic 7, Stories 7.2–7.4, FR31, FR33-34, FR36, FR66-67).
+// Stub endpoint for AI-verified photo, screenshot/document, Watch Mode, or HealthKit proof submission
+// (Epic 7, Stories 7.2–7.5, FR31, FR33-34, FR35-36, FR47, FR66-67).
 // FR31: camera capture only — no gallery import (photo path).
 // FR33-34: Watch Mode passive camera monitoring (watchMode path).
+// FR35, FR47: HealthKit auto-verification — reads Apple Health data to verify task completion.
 // FR36: screenshot/document path — PNG, JPG, or PDF up to 25 MB.
 // FR32: AI verification stub — always returns verified: true by default.
 //       Add ?demo=fail to exercise the rejection path.
@@ -39,23 +40,25 @@ const submitProofRoute = createRoute({
   method: 'post',
   path: '/v1/tasks/{taskId}/proof',
   tags: ['Proof'],
-  summary: 'Submit photo, screenshot/document, or Watch Mode session proof for AI verification',
+  summary: 'Submit photo, screenshot/document, Watch Mode session, or HealthKit data proof for AI verification',
   description:
-    'Accepts multipart/form-data with a `media` file field (photo/screenshot path) or ' +
-    'JSON body with durationSeconds/activityPercentage (watchMode path). ' +
+    'Accepts multipart/form-data with a `media` file field (photo/screenshot path), ' +
+    'JSON body with durationSeconds/activityPercentage (watchMode path), or ' +
+    'JSON body with activityType/durationSeconds/startedAt/endedAt/calorie (healthKit path). ' +
     'FR31: photo path — camera capture only; FR36: screenshot/document path — PNG, JPG, PDF up to 25 MB; ' +
     'FR33-34/FR66-67: Watch Mode session path — passive camera monitoring, session summary submitted as JSON. ' +
+    'FR35/FR47: HealthKit auto-verification — reads Apple Health data to verify task completion. ' +
     'Returns a stub verification result. ' +
     'Add ?demo=fail to exercise the rejection path. ' +
-    'Use ?proofType=screenshot or ?proofType=watchMode to indicate submission type (stub ignores body format but documents intent). ' +
-    'Stub implementation (Stories 7.2–7.4) — real AI pipeline deferred.',
+    'Use ?proofType=screenshot, ?proofType=watchMode, or ?proofType=healthKit to indicate submission type. ' +
+    'Stub implementation (Stories 7.2–7.5) — real AI pipeline deferred.',
   request: {
     params: z.object({
       taskId: z.string().min(1),
     }),
     query: z.object({
       demo: z.string().optional(),
-      proofType: z.enum(['photo', 'screenshot', 'watchMode']).optional(),
+      proofType: z.enum(['photo', 'screenshot', 'watchMode', 'healthKit']).optional(),
     }),
   },
   responses: {
@@ -84,6 +87,7 @@ app.openapi(submitProofRoute, async (c) => {
   // TODO(impl): enqueue async job via proof-verification-consumer.ts
   // TODO(impl): store result in proof_submissions table
   // TODO(impl): Story 7.4 — store watch_mode_sessions table entry; validate activityPercentage; trigger AI frame scoring via packages/ai/src/watch-mode.ts
+  // TODO(impl): Story 7.5 — read HealthKit verification data from request body; match against task activityType; store in proof_submissions; auto-verify if data within buffer window
 
   // Demo failure path for testing rejection flow.
   if (demo === 'fail') {

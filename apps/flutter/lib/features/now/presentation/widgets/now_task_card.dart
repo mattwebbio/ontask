@@ -38,6 +38,13 @@ class NowTaskCard extends StatefulWidget {
   /// When provided, the photo proof path submits via AI verification.
   final ProofRepository? proofRepository;
 
+  /// When true, shows a "Verifying" badge on the card (UX-DR31, Story 7.5).
+  ///
+  /// This is the stub infrastructure — the parameter is always `false` in Story 7.5.
+  /// A background-task story (Story 12.x) will activate this when the 30-minute
+  /// HealthKit verification buffer window is active.
+  final bool isHealthKitVerifying;
+
   const NowTaskCard({
     required this.task,
     this.onComplete,
@@ -48,6 +55,7 @@ class NowTaskCard extends StatefulWidget {
     this.timerRunning = false,
     this.timerElapsedSeconds = 0,
     this.proofRepository,
+    this.isHealthKitVerifying = false,
     super.key,
   });
 
@@ -241,6 +249,17 @@ class _NowTaskCardState extends State<NowTaskCard> {
                 if (widget.task.proofMode != ProofMode.standard)
                   const SizedBox(height: AppSpacing.lg),
 
+                // ── HealthKit "Verifying" badge (UX-DR31, Story 7.5) ──
+                // isHealthKitVerifying is always false in Story 7.5 scope.
+                // A background-task story will activate this parameter.
+                if (widget.isHealthKitVerifying) ...[
+                  _HealthKitVerifyingBadge(
+                    reducedMotion: MediaQuery.of(context).disableAnimations,
+                    colors: colors,
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                ],
+
                 // ── Timer action buttons ──────────────────────────────
                 if (widget.task.proofMode != ProofMode.calendarEvent) ...[
                   const SizedBox(height: AppSpacing.md),
@@ -378,7 +397,7 @@ class _NowTaskCardState extends State<NowTaskCard> {
               widget.onComplete?.call();
             }
           } else if (widget.task.proofMode == ProofMode.watchMode) {
-            // Open proof capture modal with healthKit path pre-selected for Watch Mode.
+            // Open proof capture modal with watchMode path for Watch Mode.
             // Watch Mode is iOS-only (UX-DR10) — macOS guard is in ProofCaptureModal path selector
             final result = await showCupertinoModalPopup<Object?>(
               context: context,
@@ -393,8 +412,24 @@ class _NowTaskCardState extends State<NowTaskCard> {
             if (result != null) {
               widget.onComplete?.call();
             }
+          } else if (widget.task.proofMode == ProofMode.healthKit) {
+            // Open proof capture modal with HealthKit path pre-selected (Story 7.5).
+            // HealthKit is iOS-only (UX-DR31) — macOS guard is in ProofCaptureModal path selector.
+            final result = await showCupertinoModalPopup<Object?>(
+              context: context,
+              builder: (_) => ProofCaptureModal(
+                taskName: widget.task.title,
+                taskId: widget.task.id,
+                proofMode: widget.task.proofMode,
+                proofRepository: widget.proofRepository,
+              ),
+            );
+            if (!mounted) return;
+            if (result != null) {
+              widget.onComplete?.call();
+            }
           } else {
-            // For standard + HealthKit + calendarEvent: mark done directly.
+            // For standard + calendarEvent: mark done directly.
             widget.onComplete?.call();
           }
         },
@@ -429,7 +464,7 @@ class _NowTaskCardState extends State<NowTaskCard> {
       case ProofMode.watchMode:
         return (AppStrings.nowCardStartWatchMode, CupertinoIcons.eye);
       case ProofMode.healthKit:
-        return (AppStrings.nowCardMarkDone, CupertinoIcons.heart);
+        return (AppStrings.nowCardProofHealthKit, CupertinoIcons.heart);
       case ProofMode.calendarEvent:
         return ('', null); // No CTA for calendar events
     }
@@ -563,5 +598,84 @@ class _NowTaskCardState extends State<NowTaskCard> {
       AppStrings.monthOct, AppStrings.monthNov, AppStrings.monthDec,
     ];
     return months[month - 1];
+  }
+}
+
+// ── HealthKit Verifying Badge ─────────────────────────────────────────────────
+
+/// Small badge shown on the Now tab task card while HealthKit verification is
+/// in-progress (UX-DR31, Story 7.5).
+///
+/// Shows a subtle pulsing opacity animation (1.0 ↔ 0.5, 2s period).
+/// If [reducedMotion] is true, shows a static opacity of 0.7.
+///
+/// Note: [NowTaskCard.isHealthKitVerifying] is always `false` in Story 7.5 scope.
+/// This widget is stub infrastructure for the background-task story (Story 12.x).
+class _HealthKitVerifyingBadge extends StatefulWidget {
+  const _HealthKitVerifyingBadge({
+    required this.reducedMotion,
+    required this.colors,
+  });
+
+  final bool reducedMotion;
+  final OnTaskColors colors;
+
+  @override
+  State<_HealthKitVerifyingBadge> createState() =>
+      _HealthKitVerifyingBadgeState();
+}
+
+class _HealthKitVerifyingBadgeState extends State<_HealthKitVerifyingBadge>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _opacity;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    );
+    _opacity = Tween<double>(begin: 1.0, end: 0.5).animate(_controller);
+    if (!widget.reducedMotion) {
+      _controller.repeat(reverse: true);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final badge = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: widget.colors.surfaceSecondary,
+        borderRadius: BorderRadius.circular(AppSpacing.sm),
+      ),
+      child: Text(
+        AppStrings.healthKitVerifyingBadge,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: widget.colors.textSecondary,
+            ),
+      ),
+    );
+
+    if (widget.reducedMotion) {
+      return Opacity(opacity: 0.7, child: badge);
+    }
+
+    return AnimatedBuilder(
+      animation: _opacity,
+      builder: (context, child) => Opacity(
+        opacity: _opacity.value,
+        child: child,
+      ),
+      child: badge,
+    );
   }
 }

@@ -61,6 +61,10 @@
 	</dict>
 	<key>NSCameraUsageDescription</key>
 	<string>On Task uses your camera to capture photo proof for task completion verification.</string>
+	<key>NSHealthShareUsageDescription</key>
+	<string>On Task reads your Apple Health data to automatically verify task completion for activities like workouts and meditation.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>On Task does not write to Apple Health.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

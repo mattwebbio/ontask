@@ -7,6 +7,10 @@
 enum ProofPath {
   photo,
   healthKit,
+
+  /// Watch Mode Live Session path (Epic 7, Stories 7.4–7.5).
+  /// Distinct from [healthKit] which is auto-verification from Apple Health.
+  watchMode,
   screenshot,
   offline;
 
@@ -20,6 +24,8 @@ enum ProofPath {
         return ProofPath.photo;
       case 'healthKit':
         return ProofPath.healthKit;
+      case 'watchMode':
+        return ProofPath.watchMode;
       case 'screenshot':
         return ProofPath.screenshot;
       case 'offline':
