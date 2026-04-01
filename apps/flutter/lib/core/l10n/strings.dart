@@ -819,4 +819,26 @@ class AppStrings {
 
   /// Section label above the stored payment method display row.
   static const String paymentMethodDisplay = 'Payment method';
+
+  // ── Stake setting UI (FR22, FR28, UX-DR7) ─────────────────────────────────
+  static const String stakeAddButton = 'Add stake';
+  static const String stakeSliderTitle = 'Set your stake';
+  static const String stakeZoneLowLabel = 'Low';
+  static const String stakeZoneMidLabel = 'Mid';
+  static const String stakeZoneHighLabel = 'High';
+  static const String stakeHighZoneGuidance =
+      "This amount will cause real financial pain if missed. That's the point — but only if you're sure.";
+  static const String stakeConfirmButton = 'Lock it in.';
+  static const String stakeRemoveConfirmTitle = 'Remove stake?';
+  static const String stakeRemoveConfirmMessage =
+      'Your financial commitment will be cancelled. The task will continue as a normal unstaked task.';
+  static const String stakeSetError = 'Could not set stake. Please try again.';
+  static const String stakePaymentMethodRequired =
+      "To lock in a stake, you'll need to add a payment method.";
+  static const String stakeSetupPaymentCta = 'Set up payment';
+  static const String stakeAmountPlaceholder = 'e.g. 25';
+  // NOTE: AppStrings.actionDelete, AppStrings.actionCancel, AppStrings.actionOk,
+  //       AppStrings.dialogErrorTitle already exist — do NOT recreate.
+  // NOTE: AppStrings.nowCardStakeLabel ('at stake') and
+  //       AppStrings.chapterBreakStakeLabel already exist.
 }

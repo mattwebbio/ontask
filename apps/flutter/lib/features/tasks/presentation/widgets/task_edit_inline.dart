@@ -7,7 +7,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/l10n/strings.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../commitment_contracts/presentation/stake_sheet_screen.dart';
 import '../../../now/domain/proof_mode.dart';
+import '../../../now/presentation/widgets/commitment_row.dart';
 import '../../data/tasks_repository.dart';
 import '../../domain/energy_requirement.dart';
 import '../../domain/recurrence_rule.dart';
@@ -46,11 +48,16 @@ class _TaskEditInlineState extends ConsumerState<TaskEditInline> {
   /// true = edit all future, false = edit this instance only.
   bool? _editAllFuture;
 
+  // ── Commitment stake (Epic 6, Story 6.2) ──────────────────────────────────
+  /// Optimistic local stake value; reflects most recent sheet result.
+  int? _localStakeAmountCents;
+
   @override
   void initState() {
     super.initState();
     _titleController = TextEditingController(text: widget.task.title);
     _notesController = TextEditingController(text: widget.task.notes ?? '');
+    _localStakeAmountCents = widget.task.stakeAmountCents;
   }
 
   @override
@@ -577,6 +584,35 @@ class _TaskEditInlineState extends ConsumerState<TaskEditInline> {
     );
   }
 
+  // ── Commitment stake (Epic 6, Story 6.2) ──────────────────────────────────
+
+  Color _stakeZoneColor(OnTaskColors colors, int? cents) {
+    if (cents == null || cents <= 0) return colors.textSecondary;
+    if (cents <= 2000) return colors.stakeZoneLow;
+    if (cents <= 7500) return colors.stakeZoneMid;
+    return colors.stakeZoneHigh;
+  }
+
+  Future<void> _openStakeSheet() async {
+    final result = await showCupertinoModalPopup<int?>(
+      context: context,
+      builder: (_) => StakeSheetScreen(
+        taskId: widget.task.id,
+        existingStakeAmountCents: _localStakeAmountCents,
+      ),
+    );
+
+    // result == null means removed; result != null means new amount set.
+    // Optimistic local state update.
+    setState(() {
+      _localStakeAmountCents = result;
+    });
+
+    // TODO(impl): call PATCH /v1/tasks/:id with stakeAmountCents in Story 6.2
+    // Use optimistic update — same pattern as other task property edits.
+    _onFieldChanged('stakeAmountCents', result);
+  }
+
   Widget _buildDependenciesSection(BuildContext context, OnTaskColors colors) {
     final depsAsync =
         ref.watch(dependenciesProvider(taskId: widget.task.id));
@@ -1033,6 +1069,30 @@ class _TaskEditInlineState extends ConsumerState<TaskEditInline> {
                       : AppStrings.taskRecurrenceLabel,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: colors.textSecondary,
+                      ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+
+          // ── Commitment stake (Epic 6, Story 6.2) ──────────────────────
+          GestureDetector(
+            onTap: _openStakeSheet,
+            child: Row(
+              children: [
+                Icon(
+                  CupertinoIcons.lock,
+                  size: 18,
+                  color: _stakeZoneColor(colors, _localStakeAmountCents),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Text(
+                  _localStakeAmountCents != null
+                      ? CommitmentRow.formatAmount(_localStakeAmountCents!)
+                      : AppStrings.stakeAddButton,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: _stakeZoneColor(colors, _localStakeAmountCents),
                       ),
                 ),
               ],

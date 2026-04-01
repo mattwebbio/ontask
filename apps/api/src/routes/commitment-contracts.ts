@@ -188,4 +188,109 @@ app.openapi(deletePaymentMethodRoute, async (c) => {
   return c.json(ok({ removed: true }), 200)
 })
 
+// ── Stake schemas ─────────────────────────────────────────────────────────────
+
+const stakeSchema = z.object({
+  taskId: z.string().uuid(),
+  stakeAmountCents: z.number().int().min(500), // minimum $5 = 500 cents
+})
+
+const stakeResponseSchema = z.object({
+  taskId: z.string().uuid(),
+  stakeAmountCents: z.number().int().nullable(),
+})
+
+const StakeResponseSchema = z.object({ data: stakeResponseSchema })
+const StakeRemoveResponseSchema = z.object({ data: z.object({ removed: z.boolean() }) })
+
+// ── GET /v1/tasks/:taskId/stake ───────────────────────────────────────────────
+// Returns the current stake amount for a task.
+
+const getTaskStakeRoute = createRoute({
+  method: 'get',
+  path: '/v1/tasks/:taskId/stake',
+  tags: ['Stake'],
+  summary: 'Get current stake for a task',
+  description:
+    'Returns the stake amount (in cents) for the given task. ' +
+    'Stub implementation (Story 6.2).',
+  request: {
+    params: z.object({ taskId: z.string().uuid() }),
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: StakeResponseSchema } },
+      description: 'Current task stake',
+    },
+  },
+})
+
+app.openapi(getTaskStakeRoute, async (c) => {
+  const { taskId } = c.req.valid('param')
+  // TODO(impl): query tasks table for stakeAmountCents where id = taskId AND userId = JWT sub
+  return c.json(ok({ taskId, stakeAmountCents: null }), 200)
+})
+
+// ── PUT /v1/tasks/:taskId/stake ───────────────────────────────────────────────
+// Sets or updates the stake on a task.
+
+const putTaskStakeRoute = createRoute({
+  method: 'put',
+  path: '/v1/tasks/:taskId/stake',
+  tags: ['Stake'],
+  summary: 'Set or update stake on a task',
+  description:
+    'Sets the stake amount (in cents) for the given task. ' +
+    'Returns 422 NO_PAYMENT_METHOD if no stored payment method. ' +
+    'Stub implementation (Story 6.2).',
+  request: {
+    params: z.object({ taskId: z.string().uuid() }),
+    body: { content: { 'application/json': { schema: stakeSchema } }, required: true },
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: StakeResponseSchema } },
+      description: 'Stake set successfully',
+    },
+    422: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'No payment method stored',
+    },
+  },
+})
+
+app.openapi(putTaskStakeRoute, async (c) => {
+  const body = c.req.valid('json')
+  // TODO(impl): check commitment_contracts.stripePaymentMethodId for userId; if null return 422 NO_PAYMENT_METHOD;
+  //             else upsert tasks.stakeAmountCents; set commitment_contracts.hasActiveStakes = true
+  return c.json(ok({ taskId: body.taskId, stakeAmountCents: body.stakeAmountCents }), 200)
+})
+
+// ── DELETE /v1/tasks/:taskId/stake ────────────────────────────────────────────
+// Removes the stake from a task.
+
+const deleteTaskStakeRoute = createRoute({
+  method: 'delete',
+  path: '/v1/tasks/:taskId/stake',
+  tags: ['Stake'],
+  summary: 'Remove stake from a task',
+  description:
+    'Removes the stake from the given task. ' +
+    'Stub implementation (Story 6.2).',
+  request: {
+    params: z.object({ taskId: z.string().uuid() }),
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: StakeRemoveResponseSchema } },
+      description: 'Stake removed',
+    },
+  },
+})
+
+app.openapi(deleteTaskStakeRoute, async (c) => {
+  // TODO(impl): set tasks.stakeAmountCents = null; recheck commitment_contracts.hasActiveStakes across all tasks for userId
+  return c.json(ok({ removed: true }), 200)
+})
+
 export { app as commitmentContractsRouter }

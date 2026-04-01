@@ -34,6 +34,7 @@ export const tasksTable = pgTable('tasks', {
   proofModeIsCustom: boolean().default(false).notNull(), // true when proofMode was explicitly set by user, overriding list/section default
   proofRetained: boolean().default(false).notNull(), // true when the user chose "Keep as completion record" (FR38, Story 7.7)
   proofMediaUrl: text(), // nullable; presigned URL or storage path for photo/video/document proof (FR21, NFR-S4)
+  stakeAmountCents: integer(), // nullable; stake amount in US cents; null means no stake set (FR22, Story 6.2)
   completedAt: timestamp({ withTimezone: true }),
   createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
