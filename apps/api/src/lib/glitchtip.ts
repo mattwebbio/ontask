@@ -28,10 +28,10 @@ export async function reportToGlitchTip(
     path: string
     method: string
   },
-  env: CloudflareBindings
+  env: CloudflareBindings | undefined
 ): Promise<void> {
   // Silently skip if DSN is not configured (local dev, test environments).
-  if (!env.GLITCHTIP_DSN) return
+  if (!env?.GLITCHTIP_DSN) return
 
   try {
     // TODO(impl): implement full Sentry envelope format per

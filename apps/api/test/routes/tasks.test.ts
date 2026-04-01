@@ -1,5 +1,12 @@
-import { describe, expect, it } from 'vitest'
-import app from '../../src/index.js'
+import { describe, expect, it, vi } from 'vitest'
+
+// Mock the scheduling service so fire-and-forget rescheduling hooks in task
+// mutation routes do not attempt real DB/calendar operations during tests.
+vi.mock('../../src/services/scheduling.js', () => ({
+  runScheduleForUser: vi.fn().mockResolvedValue({}),
+}))
+
+const app = (await import('../../src/index.js')).default
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyJson = any

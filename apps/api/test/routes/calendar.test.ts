@@ -15,6 +15,19 @@ vi.mock('../../src/db/index.js', () => ({
   createDb: vi.fn(),
 }))
 
+// Mock scheduling and webhook registration so fire-and-forget hooks in calendar
+// mutation routes do not attempt real DB/calendar operations during tests.
+vi.mock('../../src/services/scheduling.js', () => ({
+  runScheduleForUser: vi.fn().mockResolvedValue({}),
+}))
+vi.mock('../../src/services/calendar/google.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../src/services/calendar/google.js')>()
+  return {
+    ...actual,
+    registerWebhookChannel: vi.fn().mockResolvedValue(undefined),
+  }
+})
+
 // Import after mock setup
 const { createDb } = await import('../../src/db/index.js')
 const app = (await import('../../src/index.js')).default
@@ -293,6 +306,131 @@ describe('POST /v1/calendar/connect', () => {
     expect(res.status).toBe(400)
     const body = (await res.json()) as AnyJson
     expect(body.error.code).toBe('CALENDAR_FETCH_FAILED')
+  })
+})
+
+// ── POST /v1/calendar/webhook ─────────────────────────────────────────────────
+
+const stubWebhookEnv: Partial<CloudflareBindings> = {
+  ...stubEnv,
+  CALENDAR_WEBHOOK_SECRET: 'test-webhook-secret',
+}
+
+describe('POST /v1/calendar/webhook', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('webhook_validToken_sync_returns200_noRescheduling', async () => {
+    // X-Goog-Resource-State: sync = initial handshake, no rescheduling
+    const res = await app.request(
+      '/v1/calendar/webhook',
+      {
+        method: 'POST',
+        headers: {
+          'X-Goog-Channel-Token': 'test-webhook-secret',
+          'X-Goog-Resource-State': 'sync',
+          'X-Goog-Channel-Id': stubConnectionId,
+        },
+      },
+      stubWebhookEnv,
+    )
+
+    expect(res.status).toBe(200)
+    const body = (await res.json()) as AnyJson
+    expect(body).toHaveProperty('data')
+  })
+
+  it('webhook_invalidToken_returns401', async () => {
+    const res = await app.request(
+      '/v1/calendar/webhook',
+      {
+        method: 'POST',
+        headers: {
+          'X-Goog-Channel-Token': 'wrong-secret',
+          'X-Goog-Resource-State': 'exists',
+          'X-Goog-Channel-Id': stubConnectionId,
+        },
+      },
+      stubWebhookEnv,
+    )
+
+    expect(res.status).toBe(401)
+    const body = (await res.json()) as AnyJson
+    expect(body.error.code).toBe('UNAUTHORIZED')
+  })
+
+  it('webhook_missingToken_returns401', async () => {
+    const res = await app.request(
+      '/v1/calendar/webhook',
+      {
+        method: 'POST',
+        headers: {
+          'X-Goog-Resource-State': 'exists',
+        },
+      },
+      stubWebhookEnv,
+    )
+
+    expect(res.status).toBe(401)
+  })
+
+  it('webhook_validToken_exists_returns200', async () => {
+    // X-Goog-Resource-State: exists = calendar event created/modified → trigger rescheduling
+    const mockDb = {
+      select: vi.fn().mockReturnThis(),
+      from: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue([{ userId: stubUserId }]),
+    }
+    vi.mocked(createDb).mockReturnValue(mockDb as AnyJson)
+
+    // Mock runScheduleForUser indirectly via its dependencies
+    // We only verify the HTTP response is 200 — scheduling is fire-and-forget
+    const res = await app.request(
+      '/v1/calendar/webhook',
+      {
+        method: 'POST',
+        headers: {
+          'X-Goog-Channel-Token': 'test-webhook-secret',
+          'X-Goog-Resource-State': 'exists',
+          'X-Goog-Channel-Id': stubConnectionId,
+        },
+      },
+      stubWebhookEnv,
+    )
+
+    expect(res.status).toBe(200)
+  })
+
+  it('webhook_validToken_not_exists_returns200', async () => {
+    // X-Goog-Resource-State: not_exists = calendar event deleted → trigger rescheduling
+    const mockDb = {
+      select: vi.fn().mockReturnThis(),
+      from: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue([{ userId: stubUserId }]),
+    }
+    vi.mocked(createDb).mockReturnValue(mockDb as AnyJson)
+
+    const res = await app.request(
+      '/v1/calendar/webhook',
+      {
+        method: 'POST',
+        headers: {
+          'X-Goog-Channel-Token': 'test-webhook-secret',
+          'X-Goog-Resource-State': 'not_exists',
+          'X-Goog-Channel-Id': stubConnectionId,
+        },
+      },
+      stubWebhookEnv,
+    )
+
+    expect(res.status).toBe(200)
   })
 })
 

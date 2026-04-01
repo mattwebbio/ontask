@@ -23,6 +23,12 @@ export interface UpdateTaskBlockParams {
   endTime: Date
 }
 
+export interface DeleteTaskBlockParams {
+  connectionId: string
+  userId: string
+  googleEventId: string
+}
+
 // ── writeTaskBlock ────────────────────────────────────────────────────────────
 
 /**
@@ -161,6 +167,154 @@ export async function updateTaskBlock(
   } catch (error) {
     console.error(`[calendar/google] updateTaskBlock: Unexpected error for connection ${params.connectionId}:`, error)
     return 'error'
+  }
+}
+
+// ── deleteTaskBlock ───────────────────────────────────────────────────────────
+
+/**
+ * Deletes a Google Calendar event for a scheduled task block.
+ *
+ * Returns `true` on success (204) or if the event is already gone (404 —
+ * idempotent delete). Returns `false` on any other error.
+ * Partial failure tolerant — never throws.
+ *
+ * @param params - Connection, user, and Google event ID
+ * @param env - Cloudflare worker bindings
+ * @returns true on success or already-gone, false on other errors
+ */
+export async function deleteTaskBlock(
+  params: DeleteTaskBlockParams,
+  env: CloudflareBindings,
+): Promise<boolean> {
+  const calendarTokenKey = env.CALENDAR_TOKEN_KEY
+  if (!calendarTokenKey) {
+    console.error('[calendar/google] deleteTaskBlock: CALENDAR_TOKEN_KEY not set')
+    return false
+  }
+
+  try {
+    const tokenResult = await loadAndRefreshToken(params.connectionId, params.userId, env, calendarTokenKey)
+    if (!tokenResult) return false
+
+    const { accessToken, calendarId } = tokenResult
+
+    const encodedCalendarId = encodeURIComponent(calendarId)
+    const response = await fetch(
+      `https://www.googleapis.com/calendar/v3/calendars/${encodedCalendarId}/events/${params.googleEventId}`,
+      {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      },
+    )
+
+    if (response.status === 204 || response.status === 404) {
+      // 204 = deleted successfully; 404 = already gone — both are success for idempotent delete
+      return true
+    }
+
+    console.error(
+      `[calendar/google] deleteTaskBlock: Google Calendar API returned ${response.status} for event ${params.googleEventId}`,
+    )
+    return false
+  } catch (error) {
+    console.error(`[calendar/google] deleteTaskBlock: Unexpected error for connection ${params.connectionId}:`, error)
+    return false
+  }
+}
+
+// ── registerWebhookChannel ────────────────────────────────────────────────────
+
+/**
+ * Registers a Google Calendar push notification channel for a connection.
+ *
+ * Calls POST .../events/watch to subscribe to push notifications for the user's
+ * primary calendar. Returns the channel `resourceId` on success (needed for
+ * renewal), or `null` on failure.
+ *
+ * Channel expiration is set to 72 hours from now. Auto-renewal is a future
+ * hardening task (TODO(story-impl)).
+ *
+ * @param connectionId - The calendar connection ID (used as the channel ID)
+ * @param userId - The user ID for authorization
+ * @param env - Cloudflare worker bindings
+ * @returns resourceId string on success, null on failure
+ */
+export async function registerWebhookChannel(
+  connectionId: string,
+  userId: string,
+  env: CloudflareBindings,
+): Promise<string | null> {
+  const calendarTokenKey = env.CALENDAR_TOKEN_KEY
+  if (!calendarTokenKey) {
+    console.error('[calendar/google] registerWebhookChannel: CALENDAR_TOKEN_KEY not set')
+    return null
+  }
+
+  const webhookSecret = env.CALENDAR_WEBHOOK_SECRET
+  if (!webhookSecret) {
+    console.error('[calendar/google] registerWebhookChannel: CALENDAR_WEBHOOK_SECRET not set')
+    return null
+  }
+
+  try {
+    const tokenResult = await loadAndRefreshToken(connectionId, userId, env, calendarTokenKey)
+    if (!tokenResult) return null
+
+    const { accessToken } = tokenResult
+
+    const expirationMs = Date.now() + 72 * 60 * 60 * 1000 // 72 hours from now
+
+    const watchBody = {
+      id: connectionId,
+      type: 'web_hook',
+      address: 'https://api.ontaskhq.com/v1/calendar/webhook',
+      token: webhookSecret,
+      expiration: String(expirationMs),
+    }
+
+    const response = await fetch(
+      'https://www.googleapis.com/calendar/v3/calendars/primary/events/watch',
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(watchBody),
+      },
+    )
+
+    if (!response.ok) {
+      console.error(
+        `[calendar/google] registerWebhookChannel: Google Calendar API returned ${response.status} for connection ${connectionId}`,
+      )
+      return null
+    }
+
+    const data = (await response.json()) as { resourceId?: string; expiration?: string }
+    if (!data.resourceId) {
+      console.error('[calendar/google] registerWebhookChannel: Response missing resourceId')
+      return null
+    }
+
+    // Store webhook channel metadata in the DB
+    const db = createDb(env.DATABASE_URL ?? '')
+    const channelExpiry = data.expiration ? new Date(Number(data.expiration)) : new Date(expirationMs)
+    await db
+      .update(calendarConnectionsGoogleTable)
+      .set({
+        webhookChannelResourceId: data.resourceId,
+        webhookChannelExpiry: channelExpiry,
+      })
+      .where(eq(calendarConnectionsGoogleTable.connectionId, connectionId))
+
+    return data.resourceId
+  } catch (error) {
+    console.error(`[calendar/google] registerWebhookChannel: Unexpected error for connection ${connectionId}:`, error)
+    return null
   }
 }
 

@@ -1,8 +1,8 @@
 import type { CalendarEvent, ScheduledBlock } from '@ontask/core'
 import { calendarConnectionsTable, taskCalendarBlocksTable } from '@ontask/core'
-import { and, eq } from 'drizzle-orm'
+import { and, eq, notInArray } from 'drizzle-orm'
 import { createDb } from '../../db/index.js'
-import { fetchGoogleCalendarEvents, writeTaskBlock, updateTaskBlock } from './google.js'
+import { fetchGoogleCalendarEvents, writeTaskBlock, updateTaskBlock, deleteTaskBlock } from './google.js'
 import type { UpdateTaskBlockResult } from './google.js'
 
 // ── Calendar service aggregator ──────────────────────────────────────────────
@@ -26,6 +26,98 @@ import type { UpdateTaskBlockResult } from './google.js'
  * @param env - Cloudflare worker bindings
  * @returns Flat array of CalendarEvent objects from all active connections
  */
+
+// ── removeStaleCalendarBlocks ─────────────────────────────────────────────────
+
+/**
+ * Removes calendar blocks for tasks that are no longer active (deleted/completed).
+ *
+ * Queries all `taskCalendarBlocks` rows for the user. For each block whose
+ * `taskId` is NOT in `activeTaskIds`, deletes the Google Calendar event and
+ * removes the DB row.
+ *
+ * Partial failure tolerant — per-block errors are caught and logged; other
+ * blocks continue processing.
+ *
+ * @param userId - User whose stale blocks to clean up
+ * @param activeTaskIds - Task IDs that are still active in the schedule
+ * @param env - Cloudflare worker bindings
+ */
+export async function removeStaleCalendarBlocks(
+  userId: string,
+  activeTaskIds: string[],
+  env: CloudflareBindings,
+): Promise<void> {
+  try {
+    const db = createDb(env.DATABASE_URL ?? '')
+
+    // Find all blocks for this user whose taskId is NOT in activeTaskIds
+    let staleBlocks: Array<{
+      id: string
+      taskId: string
+      connectionId: string
+      googleEventId: string
+    }>
+
+    if (activeTaskIds.length === 0) {
+      // All blocks are stale — query all blocks for this user
+      staleBlocks = await db
+        .select({
+          id: taskCalendarBlocksTable.id,
+          taskId: taskCalendarBlocksTable.taskId,
+          connectionId: taskCalendarBlocksTable.connectionId,
+          googleEventId: taskCalendarBlocksTable.googleEventId,
+        })
+        .from(taskCalendarBlocksTable)
+        .where(eq(taskCalendarBlocksTable.userId, userId))
+    } else {
+      staleBlocks = await db
+        .select({
+          id: taskCalendarBlocksTable.id,
+          taskId: taskCalendarBlocksTable.taskId,
+          connectionId: taskCalendarBlocksTable.connectionId,
+          googleEventId: taskCalendarBlocksTable.googleEventId,
+        })
+        .from(taskCalendarBlocksTable)
+        .where(
+          and(
+            eq(taskCalendarBlocksTable.userId, userId),
+            notInArray(taskCalendarBlocksTable.taskId, activeTaskIds),
+          ),
+        )
+    }
+
+    for (const block of staleBlocks) {
+      try {
+        // Delete the Google Calendar event (partial failure tolerant)
+        await deleteTaskBlock(
+          {
+            connectionId: block.connectionId,
+            userId,
+            googleEventId: block.googleEventId,
+          },
+          env,
+        )
+
+        // Remove the DB row regardless of whether Google delete succeeded
+        // (event may already be gone from Google's side)
+        await db
+          .delete(taskCalendarBlocksTable)
+          .where(eq(taskCalendarBlocksTable.id, block.id))
+      } catch (blockError) {
+        console.error(
+          `[calendar] removeStaleCalendarBlocks: Error for task ${block.taskId} block ${block.id}:`,
+          blockError,
+        )
+        // Continue to next block — partial failure tolerant
+      }
+    }
+  } catch (error) {
+    console.error('[calendar] removeStaleCalendarBlocks: Failed to load stale blocks:', error)
+    // Never throw — cleanup must not prevent rescheduling
+  }
+}
+
 // ── syncScheduledBlocksToCalendar ─────────────────────────────────────────────
 
 /**

@@ -1,6 +1,7 @@
 import { OpenAPIHono, createRoute } from '@hono/zod-openapi'
 import { z } from 'zod'
 import { ok, list, err } from '../lib/response.js'
+import { runScheduleForUser } from '../services/scheduling.js'
 
 // ── Tasks router ────────────────────────────────────────────────────────────
 // CRUD routes for task management (FR1, FR55, FR57, FR58, FR59).
@@ -165,6 +166,9 @@ app.openapi(postTaskRoute, async (c) => {
   // TODO(impl): validate listId/sectionId exist, inherit defaultDueDate from section/list
   // if no dueDate provided (FR3), insert via Drizzle
   const body = c.req.valid('json')
+  const userId = c.req.header('x-user-id') ?? 'stub-user-id'
+  // Fire-and-forget rescheduling — completes within Worker lifetime (NFR-I3)
+  try { c.executionCtx.waitUntil(runScheduleForUser(userId, c.env)) } catch { /* no executionCtx in test */ }
   return c.json(
     ok(stubTask({
       title: body.title,
@@ -742,7 +746,35 @@ app.openapi(patchTaskRoute, async (c) => {
   // TODO(impl): upsert via Drizzle, validate ownership
   const { id } = c.req.valid('param')
   const body = c.req.valid('json')
+  const userId = c.req.header('x-user-id') ?? 'stub-user-id'
+  // Fire-and-forget rescheduling — completes within Worker lifetime (NFR-I3)
+  try { c.executionCtx.waitUntil(runScheduleForUser(userId, c.env)) } catch { /* no executionCtx in test */ }
   return c.json(ok(stubTask({ id, ...body, dueDate: body.dueDate ?? null })), 200)
+})
+
+// ── DELETE /v1/tasks/:id ─────────────────────────────────────────────────────
+
+const deleteTaskRoute = createRoute({
+  method: 'delete',
+  path: '/v1/tasks/{id}',
+  tags: ['Tasks'],
+  summary: 'Hard-delete a task',
+  description: 'Permanently removes a task and its associated calendar blocks.',
+  request: {
+    params: z.object({ id: z.string().uuid() }),
+  },
+  responses: {
+    204: { description: 'Task deleted' },
+    404: { content: { 'application/json': { schema: ErrorSchema } }, description: 'Task not found' },
+  },
+})
+
+app.openapi(deleteTaskRoute, async (c) => {
+  // TODO(impl): hard-delete task from DB via Drizzle
+  const userId = c.req.header('x-user-id') ?? 'stub-user-id'
+  // Fire-and-forget rescheduling — stale calendar blocks will be cleaned up (NFR-I3)
+  try { c.executionCtx.waitUntil(runScheduleForUser(userId, c.env)) } catch { /* no executionCtx in test */ }
+  return new Response(null, { status: 204 })
 })
 
 // ── DELETE /v1/tasks/:id/archive ────────────────────────────────────────────
@@ -764,6 +796,9 @@ const archiveTaskRoute = createRoute({
 
 app.openapi(archiveTaskRoute, async (c) => {
   // TODO(impl): set archivedAt = now() via Drizzle
+  const userId = c.req.header('x-user-id') ?? 'stub-user-id'
+  // Fire-and-forget rescheduling — stale calendar blocks will be cleaned up (NFR-I3)
+  try { c.executionCtx.waitUntil(runScheduleForUser(userId, c.env)) } catch { /* no executionCtx in test */ }
   return new Response(null, { status: 204 })
 })
 
@@ -884,6 +919,9 @@ const completeTaskRoute = createRoute({
 app.openapi(completeTaskRoute, async (c) => {
   // TODO(impl): look up real task from DB, set completedAt via Drizzle
   const { id } = c.req.valid('param')
+  const userId = c.req.header('x-user-id') ?? 'stub-user-id'
+  // Fire-and-forget rescheduling — completes within Worker lifetime (NFR-I3)
+  try { c.executionCtx.waitUntil(runScheduleForUser(userId, c.env)) } catch { /* no executionCtx in test */ }
   const completedTask = stubTask({
     id,
     completedAt: new Date().toISOString(),

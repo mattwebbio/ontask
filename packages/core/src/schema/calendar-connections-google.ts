@@ -16,4 +16,7 @@ export const calendarConnectionsGoogleTable = pgTable('calendar_connections_goog
   accessToken: text().notNull(), // AES-256-GCM encrypted at application layer
   refreshToken: text().notNull(), // AES-256-GCM encrypted at application layer
   tokenExpiry: timestamp({ withTimezone: true }).notNull(),
+  // Webhook channel metadata for Google Calendar push notifications (Story 3.5)
+  webhookChannelResourceId: text(), // nullable — populated after registerWebhookChannel()
+  webhookChannelExpiry: timestamp({ withTimezone: true }), // nullable — expiry of current channel
 })

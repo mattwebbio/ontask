@@ -6,6 +6,8 @@ import { ok, err } from '../lib/response.js'
 import { createDb } from '../db/index.js'
 import { encryptToken } from '../lib/crypto.js'
 import { fetchAllCalendarEvents } from '../services/calendar/index.js'
+import { registerWebhookChannel } from '../services/calendar/google.js'
+import { runScheduleForUser } from '../services/scheduling.js'
 
 // ── Calendar router ──────────────────────────────────────────────────────────
 // Routes for Google Calendar OAuth connection and listing connections (FR46).
@@ -146,6 +148,9 @@ app.openapi(postCalendarConnectRoute, async (c) => {
     console.error('[calendar/connect] Transaction failed:', error)
     return c.json(err('INTERNAL_ERROR', 'Failed to store calendar connection'), 500)
   }
+
+  // Fire-and-forget webhook channel registration — do NOT block the connect response
+  try { c.executionCtx.waitUntil(registerWebhookChannel(connectionId, userId, c.env)) } catch { /* no executionCtx in test */ }
 
   return c.json(
     ok({
@@ -358,6 +363,69 @@ app.openapi(getCalendarEventsRoute, async (c) => {
     ),
     200,
   )
+})
+
+// ── POST /v1/calendar/webhook ─────────────────────────────────────────────────
+
+const WebhookResponseSchema = z.object({
+  data: z.object({}),
+})
+
+const postCalendarWebhookRoute = createRoute({
+  method: 'post',
+  path: '/v1/calendar/webhook',
+  tags: ['Calendar'],
+  summary: 'Google Calendar push notification receiver',
+  description:
+    'Receives Google Calendar push notifications. Validates the channel token ' +
+    'and triggers rescheduling for the affected user. Returns 200 immediately ' +
+    '(Google requires fast acknowledgment). Returns 401 on invalid token (AC 1).',
+  responses: {
+    200: {
+      content: { 'application/json': { schema: WebhookResponseSchema } },
+      description: 'Notification acknowledged',
+    },
+    401: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Invalid or missing channel token',
+    },
+  },
+})
+
+app.openapi(postCalendarWebhookRoute, async (c) => {
+  // Validate the channel token — Google echoes back our registered token
+  const channelToken = c.req.header('X-Goog-Channel-Token')
+  if (!channelToken || channelToken !== c.env.CALENDAR_WEBHOOK_SECRET) {
+    return c.json(err('UNAUTHORIZED', 'Invalid channel token'), 401)
+  }
+
+  const resourceState = c.req.header('X-Goog-Resource-State')
+
+  // 'sync' is the initial handshake — acknowledge but do NOT trigger rescheduling
+  if (resourceState === 'sync') {
+    return c.json(ok({}), 200)
+  }
+
+  // 'exists' (event created/updated) and 'not_exists' (event deleted) → trigger rescheduling
+  // Look up userId from the channel ID (= connectionId registered at watch time)
+  const channelId = c.req.header('X-Goog-Channel-Id')
+
+  if (channelId) {
+    const db = createDb(c.env.DATABASE_URL ?? '')
+    const rows = await db
+      .select({ userId: calendarConnectionsTable.userId })
+      .from(calendarConnectionsTable)
+      .where(eq(calendarConnectionsTable.id, channelId))
+      .limit(1)
+
+    if (rows.length > 0) {
+      const { userId } = rows[0]
+      // Fire-and-forget — return 200 immediately, rescheduling completes within Worker lifetime
+      try { c.executionCtx.waitUntil(runScheduleForUser(userId, c.env)) } catch { /* no executionCtx in test */ }
+    }
+  }
+
+  return c.json(ok({}), 200)
 })
 
 // ── Google OAuth helpers ──────────────────────────────────────────────────────
