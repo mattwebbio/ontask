@@ -1320,7 +1320,13 @@ class _ParsedFieldPill extends StatelessWidget {
                 color: colors.textSecondary.withAlpha(153), // 60% opacity
                 borderRadius: 20,
               ),
-              child: _PillContent(label: label, value: value, colors: colors),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: colors.surfaceSecondary,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: _PillContent(label: label, value: value, colors: colors),
+              ),
             )
           : Container(
               decoration: BoxDecoration(
