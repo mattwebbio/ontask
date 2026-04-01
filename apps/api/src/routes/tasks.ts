@@ -105,7 +105,7 @@ const TaskParseResponseSchema = z.object({
     estimatedDurationMinutes: z.number().nullable().optional(),
     energyRequirement: z.enum(['high_focus', 'low_energy', 'flexible']).nullable().optional(),
     listId: z.string().nullable().optional(),
-    fieldConfidences: z.record(z.enum(['high', 'low'])),
+    fieldConfidences: z.record(z.string(), z.enum(['high', 'low'])),
   }),
 })
 
