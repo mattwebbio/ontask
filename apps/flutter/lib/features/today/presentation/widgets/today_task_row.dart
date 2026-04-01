@@ -193,7 +193,7 @@ class TodayTaskRow extends StatelessWidget {
           height: 44,
           child: CupertinoButton(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-            minSize: 44,
+            minimumSize: const Size(44, 44),
             onPressed: onStartTimer,
             child: Text(
               AppStrings.timerStart,
@@ -227,7 +227,7 @@ class TodayTaskRow extends StatelessWidget {
         height: 44,
         child: CupertinoButton(
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-          minSize: 44,
+          minimumSize: const Size(44, 44),
           onPressed: () => _openWhyHereSheet(context),
           child: Text(
             '?',
