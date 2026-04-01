@@ -68,5 +68,58 @@ void main() {
       expect(taskList.memberCount, equals(2));
       expect(taskList.memberAvatarInitials, equals(['J', 'S']));
     });
+
+    test('parses assignmentStrategy correctly when present', () {
+      final json = {
+        'id': 'b0000000-0000-4000-8000-000000000001',
+        'title': 'Team List',
+        'defaultDueDate': null,
+        'position': 0,
+        'archivedAt': null,
+        'createdAt': '2026-03-30T12:00:00.000Z',
+        'updatedAt': '2026-03-30T12:00:00.000Z',
+        'assignmentStrategy': 'round-robin',
+      };
+
+      final dto = ListDto.fromJson(json);
+
+      expect(dto.assignmentStrategy, equals('round-robin'));
+      expect(dto.toDomain().assignmentStrategy, equals('round-robin'));
+    });
+
+    test('parses assignmentStrategy as null when field is absent', () {
+      final json = {
+        'id': 'b0000000-0000-4000-8000-000000000001',
+        'title': 'Simple List',
+        'defaultDueDate': null,
+        'position': 0,
+        'archivedAt': null,
+        'createdAt': '2026-03-30T12:00:00.000Z',
+        'updatedAt': '2026-03-30T12:00:00.000Z',
+        // No assignmentStrategy field — old API stub
+      };
+
+      final dto = ListDto.fromJson(json);
+
+      expect(dto.assignmentStrategy, isNull);
+      expect(dto.toDomain().assignmentStrategy, isNull);
+    });
+
+    test('parses assignmentStrategy as null when field is explicitly null', () {
+      final json = {
+        'id': 'b0000000-0000-4000-8000-000000000001',
+        'title': 'Simple List',
+        'defaultDueDate': null,
+        'position': 0,
+        'archivedAt': null,
+        'createdAt': '2026-03-30T12:00:00.000Z',
+        'updatedAt': '2026-03-30T12:00:00.000Z',
+        'assignmentStrategy': null,
+      };
+
+      final dto = ListDto.fromJson(json);
+
+      expect(dto.assignmentStrategy, isNull);
+    });
   });
 }

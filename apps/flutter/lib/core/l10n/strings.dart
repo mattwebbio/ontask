@@ -637,6 +637,21 @@ class AppStrings {
   /// Generic error shown when the nudge request fails unexpectedly.
   static const String nudgeError = 'Something went wrong. Please try again.';
 
+  // ── Task assignment strategies (FR17-18) ──────────────────────────────────
+  static const String listSettingsTitle = 'List Settings';
+  static const String assignmentStrategyLabel = 'Assignment strategy';
+  static const String assignmentStrategyNone = 'None';
+  static const String assignmentStrategyRoundRobin = 'Round-robin';
+  static const String assignmentStrategyLeastBusy = 'Least busy';
+  static const String assignmentStrategyAiAssisted = 'AI-assisted';
+  static const String assignmentStrategyRoundRobinDesc = 'Tasks rotate through members in join order.';
+  static const String assignmentStrategyLeastBusyDesc = 'Assigns to the member with fewest tasks in the due-date window.';
+  static const String assignmentStrategyAiAssistedDesc = 'Considers task duration, workload, and energy preferences.';
+  static const String assignmentAutoAssignButton = 'Auto-assign now';
+  static const String assignmentAutoAssignSuccess = '{count} tasks assigned.';
+  static const String assignmentStrategyUpdateError = 'Could not update strategy. Please try again.';
+  static const String taskAssignedToLabel = 'Assigned';
+
   // ── Shared actions ──────────────────────────────────────────────────────
   static const String actionNotImplemented =
       'This action is not yet available in this version.';

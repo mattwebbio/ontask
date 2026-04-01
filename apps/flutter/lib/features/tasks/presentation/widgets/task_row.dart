@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/l10n/strings.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../lists/domain/list_member.dart';
 import '../../../prediction/presentation/widgets/prediction_badge_async.dart';
 import '../../domain/energy_requirement.dart';
 import '../../domain/recurrence_rule.dart';
@@ -28,6 +29,7 @@ class TaskRow extends StatelessWidget {
     this.isMultiSelectMode = false,
     this.onSelectionToggle,
     this.showPrediction = false,
+    this.listMembers = const [],
     super.key,
   });
 
@@ -58,6 +60,12 @@ class TaskRow extends StatelessWidget {
   /// Defaults to false to avoid adding network calls to every task row.
   /// Set to true only in list detail view — not in search results or Today tab.
   final bool showPrediction;
+
+  /// Members of the list, used to resolve assignee initials for the badge.
+  ///
+  /// Pass the list's members so the badge can show initials. If the member
+  /// is not found or the list is empty, a generic person icon is shown.
+  final List<ListMember> listMembers;
 
   @override
   Widget build(BuildContext context) {
@@ -280,6 +288,13 @@ class TaskRow extends StatelessWidget {
                   ],
                 ),
               ),
+              if (task.assignedToUserId != null) ...[
+                const SizedBox(width: AppSpacing.sm),
+                _AssigneeBadge(
+                  assignedToUserId: task.assignedToUserId!,
+                  listMembers: listMembers,
+                ),
+              ],
               if (showPrediction) ...[
                 const SizedBox(width: AppSpacing.sm),
                 TaskPredictionBadge(taskId: task.id),
@@ -362,5 +377,54 @@ class TaskRow extends StatelessWidget {
       case EnergyRequirement.flexible:
         return AppStrings.taskEnergyFlexible;
     }
+  }
+}
+
+/// Small avatar-initials circle shown when a task has an assigned member.
+///
+/// Shows the member's initials if found in [listMembers]; falls back to a
+/// generic person icon when the member is not loaded or not found.
+/// Display-only in v1 — tapping does nothing.
+class _AssigneeBadge extends StatelessWidget {
+  const _AssigneeBadge({
+    required this.assignedToUserId,
+    required this.listMembers,
+  });
+
+  final String assignedToUserId;
+  final List<ListMember> listMembers;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<OnTaskColors>()!;
+    final member = listMembers.where((m) => m.userId == assignedToUserId).firstOrNull;
+
+    return Semantics(
+      label: AppStrings.taskAssignedToLabel,
+      child: Container(
+        width: 20,
+        height: 20,
+        decoration: BoxDecoration(
+          color: colors.accentPrimary,
+          shape: BoxShape.circle,
+        ),
+        child: member != null
+            ? Center(
+                child: Text(
+                  member.avatarInitials,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: CupertinoColors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+              )
+            : const Icon(
+                CupertinoIcons.person,
+                size: 12,
+                color: CupertinoColors.white,
+              ),
+      ),
+    );
   }
 }

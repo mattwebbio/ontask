@@ -39,5 +39,6 @@ abstract class Task with _$Task {
     required DateTime updatedAt,
     int? durationMinutes,
     DateTime? scheduledStartTime,
+    String? assignedToUserId,
   }) = _Task;
 }

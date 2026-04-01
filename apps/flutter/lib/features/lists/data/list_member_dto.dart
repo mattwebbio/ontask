@@ -15,6 +15,7 @@ abstract class ListMemberDto with _$ListMemberDto {
     required String avatarInitials,
     required String role,
     required String joinedAt,
+    @JsonKey(defaultValue: 0) @Default(0) int roundRobinIndex,
   }) = _ListMemberDto;
 
   factory ListMemberDto.fromJson(Map<String, dynamic> json) =>
@@ -27,5 +28,6 @@ abstract class ListMemberDto with _$ListMemberDto {
         avatarInitials: avatarInitials,
         role: role,
         joinedAt: DateTime.parse(joinedAt),
+        roundRobinIndex: roundRobinIndex,
       );
 }

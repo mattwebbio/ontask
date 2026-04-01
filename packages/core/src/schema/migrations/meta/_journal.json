@@ -64,6 +64,13 @@
       "when": 1743638400000,
       "tag": "0008_list_sharing",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1775028178238,
+      "tag": "0009_task_assignment_strategies",
+      "breakpoints": true
     }
   ]
 }

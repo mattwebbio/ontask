@@ -28,6 +28,8 @@ export const tasksTable = pgTable('tasks', {
   recurrenceInterval: integer(), // for custom interval: number of days between occurrences
   recurrenceDaysOfWeek: text(), // JSON array string of ISO day numbers e.g. '[1,2,5]' (Mon=1..Sun=7)
   recurrenceParentId: uuid(), // self-reference to the original recurring task (series parent)
+  // TODO(story-TBD): FK to users table when users schema is finalized
+  assignedToUserId: uuid(), // null = unassigned; set by round-robin/least-busy/ai-assisted strategy
   completedAt: timestamp({ withTimezone: true }),
   createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
