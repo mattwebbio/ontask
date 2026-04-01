@@ -1,6 +1,6 @@
 # Story 7.1: Proof Capture Modal Foundation
 
-Status: review
+Status: in-progress
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -292,6 +292,22 @@ claude-sonnet-4-6
 - `apps/flutter/test/features/proof/proof_capture_modal_test.dart` (new)
 - `_bmad-output/implementation-artifacts/7-1-proof-capture-modal-foundation.md` (updated)
 - `_bmad-output/implementation-artifacts/sprint-status.yaml` (updated)
+
+### Review Findings
+
+- [ ] [Review][Patch] `ConsumerStatefulWidget` used with no Riverpod provider reads — downgrade to `StatefulWidget`; remove unnecessary `flutter_riverpod` dependency from modal and test `ProviderScope` wrapper [apps/flutter/lib/features/proof/presentation/proof_capture_modal.dart:22]
+- [ ] [Review][Patch] `_buildSubView` `path` parameter is unused — causes linter warning and leaves sub-view heading generic; use `path` in the stub heading or annotate clearly [apps/flutter/lib/features/proof/presentation/proof_capture_modal.dart:180]
+- [ ] [Review][Patch] No `mounted` check after `await showCupertinoModalPopup` in `NowTaskCard` — add `if (!mounted) return;` before `widget.onComplete?.call()` [apps/flutter/lib/features/now/presentation/widgets/now_task_card.dart:369]
+- [ ] [Review][Patch] Connectivity checked once only in `initState` — add a `Connectivity().onConnectivityChanged` stream subscription so offline row appears if network drops during the session [apps/flutter/lib/features/proof/presentation/proof_capture_modal.dart:44-57]
+- [ ] [Review][Patch] Offline detection condition `result.length == 1` too restrictive — use `result.every((r) => r == ConnectivityResult.none)` to handle multi-path devices correctly [apps/flutter/lib/features/proof/presentation/proof_capture_modal.dart:53-54]
+- [ ] [Review][Patch] `_checkConnectivity()` has no error handling — `Connectivity().checkConnectivity()` can throw a `PlatformException`; wrap in try/catch [apps/flutter/lib/features/proof/presentation/proof_capture_modal.dart:49-50]
+- [ ] [Review][Patch] macOS guard test assertion `anyOf(equals(0), equals(1))` is trivially true — replace with `Platform.isMacOS ? findsNothing : findsOneWidget` [apps/flutter/test/features/proof/proof_capture_modal_test.dart:220-225]
+- [ ] [Review][Patch] Test count in completion notes claims 7 widget tests; file contains 6 — correct the count in Dev Agent Record [_bmad-output/implementation-artifacts/7-1-proof-capture-modal-foundation.md:283]
+- [ ] [Review][Patch] `Semantics(focused: true)` does not imperatively move VoiceOver focus on widget build — use a `FocusNode` with `FocusScope.of(context).requestFocus(focusNode)` called post-frame to satisfy UX-DR11 [apps/flutter/lib/features/proof/presentation/proof_capture_modal.dart:109-119]
+- [ ] [Review][Patch] Swipe-to-dismiss dismissal path untested — add a test verifying swipe-down returns null (or that swipe-dismiss is barred by `isDismissible: false` if that is the intent) [apps/flutter/test/features/proof/proof_capture_modal_test.dart]
+- [x] [Review][Defer] `ProofSubmissionState` sealed class defined but never used in the modal — modal uses raw `ProofPath?` for state; sealed class is dead code until Stories 7.2–7.6 [apps/flutter/lib/features/proof/domain/proof_submission_state.dart] — deferred, pre-existing
+- [x] [Review][Defer] `ProofPath.fromJson` silently defaults unknown/null values to `photo` — silent data corruption risk on API integration; address when proof API lands in Story 7.2 [apps/flutter/lib/features/proof/domain/proof_path.dart:14-26] — deferred, pre-existing
+- [x] [Review][Defer] Sheet title string interpolation is not l10n word-order safe — `'${AppStrings.proofModalTitle} ${widget.taskName}'` hard-codes English word order; use a placeholder pattern when l10n is formalised [apps/flutter/lib/features/proof/presentation/proof_capture_modal.dart:113] — deferred, pre-existing
 
 ## Change Log
 

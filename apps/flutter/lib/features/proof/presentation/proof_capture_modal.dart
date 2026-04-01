@@ -3,7 +3,6 @@ import 'dart:io' show Platform;
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' show Theme;
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/l10n/strings.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -19,7 +18,7 @@ import '../../now/domain/proof_mode.dart';
 ///
 /// NOT added to AppRouter — presented as a CupertinoModalPopup only.
 /// (Epic 7, Story 7.1, AC1–2, FR31)
-class ProofCaptureModal extends ConsumerStatefulWidget {
+class ProofCaptureModal extends StatefulWidget {
   const ProofCaptureModal({
     super.key,
     required this.taskName,
@@ -33,10 +32,10 @@ class ProofCaptureModal extends ConsumerStatefulWidget {
   final ProofMode? proofMode;
 
   @override
-  ConsumerState<ProofCaptureModal> createState() => _ProofCaptureModalState();
+  State<ProofCaptureModal> createState() => _ProofCaptureModalState();
 }
 
-class _ProofCaptureModalState extends ConsumerState<ProofCaptureModal> {
+class _ProofCaptureModalState extends State<ProofCaptureModal> {
   ProofPath? _selectedPath;
   bool _isOffline = false;
 
@@ -47,12 +46,16 @@ class _ProofCaptureModalState extends ConsumerState<ProofCaptureModal> {
   }
 
   Future<void> _checkConnectivity() async {
-    final result = await Connectivity().checkConnectivity();
-    if (mounted) {
-      setState(() {
-        _isOffline = result.contains(ConnectivityResult.none) &&
-            result.length == 1;
-      });
+    try {
+      final result = await Connectivity().checkConnectivity();
+      if (mounted) {
+        setState(() {
+          _isOffline = result.every((r) => r == ConnectivityResult.none);
+        });
+      }
+    } on Exception {
+      // PlatformException or permission denial — treat as online (conservative).
+      if (mounted) setState(() => _isOffline = false);
     }
   }
 
@@ -228,10 +231,23 @@ class _ProofCaptureModalState extends ConsumerState<ProofCaptureModal> {
         Padding(
           padding: const EdgeInsets.all(AppSpacing.xl),
           child: Center(
-            child: Text(
-              AppStrings.proofPathComingSoon,
-              style: TextStyle(color: colors.textSecondary),
-              textAlign: TextAlign.center,
+            child: Column(
+              children: [
+                Text(
+                  path.name,
+                  style: TextStyle(
+                    color: colors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 17,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Text(
+                  AppStrings.proofPathComingSoon,
+                  style: TextStyle(color: colors.textSecondary),
+                  textAlign: TextAlign.center,
+                ),
+              ],
             ),
           ),
         ),

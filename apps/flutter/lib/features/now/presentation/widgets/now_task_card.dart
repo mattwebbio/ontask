@@ -366,6 +366,7 @@ class _NowTaskCardState extends State<NowTaskCard> {
                 proofMode: widget.task.proofMode,
               ),
             );
+            if (!mounted) return;
             if (result != null) {
               widget.onComplete?.call();
             }
