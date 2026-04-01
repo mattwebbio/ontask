@@ -45,6 +45,7 @@ const listMemberSchema = z.object({
   role: z.enum(['owner', 'member']),
   joinedAt: z.string().datetime(),
   roundRobinIndex: z.number().int(),
+  email: z.string().email().nullable(),
 })
 
 const InvitationResponseSchema = z.object({ data: invitationSchema })
@@ -110,6 +111,7 @@ function stubMembers(): z.infer<typeof listMemberSchema>[] {
       role: 'owner',
       joinedAt: now,
       roundRobinIndex: 0,
+      email: 'jordan@example.com',
     },
     {
       userId: 'd0000000-0000-4000-8000-000000000002',
@@ -118,6 +120,7 @@ function stubMembers(): z.infer<typeof listMemberSchema>[] {
       role: 'member',
       joinedAt: now,
       roundRobinIndex: 1,
+      email: 'sam@example.com',
     },
   ]
 }
@@ -443,6 +446,168 @@ app.openapi(unassignTaskRoute, async (c) => {
     }),
     200,
   )
+})
+
+// ── POST /v1/lists/:id/leave ─────────────────────────────────────────────────
+// Current user leaves the list (AC2).
+// IMPORTANT: Registered BEFORE GET /v1/lists/{id}/members — specific before parameterized rule.
+
+const leaveListResponseSchema = z.object({
+  listId: z.string().uuid(),
+  unassignedTaskCount: z.number().int(),
+})
+
+const LeaveListResponseSchema = z.object({ data: leaveListResponseSchema })
+
+const leaveListRoute = createRoute({
+  method: 'post',
+  path: '/v1/lists/{id}/leave',
+  tags: ['Sharing'],
+  summary: 'Leave a shared list',
+  description:
+    'Removes the authenticated user from the list as a member. ' +
+    'The last owner cannot leave (must promote another member first). ' +
+    'Stub implementation (Story 5.6, FR62).',
+  request: {
+    params: z.object({ id: z.string().uuid() }),
+    body: { content: { 'application/json': { schema: z.object({}) } }, required: false },
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: LeaveListResponseSchema } },
+      description: 'Successfully left the list',
+    },
+    403: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Last owner cannot leave — must promote another member to owner first',
+    },
+    404: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'List not found or caller is not a member',
+    },
+  },
+})
+
+app.openapi(leaveListRoute, async (c) => {
+  // TODO(impl): verify caller is member via JWT sub, enforce last-owner guard,
+  //             delete list_members row for jwt.sub,
+  //             set assignedToUserId = NULL on caller's incomplete tasks
+  const { id } = c.req.valid('param')
+  console.log(`[stub] User leaving list ${id}`)
+  return c.json(ok({ listId: id, unassignedTaskCount: 1 }), 200)
+})
+
+// ── DELETE /v1/lists/:id/members/:userId ─────────────────────────────────────
+// Owner removes a member from the list (AC1).
+// IMPORTANT: Registered BEFORE GET /v1/lists/{id}/members — specific before parameterized rule.
+
+const removeMemberResponseSchema = z.object({
+  listId: z.string().uuid(),
+  removedUserId: z.string().uuid(),
+  unassignedTaskCount: z.number().int(),
+})
+
+const RemoveMemberResponseSchema = z.object({ data: removeMemberResponseSchema })
+
+const removeMemberRoute = createRoute({
+  method: 'delete',
+  path: '/v1/lists/{id}/members/{userId}',
+  tags: ['Sharing'],
+  summary: 'Remove a member from a shared list',
+  description:
+    'Removes the specified member from the list. Caller must be a list owner. ' +
+    'The last owner cannot be removed. Incomplete tasks assigned to the removed member ' +
+    'are unassigned. Stub implementation (Story 5.6, FR62).',
+  request: {
+    params: z.object({ id: z.string().uuid(), userId: z.string().uuid() }),
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: RemoveMemberResponseSchema } },
+      description: 'Member removed',
+    },
+    403: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Caller is not a list owner',
+    },
+    404: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'List or member not found',
+    },
+    422: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Cannot remove the last owner (list must retain at least one owner)',
+    },
+  },
+})
+
+app.openapi(removeMemberRoute, async (c) => {
+  // TODO(impl): verify caller is owner via list_members,
+  //             enforce last-owner guard,
+  //             delete list_members row,
+  //             set assignedToUserId = NULL on tasks WHERE listId = id AND assignedToUserId = userId AND completedAt IS NULL
+  const { id, userId } = c.req.valid('param')
+  console.log(`[stub] Removing member ${userId} from list ${id}`)
+  return c.json(ok({ listId: id, removedUserId: userId, unassignedTaskCount: 1 }), 200)
+})
+
+// ── PATCH /v1/lists/:id/members/:userId/role ─────────────────────────────────
+// Grant or revoke owner role for a member (AC3).
+// IMPORTANT: Registered BEFORE GET /v1/lists/{id}/members — specific before parameterized rule.
+
+const updateMemberRoleBodySchema = z.object({
+  role: z.enum(['owner', 'member']),
+})
+
+const updateMemberRoleResponseSchema = z.object({
+  listId: z.string().uuid(),
+  userId: z.string().uuid(),
+  role: z.enum(['owner', 'member']),
+})
+
+const UpdateMemberRoleResponseSchema = z.object({ data: updateMemberRoleResponseSchema })
+
+const updateMemberRoleRoute = createRoute({
+  method: 'patch',
+  path: '/v1/lists/{id}/members/{userId}/role',
+  tags: ['Sharing'],
+  summary: 'Grant or revoke owner role for a list member',
+  description:
+    'Updates the role of a list member. Caller must be a list owner. ' +
+    'The last owner cannot be demoted to member. ' +
+    'Multiple owners can coexist. Stub implementation (Story 5.6, FR75).',
+  request: {
+    params: z.object({ id: z.string().uuid(), userId: z.string().uuid() }),
+    body: { content: { 'application/json': { schema: updateMemberRoleBodySchema } }, required: true },
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: UpdateMemberRoleResponseSchema } },
+      description: 'Role updated',
+    },
+    403: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Caller is not a list owner',
+    },
+    404: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'List or member not found',
+    },
+    422: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Cannot demote the last owner to member (must retain at least one owner)',
+    },
+  },
+})
+
+app.openapi(updateMemberRoleRoute, async (c) => {
+  // TODO(impl): verify caller is owner via list_members,
+  //             enforce last-owner guard when demoting,
+  //             update list_members.role via Drizzle
+  const { id, userId } = c.req.valid('param')
+  const body = c.req.valid('json')
+  console.log(`[stub] Updating role for member ${userId} in list ${id} to ${body.role}`)
+  return c.json(ok({ listId: id, userId, role: body.role }), 200)
 })
 
 // ── GET /v1/lists/:id/members ────────────────────────────────────────────────

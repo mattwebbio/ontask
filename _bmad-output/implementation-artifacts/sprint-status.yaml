@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-29
-last_updated: 2026-04-01 # Story 5.6 ready-for-dev
+last_updated: 2026-04-01 # Story 5.6 done
 project: ontask
 project_key: NOKEY
 tracking_system: file-system
@@ -105,13 +105,13 @@ development_status:
   # ─────────────────────────────────────────────────────────
   # Epic 5: Shared Lists & Household Coordination
   # ─────────────────────────────────────────────────────────
-  epic-5: in-progress
+  epic-5: done
   5-1-list-sharing-invitations: done
   5-2-task-assignment-strategies: done
   5-3-shared-tasks-in-personal-schedule: done
   5-4-accountability-settings-cascade: done
   5-5-shared-proof-visibility: done
-  5-6-member-management-shared-ownership: ready-for-dev
+  5-6-member-management-shared-ownership: done
   epic-5-retrospective: optional
 
   # ─────────────────────────────────────────────────────────

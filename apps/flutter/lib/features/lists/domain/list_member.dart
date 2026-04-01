@@ -14,5 +14,6 @@ abstract class ListMember with _$ListMember {
     required String role, // 'owner' | 'member'
     required DateTime joinedAt,
     @Default(0) int roundRobinIndex,
+    String? email,
   }) = _ListMember;
 }
