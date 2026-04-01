@@ -17,9 +17,10 @@ import '../../tasks/domain/time_window.dart';
 import '../../tasks/presentation/tasks_provider.dart';
 import '../data/nlp_task_repository.dart';
 import '../domain/task_parse_result.dart';
+import 'guided_chat_sheet.dart';
 
-/// Add mode toggle — Quick Capture (NLP default) or Form.
-enum _AddMode { quickCapture, form }
+/// Add mode toggle — Quick Capture (NLP default), Guided Chat, or Form.
+enum _AddMode { quickCapture, guided, form }
 
 /// Modal sheet shown when the Add action tab is tapped.
 ///
@@ -756,9 +757,10 @@ class _AddTabSheetState extends ConsumerState<AddTabSheet> {
                 ),
                 const SizedBox(height: AppSpacing.lg),
 
-                // ── Mode toggle row ─────────────────────────────────────
+                // ── Mode toggle row (3-way) ─────────────────────────────
                 Row(
                   children: [
+                    // Quick Capture segment (left)
                     Expanded(
                       child: GestureDetector(
                         onTap: () => setState(() => _mode = _AddMode.quickCapture),
@@ -789,6 +791,50 @@ class _AddTabSheetState extends ConsumerState<AddTabSheet> {
                         ),
                       ),
                     ),
+                    // Guided segment (middle)
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          // Close AddTabSheet and open GuidedChatSheet as a separate modal.
+                          // Capture the root navigator before popping — context is invalid
+                          // once this widget is disposed (after pop).
+                          final rootNavigator = Navigator.of(context, rootNavigator: true);
+                          Navigator.of(context).pop();
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            showModalBottomSheet<void>(
+                              context: rootNavigator.context,
+                              isScrollControlled: true,
+                              useRootNavigator: true,
+                              backgroundColor: Colors.transparent,
+                              builder: (_) => const GuidedChatSheet(),
+                            );
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                          decoration: BoxDecoration(
+                            color: _mode == _AddMode.guided
+                                ? colors.surfaceSecondary
+                                : colors.surfacePrimary,
+                            border: Border.all(color: colors.surfaceSecondary),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(CupertinoIcons.chat_bubble_text, size: 14, color: colors.textSecondary),
+                              const SizedBox(width: AppSpacing.xs),
+                              Text(
+                                AppStrings.addTaskModeGuided,
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: colors.textPrimary,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Form segment (right)
                     Expanded(
                       child: GestureDetector(
                         onTap: () {
@@ -1118,20 +1164,22 @@ class _AddTabSheetState extends ConsumerState<AddTabSheet> {
                 const SizedBox(height: AppSpacing.md),
                 ], // end Form mode
 
-                // ── Submit button (both modes) ──────────────────────────
-                SizedBox(
-                  width: double.infinity,
-                  child: CupertinoButton.filled(
-                    onPressed: _isSubmitting
-                        ? null
-                        : (_mode == _AddMode.quickCapture
-                            ? _createTaskFromNlp
-                            : _createTask),
-                    child: Text(
-                      _isSubmitting ? AppStrings.submittingIndicator : AppStrings.addTaskCreateButton,
+                // ── Submit button (Quick Capture and Form modes only) ───
+                // Not shown in Guided mode — task creation happens in GuidedChatSheet.
+                if (_mode != _AddMode.guided)
+                  SizedBox(
+                    width: double.infinity,
+                    child: CupertinoButton.filled(
+                      onPressed: _isSubmitting
+                          ? null
+                          : (_mode == _AddMode.quickCapture
+                              ? _createTaskFromNlp
+                              : _createTask),
+                      child: Text(
+                        _isSubmitting ? AppStrings.submittingIndicator : AppStrings.addTaskCreateButton,
+                      ),
                     ),
                   ),
-                ),
                 const SizedBox(height: AppSpacing.lg),
               ],
             ),

@@ -2,7 +2,7 @@ import { OpenAPIHono, createRoute } from '@hono/zod-openapi'
 import { z } from 'zod'
 import { ok, list, err } from '../lib/response.js'
 import { runScheduleForUser } from '../services/scheduling.js'
-import { parseTaskUtterance } from '@ontask/ai'
+import { parseTaskUtterance, conductGuidedChatTurn } from '@ontask/ai'
 
 // ── Tasks router ────────────────────────────────────────────────────────────
 // CRUD routes for task management (FR1, FR55, FR57, FR58, FR59).
@@ -106,6 +106,37 @@ const TaskParseResponseSchema = z.object({
     energyRequirement: z.enum(['high_focus', 'low_energy', 'flexible']).nullable().optional(),
     listId: z.string().nullable().optional(),
     fieldConfidences: z.record(z.string(), z.enum(['high', 'low'])),
+  }),
+})
+
+// ── Guided chat schemas (FR14/UX-DR15) ──────────────────────────────────────
+
+const ChatMessageSchema = z.object({
+  role: z.enum(['user', 'assistant']),
+  content: z.string().min(1),
+})
+
+const TaskChatRequestSchema = z.object({
+  messages: z.array(ChatMessageSchema).min(1),
+  availableLists: z
+    .array(z.object({ id: z.string(), title: z.string() }))
+    .optional(),
+})
+
+const GuidedChatTaskDraftSchema = z.object({
+  title: z.string().nullable().optional(),
+  dueDate: z.string().nullable().optional(),
+  scheduledTime: z.string().nullable().optional(),
+  estimatedDurationMinutes: z.number().nullable().optional(),
+  energyRequirement: z.enum(['high_focus', 'low_energy', 'flexible']).nullable().optional(),
+  listId: z.string().nullable().optional(),
+})
+
+const TaskChatResponseSchema = z.object({
+  data: z.object({
+    reply: z.string(),
+    isComplete: z.boolean(),
+    extractedTask: GuidedChatTaskDraftSchema.nullable().optional(),
   }),
 })
 
@@ -214,6 +245,58 @@ app.openapi(postTaskParseRoute, async (c) => {
     if (error.code === 'TIMEOUT') {
       return c.json(
         err('UNPROCESSABLE', 'Task assistant timed out — try a simpler phrase'),
+        422,
+      )
+    }
+    throw e
+  }
+})
+
+// ── POST /v1/tasks/chat ──────────────────────────────────────────────────────
+// IMPORTANT: Must be registered BEFORE POST /v1/tasks and all /:id routes to
+// prevent Hono from interpreting "chat" as a task ID. (Dev Notes: route placement)
+
+const postTaskChatRoute = createRoute({
+  method: 'post',
+  path: '/v1/tasks/chat',
+  tags: ['Tasks'],
+  summary: 'Guided chat task capture — single turn (FR14/UX-DR15)',
+  description:
+    'Performs one turn of guided chat task capture. Stateless — caller manages conversation history. ' +
+    'Does NOT create a task — returns the next conversational reply and, when complete, the extracted task draft. ' +
+    'Returns 422 when the LLM times out.',
+  request: {
+    body: { content: { 'application/json': { schema: TaskChatRequestSchema } }, required: true },
+  },
+  responses: {
+    200: { content: { 'application/json': { schema: TaskChatResponseSchema } }, description: 'Next chat turn' },
+    422: { content: { 'application/json': { schema: ErrorSchema } }, description: 'LLM timeout' },
+    400: { content: { 'application/json': { schema: ErrorSchema } }, description: 'Validation error' },
+  },
+})
+
+app.openapi(postTaskChatRoute, async (c) => {
+  const body = c.req.valid('json')
+  // Auth stub: x-user-id header (same pattern as existing routes)
+  const userId = c.req.header('x-user-id') ?? 'stub-user-id'
+
+  try {
+    const result = await conductGuidedChatTurn(
+      {
+        messages: body.messages,
+        userId,
+        availableLists: body.availableLists ?? [], // TODO(impl): fetch from DB when available
+        now: new Date(),
+      },
+      c.env,
+    )
+
+    return c.json(ok(result), 200)
+  } catch (e) {
+    const error = e as NodeJS.ErrnoException
+    if (error.code === 'TIMEOUT') {
+      return c.json(
+        err('UNPROCESSABLE', 'Chat assistant timed out — please try again'),
         422,
       )
     }
