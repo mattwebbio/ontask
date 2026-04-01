@@ -96,10 +96,10 @@ development_status:
   # ─────────────────────────────────────────────────────────
   # Epic 4: AI-Powered Task Capture (NLP)
   # ─────────────────────────────────────────────────────────
-  epic-4: in-progress
+  epic-4: done
   4-1-quick-nlp-task-capture: done
   4-2-guided-chat-task-capture: done
-  4-3-natural-language-scheduling-adjustment: review
+  4-3-natural-language-scheduling-adjustment: done
   epic-4-retrospective: optional
 
   # ─────────────────────────────────────────────────────────
