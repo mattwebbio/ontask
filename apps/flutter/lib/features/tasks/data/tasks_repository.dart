@@ -212,6 +212,21 @@ class TasksRepository {
     return _parseBulkResult(response.data!);
   }
 
+  /// Sets the per-task proof mode override (PATCH /v1/tasks/{id}/proof-mode).
+  ///
+  /// Sets proofModeIsCustom = true on the task, marking it as having a user-set override
+  /// that differs from the list/section proof requirement (FR20).
+  /// Pass [proofMode] as `'standard'`, `'photo'`, `'watchMode'`, or `'healthKit'`.
+  Future<Task> setTaskProofMode(String taskId, String proofMode) async {
+    final response = await _client.dio.patch<Map<String, dynamic>>(
+      '/v1/tasks/$taskId/proof-mode',
+      data: {'proofMode': proofMode},
+    );
+    return TaskDto.fromJson(
+      response.data!['data'] as Map<String, dynamic>,
+    ).toDomain();
+  }
+
   /// Parses the partial-success bulk result envelope.
   ({List<String> succeeded, List<({String id, String error})> failed})
       _parseBulkResult(Map<String, dynamic> responseData) {

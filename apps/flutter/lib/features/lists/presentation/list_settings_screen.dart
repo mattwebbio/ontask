@@ -24,6 +24,7 @@ class ListSettingsScreen extends ConsumerStatefulWidget {
 class _ListSettingsScreenState extends ConsumerState<ListSettingsScreen> {
   bool _isUpdatingStrategy = false;
   bool _isAutoAssigning = false;
+  bool _isUpdatingAccountability = false;
 
   @override
   Widget build(BuildContext context) {
@@ -36,6 +37,7 @@ class _ListSettingsScreenState extends ConsumerState<ListSettingsScreen> {
     }
 
     final currentStrategy = list.assignmentStrategy;
+    final currentProofRequirement = list.proofRequirement;
 
     return CupertinoPageScaffold(
       backgroundColor: colors.surfacePrimary,
@@ -85,6 +87,48 @@ class _ListSettingsScreenState extends ConsumerState<ListSettingsScreen> {
               label: AppStrings.assignmentStrategyAiAssisted,
               description: AppStrings.assignmentStrategyAiAssistedDesc,
               currentStrategy: currentStrategy,
+              colors: colors,
+            ),
+            const SizedBox(height: 32),
+            // Accountability section header
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                AppStrings.accountabilitySettingsLabel,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: colors.textSecondary,
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            // Accountability options
+            _buildAccountabilityOption(
+              value: null,
+              label: AppStrings.accountabilityNone,
+              description: AppStrings.accountabilityNoneDesc,
+              currentProofRequirement: currentProofRequirement,
+              colors: colors,
+            ),
+            _buildAccountabilityOption(
+              value: 'photo',
+              label: AppStrings.accountabilityPhoto,
+              description: AppStrings.accountabilityPhotoDesc,
+              currentProofRequirement: currentProofRequirement,
+              colors: colors,
+            ),
+            _buildAccountabilityOption(
+              value: 'watchMode',
+              label: AppStrings.accountabilityWatchMode,
+              description: AppStrings.accountabilityWatchModeDesc,
+              currentProofRequirement: currentProofRequirement,
+              colors: colors,
+            ),
+            _buildAccountabilityOption(
+              value: 'healthKit',
+              label: AppStrings.accountabilityHealthKit,
+              description: AppStrings.accountabilityHealthKitDesc,
+              currentProofRequirement: currentProofRequirement,
               colors: colors,
             ),
             const SizedBox(height: 24),
@@ -173,6 +217,79 @@ class _ListSettingsScreenState extends ConsumerState<ListSettingsScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildAccountabilityOption({
+    required String? value,
+    required String label,
+    required String? description,
+    required String? currentProofRequirement,
+    required OnTaskColors colors,
+  }) {
+    final isSelected = currentProofRequirement == value;
+
+    return GestureDetector(
+      onTap: _isUpdatingAccountability ? null : () => _updateAccountability(context, value),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(color: colors.surfaceSecondary, width: 0.5),
+          ),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: colors.textPrimary,
+                        ),
+                  ),
+                  if (description != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      description,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: colors.textSecondary,
+                          ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            if (_isUpdatingAccountability && isSelected)
+              const CupertinoActivityIndicator()
+            else
+              Icon(
+                isSelected
+                    ? CupertinoIcons.checkmark_circle_fill
+                    : CupertinoIcons.circle,
+                size: 22,
+                color: isSelected ? colors.accentPrimary : colors.textSecondary,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _updateAccountability(BuildContext context, String? proofRequirement) async {
+    if (_isUpdatingAccountability) return;
+    setState(() => _isUpdatingAccountability = true);
+    try {
+      final repo = ref.read(listsRepositoryProvider);
+      await repo.updateListAccountability(widget.listId, proofRequirement);
+      ref.invalidate(listsProvider);
+    } catch (_) {
+      if (!mounted) return;
+      _showError(this.context, AppStrings.accountabilityUpdateError);
+    } finally {
+      if (mounted) setState(() => _isUpdatingAccountability = false);
+    }
   }
 
   Future<void> _updateStrategy(BuildContext context, String? strategy) async {

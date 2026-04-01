@@ -88,6 +88,8 @@ const taskSchema = z.object({
   updatedAt: z.string().datetime(),
   assignedToUserId: z.string().uuid().nullable(),
   listName: z.string().nullable(),
+  proofMode: z.enum(['standard', 'photo', 'watchMode', 'healthKit', 'calendarEvent']),
+  proofModeIsCustom: z.boolean(),
 })
 
 const TaskResponseSchema = z.object({ data: taskSchema })
@@ -193,6 +195,8 @@ function stubTask(overrides: Partial<z.infer<typeof taskSchema>> = {}): z.infer<
     updatedAt: now,
     assignedToUserId: null,
     listName: null,
+    proofMode: 'standard' as const,
+    proofModeIsCustom: false,
     ...overrides,
   }
 }
@@ -500,7 +504,6 @@ const currentTaskSchema = taskSchema.extend({
   listName: z.string().nullable(),
   assignorName: z.string().nullable(),
   stakeAmountCents: z.number().int().nullable(),
-  proofMode: z.enum(['standard', 'photo', 'watchMode', 'healthKit', 'calendarEvent']),
 })
 
 const CurrentTaskResponseSchema = z.object({
@@ -919,6 +922,42 @@ app.openapi(getTaskRoute, async (c) => {
   // TODO(impl): verify ownership via userId
   const { id } = c.req.valid('param')
   return c.json(ok(stubTask({ id })), 200)
+})
+
+// ── PATCH /v1/tasks/:id/proof-mode ──────────────────────────────────────────
+// IMPORTANT: Registered BEFORE PATCH /v1/tasks/{id} (catch-all) to prevent
+// Hono from matching "proof-mode" as a task ID.
+
+const setTaskProofModeSchema = z.object({
+  // Note: 'calendarEvent' is NOT accepted here — read-only from calendar integration (Epic 3)
+  proofMode: z.enum(['standard', 'photo', 'watchMode', 'healthKit']),
+})
+
+const patchTaskProofModeRoute = createRoute({
+  method: 'patch',
+  path: '/v1/tasks/{id}/proof-mode',
+  tags: ['Tasks'],
+  summary: 'Override the proof mode for a specific task (FR20)',
+  description:
+    'Sets a per-task proof mode override (proofModeIsCustom = true). ' +
+    'This overrides any list- or section-level proof requirement for this task. ' +
+    'calendarEvent is NOT accepted — it is set only by calendar integration.',
+  request: {
+    params: z.object({ id: z.string().uuid() }),
+    body: { content: { 'application/json': { schema: setTaskProofModeSchema } }, required: true },
+  },
+  responses: {
+    200: { content: { 'application/json': { schema: TaskResponseSchema } }, description: 'Proof mode updated' },
+    404: { content: { 'application/json': { schema: ErrorSchema } }, description: 'Task not found' },
+    422: { content: { 'application/json': { schema: ErrorSchema } }, description: 'Validation error' },
+  },
+})
+
+app.openapi(patchTaskProofModeRoute, async (c) => {
+  // TODO(impl): set proofMode = body.proofMode, proofModeIsCustom = true in tasks table
+  const { id } = c.req.valid('param')
+  const body = c.req.valid('json')
+  return c.json(ok(stubTask({ id, proofMode: body.proofMode, proofModeIsCustom: true })), 200)
 })
 
 // ── PATCH /v1/tasks/:id ─────────────────────────────────────────────────────

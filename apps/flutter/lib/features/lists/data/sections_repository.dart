@@ -60,6 +60,21 @@ class SectionsRepository {
   Future<void> deleteSection(String id) async {
     await _client.dio.delete('/v1/sections/$id');
   }
+
+  /// Updates the proof requirement for a section (PATCH /v1/sections/{id}/accountability).
+  ///
+  /// Pass [proofRequirement] as `'none'`, `'photo'`, `'watchMode'`, `'healthKit'`, or `null` to
+  /// remove (tasks will inherit from the parent list).
+  /// In production, cascades to tasks in this section where proofModeIsCustom = false.
+  Future<Section> updateSectionAccountability(String sectionId, String? proofRequirement) async {
+    final response = await _client.dio.patch<Map<String, dynamic>>(
+      '/v1/sections/$sectionId/accountability',
+      data: {'proofRequirement': proofRequirement},
+    );
+    return SectionDto.fromJson(
+      response.data!['data'] as Map<String, dynamic>,
+    ).toDomain();
+  }
 }
 
 /// Riverpod provider for [SectionsRepository].

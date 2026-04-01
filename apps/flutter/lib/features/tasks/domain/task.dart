@@ -1,5 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import '../../now/domain/proof_mode.dart';
 import 'energy_requirement.dart';
 import 'recurrence_rule.dart';
 import 'task_priority.dart';
@@ -41,5 +42,9 @@ abstract class Task with _$Task {
     DateTime? scheduledStartTime,
     String? assignedToUserId,
     String? listName,
+    // Proof mode for this task (FR20). Defaults to standard (no proof required).
+    @Default(ProofMode.standard) ProofMode proofMode,
+    // True when this task has a user-set proof mode override (differs from list/section default).
+    @Default(false) bool proofModeIsCustom,
   }) = _Task;
 }

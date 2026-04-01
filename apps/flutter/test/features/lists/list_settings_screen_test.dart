@@ -54,7 +54,8 @@ void main() {
       await tester.pumpWidget(buildScreen());
       await tester.pumpAndSettle();
 
-      expect(find.text(AppStrings.assignmentStrategyNone), findsOneWidget);
+      // 'None' appears twice: once for assignment strategy and once for accountability
+      expect(find.text(AppStrings.assignmentStrategyNone), findsAtLeastNWidgets(1));
       expect(find.text(AppStrings.assignmentStrategyRoundRobin), findsOneWidget);
       expect(find.text(AppStrings.assignmentStrategyLeastBusy), findsOneWidget);
       expect(find.text(AppStrings.assignmentStrategyAiAssisted), findsOneWidget);
@@ -77,10 +78,17 @@ void main() {
       await tester.pumpWidget(buildScreen(listStrategy: null));
       await tester.pumpAndSettle();
 
-      // When strategy is null, the onPressed is null (button disabled)
-      final button = tester.widget<CupertinoButton>(
-        find.widgetWithText(CupertinoButton, AppStrings.assignmentAutoAssignButton),
+      // Scroll down to ensure the auto-assign button is rendered in the viewport.
+      await tester.drag(find.byType(ListView), const Offset(0, -400));
+      await tester.pumpAndSettle();
+
+      // The auto-assign CupertinoButton is the only CupertinoButton in the screen.
+      // When strategy is null, the onPressed is null (button disabled).
+      final autoAssignButtonFinder = find.ancestor(
+        of: find.text(AppStrings.assignmentAutoAssignButton),
+        matching: find.byType(CupertinoButton),
       );
+      final button = tester.widget<CupertinoButton>(autoAssignButtonFinder);
       expect(button.onPressed, isNull);
     });
 
@@ -88,9 +96,15 @@ void main() {
       await tester.pumpWidget(buildScreen(listStrategy: 'round-robin'));
       await tester.pumpAndSettle();
 
-      final button = tester.widget<CupertinoButton>(
-        find.widgetWithText(CupertinoButton, AppStrings.assignmentAutoAssignButton),
+      // Scroll down to ensure the auto-assign button is rendered in the viewport.
+      await tester.drag(find.byType(ListView), const Offset(0, -400));
+      await tester.pumpAndSettle();
+
+      final autoAssignButtonFinder = find.ancestor(
+        of: find.text(AppStrings.assignmentAutoAssignButton),
+        matching: find.byType(CupertinoButton),
       );
+      final button = tester.widget<CupertinoButton>(autoAssignButtonFinder);
       expect(button.onPressed, isNotNull);
     });
 
@@ -101,13 +115,53 @@ void main() {
       );
       await tester.pumpAndSettle();
 
+      // Scroll down to ensure the auto-assign button is rendered in the viewport.
+      await tester.drag(find.byType(ListView), const Offset(0, -400));
+      await tester.pumpAndSettle();
+
       await tester.tap(
-        find.widgetWithText(CupertinoButton, AppStrings.assignmentAutoAssignButton),
+        find.ancestor(
+          of: find.text(AppStrings.assignmentAutoAssignButton),
+          matching: find.byType(CupertinoButton),
+        ),
       );
       await tester.pumpAndSettle();
 
       expect(fakeSharingRepo.autoAssignCalled, isTrue);
       expect(fakeSharingRepo.lastAutoAssignListId, equals(testListId));
+    });
+  });
+
+  group('ListSettingsScreen — accountability section (Story 5.4, AC1)', () {
+    testWidgets('renders all four accountability options', (tester) async {
+      await tester.pumpWidget(buildScreen());
+      await tester.pumpAndSettle();
+
+      expect(find.text(AppStrings.accountabilitySettingsLabel), findsOneWidget);
+      // Scroll to bring the accountability options into view
+      await tester.drag(find.byType(ListView), const Offset(0, -200));
+      await tester.pumpAndSettle();
+
+      expect(find.text(AppStrings.accountabilityPhoto), findsOneWidget);
+      expect(find.text(AppStrings.accountabilityWatchMode), findsOneWidget);
+      expect(find.text(AppStrings.accountabilityHealthKit), findsOneWidget);
+    });
+
+    testWidgets('tapping "Photo proof" calls updateListAccountability with correct value',
+        (tester) async {
+      final fakeRepo = _FakeListsRepository();
+      await tester.pumpWidget(buildScreen(listsRepo: fakeRepo));
+      await tester.pumpAndSettle();
+
+      // Scroll down to bring the accountability options into view
+      await tester.drag(find.byType(ListView), const Offset(0, -200));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text(AppStrings.accountabilityPhoto));
+      await tester.pumpAndSettle();
+
+      expect(fakeRepo.lastUpdatedAccountabilityRequirement, equals('photo'));
+      expect(fakeRepo.lastUpdatedAccountabilityListId, equals(testListId));
     });
   });
 }
@@ -121,6 +175,8 @@ class _FakeListsRepository extends ListsRepository {
   final String? strategy;
   String? lastUpdatedListId;
   String? lastUpdatedStrategy;
+  String? lastUpdatedAccountabilityListId;
+  String? lastUpdatedAccountabilityRequirement;
 
   @override
   Future<TaskList> updateAssignmentStrategy(String listId, String? newStrategy) async {
@@ -133,6 +189,20 @@ class _FakeListsRepository extends ListsRepository {
       createdAt: DateTime(2026),
       updatedAt: DateTime(2026),
       assignmentStrategy: newStrategy,
+    );
+  }
+
+  @override
+  Future<TaskList> updateListAccountability(String listId, String? proofRequirement) async {
+    lastUpdatedAccountabilityListId = listId;
+    lastUpdatedAccountabilityRequirement = proofRequirement;
+    return TaskList(
+      id: listId,
+      title: 'Test List',
+      position: 0,
+      createdAt: DateTime(2026),
+      updatedAt: DateTime(2026),
+      proofRequirement: proofRequirement,
     );
   }
 

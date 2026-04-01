@@ -14,6 +14,7 @@ export const listsTable = pgTable('lists', {
   position: integer().default(0).notNull(),
   // TODO(story-TBD): FK to users table when users schema is finalized
   assignmentStrategy: text(), // 'round-robin' | 'least-busy' | 'ai-assisted' | null
+  proofRequirement: text(), // 'none' | 'photo' | 'watchMode' | 'healthKit' | null
   archivedAt: timestamp({ withTimezone: true }),
   createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp({ withTimezone: true }).defaultNow().notNull(),

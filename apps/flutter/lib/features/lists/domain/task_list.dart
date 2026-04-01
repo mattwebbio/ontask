@@ -19,5 +19,8 @@ abstract class TaskList with _$TaskList {
     @Default(1) int memberCount,
     @Default(<String>[]) List<String> memberAvatarInitials,
     String? assignmentStrategy,
+    // Proof requirement for all tasks in this list (FR20). Null = no requirement.
+    // Valid values: 'none' | 'photo' | 'watchMode' | 'healthKit' | null
+    String? proofRequirement,
   }) = _TaskList;
 }

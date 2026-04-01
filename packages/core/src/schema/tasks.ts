@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, timestamp, integer } from 'drizzle-orm/pg-core'
+import { pgTable, uuid, text, timestamp, integer, boolean } from 'drizzle-orm/pg-core'
 import { listsTable } from './lists.js'
 import { sectionsTable } from './sections.js'
 
@@ -30,6 +30,8 @@ export const tasksTable = pgTable('tasks', {
   recurrenceParentId: uuid(), // self-reference to the original recurring task (series parent)
   // TODO(story-TBD): FK to users table when users schema is finalized
   assignedToUserId: uuid(), // null = unassigned; set by round-robin/least-busy/ai-assisted strategy
+  proofMode: text(), // 'standard' | 'photo' | 'watchMode' | 'healthKit' | 'calendarEvent' | null (null = derived from inherited requirement)
+  proofModeIsCustom: boolean().default(false).notNull(), // true when proofMode was explicitly set by user, overriding list/section default
   completedAt: timestamp({ withTimezone: true }),
   createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp({ withTimezone: true }).defaultNow().notNull(),

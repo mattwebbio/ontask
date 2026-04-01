@@ -21,6 +21,7 @@ abstract class ListDto with _$ListDto {
     @JsonKey(defaultValue: 1) @Default(1) int memberCount,
     @JsonKey(defaultValue: <String>[]) @Default(<String>[]) List<String> memberAvatarInitials,
     @JsonKey(defaultValue: null) String? assignmentStrategy,
+    @JsonKey(defaultValue: null) String? proofRequirement,
   }) = _ListDto;
 
   factory ListDto.fromJson(Map<String, dynamic> json) => _$ListDtoFromJson(json);
@@ -39,5 +40,6 @@ abstract class ListDto with _$ListDto {
         memberCount: memberCount,
         memberAvatarInitials: memberAvatarInitials,
         assignmentStrategy: assignmentStrategy,
+        proofRequirement: proofRequirement,
       );
 }

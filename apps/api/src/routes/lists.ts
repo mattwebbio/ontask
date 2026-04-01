@@ -36,6 +36,7 @@ const listSchema = z.object({
   memberCount: z.number().int(),
   memberAvatarInitials: z.array(z.string()).max(3),
   assignmentStrategy: z.enum(['round-robin', 'least-busy', 'ai-assisted']).nullable(),
+  proofRequirement: z.enum(['none', 'photo', 'watchMode', 'healthKit']).nullable(),
 })
 
 const sectionSchema = z.object({
@@ -47,6 +48,7 @@ const sectionSchema = z.object({
   position: z.number().int(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
+  proofRequirement: z.enum(['none', 'photo', 'watchMode', 'healthKit']).nullable(),
 })
 
 const ListResponseSchema = z.object({ data: listSchema })
@@ -84,6 +86,7 @@ function stubList(overrides: Partial<z.infer<typeof listSchema>> = {}): z.infer<
     memberCount: 1,
     memberAvatarInitials: [],
     assignmentStrategy: null,
+    proofRequirement: null,
     ...overrides,
   }
 }
@@ -223,6 +226,42 @@ app.openapi(patchListSettingsRoute, async (c) => {
   const { id } = c.req.valid('param')
   const body = c.req.valid('json')
   return c.json(ok(stubList({ id, assignmentStrategy: body.assignmentStrategy })), 200)
+})
+
+// ── PATCH /v1/lists/:id/accountability ──────────────────────────────────────
+// IMPORTANT: Registered BEFORE PATCH /v1/lists/{id} (catch-all) to prevent
+// Hono from matching "accountability" as a list ID.
+
+const updateListAccountabilitySchema = z.object({
+  proofRequirement: z.enum(['none', 'photo', 'watchMode', 'healthKit']).nullable(),
+})
+
+const patchListAccountabilityRoute = createRoute({
+  method: 'patch',
+  path: '/v1/lists/{id}/accountability',
+  tags: ['Lists'],
+  summary: 'Update list proof requirement (accountability)',
+  description:
+    'Sets the proof requirement for all tasks in a list (FR20). ' +
+    'Pass null to remove the requirement. ' +
+    'In production, cascades to tasks where proofModeIsCustom = false.',
+  request: {
+    params: z.object({ id: z.string().uuid() }),
+    body: { content: { 'application/json': { schema: updateListAccountabilitySchema } }, required: true },
+  },
+  responses: {
+    200: { content: { 'application/json': { schema: ListResponseSchema } }, description: 'Accountability updated' },
+    403: { content: { 'application/json': { schema: ErrorSchema } }, description: 'Not list owner' },
+    404: { content: { 'application/json': { schema: ErrorSchema } }, description: 'List not found' },
+    422: { content: { 'application/json': { schema: ErrorSchema } }, description: 'Validation error' },
+  },
+})
+
+app.openapi(patchListAccountabilityRoute, async (c) => {
+  // TODO(impl): verify ownership from JWT, update lists table via Drizzle, cascade to tasks where proofModeIsCustom = false
+  const { id } = c.req.valid('param')
+  const body = c.req.valid('json')
+  return c.json(ok(stubList({ id, proofRequirement: body.proofRequirement })), 200)
 })
 
 // ── GET /v1/lists/:id ───────────────────────────────────────────────────────
