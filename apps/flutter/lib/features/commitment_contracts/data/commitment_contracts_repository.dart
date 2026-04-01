@@ -3,6 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../core/network/api_client.dart';
 import '../domain/charity_selection.dart';
 import '../domain/commitment_payment_status.dart';
+import '../domain/group_commitment.dart';
 import '../domain/impact_milestone.dart';
 import '../domain/impact_summary.dart';
 import '../domain/nonprofit.dart';
@@ -204,6 +205,92 @@ class CommitmentContractsRepository {
       charityName: data['charityName'] as String?,
     );
   }
+  // ── Group commitment methods (FR29, FR30, Story 6.7) ────────────────────────
+
+  /// Proposes a group commitment for a task in a shared list.
+  ///
+  /// `POST /v1/group-commitments`
+  /// Returns the newly created [GroupCommitment] in 'pending' status.
+  Future<GroupCommitment> proposeGroupCommitment({
+    required String listId,
+    required String taskId,
+  }) async {
+    final response = await _client.dio.post<Map<String, dynamic>>(
+      '/v1/group-commitments',
+      data: {'listId': listId, 'taskId': taskId},
+    );
+    final data = response.data!['data'] as Map<String, dynamic>;
+    return _groupCommitmentFromJson(data);
+  }
+
+  /// Fetches a group commitment with all member states.
+  ///
+  /// `GET /v1/group-commitments/:groupCommitmentId`
+  Future<GroupCommitment> getGroupCommitment(String groupCommitmentId) async {
+    final response = await _client.dio.get<Map<String, dynamic>>(
+      '/v1/group-commitments/$groupCommitmentId',
+    );
+    final data = response.data!['data'] as Map<String, dynamic>;
+    return _groupCommitmentFromJson(data);
+  }
+
+  /// Approves the group commitment and sets the member's individual stake.
+  ///
+  /// `POST /v1/group-commitments/:groupCommitmentId/approve`
+  /// Throws [DioException] with 422 if no payment method or commitment not pending.
+  Future<GroupCommitment> approveGroupCommitment(
+    String groupCommitmentId, {
+    required int stakeAmountCents,
+  }) async {
+    final response = await _client.dio.post<Map<String, dynamic>>(
+      '/v1/group-commitments/$groupCommitmentId/approve',
+      data: {'stakeAmountCents': stakeAmountCents},
+    );
+    final data = response.data!['data'] as Map<String, dynamic>;
+    return _groupCommitmentFromJson(data);
+  }
+
+  /// Sets pool mode opt-in for the authenticated member.
+  ///
+  /// `POST /v1/group-commitments/:groupCommitmentId/pool-mode`
+  /// [optIn] = true to opt in; false to opt out.
+  /// Throws [DioException] with 422 if commitment is not active.
+  Future<void> setPoolModeOptIn(
+    String groupCommitmentId, {
+    required bool optIn,
+  }) async {
+    await _client.dio.post<Map<String, dynamic>>(
+      '/v1/group-commitments/$groupCommitmentId/pool-mode',
+      data: {'optIn': optIn},
+    );
+  }
+
+  GroupCommitment _groupCommitmentFromJson(Map<String, dynamic> data) {
+    final membersList = (data['members'] as List? ?? [])
+        .map((m) {
+          final member = m as Map<String, dynamic>;
+          return GroupCommitmentMember(
+            userId: member['userId'] as String,
+            stakeAmountCents: member['stakeAmountCents'] != null
+                ? (member['stakeAmountCents'] as num).toInt()
+                : null,
+            approved: member['approved'] as bool? ?? false,
+            poolModeOptIn: member['poolModeOptIn'] as bool? ?? false,
+          );
+        })
+        .toList();
+    return GroupCommitment(
+      id: data['id'] as String,
+      listId: data['listId'] as String,
+      taskId: data['taskId'] as String,
+      proposedByUserId: data['proposedByUserId'] as String,
+      status: data['status'] as String,
+      members: membersList,
+      createdAt: DateTime.parse(data['createdAt'] as String).toLocal(),
+      updatedAt: DateTime.parse(data['updatedAt'] as String).toLocal(),
+    );
+  }
+
   // ── Impact methods (FR27, Story 6.4) ────────────────────────────────────────
 
   /// Fetches the authenticated user's aggregated impact summary.

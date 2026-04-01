@@ -1005,4 +1005,262 @@ void main() {
       );
     });
   });
+
+  // ── CommitmentContractsRepository — group commitments (Story 6.7) ──────────
+
+  group('CommitmentContractsRepository — group commitments (Story 6.7)', () {
+    const stubGroupCommitmentId = '00000000-0000-0000-0000-000000000001';
+    const stubListId = '00000000-0000-0000-0000-000000000002';
+    const stubTaskId = '00000000-0000-0000-0000-000000000003';
+    const stubUserId = '00000000-0000-0000-0000-000000000099';
+    const stubNow = '2026-04-01T00:00:00.000Z';
+
+    Map<String, dynamic> stubGroupCommitmentResponse({
+      String status = 'pending',
+      List<Map<String, dynamic>> members = const [],
+    }) {
+      return {
+        'data': {
+          'id': stubGroupCommitmentId,
+          'listId': stubListId,
+          'taskId': stubTaskId,
+          'proposedByUserId': stubUserId,
+          'status': status,
+          'members': members,
+          'createdAt': stubNow,
+          'updatedAt': stubNow,
+        },
+      };
+    }
+
+    test('proposeGroupCommitment sends POST with correct body', () async {
+      final mockDio = MockDio();
+      final mockClient = MockApiClient();
+      when(() => mockClient.dio).thenReturn(mockDio);
+
+      when(
+        () => mockDio.post<Map<String, dynamic>>(
+          any(),
+          data: any(named: 'data'),
+        ),
+      ).thenAnswer(
+        (_) async => Response(
+          requestOptions: RequestOptions(path: '/v1/group-commitments'),
+          statusCode: 201,
+          data: stubGroupCommitmentResponse(),
+        ),
+      );
+
+      final repo = CommitmentContractsRepository(mockClient);
+      final result = await repo.proposeGroupCommitment(
+        listId: stubListId,
+        taskId: stubTaskId,
+      );
+
+      final capturedArgs = verify(
+        () => mockDio.post<Map<String, dynamic>>(
+          captureAny(),
+          data: captureAny(named: 'data'),
+        ),
+      ).captured;
+
+      expect(capturedArgs[0], equals('/v1/group-commitments'));
+      expect(
+        capturedArgs[1],
+        equals({'listId': stubListId, 'taskId': stubTaskId}),
+      );
+      expect(result.status, equals('pending'));
+      expect(result.listId, equals(stubListId));
+      expect(result.taskId, equals(stubTaskId));
+    });
+
+    test('getGroupCommitment fires GET and maps response', () async {
+      final mockDio = MockDio();
+      final mockClient = MockApiClient();
+      when(() => mockClient.dio).thenReturn(mockDio);
+
+      when(
+        () => mockDio.get<Map<String, dynamic>>(any()),
+      ).thenAnswer(
+        (_) async => Response(
+          requestOptions: RequestOptions(
+            path: '/v1/group-commitments/$stubGroupCommitmentId',
+          ),
+          statusCode: 200,
+          data: stubGroupCommitmentResponse(),
+        ),
+      );
+
+      final repo = CommitmentContractsRepository(mockClient);
+      final result = await repo.getGroupCommitment(stubGroupCommitmentId);
+
+      final captured = verify(
+        () => mockDio.get<Map<String, dynamic>>(captureAny()),
+      ).captured;
+
+      expect(
+        captured.single,
+        equals('/v1/group-commitments/$stubGroupCommitmentId'),
+      );
+      expect(result.id, equals(stubGroupCommitmentId));
+    });
+
+    test('approveGroupCommitment fires POST with stakeAmountCents', () async {
+      final mockDio = MockDio();
+      final mockClient = MockApiClient();
+      when(() => mockClient.dio).thenReturn(mockDio);
+
+      when(
+        () => mockDio.post<Map<String, dynamic>>(
+          any(),
+          data: any(named: 'data'),
+        ),
+      ).thenAnswer(
+        (_) async => Response(
+          requestOptions: RequestOptions(
+            path: '/v1/group-commitments/$stubGroupCommitmentId/approve',
+          ),
+          statusCode: 200,
+          data: stubGroupCommitmentResponse(
+            members: [
+              {
+                'userId': stubUserId,
+                'stakeAmountCents': 1500,
+                'approved': true,
+                'poolModeOptIn': false,
+              },
+            ],
+          ),
+        ),
+      );
+
+      final repo = CommitmentContractsRepository(mockClient);
+      final result = await repo.approveGroupCommitment(
+        stubGroupCommitmentId,
+        stakeAmountCents: 1500,
+      );
+
+      final capturedArgs = verify(
+        () => mockDio.post<Map<String, dynamic>>(
+          captureAny(),
+          data: captureAny(named: 'data'),
+        ),
+      ).captured;
+
+      expect(
+        capturedArgs[0],
+        equals('/v1/group-commitments/$stubGroupCommitmentId/approve'),
+      );
+      expect(capturedArgs[1], equals({'stakeAmountCents': 1500}));
+      expect(result.members.first.approved, isTrue);
+      expect(result.members.first.stakeAmountCents, equals(1500));
+    });
+
+    test('setPoolModeOptIn fires POST with optIn: true', () async {
+      final mockDio = MockDio();
+      final mockClient = MockApiClient();
+      when(() => mockClient.dio).thenReturn(mockDio);
+
+      when(
+        () => mockDio.post<Map<String, dynamic>>(
+          any(),
+          data: any(named: 'data'),
+        ),
+      ).thenAnswer(
+        (_) async => Response(
+          requestOptions: RequestOptions(
+            path: '/v1/group-commitments/$stubGroupCommitmentId/pool-mode',
+          ),
+          statusCode: 200,
+          data: {
+            'data': {
+              'groupCommitmentId': stubGroupCommitmentId,
+              'userId': stubUserId,
+              'poolModeOptIn': true,
+            },
+          },
+        ),
+      );
+
+      final repo = CommitmentContractsRepository(mockClient);
+      await repo.setPoolModeOptIn(stubGroupCommitmentId, optIn: true);
+
+      final capturedArgs = verify(
+        () => mockDio.post<Map<String, dynamic>>(
+          captureAny(),
+          data: captureAny(named: 'data'),
+        ),
+      ).captured;
+
+      expect(
+        capturedArgs[0],
+        equals('/v1/group-commitments/$stubGroupCommitmentId/pool-mode'),
+      );
+      expect(capturedArgs[1], equals({'optIn': true}));
+    });
+
+    test(
+        '_groupCommitmentFromJson maps stakeAmountCents correctly using (x as num).toInt()',
+        () async {
+      final mockDio = MockDio();
+      final mockClient = MockApiClient();
+      when(() => mockClient.dio).thenReturn(mockDio);
+
+      // API may return stakeAmountCents as a double (e.g. 1500.0) — must cast via num
+      when(
+        () => mockDio.get<Map<String, dynamic>>(any()),
+      ).thenAnswer(
+        (_) async => Response(
+          requestOptions: RequestOptions(path: '/v1/group-commitments/x'),
+          statusCode: 200,
+          data: {
+            'data': {
+              'id': stubGroupCommitmentId,
+              'listId': stubListId,
+              'taskId': stubTaskId,
+              'proposedByUserId': stubUserId,
+              'status': 'pending',
+              'members': [
+                {
+                  'userId': stubUserId,
+                  'stakeAmountCents': 2500.0, // returned as double from JSON
+                  'approved': false,
+                  'poolModeOptIn': false,
+                },
+              ],
+              'createdAt': stubNow,
+              'updatedAt': stubNow,
+            },
+          },
+        ),
+      );
+
+      final repo = CommitmentContractsRepository(mockClient);
+      final result = await repo.getGroupCommitment(stubGroupCommitmentId);
+
+      expect(result.members.first.stakeAmountCents, equals(2500));
+      expect(result.members.first.stakeAmountCents, isA<int>());
+    });
+
+    test('_groupCommitmentFromJson handles empty members list', () async {
+      final mockDio = MockDio();
+      final mockClient = MockApiClient();
+      when(() => mockClient.dio).thenReturn(mockDio);
+
+      when(
+        () => mockDio.get<Map<String, dynamic>>(any()),
+      ).thenAnswer(
+        (_) async => Response(
+          requestOptions: RequestOptions(path: '/v1/group-commitments/x'),
+          statusCode: 200,
+          data: stubGroupCommitmentResponse(members: []),
+        ),
+      );
+
+      final repo = CommitmentContractsRepository(mockClient);
+      final result = await repo.getGroupCommitment(stubGroupCommitmentId);
+
+      expect(result.members, isEmpty);
+    });
+  });
 }
