@@ -524,6 +524,7 @@ class _TaskSliver extends StatelessWidget {
             taskId: task.id,
             title: task.title,
             timeLabel: _formatTime(task.dueDate),
+            listName: task.listName,
             rowState: state,
             onComplete: () => onComplete(task.id),
             onReschedule: () => onReschedule(task.id),

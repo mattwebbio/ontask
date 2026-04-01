@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ontask/core/l10n/strings.dart';
 import 'package:ontask/core/theme/app_theme.dart';
 import 'package:ontask/features/now/domain/now_task.dart';
-import 'package:ontask/features/now/domain/proof_mode.dart';
 import 'package:ontask/features/now/presentation/widgets/now_task_card.dart';
 
 // Tests for NowTaskCard attribution rendering (Story 5.3, AC2).
