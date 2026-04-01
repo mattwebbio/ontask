@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:camera/camera.dart';
@@ -43,6 +44,7 @@ class PhotoCaptureSubView extends StatefulWidget {
     required this.taskId,
     required this.taskName,
     required this.proofRepository,
+    this.onApproved,
   });
 
   /// The task ID used for proof submission.
@@ -53,6 +55,9 @@ class PhotoCaptureSubView extends StatefulWidget {
 
   /// Injected proof repository for API submission.
   final ProofRepository proofRepository;
+
+  /// Called when the proof is approved, before the modal is popped.
+  final VoidCallback? onApproved;
 
   @override
   State<PhotoCaptureSubView> createState() => _PhotoCaptureSubViewState();
@@ -71,6 +76,9 @@ class _PhotoCaptureSubViewState extends State<PhotoCaptureSubView>
 
   // ── Captured file ──────────────────────────────────────────────────────────
   XFile? _capturedFile;
+
+  // ── Submission guard ───────────────────────────────────────────────────────
+  bool _isSubmitting = false;
 
   // ── Verification result ────────────────────────────────────────────────────
   String? _rejectionReason;
@@ -157,7 +165,8 @@ class _PhotoCaptureSubViewState extends State<PhotoCaptureSubView>
         _captureState = _CaptureState.captured;
       });
     } catch (e) {
-      // Camera error — stay in camera state; user can retry.
+      if (!mounted) return;
+      setState(() => _cameraError = 'Could not take photo. Please try again.');
     }
   }
 
@@ -169,10 +178,14 @@ class _PhotoCaptureSubViewState extends State<PhotoCaptureSubView>
   }
 
   Future<void> _onSubmit() async {
+    if (_isSubmitting) return;
     final file = _capturedFile;
     if (file == null) return;
 
-    setState(() => _captureState = _CaptureState.verifying);
+    setState(() {
+      _isSubmitting = true;
+      _captureState = _CaptureState.verifying;
+    });
 
     // Start arc animation (UX-DR30).
     if (!_reducedMotion) {
@@ -207,6 +220,7 @@ class _PhotoCaptureSubViewState extends State<PhotoCaptureSubView>
         // Auto-dismiss after 2 seconds.
         Future.delayed(const Duration(seconds: 2), () {
           if (!mounted) return;
+          widget.onApproved?.call();
           Navigator.pop(context, ProofPath.photo);
         });
       case ProofVerificationRejected(:final reason):
@@ -385,8 +399,8 @@ class _PhotoCaptureSubViewState extends State<PhotoCaptureSubView>
             child: ClipRRect(
               borderRadius: BorderRadius.circular(12),
               child: _capturedFile != null
-                  ? Image.network(
-                      _capturedFile!.path,
+                  ? Image.file(
+                      File(_capturedFile!.path),
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) => Container(
                         color: colors.surfacePrimary,
@@ -449,8 +463,8 @@ class _PhotoCaptureSubViewState extends State<PhotoCaptureSubView>
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12),
                   child: _capturedFile != null
-                      ? Image.network(
-                          _capturedFile!.path,
+                      ? Image.file(
+                          File(_capturedFile!.path),
                           fit: BoxFit.cover,
                           width: double.infinity,
                           height: double.infinity,
@@ -514,8 +528,8 @@ class _PhotoCaptureSubViewState extends State<PhotoCaptureSubView>
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12),
                   child: _capturedFile != null
-                      ? Image.network(
-                          _capturedFile!.path,
+                      ? Image.file(
+                          File(_capturedFile!.path),
                           fit: BoxFit.cover,
                           width: double.infinity,
                           height: double.infinity,

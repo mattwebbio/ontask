@@ -135,7 +135,7 @@ class _NowScreenState extends ConsumerState<NowScreen> {
   ProofRepository? _tryCreateProofRepository() {
     try {
       return ProofRepository(ref.read(apiClientProvider));
-    } catch (_) {
+    } catch (e) {
       return null;
     }
   }

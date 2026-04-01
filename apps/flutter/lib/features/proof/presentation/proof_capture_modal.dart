@@ -209,14 +209,23 @@ class _ProofCaptureModalState extends State<ProofCaptureModal> {
     ProofPath path,
   ) {
     // ── Photo path — real implementation (Story 7.2) ──────────────────────
-    if (path == ProofPath.photo &&
-        widget.taskId != null &&
-        widget.proofRepository != null) {
-      return PhotoCaptureSubView(
-        taskId: widget.taskId!,
-        taskName: widget.taskName,
-        proofRepository: widget.proofRepository!,
+    if (path == ProofPath.photo) {
+      assert(
+        widget.taskId != null && widget.proofRepository != null,
+        'ProofCaptureModal: taskId and proofRepository are required for photo path.',
       );
+      if (widget.taskId != null && widget.proofRepository != null) {
+        return PhotoCaptureSubView(
+          taskId: widget.taskId!,
+          taskName: widget.taskName,
+          proofRepository: widget.proofRepository!,
+          onApproved: () {
+            setState(() {
+              _submissionState = const ProofSubmissionSubmitted();
+            });
+          },
+        );
+      }
     }
 
     // ── Other paths — stub placeholder (Stories 7.3–7.6) ─────────────────

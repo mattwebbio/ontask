@@ -115,7 +115,10 @@ void main() {
         (tester) async {
       await pumpModal(tester);
 
-      await tester.tap(find.text(AppStrings.proofPathPhotoTitle));
+      // Tap screenshot path (non-photo) to verify stub sub-view navigation.
+      // Photo path requires taskId + proofRepository; screenshot path tests
+      // the general sub-view navigation behaviour (back button visible).
+      await tester.tap(find.text(AppStrings.proofPathScreenshotTitle));
       await tester.pump();
 
       // Back button and coming-soon placeholder visible.
@@ -123,7 +126,7 @@ void main() {
       expect(find.text(AppStrings.proofPathComingSoon), findsOneWidget);
 
       // Path selector rows no longer visible.
-      expect(find.text(AppStrings.proofPathPhotoTitle), findsNothing);
+      expect(find.text(AppStrings.proofPathScreenshotTitle), findsNothing);
     });
 
     testWidgets('tapping back from sub-view returns to path selector',
