@@ -1,6 +1,6 @@
 # Story 7.6: Offline Proof Queue
 
-Status: review
+Status: in-progress
 
 ## Story
 
@@ -592,6 +592,15 @@ This ensures the listener is alive for the full app lifecycle and can read River
 - [x] Test scaffold follows `health_kit_proof_sub_view_test.dart` pattern
 - [x] Deferred items documented
 - [x] Status set to ready-for-dev
+
+### Review Findings
+
+- [ ] [Review][Patch] Remove unused `package:drift/drift.dart show Value` import — `Value` is imported but never called (0 usages of `Value(`)  [`apps/flutter/lib/features/proof/data/proof_repository.dart:5`]
+- [ ] [Review][Patch] Remove unused `package:riverpod/riverpod.dart` import — not a direct `pubspec.yaml` dependency; `Ref` is available via `riverpod_annotation` [`apps/flutter/lib/features/proof/data/proof_repository.dart:6`]
+- [ ] [Review][Patch] Remove unused `sync_manager.dart` import in test — `SyncManager`/`syncManagerProvider` symbols appear only in a comment, not as callable references [`apps/flutter/test/core/sync/connectivity_sync_listener_test.dart:10`]
+- [ ] [Review][Patch] Missing `if (!mounted) return;` before stream subscription in `_initConnectivity` — if `checkConnectivity()` throws and the widget has been disposed, the catch block runs with no mounted guard, then `_connectivitySub` is assigned post-dispose. `dispose()` has already run so the subscription is never cancelled (resource leak). Add `if (!mounted) return;` after the closing `}` of the try/catch, before the `_connectivitySub =` line [`apps/flutter/lib/core/sync/connectivity_sync_listener.dart:56`]
+- [ ] [Review][Patch] clientTimestamp fallback uses `DateTime.now()` instead of preserving original capture time — in `_triggerSync` `applyOperation`, if `payload['clientTimestamp']` key is absent the fallback `?? DateTime.now().toIso8601String()` silently uses the current time, defeating ARCH-26. Should use a fallback that preserves intent (e.g., log and skip, or document clearly that this case is unreachable). [`apps/flutter/lib/core/sync/connectivity_sync_listener.dart:81-85`]
+- [ ] [Review][Patch] Misleading test comment — "Uses a real SyncManager with in-memory Drift database" but the test overrides `proofRepositoryProvider` with a mock and never exercises real SyncManager DB operations [`apps/flutter/test/core/sync/connectivity_sync_listener_test.dart:16`]
 
 ## Dev Agent Record
 
