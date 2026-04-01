@@ -1,6 +1,6 @@
 # Story 5.6: Member Management & Shared Ownership
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -20,44 +20,44 @@ so that list membership stays accurate and administrative responsibility can be 
 
 ### Backend: API — add member management endpoints to `apps/api/src/routes/sharing.ts` (AC: 1, 2, 3)
 
-- [ ] Add `DELETE /v1/lists/{id}/members/{userId}` — remove a member (AC: 1)
-  - [ ] Request params: `{ id: z.string().uuid(), userId: z.string().uuid() }`
-  - [ ] Response 200: `{ data: { listId, removedUserId, unassignedTaskCount } }`
-  - [ ] Response 403: caller is not a list owner
-  - [ ] Response 404: list or member not found
-  - [ ] Response 422: cannot remove the last owner (list must retain at least one owner)
-  - [ ] Stub: return 200 with `{ listId: id, removedUserId: userId, unassignedTaskCount: 1 }`; add `TODO(impl): verify caller is owner via list_members, delete list_members row, set assignedToUserId = NULL on tasks WHERE listId = id AND assignedToUserId = userId AND completedAt IS NULL`
-  - [ ] Tag: `'Sharing'`
-  - [ ] Register BEFORE `GET /v1/lists/{id}/members` (specific/nested before list-members) — specific before parameterized rule
-  - [ ] Use `.js` extensions for all local imports
-  - [ ] Use `@hono/zod-openapi` `createRoute` pattern — no untyped routes
+- [x] Add `DELETE /v1/lists/{id}/members/{userId}` — remove a member (AC: 1)
+  - [x] Request params: `{ id: z.string().uuid(), userId: z.string().uuid() }`
+  - [x] Response 200: `{ data: { listId, removedUserId, unassignedTaskCount } }`
+  - [x] Response 403: caller is not a list owner
+  - [x] Response 404: list or member not found
+  - [x] Response 422: cannot remove the last owner (list must retain at least one owner)
+  - [x] Stub: return 200 with `{ listId: id, removedUserId: userId, unassignedTaskCount: 1 }`; add `TODO(impl): verify caller is owner via list_members, delete list_members row, set assignedToUserId = NULL on tasks WHERE listId = id AND assignedToUserId = userId AND completedAt IS NULL`
+  - [x] Tag: `'Sharing'`
+  - [x] Register BEFORE `GET /v1/lists/{id}/members` (specific/nested before list-members) — specific before parameterized rule
+  - [x] Use `.js` extensions for all local imports
+  - [x] Use `@hono/zod-openapi` `createRoute` pattern — no untyped routes
 
-- [ ] Add `POST /v1/lists/{id}/leave` — current user leaves the list (AC: 2)
-  - [ ] Request params: `{ id: z.string().uuid() }`, body: empty `{}`
-  - [ ] Response 200: `{ data: { listId, unassignedTaskCount } }`
-  - [ ] Response 403: last owner cannot leave (must promote another member to owner first)
-  - [ ] Response 404: list not found or caller is not a member
-  - [ ] Stub: return 200 with `{ listId: id, unassignedTaskCount: 1 }`; add `TODO(impl): verify caller is member via JWT, enforce last-owner guard, delete list_members row for jwt.sub, set assignedToUserId = NULL on caller's incomplete tasks`
-  - [ ] Tag: `'Sharing'`
-  - [ ] Register BEFORE `GET /v1/lists/{id}/members` — specific before parameterized rule
-  - [ ] Use `.js` extensions for all local imports
+- [x] Add `POST /v1/lists/{id}/leave` — current user leaves the list (AC: 2)
+  - [x] Request params: `{ id: z.string().uuid() }`, body: empty `{}`
+  - [x] Response 200: `{ data: { listId, unassignedTaskCount } }`
+  - [x] Response 403: last owner cannot leave (must promote another member to owner first)
+  - [x] Response 404: list not found or caller is not a member
+  - [x] Stub: return 200 with `{ listId: id, unassignedTaskCount: 1 }`; add `TODO(impl): verify caller is member via JWT, enforce last-owner guard, delete list_members row for jwt.sub, set assignedToUserId = NULL on caller's incomplete tasks`
+  - [x] Tag: `'Sharing'`
+  - [x] Register BEFORE `GET /v1/lists/{id}/members` — specific before parameterized rule
+  - [x] Use `.js` extensions for all local imports
 
-- [ ] Add `PATCH /v1/lists/{id}/members/{userId}/role` — grant or revoke owner role (AC: 3)
-  - [ ] Request params: `{ id: z.string().uuid(), userId: z.string().uuid() }`
-  - [ ] Request body schema: `{ role: z.enum(['owner', 'member']) }`
-  - [ ] Response 200: `{ data: { listId, userId, role } }`
-  - [ ] Response 403: caller is not a list owner
-  - [ ] Response 404: list or member not found
-  - [ ] Response 422: cannot demote the last owner to member (must retain at least one owner)
-  - [ ] Stub: return 200 with `{ listId: id, userId, role: body.role }`; add `TODO(impl): verify caller is owner, enforce last-owner guard when demoting, update list_members.role via Drizzle`
-  - [ ] Tag: `'Sharing'`
-  - [ ] Register BEFORE `GET /v1/lists/{id}/members` — specific before parameterized rule
-  - [ ] Use `.js` extensions for all local imports
+- [x] Add `PATCH /v1/lists/{id}/members/{userId}/role` — grant or revoke owner role (AC: 3)
+  - [x] Request params: `{ id: z.string().uuid(), userId: z.string().uuid() }`
+  - [x] Request body schema: `{ role: z.enum(['owner', 'member']) }`
+  - [x] Response 200: `{ data: { listId, userId, role } }`
+  - [x] Response 403: caller is not a list owner
+  - [x] Response 404: list or member not found
+  - [x] Response 422: cannot demote the last owner to member (must retain at least one owner)
+  - [x] Stub: return 200 with `{ listId: id, userId, role: body.role }`; add `TODO(impl): verify caller is owner, enforce last-owner guard when demoting, update list_members.role via Drizzle`
+  - [x] Tag: `'Sharing'`
+  - [x] Register BEFORE `GET /v1/lists/{id}/members` — specific before parameterized rule
+  - [x] Use `.js` extensions for all local imports
 
 ### Backend: Route registration order in `apps/api/src/routes/sharing.ts` (AC: 1, 2, 3)
 
-- [ ] Verify and set the final route order in `sharing.ts` so all new specific routes precede `GET /v1/lists/{id}/members` (AC: 1, 2, 3)
-  - [ ] Confirmed order for new routes (insert before `GET /v1/lists/{id}/members`):
+- [x] Verify and set the final route order in `sharing.ts` so all new specific routes precede `GET /v1/lists/{id}/members` (AC: 1, 2, 3)
+  - [x] Confirmed order for new routes (insert before `GET /v1/lists/{id}/members`):
     1. `POST /v1/lists/{id}/share` (existing)
     2. `POST /v1/lists/{id}/assign` (existing)
     3. `POST /v1/lists/{id}/auto-assign` (existing)
@@ -69,94 +69,94 @@ so that list membership stays accurate and administrative responsibility can be 
 
 ### Flutter: Domain model — extend `ListMember` with email (AC: 1, 3)
 
-- [ ] Add `String? email` to `apps/flutter/lib/features/lists/domain/list_member.dart` (AC: 1, 3)
-  - [ ] `String? email` — nullable; the member's email; may be null for members who joined before email tracking was added or for privacy reasons
-  - [ ] Use `@Default(null)` is NOT needed — nullable field with no default is fine in Freezed; just `String? email`
-  - [ ] Current fields: `userId`, `displayName`, `avatarInitials`, `role`, `joinedAt`, `roundRobinIndex` — do NOT remove any
-  - [ ] Regenerate `list_member.freezed.dart` — run `dart run build_runner build --delete-conflicting-outputs` and commit
+- [x] Add `String? email` to `apps/flutter/lib/features/lists/domain/list_member.dart` (AC: 1, 3)
+  - [x] `String? email` — nullable; the member's email; may be null for members who joined before email tracking was added or for privacy reasons
+  - [x] Use `@Default(null)` is NOT needed — nullable field with no default is fine in Freezed; just `String? email`
+  - [x] Current fields: `userId`, `displayName`, `avatarInitials`, `role`, `joinedAt`, `roundRobinIndex` — do NOT remove any
+  - [x] Regenerate `list_member.freezed.dart` — run `dart run build_runner build --delete-conflicting-outputs` and commit
 
 ### Flutter: SharingRepository — add member management methods (AC: 1, 2, 3)
 
-- [ ] Add `removeMember` to `apps/flutter/lib/features/lists/data/sharing_repository.dart` (AC: 1)
-  - [ ] `Future<Map<String, dynamic>> removeMember(String listId, String userId)` — `DELETE /v1/lists/$listId/members/$userId`
-  - [ ] Use `_client.dio.delete<Map<String, dynamic>>('/v1/lists/$listId/members/$userId')`
-  - [ ] Return `response.data!['data'] as Map<String, dynamic>`
-  - [ ] This IS a sharing-domain operation — belongs in `SharingRepository`, NOT in `ListsRepository`
+- [x] Add `removeMember` to `apps/flutter/lib/features/lists/data/sharing_repository.dart` (AC: 1)
+  - [x] `Future<Map<String, dynamic>> removeMember(String listId, String userId)` — `DELETE /v1/lists/$listId/members/$userId`
+  - [x] Use `_client.dio.delete<Map<String, dynamic>>('/v1/lists/$listId/members/$userId')`
+  - [x] Return `response.data!['data'] as Map<String, dynamic>`
+  - [x] This IS a sharing-domain operation — belongs in `SharingRepository`, NOT in `ListsRepository`
 
-- [ ] Add `leaveList` to `apps/flutter/lib/features/lists/data/sharing_repository.dart` (AC: 2)
-  - [ ] `Future<Map<String, dynamic>> leaveList(String listId)` — `POST /v1/lists/$listId/leave`
-  - [ ] Use `_client.dio.post<Map<String, dynamic>>('/v1/lists/$listId/leave', data: <String, dynamic>{})`
-  - [ ] Return `response.data!['data'] as Map<String, dynamic>`
+- [x] Add `leaveList` to `apps/flutter/lib/features/lists/data/sharing_repository.dart` (AC: 2)
+  - [x] `Future<Map<String, dynamic>> leaveList(String listId)` — `POST /v1/lists/$listId/leave`
+  - [x] Use `_client.dio.post<Map<String, dynamic>>('/v1/lists/$listId/leave', data: <String, dynamic>{})`
+  - [x] Return `response.data!['data'] as Map<String, dynamic>`
 
-- [ ] Add `updateMemberRole` to `apps/flutter/lib/features/lists/data/sharing_repository.dart` (AC: 3)
-  - [ ] `Future<Map<String, dynamic>> updateMemberRole(String listId, String userId, String role)` — `PATCH /v1/lists/$listId/members/$userId/role`
-  - [ ] Use `_client.dio.patch<Map<String, dynamic>>('/v1/lists/$listId/members/$userId/role', data: {'role': role})`
-  - [ ] Return `response.data!['data'] as Map<String, dynamic>`
+- [x] Add `updateMemberRole` to `apps/flutter/lib/features/lists/data/sharing_repository.dart` (AC: 3)
+  - [x] `Future<Map<String, dynamic>> updateMemberRole(String listId, String userId, String role)` — `PATCH /v1/lists/$listId/members/$userId/role`
+  - [x] Use `_client.dio.patch<Map<String, dynamic>>('/v1/lists/$listId/members/$userId/role', data: {'role': role})`
+  - [x] Return `response.data!['data'] as Map<String, dynamic>`
 
-- [ ] Regenerate `sharing_repository.g.dart` — provider hash may change if `@riverpod` annotation context changes; commit
+- [x] Regenerate `sharing_repository.g.dart` — provider hash may change if `@riverpod` annotation context changes; commit
 
 ### Flutter: List Settings screen — add Members section (AC: 1, 2, 3)
 
-- [ ] Extend `apps/flutter/lib/features/lists/presentation/list_settings_screen.dart` with a "Members" section (AC: 1, 2, 3)
-  - [ ] Add section below the existing "Accountability" section
-  - [ ] Section header: `AppStrings.membersSettingsLabel` (new string — see l10n section)
-  - [ ] Fetch members using `ref.watch(listMembersNotifierProvider(widget.listId))` — this provider already exists at `apps/flutter/lib/features/lists/presentation/list_members_provider.dart`
-  - [ ] For each member, render a `CupertinoListTile` with: avatar initials circle, `displayName`, role badge ("Owner" / "Member")
-  - [ ] For `role == 'owner'`: show `AppStrings.memberRoleOwner` badge in `colors.accentPrimary`
-  - [ ] For `role == 'member'`: show `AppStrings.memberRoleMember` badge in `colors.textSecondary`
-  - [ ] Only show management actions (remove, grant owner) if the current user is an owner — detect via checking caller's own `ListMember.role == 'owner'` from the member list
-  - [ ] Owner management actions: trailing `CupertinoButton` with `CupertinoIcons.ellipsis_circle` → opens `CupertinoActionSheet` per member with options: "Grant Owner", "Remove from list" (show "Revoke Owner" instead of "Grant Owner" when member already has role `'owner'`)
-  - [ ] "Grant Owner" / "Revoke Owner": calls `sharingRepository.updateMemberRole(listId, userId, 'owner'/'member')` → `ref.invalidate(listMembersNotifierProvider(widget.listId))`
-  - [ ] "Remove from list": show a `CupertinoAlertDialog` confirmation with title `AppStrings.removeMemberConfirmTitle`, message `AppStrings.removeMemberConfirmMessage`, actions: Cancel + `AppStrings.actionDelete` (destructive) → on confirm: call `sharingRepository.removeMember(listId, userId)` → `ref.invalidate(listMembersNotifierProvider(widget.listId))` AND `ref.invalidate(listsProvider)`
-  - [ ] Loading state during management actions: `_isManagingMember` bool state (similar to `_isUpdatingStrategy`)
-  - [ ] Error state: `CupertinoAlertDialog` with title `AppStrings.dialogErrorTitle`, message `AppStrings.memberManagementError`
-  - [ ] Background: `colors.surfacePrimary` (already set on screen)
-  - [ ] `minimumSize: const Size(44, 44)` on any `CupertinoButton`
+- [x] Extend `apps/flutter/lib/features/lists/presentation/list_settings_screen.dart` with a "Members" section (AC: 1, 2, 3)
+  - [x] Add section below the existing "Accountability" section
+  - [x] Section header: `AppStrings.membersSettingsLabel` (new string — see l10n section)
+  - [x] Fetch members using `ref.watch(listMembersProvider(widget.listId))` — this provider already exists at `apps/flutter/lib/features/lists/presentation/list_members_provider.dart`
+  - [x] For each member, render a row with: avatar initials circle, `displayName`, role badge ("Owner" / "Member")
+  - [x] For `role == 'owner'`: show `AppStrings.memberRoleOwner` badge in `colors.accentPrimary`
+  - [x] For `role == 'member'`: show `AppStrings.memberRoleMember` badge in `colors.textSecondary`
+  - [x] Only show management actions (remove, grant owner) if the current user is an owner — detect via checking caller's own `ListMember.role == 'owner'` from the member list
+  - [x] Owner management actions: trailing `CupertinoButton` with `CupertinoIcons.ellipsis_circle` → opens `CupertinoActionSheet` per member with options: "Grant Owner", "Remove from list" (show "Revoke Owner" instead of "Grant Owner" when member already has role `'owner'`)
+  - [x] "Grant Owner" / "Revoke Owner": calls `sharingRepository.updateMemberRole(listId, userId, 'owner'/'member')` → `ref.invalidate(listMembersProvider(widget.listId))`
+  - [x] "Remove from list": show a `CupertinoAlertDialog` confirmation with title `AppStrings.removeMemberConfirmTitle`, message `AppStrings.removeMemberConfirmMessage`, actions: Cancel + `AppStrings.actionDelete` (destructive) → on confirm: call `sharingRepository.removeMember(listId, userId)` → `ref.invalidate(listMembersProvider(widget.listId))` AND `ref.invalidate(listsProvider)`
+  - [x] Loading state during management actions: `_isManagingMember` bool state (similar to `_isUpdatingStrategy`)
+  - [x] Error state: `CupertinoAlertDialog` with title `AppStrings.dialogErrorTitle`, message `AppStrings.memberManagementError`
+  - [x] Background: `colors.surfacePrimary` (already set on screen)
+  - [x] `minimumSize: const Size(44, 44)` on any `CupertinoButton`
 
-- [ ] Add "Leave list" option to `list_settings_screen.dart` for non-owner members (AC: 2)
-  - [ ] Show a "Leave list" `CupertinoButton` with destructive styling at the bottom of the Members section
-  - [ ] Only show when current user is NOT the last owner (if user is the only owner, show a disabled button with tooltip `AppStrings.leaveListLastOwnerNote`)
-  - [ ] Tapping opens a `CupertinoAlertDialog` confirmation: title `AppStrings.leaveListConfirmTitle`, message `AppStrings.leaveListConfirmMessage`, actions: Cancel + `AppStrings.actionDelete` (destructive)
-  - [ ] On confirm: call `sharingRepository.leaveList(listId)` → on success, `context.go('/lists')` to navigate back to lists screen (list is no longer accessible)
-  - [ ] Error state: show `CupertinoAlertDialog` with `AppStrings.dialogErrorTitle` and `AppStrings.leaveListError`
+- [x] Add "Leave list" option to `list_settings_screen.dart` for non-owner members (AC: 2)
+  - [x] Show a "Leave list" `CupertinoButton` with destructive styling at the bottom of the Members section
+  - [x] Only show when current user is NOT the last owner (if user is the only owner, show a disabled button with tooltip `AppStrings.leaveListLastOwnerNote`)
+  - [x] Tapping opens a `CupertinoAlertDialog` confirmation: title `AppStrings.leaveListConfirmTitle`, message `AppStrings.leaveListConfirmMessage`, actions: Cancel + `AppStrings.actionDelete` (destructive)
+  - [x] On confirm: call `sharingRepository.leaveList(listId)` → on success, `context.go('/lists')` to navigate back to lists screen (list is no longer accessible)
+  - [x] Error state: show `CupertinoAlertDialog` with `AppStrings.dialogErrorTitle` and `AppStrings.leaveListError`
 
 ### Flutter: l10n strings (AC: 1, 2, 3)
 
-- [ ] Add to `apps/flutter/lib/core/l10n/strings.dart` under a new `// ── Member management & shared ownership (FR62, FR75) ──` section (AC: 1, 2, 3)
-  - [ ] `static const String membersSettingsLabel = 'Members';` — section header in List Settings
-  - [ ] `static const String memberRoleOwner = 'Owner';` — role badge
-  - [ ] `static const String memberRoleMember = 'Member';` — role badge
-  - [ ] `static const String memberGrantOwner = 'Grant Owner';` — action sheet option
-  - [ ] `static const String memberRevokeOwner = 'Revoke Owner';` — action sheet option
-  - [ ] `static const String memberRemoveFromList = 'Remove from list';` — action sheet option
-  - [ ] `static const String removeMemberConfirmTitle = 'Remove member?';`
-  - [ ] `static const String removeMemberConfirmMessage = 'This member will lose access to the list immediately and their assigned tasks will be unassigned.';`
-  - [ ] `static const String leaveListButton = 'Leave list';` — button label
-  - [ ] `static const String leaveListConfirmTitle = 'Leave list?';`
-  - [ ] `static const String leaveListConfirmMessage = 'You will lose access to this list. Your assigned tasks will be unassigned. You cannot rejoin without a new invitation.';`
-  - [ ] `static const String leaveListLastOwnerNote = 'You cannot leave as the last owner. Promote another member to owner first.';`
-  - [ ] `static const String memberManagementError = 'Could not update member. Please try again.';`
-  - [ ] `static const String leaveListError = 'Could not leave list. Please try again.';`
-  - [ ] NOTE: `AppStrings.actionDelete`, `AppStrings.actionOk`, `AppStrings.dialogErrorTitle` already exist — do NOT recreate
+- [x] Add to `apps/flutter/lib/core/l10n/strings.dart` under a new `// ── Member management & shared ownership (FR62, FR75) ──` section (AC: 1, 2, 3)
+  - [x] `static const String membersSettingsLabel = 'Members';` — section header in List Settings
+  - [x] `static const String memberRoleOwner = 'Owner';` — role badge
+  - [x] `static const String memberRoleMember = 'Member';` — role badge
+  - [x] `static const String memberGrantOwner = 'Grant Owner';` — action sheet option
+  - [x] `static const String memberRevokeOwner = 'Revoke Owner';` — action sheet option
+  - [x] `static const String memberRemoveFromList = 'Remove from list';` — action sheet option
+  - [x] `static const String removeMemberConfirmTitle = 'Remove member?';`
+  - [x] `static const String removeMemberConfirmMessage = 'This member will lose access to the list immediately and their assigned tasks will be unassigned.';`
+  - [x] `static const String leaveListButton = 'Leave list';` — button label
+  - [x] `static const String leaveListConfirmTitle = 'Leave list?';`
+  - [x] `static const String leaveListConfirmMessage = 'You will lose access to this list. Your assigned tasks will be unassigned. You cannot rejoin without a new invitation.';`
+  - [x] `static const String leaveListLastOwnerNote = 'You cannot leave as the last owner. Promote another member to owner first.';`
+  - [x] `static const String memberManagementError = 'Could not update member. Please try again.';`
+  - [x] `static const String leaveListError = 'Could not leave list. Please try again.';`
+  - [x] NOTE: `AppStrings.actionDelete`, `AppStrings.actionOk`, `AppStrings.dialogErrorTitle` already exist — do NOT recreate
 
 ### Tests
 
-- [ ] Unit test for `SharingRepository` new methods in `apps/flutter/test/features/lists/sharing_repository_test.dart` (AC: 1, 2, 3)
-  - [ ] Extend existing `sharing_repository_test.dart` (created in Story 5.3)
-  - [ ] Test: `removeMember('list-id', 'user-id')` fires `DELETE /v1/lists/list-id/members/user-id`
-  - [ ] Test: `leaveList('list-id')` fires `POST /v1/lists/list-id/leave`
-  - [ ] Test: `updateMemberRole('list-id', 'user-id', 'owner')` fires `PATCH /v1/lists/list-id/members/user-id/role` with body `{'role': 'owner'}`
-  - [ ] Use same `mocktail` + `MockDio` pattern established in Story 5.3 `sharing_repository_test.dart`
+- [x] Unit test for `SharingRepository` new methods in `apps/flutter/test/features/lists/sharing_repository_test.dart` (AC: 1, 2, 3)
+  - [x] Extend existing `sharing_repository_test.dart` (created in Story 5.3)
+  - [x] Test: `removeMember('list-id', 'user-id')` fires `DELETE /v1/lists/list-id/members/user-id`
+  - [x] Test: `leaveList('list-id')` fires `POST /v1/lists/list-id/leave`
+  - [x] Test: `updateMemberRole('list-id', 'user-id', 'owner')` fires `PATCH /v1/lists/list-id/members/user-id/role` with body `{'role': 'owner'}`
+  - [x] Use same `mocktail` + `MockDio` pattern established in Story 5.3 `sharing_repository_test.dart`
 
-- [ ] Widget test for `ListSettingsScreen` members section in `apps/flutter/test/features/lists/list_settings_screen_test.dart` (AC: 1, 2, 3)
-  - [ ] Extend existing `list_settings_screen_test.dart` (created in Story 5.2, extended in Story 5.4)
-  - [ ] Test: members section header `AppStrings.membersSettingsLabel` renders
-  - [ ] Test: member display name renders for a stub member list
-  - [ ] Test: when current user is owner, the ellipsis button renders on member rows
-  - [ ] Test: when current user is NOT owner, no management buttons are shown
-  - [ ] Test: "Leave list" button renders for non-owner current user
-  - [ ] Override `sharingRepositoryProvider` and `listMembersNotifierProvider` with stub values — same `ProviderContainer` pattern as Story 5.4 tests
-  - [ ] Wrap in `MaterialApp` with `OnTaskTheme` to resolve `OnTaskColors` extension
+- [x] Widget test for `ListSettingsScreen` members section in `apps/flutter/test/features/lists/list_settings_screen_test.dart` (AC: 1, 2, 3)
+  - [x] Extend existing `list_settings_screen_test.dart` (created in Story 5.2, extended in Story 5.4)
+  - [x] Test: members section header `AppStrings.membersSettingsLabel` renders
+  - [x] Test: member display name renders for a stub member list
+  - [x] Test: when current user is owner, the ellipsis button renders on member rows
+  - [x] Test: when current user is NOT owner, no management buttons are shown
+  - [x] Test: "Leave list" button renders for non-last-owner member
+  - [x] Override `sharingRepositoryProvider` and `listMembersProvider` with stub values — same `ProviderContainer` pattern as Story 5.4 tests
+  - [x] Wrap in `MaterialApp` with `OnTaskTheme` to resolve `OnTaskColors` extension
 
 ## Dev Notes
 
@@ -357,6 +357,33 @@ claude-sonnet-4-6
 
 ### Debug Log References
 
+None — implementation proceeded without blockers.
+
 ### Completion Notes List
 
+- Added three API endpoints to `sharing.ts`: `POST /leave`, `DELETE /members/{userId}`, `PATCH /members/{userId}/role` — all stub implementations with `TODO(impl)` markers, registered before `GET /v1/lists/{id}/members` per route-ordering spec.
+- Extended `listMemberSchema` with nullable `email` field and updated `stubMembers()` with email values.
+- Added `String? email` to `ListMember` Freezed model; regenerated `list_member.freezed.dart` via `build_runner`.
+- Added `removeMember`, `leaveList`, `updateMemberRole` to `SharingRepository`; updated `_memberFromJson` to parse `email`.
+- Extended `list_settings_screen.dart` with full Members section: avatar rows, role badges, ellipsis action sheet (grant/revoke owner, remove), "Leave list" button with last-owner guard, confirmation dialogs, and `_isManagingMember` loading state. Used `listMembersProvider(listId)` (actual generated provider name — `listMembersNotifierProvider` in spec was a naming discrepancy).
+- Added 14 l10n strings for member management under the `// ── Member management & shared ownership (FR62, FR75) ──` section.
+- Extended `sharing_repository_test.dart` with 4 new unit tests for `removeMember`, `leaveList`, `updateMemberRole`.
+- Extended `list_settings_screen_test.dart` with 5 widget tests for the Members section; overrode `listMembersProvider` with `_FakeListMembersNotifier`.
+- All 665 Flutter tests pass. Zero regressions. No TypeScript errors introduced in `sharing.ts`.
+
 ### File List
+
+apps/api/src/routes/sharing.ts
+apps/flutter/lib/features/lists/domain/list_member.dart
+apps/flutter/lib/features/lists/domain/list_member.freezed.dart
+apps/flutter/lib/features/lists/data/sharing_repository.dart
+apps/flutter/lib/features/lists/presentation/list_settings_screen.dart
+apps/flutter/lib/core/l10n/strings.dart
+apps/flutter/test/features/lists/sharing_repository_test.dart
+apps/flutter/test/features/lists/list_settings_screen_test.dart
+_bmad-output/implementation-artifacts/5-6-member-management-shared-ownership.md
+_bmad-output/implementation-artifacts/sprint-status.yaml
+
+## Change Log
+
+- 2026-04-01: Story 5.6 implemented — Member Management & Shared Ownership. Added API endpoints (remove member, leave list, update role), Flutter SharingRepository methods, Members section in ListSettingsScreen, 14 l10n strings, 9 new tests (4 unit + 5 widget). All 665 Flutter tests pass.

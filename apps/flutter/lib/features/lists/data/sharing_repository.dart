@@ -115,6 +115,43 @@ class SharingRepository {
         .toList();
   }
 
+  /// Removes a member from a shared list (FR62, AC1).
+  ///
+  /// Returns `{ listId, removedUserId, unassignedTaskCount }`.
+  Future<Map<String, dynamic>> removeMember(String listId, String userId) async {
+    final response = await _client.dio.delete<Map<String, dynamic>>(
+      '/v1/lists/$listId/members/$userId',
+    );
+    return response.data!['data'] as Map<String, dynamic>;
+  }
+
+  /// Removes the current user from a shared list (FR62, AC2).
+  ///
+  /// Returns `{ listId, unassignedTaskCount }`.
+  Future<Map<String, dynamic>> leaveList(String listId) async {
+    final response = await _client.dio.post<Map<String, dynamic>>(
+      '/v1/lists/$listId/leave',
+      data: <String, dynamic>{},
+    );
+    return response.data!['data'] as Map<String, dynamic>;
+  }
+
+  /// Grants or revokes owner role for a list member (FR75, AC3).
+  ///
+  /// [role] must be `'owner'` or `'member'`.
+  /// Returns `{ listId, userId, role }`.
+  Future<Map<String, dynamic>> updateMemberRole(
+    String listId,
+    String userId,
+    String role,
+  ) async {
+    final response = await _client.dio.patch<Map<String, dynamic>>(
+      '/v1/lists/$listId/members/$userId/role',
+      data: {'role': role},
+    );
+    return response.data!['data'] as Map<String, dynamic>;
+  }
+
   ListMember _memberFromJson(Map<String, dynamic> json) {
     return ListMember(
       userId: json['userId'] as String,
@@ -122,6 +159,7 @@ class SharingRepository {
       avatarInitials: json['avatarInitials'] as String,
       role: json['role'] as String,
       joinedAt: DateTime.parse(json['joinedAt'] as String),
+      email: json['email'] as String?,
     );
   }
 }

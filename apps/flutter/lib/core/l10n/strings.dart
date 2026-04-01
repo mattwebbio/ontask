@@ -739,4 +739,50 @@ class AppStrings {
 
   /// Footer note in proof sheet — privacy scoping (NFR-S4).
   static const String proofPrivacyNote = 'Visible to list members only.';
+
+  // ── Member management & shared ownership (FR62, FR75) ──────────────────────
+  /// Section header in List Settings.
+  static const String membersSettingsLabel = 'Members';
+
+  /// Role badge for owner members.
+  static const String memberRoleOwner = 'Owner';
+
+  /// Role badge for regular members.
+  static const String memberRoleMember = 'Member';
+
+  /// Action sheet option — grant owner role to member.
+  static const String memberGrantOwner = 'Grant Owner';
+
+  /// Action sheet option — revoke owner role from member.
+  static const String memberRevokeOwner = 'Revoke Owner';
+
+  /// Action sheet option — remove member from list.
+  static const String memberRemoveFromList = 'Remove from list';
+
+  /// Confirmation dialog title when removing a member.
+  static const String removeMemberConfirmTitle = 'Remove member?';
+
+  /// Confirmation dialog message when removing a member.
+  static const String removeMemberConfirmMessage =
+      'This member will lose access to the list immediately and their assigned tasks will be unassigned.';
+
+  /// Button label for leaving a list.
+  static const String leaveListButton = 'Leave list';
+
+  /// Confirmation dialog title when leaving a list.
+  static const String leaveListConfirmTitle = 'Leave list?';
+
+  /// Confirmation dialog message when leaving a list.
+  static const String leaveListConfirmMessage =
+      'You will lose access to this list. Your assigned tasks will be unassigned. You cannot rejoin without a new invitation.';
+
+  /// Tooltip shown on disabled "Leave list" button when user is the last owner.
+  static const String leaveListLastOwnerNote =
+      'You cannot leave as the last owner. Promote another member to owner first.';
+
+  /// Error shown when a member management action fails.
+  static const String memberManagementError = 'Could not update member. Please try again.';
+
+  /// Error shown when leaving a list fails.
+  static const String leaveListError = 'Could not leave list. Please try again.';
 }
