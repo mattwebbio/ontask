@@ -202,9 +202,11 @@ const NudgeResponseSchema = z.object({
     taskId: z.string().openapi({ example: 'a0000000-0000-4000-8000-000000000001' }),
     proposedStartTime: z
       .string()
+      .datetime()
       .openapi({ example: '2026-04-02T09:00:00.000Z' }),
     proposedEndTime: z
       .string()
+      .datetime()
       .openapi({ example: '2026-04-02T09:30:00.000Z' }),
     interpretation: z.string().openapi({ example: 'Tomorrow morning at 9 AM' }),
     confidence: z.enum(['high', 'low']).openapi({ example: 'high' }),
@@ -214,6 +216,7 @@ const NudgeResponseSchema = z.object({
 const NudgeConfirmRequestSchema = z.object({
   proposedStartTime: z
     .string()
+    .datetime()
     .openapi({ example: '2026-04-02T09:00:00.000Z' }),
 })
 
@@ -289,9 +292,10 @@ app.openapi(postNudgeRoute, async (c) => {
     )
   }
 
-  // Step 3: run schedule with the suggested date injected (proposal only — no DB write)
+  // Step 3: run schedule with the suggested date injected (proposal only — no calendar write)
   const { schedule: scheduleOutput } = await runScheduleForUser(userId, c.env, {
     suggestedDates: { [taskId]: nudgeOutput.suggestedDate },
+    dryRun: true,
   })
 
   const block = scheduleOutput.scheduledBlocks.find((b) => b.taskId === taskId)

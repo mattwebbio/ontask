@@ -56,7 +56,7 @@ class _RevealAnimationTestWidgetState extends State<_RevealAnimationTestWidget>
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: controller,
-      builder: (_, __) => Opacity(
+      builder: (_, _) => Opacity(
         opacity: controller.value,
         child: const SizedBox(width: 100, height: 44, key: Key('row')),
       ),

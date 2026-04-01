@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
+import type { AIProviderEnv } from '../provider.js'
 
 // ── Mock @ai-sdk/openai to avoid real HTTP calls ───────────────────────────────
 vi.mock('@ai-sdk/openai', () => ({
@@ -29,7 +30,7 @@ describe('createAIProvider', () => {
   })
 
   it('calls createOpenAI without baseURL when env has no AI_GATEWAY_URL', () => {
-    const env = {} as unknown as CloudflareBindings
+    const env = {} as AIProviderEnv
     createAIProvider(env)
     expect(mockCreateOpenAI).toHaveBeenCalledWith(
       expect.not.objectContaining({ baseURL: expect.anything() }),
@@ -39,7 +40,7 @@ describe('createAIProvider', () => {
   it('calls createOpenAI with baseURL when AI_GATEWAY_URL is in env', () => {
     const env = {
       AI_GATEWAY_URL: 'https://gateway.ai.cloudflare.com/v1/acct/gw/openai',
-    } as unknown as CloudflareBindings
+    } as AIProviderEnv
     createAIProvider(env)
     expect(mockCreateOpenAI).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -49,7 +50,7 @@ describe('createAIProvider', () => {
   })
 
   it('calls createOpenAI without baseURL when AI_GATEWAY_URL is an empty string', () => {
-    const env = { AI_GATEWAY_URL: '' } as unknown as CloudflareBindings
+    const env = { AI_GATEWAY_URL: '' } as AIProviderEnv
     createAIProvider(env)
     expect(mockCreateOpenAI).toHaveBeenCalledWith(
       expect.not.objectContaining({ baseURL: expect.anything() }),

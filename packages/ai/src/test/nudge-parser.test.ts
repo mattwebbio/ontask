@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { parseSchedulingNudge } from '../nudge-parser.js'
 import type { NudgeInput } from '../nudge-parser.js'
+import type { AIProviderEnv } from '../provider.js'
 
 // ── Mock the Vercel AI SDK — never call the real LLM in unit tests ────────────
 vi.mock('ai', () => ({
@@ -38,7 +39,8 @@ function makeInput(overrides: Partial<NudgeInput> = {}): NudgeInput {
 function mockLlmResponse(suggestedDate: string, confidence: 'high' | 'low', interpretation: string) {
   mockGenerateObject.mockResolvedValueOnce({
     object: { suggestedDate, confidence, interpretation },
-  } as ReturnType<typeof generateObject> extends Promise<infer T> ? T : never)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } as any)
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -108,7 +110,7 @@ describe('parseSchedulingNudge', () => {
 
     mockLlmResponse('2026-04-02T09:00:00.000Z', 'high', 'Tomorrow morning')
 
-    const fakeEnv = { AI: {} } as unknown as CloudflareBindings
+    const fakeEnv: AIProviderEnv = {}
     await parseSchedulingNudge(makeInput(), fakeEnv)
 
     expect(mockCreateProvider).toHaveBeenCalledWith(fakeEnv)

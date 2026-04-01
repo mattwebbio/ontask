@@ -1,5 +1,10 @@
 import { createOpenAI } from '@ai-sdk/openai'
 
+/** Minimal env shape needed by the AI provider — avoids coupling to apps/api's CloudflareBindings. */
+export interface AIProviderEnv {
+  AI_GATEWAY_URL?: string
+}
+
 /**
  * createAIProvider — returns a model factory configured to use the
  * Cloudflare AI Gateway binding when available, or falls back to direct
@@ -15,14 +20,11 @@ import { createOpenAI } from '@ai-sdk/openai'
  *
  * @param env - Cloudflare worker bindings (may be undefined in unit tests)
  */
-export function createAIProvider(env?: CloudflareBindings) {
+export function createAIProvider(env?: AIProviderEnv) {
   // When running under wrangler dev the AI binding is available.
   // Use the gateway URL if configured via env; otherwise fall back to
   // direct OpenAI (needed for local `flutter run` dev without wrangler).
-  const gatewayUrl =
-    env && 'AI_GATEWAY_URL' in env && (env as Record<string, unknown>)['AI_GATEWAY_URL']
-      ? String((env as Record<string, unknown>)['AI_GATEWAY_URL'])
-      : undefined
+  const gatewayUrl = env?.AI_GATEWAY_URL ?? undefined
 
   const openai = createOpenAI({
     ...(gatewayUrl ? { baseURL: gatewayUrl } : {}),

@@ -1,6 +1,6 @@
 import { generateObject } from 'ai'
 import { z } from 'zod'
-import { createAIProvider } from './provider.js'
+import { createAIProvider, type AIProviderEnv } from './provider.js'
 
 // ── Input / Output types ──────────────────────────────────────────────────────
 
@@ -76,7 +76,7 @@ const LLM_TIMEOUT_MS = 2500
  */
 export async function parseSchedulingNudge(
   input: NudgeInput,
-  env?: CloudflareBindings,
+  env?: AIProviderEnv,
 ): Promise<NudgeOutput> {
   const provider = createAIProvider(env)
   const model = provider('gpt-4o-mini')

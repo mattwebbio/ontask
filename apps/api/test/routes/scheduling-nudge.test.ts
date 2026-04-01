@@ -6,9 +6,19 @@ vi.mock('@ontask/ai', () => ({
   parseSchedulingNudge: vi.fn(),
 }))
 
+// ── Mock calendar service — verify dryRun skips calendar writes ───────────────
+vi.mock('../../src/services/calendar/index.js', () => ({
+  fetchAllCalendarEvents: vi.fn().mockResolvedValue([]),
+  removeStaleCalendarBlocks: vi.fn().mockResolvedValue(undefined),
+  syncScheduledBlocksToCalendar: vi.fn().mockResolvedValue(undefined),
+}))
+
 import { parseSchedulingNudge } from '@ontask/ai'
+import { removeStaleCalendarBlocks, syncScheduledBlocksToCalendar } from '../../src/services/calendar/index.js'
 
 const mockParseNudge = vi.mocked(parseSchedulingNudge)
+const mockRemoveStale = vi.mocked(removeStaleCalendarBlocks)
+const mockSyncToCalendar = vi.mocked(syncScheduledBlocksToCalendar)
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyJson = any
@@ -132,6 +142,20 @@ describe('POST /v1/tasks/:id/schedule/nudge', () => {
     })
     expect(res.status).toBe(400)
   })
+
+  it('does NOT call calendar sync or stale-block removal (dryRun)', async () => {
+    mockHighConfidenceNudge()
+
+    await app.request(`/v1/tasks/${unknownTaskId}/schedule/nudge`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-id': 'test-user' },
+      body: JSON.stringify({ utterance: 'move to tomorrow morning' }),
+    })
+
+    // dryRun: true — calendar functions must not be called during nudge proposal
+    expect(mockRemoveStale).not.toHaveBeenCalled()
+    expect(mockSyncToCalendar).not.toHaveBeenCalled()
+  })
 })
 
 describe('POST /v1/tasks/:id/schedule/nudge/confirm', () => {
@@ -178,5 +202,28 @@ describe('POST /v1/tasks/:id/schedule/nudge/confirm', () => {
       body: JSON.stringify({}),
     })
     expect(res.status).toBe(400)
+  })
+
+  it('returns 400 when proposedStartTime is not a valid ISO datetime', async () => {
+    const res = await app.request(`/v1/tasks/${validTaskId}/schedule/nudge/confirm`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-id': 'test-user' },
+      body: JSON.stringify({ proposedStartTime: 'not-a-date' }),
+    })
+    expect(res.status).toBe(400)
+  })
+
+  it('calls calendar sync (not dryRun) when confirming a nudge', async () => {
+    vi.clearAllMocks()
+
+    await app.request(`/v1/tasks/${unknownTaskId}/schedule/nudge/confirm`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-id': 'test-user' },
+      body: JSON.stringify({ proposedStartTime: '2026-04-02T09:00:00.000Z' }),
+    })
+
+    // confirm uses dryRun: false (default) — calendar functions must be called
+    expect(mockRemoveStale).toHaveBeenCalled()
+    expect(mockSyncToCalendar).toHaveBeenCalled()
   })
 })

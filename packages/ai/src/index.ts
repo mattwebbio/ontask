@@ -5,3 +5,4 @@
 export { parseSchedulingNudge } from './nudge-parser.js'
 export type { NudgeInput, NudgeOutput } from './nudge-parser.js'
 export { createAIProvider } from './provider.js'
+export type { AIProviderEnv } from './provider.js'
