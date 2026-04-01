@@ -26,7 +26,15 @@
     "DATABASE_URL": "postgresql://placeholder",
     "ENVIRONMENT": "production",
     "GLITCHTIP_DSN": "",
-    "POSTHOG_API_KEY": ""
+    "POSTHOG_API_KEY": "",
+    // Google OAuth2 credentials for Google Calendar integration (Story 3.3).
+    // Set via `wrangler secret put GOOGLE_CLIENT_ID` — never committed.
+    "GOOGLE_CLIENT_ID": "",
+    // Set via `wrangler secret put GOOGLE_CLIENT_SECRET` — never committed.
+    "GOOGLE_CLIENT_SECRET": "",
+    // 32-byte AES key for encrypting Google Calendar OAuth tokens at rest (NFR-S4).
+    // Set via `wrangler secret put CALENDAR_TOKEN_KEY` — never committed.
+    "CALENDAR_TOKEN_KEY": ""
   }
 
   // "kv_namespaces": [],
