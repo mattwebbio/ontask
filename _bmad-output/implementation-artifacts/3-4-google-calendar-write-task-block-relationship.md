@@ -290,6 +290,20 @@ apps/flutter/lib/core/router/app_router.dart (modified)
 _bmad-output/implementation-artifacts/3-4-google-calendar-write-task-block-relationship.md (modified)
 _bmad-output/implementation-artifacts/sprint-status.yaml (modified)
 
+### Review Findings
+
+- [ ] [Review][Decision] AC1 link vs. plain-text ID — `writeTaskBlock` sets `description: 'Scheduled by On Task · Task ID: ${params.taskId}'` — plain text, not a URL. AC1 (FR11) says "a link back to the task". Needs a decision: is `https://app.ontaskhq.com/tasks/<id>` the intended link format? [apps/api/src/services/calendar/google.ts:57]
+- [ ] [Review][Patch] `CalendarEventDto.summary` optional and API never sends it — event titles always render as fallback string "Calendar Event" [apps/api/src/routes/calendar.ts:302-307, apps/flutter/lib/features/today/data/calendar_event_dto.dart:19]
+- [ ] [Review][Patch] `DateTime.parse()` in `CalendarEventDto` getters can throw `FormatException`; uncaught in `_buildBlocks()` — crashes timeline on bad API data [apps/flutter/lib/features/today/data/calendar_event_dto.dart:26-27, apps/flutter/lib/features/today/presentation/widgets/timeline_view.dart:122-135]
+- [ ] [Review][Patch] `updateTaskBlock` returns false for both 404 and 401; 401 (expired token mid-request) incorrectly triggers create-new-event fallback in `syncScheduledBlocksToCalendar` [apps/api/src/services/calendar/google.ts:141-145, apps/api/src/services/calendar/index.ts:128-151]
+- [ ] [Review][Patch] PATCH-failed fallback: if `writeTaskBlock` succeeds but `db.update()` throws, old `googleEventId` retained in DB → subsequent runs loop creating new events [apps/api/src/services/calendar/index.ts:141-151]
+- [ ] [Review][Patch] New-block insert uses plain `db.insert()` not `onConflictDoUpdate` — race condition on simultaneous scheduling runs violates unique constraint and is silently swallowed [apps/api/src/services/calendar/index.ts:168-176]
+- [ ] [Review][Patch] `writeTaskBlock_success` test assertion too weak — accepts null return, would pass even if function always failed [apps/api/test/services/calendar-write.test.ts:134]
+- [ ] [Review][Patch] `onBlockTapped` early-return in `_handleBlockTapped` bypasses AC3 navigation; also passes `onBlockTapped` to `TimelinePainter` creating double-tap risk [apps/flutter/lib/features/today/presentation/widgets/timeline_view.dart:170-173, 227]
+- [x] [Review][Defer] `loadAndRefreshToken` filters DB by `connectionId` only; userId ownership enforced in-memory — functionally correct but not index-optimal [apps/api/src/services/calendar/google.ts:175-200] — deferred, pre-existing pattern from fetchGoogleCalendarEvents
+- [x] [Review][Defer] AC3 `onBlockTapped` design concern — injection override bypasses navigation in test contexts; production path (no override) is correct [apps/flutter/lib/features/today/presentation/widgets/timeline_view.dart:170-173] — deferred, production behavior is correct
+- [x] [Review][Defer] Flutter `getCalendarEvents()` catch block silently discards errors with no debug logging [apps/flutter/lib/features/today/data/today_repository.dart:112] — deferred, intentional per partial-failure spec
+
 ## Change Log
 
 - 2026-03-31: Story 3.4 implemented — Google Calendar write & task-block relationship

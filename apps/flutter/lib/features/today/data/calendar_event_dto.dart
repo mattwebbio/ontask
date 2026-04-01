@@ -22,9 +22,9 @@ abstract class CalendarEventDto with _$CalendarEventDto {
   factory CalendarEventDto.fromJson(Map<String, dynamic> json) =>
       _$CalendarEventDtoFromJson(json);
 
-  /// Parsed start time as [DateTime].
-  DateTime get startDateTime => DateTime.parse(startTime);
+  /// Parsed start time as [DateTime]. Falls back to epoch on parse failure.
+  DateTime get startDateTime => DateTime.tryParse(startTime) ?? DateTime.fromMillisecondsSinceEpoch(0);
 
-  /// Parsed end time as [DateTime].
-  DateTime get endDateTime => DateTime.parse(endTime);
+  /// Parsed end time as [DateTime]. Falls back to epoch on parse failure.
+  DateTime get endDateTime => DateTime.tryParse(endTime) ?? DateTime.fromMillisecondsSinceEpoch(0);
 }

@@ -3,6 +3,7 @@ import { calendarConnectionsTable, taskCalendarBlocksTable } from '@ontask/core'
 import { and, eq } from 'drizzle-orm'
 import { createDb } from '../../db/index.js'
 import { fetchGoogleCalendarEvents, writeTaskBlock, updateTaskBlock } from './google.js'
+import type { UpdateTaskBlockResult } from './google.js'
 
 // ── Calendar service aggregator ──────────────────────────────────────────────
 // Queries all active calendar connections for a user and aggregates events from
@@ -99,13 +100,13 @@ export async function syncScheduledBlocksToCalendar(
           if (existing.length > 0) {
             const row = existing[0]
 
-            // Check if times match — if so, skip
+            // Check if times match — if so, skip (no-op)
             const startMatch = row.scheduledStartTime.getTime() === block.startTime.getTime()
             const endMatch = row.scheduledEndTime.getTime() === block.endTime.getTime()
             if (startMatch && endMatch) continue
 
             // Times differ — attempt PATCH
-            const updated = await updateTaskBlock(
+            const updateResult: UpdateTaskBlockResult = await updateTaskBlock(
               {
                 connectionId: connection.id,
                 userId,
@@ -116,7 +117,8 @@ export async function syncScheduledBlocksToCalendar(
               env,
             )
 
-            if (updated) {
+            if (updateResult === 'updated') {
+              // PATCH succeeded — update DB timestamps
               await db
                 .update(taskCalendarBlocksTable)
                 .set({
@@ -125,8 +127,8 @@ export async function syncScheduledBlocksToCalendar(
                   updatedAt: new Date(),
                 })
                 .where(eq(taskCalendarBlocksTable.id, row.id))
-            } else {
-              // PATCH failed (event may have been deleted externally) — create new
+            } else if (updateResult === 'not_found') {
+              // Event was externally deleted (404) — create a new one and upsert DB row
               const newEventId = await writeTaskBlock(
                 {
                   connectionId: connection.id,
@@ -139,19 +141,31 @@ export async function syncScheduledBlocksToCalendar(
                 env,
               )
               if (newEventId) {
+                // Upsert so stale googleEventId is always replaced atomically
                 await db
-                  .update(taskCalendarBlocksTable)
-                  .set({
+                  .insert(taskCalendarBlocksTable)
+                  .values({
+                    taskId: block.taskId,
+                    userId,
+                    connectionId: connection.id,
                     googleEventId: newEventId,
                     scheduledStartTime: block.startTime,
                     scheduledEndTime: block.endTime,
-                    updatedAt: new Date(),
                   })
-                  .where(eq(taskCalendarBlocksTable.id, row.id))
+                  .onConflictDoUpdate({
+                    target: [taskCalendarBlocksTable.taskId, taskCalendarBlocksTable.connectionId],
+                    set: {
+                      googleEventId: newEventId,
+                      scheduledStartTime: block.startTime,
+                      scheduledEndTime: block.endTime,
+                      updatedAt: new Date(),
+                    },
+                  })
               }
             }
+            // 'error' → don't attempt fallback (auth/network failure would also cause create to fail)
           } else {
-            // No existing row — create new calendar event
+            // No existing row — create new calendar event and upsert to handle races
             const newEventId = await writeTaskBlock(
               {
                 connectionId: connection.id,
@@ -165,14 +179,26 @@ export async function syncScheduledBlocksToCalendar(
             )
 
             if (newEventId) {
-              await db.insert(taskCalendarBlocksTable).values({
-                taskId: block.taskId,
-                userId,
-                connectionId: connection.id,
-                googleEventId: newEventId,
-                scheduledStartTime: block.startTime,
-                scheduledEndTime: block.endTime,
-              })
+              // Upsert guards against parallel scheduling run race conditions
+              await db
+                .insert(taskCalendarBlocksTable)
+                .values({
+                  taskId: block.taskId,
+                  userId,
+                  connectionId: connection.id,
+                  googleEventId: newEventId,
+                  scheduledStartTime: block.startTime,
+                  scheduledEndTime: block.endTime,
+                })
+                .onConflictDoUpdate({
+                  target: [taskCalendarBlocksTable.taskId, taskCalendarBlocksTable.connectionId],
+                  set: {
+                    googleEventId: newEventId,
+                    scheduledStartTime: block.startTime,
+                    scheduledEndTime: block.endTime,
+                    updatedAt: new Date(),
+                  },
+                })
             }
           }
         } catch (blockError) {

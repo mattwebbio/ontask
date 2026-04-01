@@ -129,9 +129,8 @@ describe('writeTaskBlock', () => {
       stubEnv as CloudflareBindings,
     )
 
-    // May return null if crypto decryption fails on mock data;
-    // the important thing is it doesn't throw and returns null or a string
-    expect(result === null || typeof result === 'string').toBe(true)
+    // fetch is mocked to return a 201 with a valid event id, so result must be the event id string
+    expect(result).toBe(stubGoogleEventId)
     fetchSpy.mockRestore()
   })
 
@@ -176,7 +175,7 @@ describe('updateTaskBlock', () => {
     vi.restoreAllMocks()
   })
 
-  it('updateTaskBlock_missingTokenKey_returnsFalse', async () => {
+  it('updateTaskBlock_missingTokenKey_returnsError', async () => {
     const result = await updateTaskBlock(
       {
         connectionId: stubConnectionId,
@@ -188,7 +187,7 @@ describe('updateTaskBlock', () => {
       stubEnvNoTokenKey as CloudflareBindings,
     )
 
-    expect(result).toBe(false)
+    expect(result).toBe('error')
   })
 
   it('updateTaskBlock_success_returnsTrue', async () => {
@@ -217,12 +216,12 @@ describe('updateTaskBlock', () => {
       stubEnv as CloudflareBindings,
     )
 
-    // Returns true or false depending on token decrypt success (mock)
-    expect(typeof result).toBe('boolean')
+    // Returns 'updated' or 'error' depending on token decrypt success (mock)
+    expect(result === 'updated' || result === 'error').toBe(true)
     fetchSpy.mockRestore()
   })
 
-  it('updateTaskBlock_googleApiError_returnsFalse', async () => {
+  it('updateTaskBlock_eventNotFound_returnsNotFound', async () => {
     vi.mocked(createDb).mockReturnValue(makeDbMock() as AnyJson)
 
     vi.mock('../../src/lib/crypto.js', () => ({
@@ -245,7 +244,7 @@ describe('updateTaskBlock', () => {
       stubEnv as CloudflareBindings,
     )
 
-    expect(result).toBe(false)
+    expect(result).toBe('not_found')
     fetchSpy.mockRestore()
   })
 })

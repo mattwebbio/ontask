@@ -54,7 +54,7 @@ export async function writeTaskBlock(
 
     const eventBody = {
       summary: params.taskTitle,
-      description: `Scheduled by On Task · Task ID: ${params.taskId}`,
+      description: `Scheduled by On Task · https://app.ontaskhq.com/tasks/${params.taskId}`,
       start: { dateTime: params.startTime.toISOString(), timeZone: 'UTC' },
       end: { dateTime: params.endTime.toISOString(), timeZone: 'UTC' },
     }
@@ -94,29 +94,34 @@ export async function writeTaskBlock(
 
 // ── updateTaskBlock ───────────────────────────────────────────────────────────
 
+export type UpdateTaskBlockResult = 'updated' | 'not_found' | 'error'
+
 /**
  * Updates the time fields of an existing Google Calendar event.
  *
  * Uses PATCH to update only start/end times (partial update).
- * Returns true on success, false on any failure (partial failure tolerant).
+ * Returns 'updated' on success, 'not_found' if the event was externally deleted
+ * (404), or 'error' for any other failure. Callers should only attempt a
+ * create-fallback on 'not_found' — 'error' typically means auth/network issues
+ * that would also cause a subsequent create to fail.
  *
  * @param params - Connection, user, event ID, and new time information
  * @param env - Cloudflare worker bindings
- * @returns true on success, false on failure
+ * @returns UpdateTaskBlockResult
  */
 export async function updateTaskBlock(
   params: UpdateTaskBlockParams,
   env: CloudflareBindings,
-): Promise<boolean> {
+): Promise<UpdateTaskBlockResult> {
   const calendarTokenKey = env.CALENDAR_TOKEN_KEY
   if (!calendarTokenKey) {
     console.error('[calendar/google] updateTaskBlock: CALENDAR_TOKEN_KEY not set')
-    return false
+    return 'error'
   }
 
   try {
     const tokenResult = await loadAndRefreshToken(params.connectionId, params.userId, env, calendarTokenKey)
-    if (!tokenResult) return false
+    if (!tokenResult) return 'error'
 
     const { accessToken, calendarId } = tokenResult
 
@@ -138,17 +143,24 @@ export async function updateTaskBlock(
       },
     )
 
+    if (response.status === 404) {
+      console.error(
+        `[calendar/google] updateTaskBlock: Event ${params.googleEventId} not found (externally deleted)`,
+      )
+      return 'not_found'
+    }
+
     if (!response.ok) {
       console.error(
         `[calendar/google] updateTaskBlock: Google Calendar API returned ${response.status} for event ${params.googleEventId}`,
       )
-      return false
+      return 'error'
     }
 
-    return true
+    return 'updated'
   } catch (error) {
     console.error(`[calendar/google] updateTaskBlock: Unexpected error for connection ${params.connectionId}:`, error)
-    return false
+    return 'error'
   }
 }
 
@@ -428,5 +440,6 @@ function mapGoogleEventToCalendarEvent(item: GoogleCalendarEventItem): CalendarE
     startTime: new Date(item.start.dateTime ?? item.start.date ?? ''),
     endTime: new Date(item.end.dateTime ?? item.end.date ?? ''),
     isAllDay,
+    summary: item.summary,
   }
 }
