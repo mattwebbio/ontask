@@ -144,7 +144,7 @@ app.openapi(confirmSetupRoute, async (c) => {
   //             call Stripe API to retrieve PaymentMethod from SetupIntent;
   //             store stripePaymentMethodId, paymentMethodLast4, paymentMethodBrand
   const body = c.req.valid('json')
-  console.log(`[stub] Confirming payment setup session token: ${body.sessionToken}`)
+  void body.sessionToken // consumed by TODO(impl) validation above
   return c.json(
     ok({
       hasPaymentMethod: true,

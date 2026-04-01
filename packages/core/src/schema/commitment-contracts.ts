@@ -15,7 +15,7 @@ export const commitmentContractsTable = pgTable('commitment_contracts', {
   paymentMethodBrand: text(),
   hasActiveStakes: boolean().default(false).notNull(),
   setupSessionToken: text(),
-  setupSessionExpiresAt: timestamp(),
-  createdAt: timestamp().defaultNow().notNull(),
-  updatedAt: timestamp().defaultNow().notNull(),
+  setupSessionExpiresAt: timestamp({ withTimezone: true }),
+  createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
 })

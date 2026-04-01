@@ -7,7 +7,7 @@ CREATE TABLE "commitment_contracts" (
 	"payment_method_brand" text,
 	"has_active_stakes" boolean DEFAULT false NOT NULL,
 	"setup_session_token" text,
-	"setup_session_expires_at" timestamp,
-	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL
+	"setup_session_expires_at" timestamp with time zone,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
