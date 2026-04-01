@@ -24,6 +24,7 @@ Future<void> pumpStakeSheetScreen(
   WidgetTester tester, {
   required MockCommitmentContractsRepository mockRepo,
   String taskId = 'task-id',
+  String taskTitle = 'Test Task',
   int? existingStakeAmountCents,
 }) async {
   await tester.pumpWidget(
@@ -36,6 +37,7 @@ Future<void> pumpStakeSheetScreen(
         home: Scaffold(
           body: StakeSheetScreen(
             taskId: taskId,
+            taskTitle: taskTitle,
             existingStakeAmountCents: existingStakeAmountCents,
           ),
         ),

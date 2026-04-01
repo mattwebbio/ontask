@@ -1,5 +1,10 @@
 # Deferred Work
 
+## Deferred from: code review of 6-8-full-commitment-lock-flow-animation (2026-04-01)
+
+- **`minSize` deprecated in `task_edit_inline.dart` (lines 670, 694)** — Pre-existing before Story 6.8 (present in HEAD commit `d5f79a4`); Story 6.8 shifts line numbers by +1 only. Replace `minSize` with `minimumSize` in a future task_edit_inline refactor pass.
+- **`deadline` hardcoded as `DateTime.now().add(const Duration(days: 30))` in `StakeSheetScreen._onConfirm`** — Documented in story Deferred Items. Ceremony card shows a fake deadline. Wire real task deadline when task detail API integration lands.
+
 ## Deferred from: code review of 6-7-group-commitment-arrangements-pool-mode (2026-04-01)
 
 - **`status` column uses unconstrained text, no DB-level enum/CHECK** — `group_commitments.status` allows any string. Application-level enforcement only; add `pgEnum` or CHECK constraint in a future schema hardening pass.

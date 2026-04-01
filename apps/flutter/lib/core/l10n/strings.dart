@@ -876,6 +876,18 @@ class AppStrings {
   static const String impactCommitmentsKeptLabel = 'commitments kept';
   static const String settingsImpact = 'Impact';
 
+  // ── Commitment lock ceremony (UX-DR8, UX-DR20, UX-DR32) ─────────────────────
+  /// Eyebrow label on the full-screen Commitment Ceremony Card.
+  static const String commitmentCeremonyEyebrow = 'YOUR COMMITMENT';
+
+  /// Sub-copy on the Commitment Ceremony Card — future self voice (UX-DR32).
+  static const String commitmentCeremonyCopy =
+      'Your future self is counting on you.';
+
+  /// Error shown if the lock API call fails (for future implementation).
+  static const String lockConfirmError =
+      'Could not lock your commitment. Please try again.';
+
   // ── Group commitments & pool mode (FR29, FR30) ──────────────────────────────
   static const String groupCommitmentProposalTitle = 'Group commitment';
   static const String groupCommitmentReviewTitle = 'Review commitment';

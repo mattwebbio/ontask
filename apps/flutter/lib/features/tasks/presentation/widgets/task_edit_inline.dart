@@ -598,6 +598,7 @@ class _TaskEditInlineState extends ConsumerState<TaskEditInline> {
       context: context,
       builder: (_) => StakeSheetScreen(
         taskId: widget.task.id,
+        taskTitle: widget.task.title,
         existingStakeAmountCents: _localStakeAmountCents,
       ),
     );
