@@ -10,6 +10,7 @@ import '../../tasks/presentation/tasks_provider.dart';
 import '../data/guided_chat_repository.dart';
 import '../domain/chat_message.dart';
 import '../domain/guided_chat_response.dart';
+import '../domain/guided_chat_task_draft.dart';
 
 /// Full-height modal sheet for guided chat task capture (FR14 / UX-DR15).
 ///
@@ -92,7 +93,9 @@ class _GuidedChatSheetState extends ConsumerState<GuidedChatSheet> {
 
     setState(() => _isLoading = true);
 
-    // Build message list for API — use all user/assistant messages so far
+    // Build message list for API — use all user/assistant messages so far.
+    // The API schema requires messages.min(1), so seed with a greeting when
+    // the thread is empty (i.e., the opening LLM turn before the user speaks).
     final apiMessages = _messages
         .where((m) => m['isError'] != true)
         .map((m) => ChatMessage(
@@ -100,6 +103,10 @@ class _GuidedChatSheetState extends ConsumerState<GuidedChatSheet> {
               content: m['content'] as String,
             ))
         .toList();
+
+    if (apiMessages.isEmpty) {
+      apiMessages.add(ChatMessage(role: 'user', content: 'Hi, I need to create a task'));
+    }
 
     try {
       final repo = ref.read(guidedChatRepositoryProvider);
@@ -387,8 +394,7 @@ class _ConfirmationCard extends StatelessWidget {
     required this.onCreateTask,
   });
 
-  // ignore: avoid-dynamic
-  final dynamic draft; // GuidedChatTaskDraft
+  final GuidedChatTaskDraft draft;
   final bool isSubmitting;
   final OnTaskColors colors;
   final VoidCallback onCreateTask;
@@ -398,12 +404,12 @@ class _ConfirmationCard extends StatelessWidget {
     // Build field rows to display
     final rows = <_FieldRow>[];
 
-    final title = draft.title as String?;
+    final title = draft.title;
     if (title != null && title.isNotEmpty) {
       rows.add(_FieldRow(label: 'Task', value: title));
     }
 
-    final dueDate = draft.dueDate as String?;
+    final dueDate = draft.dueDate;
     if (dueDate != null) {
       final date = DateTime.tryParse(dueDate);
       rows.add(_FieldRow(
@@ -414,7 +420,7 @@ class _ConfirmationCard extends StatelessWidget {
       ));
     }
 
-    final energyRequirement = draft.energyRequirement as String?;
+    final energyRequirement = draft.energyRequirement;
     if (energyRequirement != null) {
       final label = energyRequirement == 'high_focus'
           ? 'High focus'
@@ -424,7 +430,7 @@ class _ConfirmationCard extends StatelessWidget {
       rows.add(_FieldRow(label: 'Energy', value: label));
     }
 
-    final duration = draft.estimatedDurationMinutes as int?;
+    final duration = draft.estimatedDurationMinutes;
     if (duration != null) {
       rows.add(_FieldRow(label: 'Duration', value: '${duration}min'));
     }

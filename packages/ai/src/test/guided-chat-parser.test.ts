@@ -65,6 +65,7 @@ describe('conductGuidedChatTurn', () => {
 
   afterEach(() => {
     vi.clearAllMocks()
+    vi.useRealTimers()
   })
 
   it('first turn (empty messages) — LLM returns opening question, isComplete: false', async () => {
@@ -290,5 +291,18 @@ describe('conductGuidedChatTurn', () => {
     expect(result.isComplete).toBe(true)
     expect(result.extractedTask?.title).toBeNull()
     expect(result.extractedTask?.dueDate).toBe('2026-04-05T00:00:00.000Z')
+  })
+
+  it('isComplete true with extractedTask null — extractedTask is undefined', async () => {
+    mockLlmResponse({
+      reply: 'All done!',
+      isComplete: true,
+      extractedTask: null,
+    })
+
+    const result = await conductGuidedChatTurn(makeInput())
+
+    expect(result.isComplete).toBe(true)
+    expect(result.extractedTask).toBeUndefined()
   })
 })
