@@ -119,10 +119,18 @@ void main() {
   // ── AddTabSheet: recurrence picker ─────────────────────────────────────
 
   group('AddTabSheet — recurrence picker', () {
-    testWidgets('shows recurrence picker label', (tester) async {
-      await tester.pumpWidget(buildAddTabSheet());
+    // Helper: open the sheet and switch to Form mode
+    // (Sheet defaults to Quick Capture mode since Story 4.1)
+    Future<void> openSheetInFormMode(WidgetTester tester) async {
       await tester.tap(find.text('Open'));
       await tester.pumpAndSettle();
+      await tester.tap(find.text(AppStrings.addTaskModeForm));
+      await tester.pump();
+    }
+
+    testWidgets('shows recurrence picker label', (tester) async {
+      await tester.pumpWidget(buildAddTabSheet());
+      await openSheetInFormMode(tester);
 
       // Scroll to recurrence picker
       await tester.dragUntilVisible(
@@ -135,8 +143,7 @@ void main() {
 
     testWidgets('recurrence picker shows options when tapped', (tester) async {
       await tester.pumpWidget(buildAddTabSheet());
-      await tester.tap(find.text('Open'));
-      await tester.pumpAndSettle();
+      await openSheetInFormMode(tester);
 
       // Scroll to recurrence picker
       await tester.dragUntilVisible(
@@ -155,8 +162,7 @@ void main() {
 
     testWidgets('selecting weekly shows day-of-week picker', (tester) async {
       await tester.pumpWidget(buildAddTabSheet());
-      await tester.tap(find.text('Open'));
-      await tester.pumpAndSettle();
+      await openSheetInFormMode(tester);
 
       // Scroll to and open recurrence picker
       await tester.dragUntilVisible(
@@ -179,8 +185,7 @@ void main() {
 
     testWidgets('selecting custom shows interval picker', (tester) async {
       await tester.pumpWidget(buildAddTabSheet());
-      await tester.tap(find.text('Open'));
-      await tester.pumpAndSettle();
+      await openSheetInFormMode(tester);
 
       // Scroll to and open recurrence picker
       await tester.dragUntilVisible(
@@ -202,8 +207,7 @@ void main() {
 
     testWidgets('selecting daily updates label', (tester) async {
       await tester.pumpWidget(buildAddTabSheet());
-      await tester.tap(find.text('Open'));
-      await tester.pumpAndSettle();
+      await openSheetInFormMode(tester);
 
       // Scroll to and open recurrence picker
       await tester.dragUntilVisible(

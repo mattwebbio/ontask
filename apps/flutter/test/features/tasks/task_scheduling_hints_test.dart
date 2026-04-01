@@ -94,26 +94,32 @@ void main() {
   // ── AddTabSheet: scheduling hint pickers ─────────────────────────────────
 
   group('AddTabSheet — scheduling hint pickers', () {
-    testWidgets('shows time window picker label', (tester) async {
-      await tester.pumpWidget(buildAddTabSheet());
+    // Helper: open the sheet and switch to Form mode
+    // (Sheet defaults to Quick Capture mode since Story 4.1)
+    Future<void> openSheetInFormMode(WidgetTester tester) async {
       await tester.tap(find.text('Open'));
       await tester.pumpAndSettle();
+      await tester.tap(find.text(AppStrings.addTaskModeForm));
+      await tester.pump();
+    }
+
+    testWidgets('shows time window picker label', (tester) async {
+      await tester.pumpWidget(buildAddTabSheet());
+      await openSheetInFormMode(tester);
 
       expect(find.text(AppStrings.taskTimeWindowLabel), findsOneWidget);
     });
 
     testWidgets('shows energy requirement picker label', (tester) async {
       await tester.pumpWidget(buildAddTabSheet());
-      await tester.tap(find.text('Open'));
-      await tester.pumpAndSettle();
+      await openSheetInFormMode(tester);
 
       expect(find.text(AppStrings.taskEnergyLabel), findsOneWidget);
     });
 
     testWidgets('shows priority picker label', (tester) async {
       await tester.pumpWidget(buildAddTabSheet());
-      await tester.tap(find.text('Open'));
-      await tester.pumpAndSettle();
+      await openSheetInFormMode(tester);
 
       expect(find.text(AppStrings.taskPriorityLabel), findsOneWidget);
     });
@@ -121,8 +127,7 @@ void main() {
     testWidgets('time window picker shows options when tapped',
         (tester) async {
       await tester.pumpWidget(buildAddTabSheet());
-      await tester.tap(find.text('Open'));
-      await tester.pumpAndSettle();
+      await openSheetInFormMode(tester);
 
       // Tap the time window picker row
       await tester.tap(find.text(AppStrings.taskTimeWindowLabel));
@@ -138,8 +143,7 @@ void main() {
     testWidgets('energy requirement picker shows options when tapped',
         (tester) async {
       await tester.pumpWidget(buildAddTabSheet());
-      await tester.tap(find.text('Open'));
-      await tester.pumpAndSettle();
+      await openSheetInFormMode(tester);
 
       // Scroll to energy picker and tap
       await tester.dragUntilVisible(
@@ -158,8 +162,7 @@ void main() {
 
     testWidgets('priority picker shows options when tapped', (tester) async {
       await tester.pumpWidget(buildAddTabSheet());
-      await tester.tap(find.text('Open'));
-      await tester.pumpAndSettle();
+      await openSheetInFormMode(tester);
 
       // Scroll to priority picker and tap
       await tester.dragUntilVisible(
@@ -178,8 +181,7 @@ void main() {
 
     testWidgets('selecting time window updates label', (tester) async {
       await tester.pumpWidget(buildAddTabSheet());
-      await tester.tap(find.text('Open'));
-      await tester.pumpAndSettle();
+      await openSheetInFormMode(tester);
 
       // Open time window picker
       await tester.tap(find.text(AppStrings.taskTimeWindowLabel));
@@ -200,8 +202,7 @@ void main() {
     testWidgets('selecting custom time window shows time range picker',
         (tester) async {
       await tester.pumpWidget(buildAddTabSheet());
-      await tester.tap(find.text('Open'));
-      await tester.pumpAndSettle();
+      await openSheetInFormMode(tester);
 
       // Open time window picker
       await tester.tap(find.text(AppStrings.taskTimeWindowLabel));

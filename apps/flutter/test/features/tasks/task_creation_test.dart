@@ -61,6 +61,9 @@ void main() {
       await tester.pumpWidget(buildWidget());
       await tester.tap(find.text('Open'));
       await tester.pumpAndSettle();
+      // Sheet opens in Quick Capture mode — switch to Form mode
+      await tester.tap(find.text(AppStrings.addTaskModeForm));
+      await tester.pump();
 
       expect(
         find.byWidgetPredicate(
@@ -76,6 +79,9 @@ void main() {
       await tester.pumpWidget(buildWidget());
       await tester.tap(find.text('Open'));
       await tester.pumpAndSettle();
+      // Sheet opens in Quick Capture mode — switch to Form mode
+      await tester.tap(find.text(AppStrings.addTaskModeForm));
+      await tester.pump();
 
       expect(
         find.byWidgetPredicate(
@@ -91,6 +97,9 @@ void main() {
       await tester.pumpWidget(buildWidget());
       await tester.tap(find.text('Open'));
       await tester.pumpAndSettle();
+      // Sheet opens in Quick Capture mode — switch to Form mode
+      await tester.tap(find.text(AppStrings.addTaskModeForm));
+      await tester.pump();
 
       expect(find.text(AppStrings.addTaskDueDateLabel), findsOneWidget);
     });
@@ -108,6 +117,9 @@ void main() {
       await tester.pumpWidget(buildWidget());
       await tester.tap(find.text('Open'));
       await tester.pumpAndSettle();
+      // Sheet opens in Quick Capture mode — switch to Form mode
+      await tester.tap(find.text(AppStrings.addTaskModeForm));
+      await tester.pump();
 
       // Tap create without entering title
       await tester.tap(find.text(AppStrings.addTaskCreateButton));

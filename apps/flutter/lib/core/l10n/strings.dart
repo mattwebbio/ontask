@@ -544,6 +544,43 @@ class AppStrings {
   /// Label prefix for the stake-returned row (shown when stakeAmount != null).
   static const String chapterBreakStakeLabel = 'Stake returned';
 
+  // ── NLP task capture (FR1b) ──────────────────────────────────────────────
+
+  /// Placeholder for the Quick Capture NLP input field.
+  /// Uses "future self" voice per UX-DR spec line 1427.
+  static const String addTaskNlpPlaceholder = 'What does your future self need to do?';
+
+  /// Inline warning shown when the AI returns low confidence for a task utterance.
+  static const String addTaskNlpLowConfidence =
+      "I couldn't understand that — try something like 'call dentist Thursday at 2pm'";
+
+  /// Generic error shown when the NLP parse request fails unexpectedly.
+  static const String addTaskNlpError = 'Something went wrong. Please try again.';
+
+  /// Loading indicator label shown while the NLP parse is in progress.
+  static const String addTaskNlpParsing = 'Understanding your task\u2026';
+
+  /// Mode toggle label for Quick Capture NLP mode.
+  static const String addTaskModeQuickCapture = 'Quick Capture';
+
+  /// Mode toggle label for Form mode.
+  static const String addTaskModeForm = 'Form';
+
+  /// Pill label for the parsed task title.
+  static const String addTaskNlpTitle = 'Task';
+
+  /// Pill label for the parsed due date.
+  static const String addTaskNlpDueDate = 'Due';
+
+  /// Pill label for the parsed estimated duration.
+  static const String addTaskNlpDuration = 'Duration';
+
+  /// Pill label for the parsed energy requirement.
+  static const String addTaskNlpEnergy = 'Energy';
+
+  /// Pill label for the parsed list assignment.
+  static const String addTaskNlpList = 'List';
+
   // ── Scheduling nudge (FR14) ──────────────────────────────────────────────
   /// CTA label on TodayTaskRow swipe action that opens the AI nudge sheet.
   static const String todayRowNudge = 'Reschedule with AI';
