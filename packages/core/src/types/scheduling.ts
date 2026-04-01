@@ -56,5 +56,6 @@ export interface ScheduleOutput {
 }
 
 export interface ExplainOutput {
+  taskId?: string // identifies which task this explanation belongs to (used by API response shape)
   reasons: string[]
 }

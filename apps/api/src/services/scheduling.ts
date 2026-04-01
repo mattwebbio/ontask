@@ -1,6 +1,18 @@
 import { schedule } from '@ontask/scheduling'
-import type { ScheduleOutput } from '@ontask/core'
+import type { ScheduleInput, ScheduleOutput } from '@ontask/core'
 import { fetchAllCalendarEvents, syncScheduledBlocksToCalendar, removeStaleCalendarBlocks } from './calendar/index.js'
+
+/**
+ * RunScheduleResult — the full result of running the scheduling engine,
+ * including both the schedule output and the input used to generate it.
+ *
+ * The GET /v1/tasks/:id/schedule route needs access to both the schedule
+ * output and the original input so it can call explain() per-task request.
+ */
+export interface RunScheduleResult {
+  schedule: ScheduleOutput
+  scheduleInput: ScheduleInput
+}
 
 /**
  * runScheduleForUser — orchestrates the scheduling engine for a single user.
@@ -14,19 +26,21 @@ import { fetchAllCalendarEvents, syncScheduledBlocksToCalendar, removeStaleCalen
 export async function runScheduleForUser(
   userId: string,
   env: CloudflareBindings,
-): Promise<ScheduleOutput> {
+): Promise<RunScheduleResult> {
   // TODO(story-impl): load real tasks from DB using userId
   const now = new Date()
   const windowEnd = new Date(now.getTime() + 14 * 24 * 60 * 60_000) // 14 days ahead
 
   const calendarEvents = await fetchAllCalendarEvents(userId, now, windowEnd, env)
 
-  const result = schedule({
+  const scheduleInput: ScheduleInput = {
     tasks: [],
     calendarEvents,
     windowStart: now,
     windowEnd,
-  })
+  }
+
+  const result = schedule(scheduleInput)
 
   // Remove blocks for tasks no longer in the schedule (deleted/completed tasks)
   // TODO(story-impl): pass real task IDs when task loading is wired
@@ -38,5 +52,8 @@ export async function runScheduleForUser(
   await syncScheduledBlocksToCalendar(userId, result.scheduledBlocks, [], env)
 
   // The API service layer sets generatedAt — the engine never calls new Date()
-  return { ...result, generatedAt: new Date() }
+  return {
+    schedule: { ...result, generatedAt: new Date() },
+    scheduleInput,
+  }
 }

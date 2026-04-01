@@ -1,11 +1,12 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart' show Colors, Dismissible, DismissDirection, Theme;
+import 'package:flutter/material.dart' show Colors, Dismissible, DismissDirection, Theme, showModalBottomSheet;
 import 'package:flutter/semantics.dart';
 
 import '../../../../core/l10n/strings.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../now/presentation/widgets/now_task_card.dart';
+import '../../../scheduling/presentation/widgets/schedule_explanation_sheet.dart';
 
 /// Visual states for a task row in the Today tab.
 ///
@@ -40,6 +41,10 @@ class TodayTaskRow extends StatelessWidget {
   final VoidCallback? onReschedule;
   final VoidCallback? onStartTimer;
 
+  /// If non-null, shows a "?" button in the trailing area (for [upcoming] and
+  /// [current] states) that opens the scheduling explanation sheet (FR13).
+  final VoidCallback? onWhyHere;
+
   /// If non-null, indicates the task has a timer running/paused with this
   /// many elapsed seconds. Shows an elapsed indicator instead of Start button.
   final int? timerElapsedSeconds;
@@ -52,6 +57,7 @@ class TodayTaskRow extends StatelessWidget {
     this.onComplete,
     this.onReschedule,
     this.onStartTimer,
+    this.onWhyHere,
     this.timerElapsedSeconds,
     super.key,
   });
@@ -121,6 +127,8 @@ class TodayTaskRow extends StatelessWidget {
             ),
             // Timer indicator or start action
             if (!isMuted && !isCalendarEvent) _buildTimerAction(colors),
+            // "Why here?" button — only for upcoming and current states
+            if (_showWhyHereButton()) _buildWhyHereButton(context, colors),
             // Trailing status indicator
             _buildStatusIndicator(colors),
           ],
@@ -202,16 +210,64 @@ class TodayTaskRow extends StatelessWidget {
     return const SizedBox.shrink();
   }
 
+  /// Returns true if the "Why here?" button should be shown.
+  ///
+  /// Only shown for [upcoming] and [current] states when [onWhyHere] is non-null.
+  bool _showWhyHereButton() {
+    if (onWhyHere == null) return false;
+    return rowState == TodayTaskRowState.upcoming ||
+        rowState == TodayTaskRowState.current;
+  }
+
+  /// Builds the small "?" button that opens the scheduling explanation sheet.
+  Widget _buildWhyHereButton(BuildContext context, OnTaskColors colors) {
+    return Semantics(
+      excludeSemantics: true, // handled via CustomSemanticsAction on parent
+      child: SizedBox(
+        height: 44,
+        child: CupertinoButton(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+          minSize: 44,
+          onPressed: () => _openWhyHereSheet(context),
+          child: Text(
+            '?',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: colors.textSecondary.withValues(alpha: 0.6),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Opens the [ScheduleExplanationSheet] as a modal bottom sheet.
+  void _openWhyHereSheet(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => ScheduleExplanationSheet(taskId: taskId),
+    );
+  }
+
   /// Builds VoiceOver custom semantic actions.
   Map<CustomSemanticsAction, VoidCallback>? _buildCustomActions() {
-    if (onStartTimer == null) return null;
-    if (timerElapsedSeconds != null && timerElapsedSeconds! > 0) return null;
+    final actions = <CustomSemanticsAction, VoidCallback>{};
 
-    return {
-      const CustomSemanticsAction(
-        label: AppStrings.todayRowStartTimer,
-      ): onStartTimer!,
-    };
+    if (onStartTimer != null &&
+        (timerElapsedSeconds == null || timerElapsedSeconds! == 0)) {
+      actions[const CustomSemanticsAction(label: AppStrings.todayRowStartTimer)] =
+          onStartTimer!;
+    }
+
+    if (_showWhyHereButton()) {
+      actions[const CustomSemanticsAction(label: AppStrings.todayRowWhyHere)] =
+          onWhyHere!;
+    }
+
+    return actions.isEmpty ? null : actions;
   }
 
   Widget _buildStatusIndicator(OnTaskColors colors) {
