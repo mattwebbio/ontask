@@ -295,8 +295,7 @@ describe('deleteTaskBlock', () => {
       stubEnv as CloudflareBindings,
     )
 
-    // Returns true or false depending on token decrypt success (mock)
-    expect(typeof result).toBe('boolean')
+    expect(result).toBe(true)
     fetchSpy.mockRestore()
   })
 
@@ -322,8 +321,7 @@ describe('deleteTaskBlock', () => {
       stubEnv as CloudflareBindings,
     )
 
-    // Returns true or false depending on token decrypt success (mock)
-    expect(typeof result).toBe('boolean')
+    expect(result).toBe(true)
     fetchSpy.mockRestore()
   })
 
@@ -349,9 +347,7 @@ describe('deleteTaskBlock', () => {
       stubEnv as CloudflareBindings,
     )
 
-    // Returns false on non-204/non-404 responses
-    // (may also return false if token decrypt fails in test env, which is expected)
-    expect(typeof result).toBe('boolean')
+    expect(result).toBe(false)
     fetchSpy.mockRestore()
   })
 })

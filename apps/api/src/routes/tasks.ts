@@ -752,6 +752,31 @@ app.openapi(patchTaskRoute, async (c) => {
   return c.json(ok(stubTask({ id, ...body, dueDate: body.dueDate ?? null })), 200)
 })
 
+// ── DELETE /v1/tasks/:id ─────────────────────────────────────────────────────
+
+const deleteTaskRoute = createRoute({
+  method: 'delete',
+  path: '/v1/tasks/{id}',
+  tags: ['Tasks'],
+  summary: 'Hard-delete a task',
+  description: 'Permanently removes a task and its associated calendar blocks.',
+  request: {
+    params: z.object({ id: z.string().uuid() }),
+  },
+  responses: {
+    204: { description: 'Task deleted' },
+    404: { content: { 'application/json': { schema: ErrorSchema } }, description: 'Task not found' },
+  },
+})
+
+app.openapi(deleteTaskRoute, async (c) => {
+  // TODO(impl): hard-delete task from DB via Drizzle
+  const userId = c.req.header('x-user-id') ?? 'stub-user-id'
+  // Fire-and-forget rescheduling — stale calendar blocks will be cleaned up (NFR-I3)
+  try { c.executionCtx.waitUntil(runScheduleForUser(userId, c.env)) } catch { /* no executionCtx in test */ }
+  return new Response(null, { status: 204 })
+})
+
 // ── DELETE /v1/tasks/:id/archive ────────────────────────────────────────────
 
 const archiveTaskRoute = createRoute({
