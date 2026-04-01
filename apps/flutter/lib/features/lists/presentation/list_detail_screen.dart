@@ -19,6 +19,7 @@ import 'lists_provider.dart';
 import 'sections_provider.dart';
 import 'widgets/bulk_actions_bar.dart';
 import 'widgets/section_widget.dart';
+import 'widgets/share_list_sheet.dart';
 
 /// Shows list title, sections (expandable, nested), and tasks.
 ///
@@ -359,6 +360,13 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
           CupertinoActionSheetAction(
             onPressed: () {
               Navigator.of(ctx).pop();
+              _showShareSheet(context, list);
+            },
+            child: const Text(AppStrings.shareListAction),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.of(ctx).pop();
               _showSaveTemplateDialog(
                 context,
                 list?.title ?? '',
@@ -373,6 +381,18 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
           onPressed: () => Navigator.of(ctx).pop(),
           child: const Text(AppStrings.actionCancel),
         ),
+      ),
+    );
+  }
+
+  void _showShareSheet(BuildContext context, dynamic list) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => ShareListSheet(
+        listId: widget.listId,
+        listTitle: list?.title ?? '',
       ),
     );
   }

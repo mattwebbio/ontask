@@ -289,6 +289,23 @@ class AppStrings {
 
   // ── Lists tab ─────────────────────────────────────────────────────────────
   static const String listsTitle = "Lists";
+
+  // ── List sharing & invitations (FR15, FR16) ───────────────────────────────
+  static const String shareListAction = 'Share list';
+  static const String shareListTitle = 'Invite someone';
+  static const String shareListEmailPlaceholder = 'Email address';
+  static const String shareListSendButton = 'Send invitation';
+  static const String shareListSuccessMessage = 'Invitation sent to {email}.';
+  static const String shareListErrorInvalidEmail = 'Enter a valid email address.';
+  static const String shareListErrorGeneric = 'Something went wrong. Please try again.';
+  static const String inviteAcceptTitle = 'You\u2019re invited';
+  static const String inviteAcceptSubtitle = 'Invited by {inviterName}';
+  static const String inviteAcceptButton = 'Accept & join list';
+  static const String inviteDeclineButton = 'Decline';
+  static const String inviteExpiredMessage = 'This invitation has expired or is no longer valid.';
+  static const String inviteGoToLists = 'Go to Lists';
+  static const String listSharedIndicator = 'Shared';
+  static const String listMemberCount = '{count} members';
   static const String createListButton = "Create a list";
   static const String createListTitle = "New list";
   static const String createListTitlePlaceholder = "What should we call it?";

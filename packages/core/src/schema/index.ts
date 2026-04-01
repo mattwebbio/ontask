@@ -10,3 +10,5 @@ export { calendarConnectionsOutlookTable } from './calendar-connections-outlook.
 export { calendarConnectionsAppleTable } from './calendar-connections-apple.js'
 export { calendarEventsTable } from './calendar-events.js'
 export { taskCalendarBlocksTable } from './task-calendar-blocks.js'
+export { listMembersTable } from './list-members.js'
+export { listInvitationsTable } from './list-invitations.js'

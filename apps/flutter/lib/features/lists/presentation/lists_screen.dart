@@ -7,7 +7,9 @@ import '../../../core/l10n/strings.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../templates/presentation/templates_screen.dart';
+import '../domain/list_member.dart';
 import 'create_list_screen.dart';
+import 'list_members_provider.dart';
 import 'lists_provider.dart';
 import 'widgets/lists_empty_state.dart';
 
@@ -100,14 +102,21 @@ class ListsScreen extends ConsumerWidget {
                           child: Row(
                             children: [
                               Expanded(
-                                child: Text(
-                                  list.title,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodyLarge
-                                      ?.copyWith(
-                                        color: colors.textPrimary,
-                                      ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      list.title,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyLarge
+                                          ?.copyWith(
+                                            color: colors.textPrimary,
+                                          ),
+                                    ),
+                                    _SharedIndicator(listId: list.id),
+                                  ],
                                 ),
                               ),
                               Icon(
@@ -146,6 +155,107 @@ class ListsScreen extends ConsumerWidget {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => const CreateListScreen(),
+    );
+  }
+}
+
+// ── Shared indicator row ─────────────────────────────────────────────────────
+
+/// Shows member avatars if the list has 2 or more members (i.e., is shared).
+///
+/// Renders nothing (zero-height) when the list is personal (0–1 members)
+/// or when member data is loading / erroring — preserves existing row layout.
+class _SharedIndicator extends ConsumerWidget {
+  const _SharedIndicator({required this.listId});
+
+  final String listId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final membersState = ref.watch(listMembersProvider(listId));
+
+    return membersState.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (members) {
+        if (members.length < 2) return const SizedBox.shrink();
+
+        final colors = Theme.of(context).extension<OnTaskColors>()!;
+        final displayMembers = members.take(3).toList();
+
+        return Padding(
+          padding: const EdgeInsets.only(top: AppSpacing.xs),
+          child: Row(
+            children: [
+              // Stacked avatar circles
+              SizedBox(
+                height: 20,
+                width: (displayMembers.length * 14.0) + 6,
+                child: Stack(
+                  children: [
+                    for (var i = 0; i < displayMembers.length; i++)
+                      Positioned(
+                        left: i * 14.0,
+                        child: _MemberAvatar(
+                          member: displayMembers[i],
+                          colors: colors,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: AppSpacing.xs),
+              Text(
+                AppStrings.listMemberCount
+                    .replaceAll('{count}', '${members.length}'),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: colors.textSecondary,
+                    ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// A 20×20 circular avatar showing member initials (AC: 3).
+///
+/// Background: [OnTaskColors.accentPrimary], foreground: [OnTaskColors.surfacePrimary].
+class _MemberAvatar extends StatelessWidget {
+  const _MemberAvatar({required this.member, required this.colors});
+
+  final ListMember member;
+  final OnTaskColors colors;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 20,
+      height: 20,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: colors.accentPrimary,
+        border: Border.all(color: colors.surfacePrimary, width: 1),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        member.avatarInitials.isEmpty
+            ? '?'
+            : member.avatarInitials.substring(
+                0,
+                member.avatarInitials.length > 2
+                    ? 2
+                    : member.avatarInitials.length,
+              ),
+        style: TextStyle(
+          fontSize: 8,
+          fontWeight: FontWeight.w600,
+          color: colors.surfacePrimary,
+          height: 1,
+        ),
+      ),
     );
   }
 }
