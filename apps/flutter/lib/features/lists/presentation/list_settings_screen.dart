@@ -30,7 +30,12 @@ class _ListSettingsScreenState extends ConsumerState<ListSettingsScreen> {
     final colors = Theme.of(context).extension<OnTaskColors>()!;
     final listsState = ref.watch(listsProvider);
     final list = listsState.value?.where((l) => l.id == widget.listId).firstOrNull;
-    final currentStrategy = list?.assignmentStrategy;
+
+    if (listsState.isLoading || list == null) {
+      return const Center(child: CupertinoActivityIndicator());
+    }
+
+    final currentStrategy = list.assignmentStrategy;
 
     return CupertinoPageScaffold(
       backgroundColor: colors.surfacePrimary,
