@@ -22,6 +22,8 @@ declare namespace Cloudflare {
 		CALENDAR_TOKEN_KEY?: string;
 		/** Secret token echoed back by Google in X-Goog-Channel-Token header on push notifications (Story 3.5). Set via `wrangler secret put CALENDAR_WEBHOOK_SECRET`. */
 		CALENDAR_WEBHOOK_SECRET?: string;
+		/** Cloudflare AI Gateway base URL for routing LLM requests (Story 3.7). Set via `wrangler secret put AI_GATEWAY_URL`. */
+		AI_GATEWAY_URL?: string;
 	}
 }
 interface CloudflareBindings extends Cloudflare.Env {}

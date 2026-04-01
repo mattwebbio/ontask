@@ -544,6 +544,20 @@ class AppStrings {
   /// Label prefix for the stake-returned row (shown when stakeAmount != null).
   static const String chapterBreakStakeLabel = 'Stake returned';
 
+  // ── Scheduling nudge (FR14) ──────────────────────────────────────────────
+  /// CTA label on TodayTaskRow swipe action that opens the AI nudge sheet.
+  static const String todayRowNudge = 'Reschedule with AI';
+
+  /// Title shown at the top of the NudgeInputSheet bottom sheet.
+  static const String nudgeSheetTitle = 'When would you like to move this?';
+
+  /// Inline warning shown when the AI returns low confidence (user can retry).
+  static const String nudgeConfidenceLow =
+      "I couldn't understand that — try something like 'move to tomorrow morning'";
+
+  /// Generic error shown when the nudge request fails unexpectedly.
+  static const String nudgeError = 'Something went wrong. Please try again.';
+
   // ── Shared actions ──────────────────────────────────────────────────────
   static const String actionNotImplemented =
       'This action is not yet available in this version.';

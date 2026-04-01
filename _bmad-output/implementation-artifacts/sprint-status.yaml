@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-29
-last_updated: 2026-03-31 # Story 3.6 ready-for-dev
+last_updated: 2026-03-31 # Story 3.7 review
 project: ontask
 project_key: NOKEY
 tracking_system: file-system
@@ -89,8 +89,8 @@ development_status:
   3-3-google-calendar-read-available-time: done
   3-4-google-calendar-write-task-block-relationship: done
   3-5-auto-rescheduling-on-change: done
-  3-6-scheduling-explanation: review
-  3-7-natural-language-scheduling-nudges-motion-tokens: backlog
+  3-6-scheduling-explanation: done
+  3-7-natural-language-scheduling-nudges-motion-tokens: review
   epic-3-retrospective: optional
 
   # ─────────────────────────────────────────────────────────

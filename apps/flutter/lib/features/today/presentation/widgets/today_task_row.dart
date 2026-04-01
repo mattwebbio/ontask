@@ -6,6 +6,7 @@ import '../../../../core/l10n/strings.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../now/presentation/widgets/now_task_card.dart';
+import '../../../scheduling/presentation/widgets/nudge_input_sheet.dart';
 import '../../../scheduling/presentation/widgets/schedule_explanation_sheet.dart';
 
 /// Visual states for a task row in the Today tab.
@@ -45,6 +46,14 @@ class TodayTaskRow extends StatelessWidget {
   /// [current] states) that opens the scheduling explanation sheet (FR13).
   final VoidCallback? onWhyHere;
 
+  /// If non-null, exposes a "Reschedule with AI" trailing swipe action
+  /// (for [upcoming] and [current] states) that opens the [NudgeInputSheet].
+  ///
+  /// When [onNudge] is provided alongside [onReschedule], the caller decides
+  /// which action to expose — typically [onNudge] replaces the calendar-picker
+  /// swipe action for AI-enabled rescheduling (FR14).
+  final VoidCallback? onNudge;
+
   /// If non-null, indicates the task has a timer running/paused with this
   /// many elapsed seconds. Shows an elapsed indicator instead of Start button.
   final int? timerElapsedSeconds;
@@ -58,6 +67,7 @@ class TodayTaskRow extends StatelessWidget {
     this.onReschedule,
     this.onStartTimer,
     this.onWhyHere,
+    this.onNudge,
     this.timerElapsedSeconds,
     super.key,
   });
@@ -141,6 +151,9 @@ class TodayTaskRow extends StatelessWidget {
       return rowContent;
     }
 
+    // Determine trailing swipe action: onNudge (AI) takes priority over onReschedule (picker)
+    final hasTrailingAction = onNudge != null || onReschedule != null;
+
     return Dismissible(
       key: ValueKey('today_task_$taskId'),
       background: Container(
@@ -149,18 +162,27 @@ class TodayTaskRow extends StatelessWidget {
         color: colors.scheduleHealthy,
         child: const Icon(CupertinoIcons.check_mark, color: CupertinoColors.white),
       ),
-      secondaryBackground: Container(
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: AppSpacing.lg),
-        color: colors.accentPrimary,
-        child: const Icon(CupertinoIcons.calendar, color: CupertinoColors.white),
-      ),
+      secondaryBackground: hasTrailingAction
+          ? Container(
+              alignment: Alignment.centerRight,
+              padding: const EdgeInsets.only(right: AppSpacing.lg),
+              color: colors.accentPrimary,
+              child: Icon(
+                onNudge != null ? CupertinoIcons.sparkles : CupertinoIcons.calendar,
+                color: CupertinoColors.white,
+              ),
+            )
+          : null,
       confirmDismiss: (direction) async {
         if (direction == DismissDirection.startToEnd) {
           onComplete?.call();
           return false; // Don't remove from tree — state update handles it
         } else if (direction == DismissDirection.endToStart) {
-          onReschedule?.call();
+          if (onNudge != null) {
+            onNudge!();
+          } else {
+            onReschedule?.call();
+          }
           return false;
         }
         return false;

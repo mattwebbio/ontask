@@ -37,7 +37,10 @@
     "CALENDAR_TOKEN_KEY": "",
     // Secret token echoed back by Google in X-Goog-Channel-Token header on push notifications.
     // Set via `wrangler secret put CALENDAR_WEBHOOK_SECRET` — never committed.
-    "CALENDAR_WEBHOOK_SECRET": ""
+    "CALENDAR_WEBHOOK_SECRET": "",
+    // Cloudflare AI Gateway base URL for routing LLM requests through the gateway (Story 3.7).
+    // Set via `wrangler secret put AI_GATEWAY_URL` — never committed.
+    "AI_GATEWAY_URL": ""
   }
 
   // "kv_namespaces": [],
