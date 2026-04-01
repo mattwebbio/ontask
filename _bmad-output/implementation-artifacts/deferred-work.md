@@ -1,5 +1,13 @@
 # Deferred Work
 
+## Deferred from: code review of 6-3-charity-selection (2026-04-01)
+
+- **Stale search results visible during subsequent loads** — `_nonprofits` is not cleared when a new search begins in `CharitySheetScreen._loadCharities`; old results remain visible while `_isLoading=true` but `nonprofits.isNotEmpty`. The `CharitySearchDelegate` loading indicator only triggers when both `isLoading && nonprofits.isEmpty`, so during re-searches the list appears static with no loading feedback. Not a spec bug; address when UX polish pass lands on the charity sheet.
+
+## Deferred from: code review of 6-2-stake-setting-ui (2026-04-01)
+
+- **`_openStakeSheet` future unawaited on `GestureDetector.onTap`** — `task_edit_inline.dart` assigns an `async` method returning `Future<void>` to `onTap`. Errors thrown inside (e.g. if `showCupertinoModalPopup` throws) are silently swallowed. Pre-existing pattern across the entire file; address when `task_edit_inline.dart` is refactored or when error reporting is hardened across the task-editing flow.
+
 ## Deferred from: code review of 6-1-payment-method-setup (2026-04-01)
 
 - **Manual "Tap to confirm setup" stub button absent** — Dev Notes for Story 6.1 suggest a manual confirm button in `PaymentSettingsScreen` so testers can invoke `confirmSetup()` before Story 13.1 deep links are live. Screen omits this. Revisit in Story 13.1 or add as a debug-only affordance before Epic 6 QA.

@@ -483,6 +483,11 @@ claude-sonnet-4-6
 - Added 8 charity l10n strings to `AppStrings`.
 - All 41 commitment_contracts tests pass; full suite (Flutter + API) passes with no regressions.
 
+### Review Findings
+
+- [ ] [Review][Patch] `catch (_)` in new `_loadDefaultCharity` violates story constraint — change to `catch (e)` [`apps/flutter/lib/features/commitment_contracts/presentation/stake_sheet_screen.dart:66`]
+- [x] [Review][Defer] Stale search results visible during subsequent loads — `_nonprofits` is not cleared when a new search begins; old results remain visible while `_isLoading=true` but `nonprofits.isNotEmpty` [`apps/flutter/lib/features/commitment_contracts/presentation/charity_sheet_screen.dart`] — deferred, pre-existing architectural choice; not a bug per spec
+
 ### Change Log
 
 - 2026-04-01: Story 6.3 implemented — charity selection feature (DB schema, API stubs, Flutter UI, tests). All tasks complete. Status → review.

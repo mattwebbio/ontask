@@ -63,7 +63,7 @@ class _StakeSheetScreenState extends ConsumerState<StakeSheetScreen> {
           );
         });
       }
-    } catch (_) {
+    } catch (e) {
       // Non-blocking — charity selection is optional. Default to none.
     }
   }
