@@ -4,12 +4,14 @@ import 'dart:math' as math;
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' show Theme;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:health/health.dart';
 
 import '../../../core/l10n/strings.dart';
 import '../../../core/motion/motion_tokens.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_theme.dart';
+import '../data/proof_prefs_provider.dart';
 import '../data/proof_repository.dart';
 import '../domain/health_kit_verification_data.dart';
 import '../domain/proof_path.dart';
@@ -37,17 +39,17 @@ enum _HealthKitState {
 /// Reads Apple Health data to automatically verify task completion
 /// for activities like workouts and meditation.
 ///
-/// This is a [StatefulWidget] (NOT [ConsumerStatefulWidget]) — no Riverpod
-/// provider reads are needed at widget level. The [ProofRepository] is
-/// injected via constructor. Pattern established in Stories 7.2–7.4.
+/// Migrated to [ConsumerStatefulWidget] in Story 7.7 to read
+/// [proofRetainDefaultProvider] and present the retention toggle after approval.
+/// The [ProofRepository] is injected via constructor.
 ///
 /// HealthKit is iOS-only (UX-DR31). The [assert] in [build] fires in debug
 /// builds if this widget is somehow constructed on macOS.
 ///
-/// On successful verification, calls [Navigator.pop(context, ProofPath.healthKit)]
-/// so the caller ([ProofCaptureModal]) can trigger [onApproved].
-/// (Epic 7, Story 7.5, AC: 1–5, FR35, FR47, UX-DR31)
-class HealthKitProofSubView extends StatefulWidget {
+/// On successful verification, presents the retention choice and then calls
+/// [onApproved] + [Navigator.pop(context, ProofPath.healthKit)] on Confirm.
+/// (Epic 7, Stories 7.5, 7.7, AC: 1–5, FR35, FR38, FR47, UX-DR31)
+class HealthKitProofSubView extends ConsumerStatefulWidget {
   const HealthKitProofSubView({
     super.key,
     required this.taskId,
@@ -62,16 +64,20 @@ class HealthKitProofSubView extends StatefulWidget {
   final VoidCallback? onApproved;
 
   @override
-  State<HealthKitProofSubView> createState() => _HealthKitProofSubViewState();
+  ConsumerState<HealthKitProofSubView> createState() =>
+      _HealthKitProofSubViewState();
 }
 
-class _HealthKitProofSubViewState extends State<HealthKitProofSubView>
+class _HealthKitProofSubViewState extends ConsumerState<HealthKitProofSubView>
     with TickerProviderStateMixin {
   // ── State machine ──────────────────────────────────────────────────────────
   _HealthKitState _state = _HealthKitState.idle;
 
   // ── Submission guard ───────────────────────────────────────────────────────
   bool _isSubmitting = false;
+
+  // ── Retention preference ───────────────────────────────────────────────────
+  bool _retainProof = true;
 
   // ── HealthKit data ─────────────────────────────────────────────────────────
   HealthKitVerificationData? _verificationData;
@@ -105,6 +111,9 @@ class _HealthKitProofSubViewState extends State<HealthKitProofSubView>
     _approvalFadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _approvalFadeController, curve: Curves.easeIn),
     );
+    // Read synchronously from provider cache — keepAlive provider is pre-loaded.
+    // Falls back to true if not yet resolved.
+    _retainProof = ref.read(proofRetainDefaultProvider).value ?? true;
   }
 
   @override
@@ -234,12 +243,7 @@ class _HealthKitProofSubViewState extends State<HealthKitProofSubView>
           _isSubmitting = false;
         });
         _approvalFadeController.forward();
-        Future.delayed(const Duration(seconds: 2), () {
-          if (mounted) {
-            widget.onApproved?.call();
-            Navigator.pop(context, ProofPath.healthKit);
-          }
-        });
+        // Do NOT auto-dismiss — wait for user to confirm retention choice.
       case ProofVerificationRejected(:final reason):
         setState(() {
           _state = _HealthKitState.rejected;
@@ -252,6 +256,22 @@ class _HealthKitProofSubViewState extends State<HealthKitProofSubView>
           _rejectionReason = message;
           _isSubmitting = false;
         });
+    }
+  }
+
+  Future<void> _onConfirmRetention() async {
+    try {
+      await widget.proofRepository.setProofRetention(
+        widget.taskId,
+        retain: _retainProof,
+      );
+      if (!mounted) return;
+      widget.onApproved?.call();
+      Navigator.pop(context, ProofPath.healthKit);
+    } catch (e) {
+      debugPrint('HealthKitProofSubView: setProofRetention error: $e');
+      if (!mounted) return;
+      // Show error state — reuse proofRetakeCta or add new error string
     }
   }
 
@@ -655,6 +675,59 @@ class _HealthKitProofSubViewState extends State<HealthKitProofSubView>
             ),
           ),
           const SizedBox(height: 16),
+          // ── Retention toggle (FR38, Story 7.7) ──────────────────────────────
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      AppStrings.proofRetainLabel,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      _retainProof
+                          ? AppStrings.proofRetainSubtitle
+                          : AppStrings.proofDiscardSubtitle,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: colors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              CupertinoSwitch(
+                value: _retainProof,
+                activeTrackColor: colors.accentPrimary,
+                onChanged: (value) => setState(() => _retainProof = value),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: CupertinoButton(
+              minimumSize: const Size(44, 44),
+              color: colors.accentPrimary,
+              borderRadius: BorderRadius.circular(AppSpacing.md),
+              onPressed: _onConfirmRetention,
+              child: Text(
+                AppStrings.proofRetainConfirmCta,
+                style: TextStyle(
+                  color: colors.surfacePrimary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );

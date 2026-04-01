@@ -244,6 +244,20 @@ class ProofRepository {
     );
   }
 
+  /// Sets the proof retention preference for a submitted task.
+  ///
+  /// Calls PATCH /v1/tasks/{taskId}/proof-retention with `{ retain: bool }`.
+  /// When retain=true, proof media is kept in B2 storage as a completion record (FR38, NFR-R8).
+  /// When retain=false, media is scheduled for deletion within 24 hours (FR38).
+  ///
+  /// Sets proofRetained on the task record server-side.
+  Future<void> setProofRetention(String taskId, {required bool retain}) async {
+    await _client.dio.patch<void>(
+      '/v1/tasks/$taskId/proof-retention',
+      data: {'retain': retain},
+    );
+  }
+
   /// Submits a previously-queued offline proof to the API during sync.
   ///
   /// Called by [SyncManager.processQueue]'s [applyOperation] callback when

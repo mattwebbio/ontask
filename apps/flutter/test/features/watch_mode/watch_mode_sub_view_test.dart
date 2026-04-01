@@ -1,15 +1,18 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:ontask/core/l10n/strings.dart';
 import 'package:ontask/core/theme/app_theme.dart';
+import 'package:ontask/features/proof/data/proof_prefs_provider.dart';
 import 'package:ontask/features/proof/data/proof_repository.dart';
 import 'package:ontask/features/proof/domain/proof_path.dart';
 import 'package:ontask/features/proof/domain/proof_verification_result.dart';
 import 'package:ontask/features/watch_mode/domain/watch_mode_session.dart';
 import 'package:ontask/features/watch_mode/presentation/watch_mode_sub_view.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // Widget tests for WatchModeSubView — Story 7.4 (FR33-34, FR66-67, AC: 1–4).
 //
@@ -53,13 +56,21 @@ Future<void> pumpSubView(
   _stubCameraChannel();
 
   await tester.pumpWidget(
-    MaterialApp(
-      theme: AppTheme.light(ThemeVariant.clay, 'PlayfairDisplay'),
-      home: Scaffold(
-        body: WatchModeSubView(
-          taskId: taskId,
-          taskName: taskName,
-          proofRepository: mockRepo,
+    ProviderScope(
+      overrides: [
+        // Provide a resolved proofRetainDefaultProvider so ConsumerStatefulWidget
+        // doesn't need SharedPreferences access in tests.
+        proofRetainDefaultProvider.overrideWith((ref) async => true),
+        proofRetainSettingsProvider.overrideWith(() => _FakeProofRetainSettings()),
+      ],
+      child: MaterialApp(
+        theme: AppTheme.light(ThemeVariant.clay, 'PlayfairDisplay'),
+        home: Scaffold(
+          body: WatchModeSubView(
+            taskId: taskId,
+            taskName: taskName,
+            proofRepository: mockRepo,
+          ),
         ),
       ),
     ),
@@ -67,6 +78,16 @@ Future<void> pumpSubView(
 
   // Allow initial async calls to complete.
   await tester.pump();
+}
+
+// ── Fake notifier for tests ───────────────────────────────────────────────────
+
+class _FakeProofRetainSettings extends ProofRetainSettings {
+  @override
+  void build() {}
+
+  @override
+  Future<void> setRetainDefault(bool retain) async {}
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
@@ -82,6 +103,10 @@ void main() {
         startedAt: DateTime(2026),
       ),
     );
+  });
+
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
   });
 
   tearDown(() {
@@ -117,24 +142,32 @@ void main() {
         (tester) async {
       final mockRepo = MockProofRepository();
       // Wrap in a Navigator so pop is testable.
+      _stubCameraChannel();
       await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.light(ThemeVariant.clay, 'PlayfairDisplay'),
-          home: Navigator(
-            onGenerateRoute: (_) => MaterialPageRoute(
-              builder: (context) => Scaffold(
-                body: WatchModeSubView(
-                  taskId: 'task-001',
-                  taskName: 'Test',
-                  proofRepository: mockRepo,
-                  onApproved: () {},
+        ProviderScope(
+          overrides: [
+            proofRetainDefaultProvider.overrideWith((ref) async => true),
+            proofRetainSettingsProvider.overrideWith(
+              () => _FakeProofRetainSettings(),
+            ),
+          ],
+          child: MaterialApp(
+            theme: AppTheme.light(ThemeVariant.clay, 'PlayfairDisplay'),
+            home: Navigator(
+              onGenerateRoute: (_) => MaterialPageRoute(
+                builder: (context) => Scaffold(
+                  body: WatchModeSubView(
+                    taskId: 'task-001',
+                    taskName: 'Test',
+                    proofRepository: mockRepo,
+                    onApproved: () {},
+                  ),
                 ),
               ),
             ),
           ),
         ),
       );
-      _stubCameraChannel();
       await tester.pump();
 
       // Tap the back chevron.
@@ -200,13 +233,21 @@ void main() {
       final mockRepo = MockProofRepository();
 
       await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.light(ThemeVariant.clay, 'PlayfairDisplay'),
-          home: Scaffold(
-            body: WatchModeSubView(
-              taskId: 'task-001',
-              taskName: 'Write unit tests',
-              proofRepository: mockRepo,
+        ProviderScope(
+          overrides: [
+            proofRetainDefaultProvider.overrideWith((ref) async => true),
+            proofRetainSettingsProvider.overrideWith(
+              () => _FakeProofRetainSettings(),
+            ),
+          ],
+          child: MaterialApp(
+            theme: AppTheme.light(ThemeVariant.clay, 'PlayfairDisplay'),
+            home: Scaffold(
+              body: WatchModeSubView(
+                taskId: 'task-001',
+                taskName: 'Write unit tests',
+                proofRepository: mockRepo,
+              ),
             ),
           ),
         ),
@@ -345,13 +386,21 @@ void main() {
           .thenAnswer((_) async => const ProofVerificationApproved());
 
       await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.light(ThemeVariant.clay, 'PlayfairDisplay'),
-          home: Scaffold(
-            body: WatchModeSubView(
-              taskId: 'task-001',
-              taskName: 'Write unit tests',
-              proofRepository: mockRepo,
+        ProviderScope(
+          overrides: [
+            proofRetainDefaultProvider.overrideWith((ref) async => true),
+            proofRetainSettingsProvider.overrideWith(
+              () => _FakeProofRetainSettings(),
+            ),
+          ],
+          child: MaterialApp(
+            theme: AppTheme.light(ThemeVariant.clay, 'PlayfairDisplay'),
+            home: Scaffold(
+              body: WatchModeSubView(
+                taskId: 'task-001',
+                taskName: 'Write unit tests',
+                proofRepository: mockRepo,
+              ),
             ),
           ),
         ),
@@ -388,13 +437,21 @@ void main() {
       );
 
       await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.light(ThemeVariant.clay, 'PlayfairDisplay'),
-          home: Scaffold(
-            body: WatchModeSubView(
-              taskId: 'task-001',
-              taskName: 'Write unit tests',
-              proofRepository: mockRepo,
+        ProviderScope(
+          overrides: [
+            proofRetainDefaultProvider.overrideWith((ref) async => true),
+            proofRetainSettingsProvider.overrideWith(
+              () => _FakeProofRetainSettings(),
+            ),
+          ],
+          child: MaterialApp(
+            theme: AppTheme.light(ThemeVariant.clay, 'PlayfairDisplay'),
+            home: Scaffold(
+              body: WatchModeSubView(
+                taskId: 'task-001',
+                taskName: 'Write unit tests',
+                proofRepository: mockRepo,
+              ),
             ),
           ),
         ),

@@ -5,12 +5,14 @@ import 'dart:math' as math;
 import 'package:camera/camera.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' show Theme;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/l10n/strings.dart';
 import '../../../core/motion/motion_tokens.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../now/presentation/widgets/now_task_card.dart';
+import '../../proof/data/proof_prefs_provider.dart';
 import '../../proof/data/proof_repository.dart';
 import '../../proof/domain/proof_path.dart';
 import '../../proof/domain/proof_verification_result.dart';
@@ -43,9 +45,11 @@ const int _pollIntervalSeconds = 45;
 /// Manages its own state machine: idle → starting → active → ending → summary
 /// → submitting → result.
 ///
-/// This is a [StatefulWidget] (NOT [ConsumerStatefulWidget]) — no Riverpod
-/// provider reads are needed at widget level. The [ProofRepository] is
-/// injected via constructor. Pattern established in Stories 7.2–7.3.
+/// Migrated to [ConsumerStatefulWidget] in Story 7.7 to read
+/// [proofRetainDefaultProvider] and present the retention toggle after approval.
+/// The retention toggle only appears in the [_WatchModeState.approved] state —
+/// NOT triggered from [_onDone] (deferred bug noted in deferred-work.md).
+/// The [ProofRepository] is injected via constructor.
 ///
 /// Watch Mode is a focus mode — NOT a proof-filing mode (UX spec line 1031–1032).
 /// The active state deliberately shows NO camera preview — only a minimal overlay.
@@ -56,12 +60,10 @@ const int _pollIntervalSeconds = 45;
 /// Watch Mode is iOS-only (UX-DR10). The [assert] in [build] fires in debug
 /// builds if this widget is somehow constructed on macOS.
 ///
-/// On successful verification, calls [Navigator.pop(context, ProofPath.watchMode)]
-/// so the caller ([ProofCaptureModal]) can trigger [onApproved].
-/// Note: Prior to Story 7.5, this popped with [ProofPath.healthKit]. Updated
-/// as part of the ProofPath enum split (Story 7.5).
-/// (Epic 7, Story 7.4, AC: 1–4, FR33-34, FR66-67, UX-DR10)
-class WatchModeSubView extends StatefulWidget {
+/// On successful verification, presents the retention choice and then calls
+/// [onApproved] + [Navigator.pop(context, ProofPath.watchMode)] on Confirm.
+/// (Epic 7, Stories 7.4, 7.7, AC: 1–4, FR33-34, FR38, FR66-67, UX-DR10)
+class WatchModeSubView extends ConsumerStatefulWidget {
   const WatchModeSubView({
     super.key,
     required this.taskId,
@@ -76,16 +78,19 @@ class WatchModeSubView extends StatefulWidget {
   final VoidCallback? onApproved;
 
   @override
-  State<WatchModeSubView> createState() => _WatchModeSubViewState();
+  ConsumerState<WatchModeSubView> createState() => _WatchModeSubViewState();
 }
 
-class _WatchModeSubViewState extends State<WatchModeSubView>
+class _WatchModeSubViewState extends ConsumerState<WatchModeSubView>
     with TickerProviderStateMixin {
   // ── State machine ──────────────────────────────────────────────────────────
   _WatchModeState _watchState = _WatchModeState.idle;
 
   // ── Submission guard ───────────────────────────────────────────────────────
   bool _isSubmitting = false;
+
+  // ── Retention preference ───────────────────────────────────────────────────
+  bool _retainProof = true;
 
   // ── Camera ─────────────────────────────────────────────────────────────────
   CameraController? _cameraController;
@@ -138,6 +143,9 @@ class _WatchModeSubViewState extends State<WatchModeSubView>
       vsync: this,
       duration: const Duration(seconds: 1),
     );
+    // Read synchronously from provider cache — keepAlive provider is pre-loaded.
+    // Falls back to true if not yet resolved.
+    _retainProof = ref.read(proofRetainDefaultProvider).value ?? true;
   }
 
   @override
@@ -299,11 +307,7 @@ class _WatchModeSubViewState extends State<WatchModeSubView>
           _isSubmitting = false;
         });
         _approvalFadeController.forward();
-        Future.delayed(const Duration(seconds: 2), () {
-          if (!mounted) return;
-          widget.onApproved?.call();
-          Navigator.pop(context, ProofPath.watchMode);
-        });
+        // Do NOT auto-dismiss — wait for user to confirm retention choice.
       case ProofVerificationRejected(:final reason):
         setState(() {
           _watchState = _WatchModeState.rejected;
@@ -316,6 +320,22 @@ class _WatchModeSubViewState extends State<WatchModeSubView>
           _rejectionReason = message;
           _isSubmitting = false;
         });
+    }
+  }
+
+  Future<void> _onConfirmRetention() async {
+    try {
+      await widget.proofRepository.setProofRetention(
+        widget.taskId,
+        retain: _retainProof,
+      );
+      if (!mounted) return;
+      widget.onApproved?.call();
+      Navigator.pop(context, ProofPath.watchMode);
+    } catch (e) {
+      debugPrint('WatchModeSubView: setProofRetention error: $e');
+      if (!mounted) return;
+      // Show error state — reuse proofRetakeCta or add new error string
     }
   }
 
@@ -741,6 +761,60 @@ class _WatchModeSubViewState extends State<WatchModeSubView>
             ),
           ),
           const SizedBox(height: 16),
+          // ── Retention toggle (FR38, Story 7.7) ──────────────────────────────
+          // Only shown in the approved state — NOT triggered from _onDone().
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      AppStrings.proofRetainLabel,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      _retainProof
+                          ? AppStrings.proofRetainSubtitle
+                          : AppStrings.proofDiscardSubtitle,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: colors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              CupertinoSwitch(
+                value: _retainProof,
+                activeTrackColor: colors.accentPrimary,
+                onChanged: (value) => setState(() => _retainProof = value),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: CupertinoButton(
+              minimumSize: const Size(44, 44),
+              color: colors.accentPrimary,
+              borderRadius: BorderRadius.circular(AppSpacing.md),
+              onPressed: _onConfirmRetention,
+              child: Text(
+                AppStrings.proofRetainConfirmCta,
+                style: TextStyle(
+                  color: colors.surfacePrimary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );

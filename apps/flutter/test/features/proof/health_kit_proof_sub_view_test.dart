@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:ontask/core/l10n/strings.dart';
 import 'package:ontask/core/theme/app_theme.dart';
+import 'package:ontask/features/proof/data/proof_prefs_provider.dart';
 import 'package:ontask/features/proof/data/proof_repository.dart';
 import 'package:ontask/features/proof/domain/health_kit_verification_data.dart';
 import 'package:ontask/features/proof/domain/proof_path.dart';
 import 'package:ontask/features/proof/domain/proof_verification_result.dart';
 import 'package:ontask/features/proof/presentation/health_kit_proof_sub_view.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // Widget tests for HealthKitProofSubView — Story 7.5 (FR35, FR47, AC: 1–5).
 //
@@ -19,6 +22,16 @@ import 'package:ontask/features/proof/presentation/health_kit_proof_sub_view.dar
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 
 class MockProofRepository extends Mock implements ProofRepository {}
+
+// ── Fake notifier for tests ───────────────────────────────────────────────────
+
+class _FakeProofRetainSettings extends ProofRetainSettings {
+  @override
+  void build() {}
+
+  @override
+  Future<void> setRetainDefault(bool retain) async {}
+}
 
 // ── Health channel stub ───────────────────────────────────────────────────────
 
@@ -86,13 +99,21 @@ Future<void> pumpSubView(
   _stubHealthChannelEmpty();
 
   await tester.pumpWidget(
-    MaterialApp(
-      theme: AppTheme.light(ThemeVariant.clay, 'PlayfairDisplay'),
-      home: Scaffold(
-        body: HealthKitProofSubView(
-          taskId: taskId,
-          taskName: taskName,
-          proofRepository: mockRepo,
+    ProviderScope(
+      overrides: [
+        proofRetainDefaultProvider.overrideWith((ref) async => true),
+        proofRetainSettingsProvider.overrideWith(
+          () => _FakeProofRetainSettings(),
+        ),
+      ],
+      child: MaterialApp(
+        theme: AppTheme.light(ThemeVariant.clay, 'PlayfairDisplay'),
+        home: Scaffold(
+          body: HealthKitProofSubView(
+            taskId: taskId,
+            taskName: taskName,
+            proofRepository: mockRepo,
+          ),
         ),
       ),
     ),
@@ -116,6 +137,10 @@ void main() {
         endedAt: DateTime(2026).add(const Duration(minutes: 30)),
       ),
     );
+  });
+
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
   });
 
   tearDown(() {
@@ -154,16 +179,24 @@ void main() {
       // Wrap in a Navigator so pop is testable.
       _stubHealthChannelEmpty();
       await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.light(ThemeVariant.clay, 'PlayfairDisplay'),
-          home: Navigator(
-            onGenerateRoute: (_) => MaterialPageRoute(
-              builder: (context) => Scaffold(
-                body: HealthKitProofSubView(
-                  taskId: 'task-001',
-                  taskName: 'Morning run',
-                  proofRepository: mockRepo,
-                  onApproved: () {},
+        ProviderScope(
+          overrides: [
+            proofRetainDefaultProvider.overrideWith((ref) async => true),
+            proofRetainSettingsProvider.overrideWith(
+              () => _FakeProofRetainSettings(),
+            ),
+          ],
+          child: MaterialApp(
+            theme: AppTheme.light(ThemeVariant.clay, 'PlayfairDisplay'),
+            home: Navigator(
+              onGenerateRoute: (_) => MaterialPageRoute(
+                builder: (context) => Scaffold(
+                  body: HealthKitProofSubView(
+                    taskId: 'task-001',
+                    taskName: 'Morning run',
+                    proofRepository: mockRepo,
+                    onApproved: () {},
+                  ),
                 ),
               ),
             ),
@@ -211,13 +244,21 @@ void main() {
       final mockRepo = MockProofRepository();
 
       await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.light(ThemeVariant.clay, 'PlayfairDisplay'),
-          home: Scaffold(
-            body: HealthKitProofSubView(
-              taskId: 'task-001',
-              taskName: 'Morning run',
-              proofRepository: mockRepo,
+        ProviderScope(
+          overrides: [
+            proofRetainDefaultProvider.overrideWith((ref) async => true),
+            proofRetainSettingsProvider.overrideWith(
+              () => _FakeProofRetainSettings(),
+            ),
+          ],
+          child: MaterialApp(
+            theme: AppTheme.light(ThemeVariant.clay, 'PlayfairDisplay'),
+            home: Scaffold(
+              body: HealthKitProofSubView(
+                taskId: 'task-001',
+                taskName: 'Morning run',
+                proofRepository: mockRepo,
+              ),
             ),
           ),
         ),
@@ -283,28 +324,36 @@ void main() {
 
       _stubHealthChannelEmpty();
       await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.light(ThemeVariant.clay, 'PlayfairDisplay'),
-          home: Navigator(
-            onGenerateRoute: (_) => MaterialPageRoute(
-              builder: (context) => Scaffold(
-                body: ElevatedButton(
-                  onPressed: () async {
-                    final result = await Navigator.push<ProofPath?>(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => Scaffold(
-                          body: HealthKitProofSubView(
-                            taskId: 'task-001',
-                            taskName: 'Morning run',
-                            proofRepository: mockRepo,
+        ProviderScope(
+          overrides: [
+            proofRetainDefaultProvider.overrideWith((ref) async => true),
+            proofRetainSettingsProvider.overrideWith(
+              () => _FakeProofRetainSettings(),
+            ),
+          ],
+          child: MaterialApp(
+            theme: AppTheme.light(ThemeVariant.clay, 'PlayfairDisplay'),
+            home: Navigator(
+              onGenerateRoute: (_) => MaterialPageRoute(
+                builder: (context) => Scaffold(
+                  body: ElevatedButton(
+                    onPressed: () async {
+                      final result = await Navigator.push<ProofPath?>(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => Scaffold(
+                            body: HealthKitProofSubView(
+                              taskId: 'task-001',
+                              taskName: 'Morning run',
+                              proofRepository: mockRepo,
+                            ),
                           ),
                         ),
-                      ),
-                    );
-                    poppedValue = result;
-                  },
-                  child: const Text('open'),
+                      );
+                      poppedValue = result;
+                    },
+                    child: const Text('open'),
+                  ),
                 ),
               ),
             ),

@@ -4,14 +4,17 @@ import 'package:camera/camera.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:ontask/core/l10n/strings.dart';
 import 'package:ontask/core/theme/app_theme.dart';
+import 'package:ontask/features/proof/data/proof_prefs_provider.dart';
 import 'package:ontask/features/proof/data/proof_repository.dart';
 import 'package:ontask/features/proof/domain/proof_verification_result.dart';
 import 'package:ontask/features/proof/presentation/screenshot_proof_sub_view.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // Widget tests for ScreenshotProofSubView — Story 7.3 (FR36, AC: 1–2).
 //
@@ -28,6 +31,16 @@ class MockFilePicker extends Mock
     with MockPlatformInterfaceMixin
     implements FilePicker {}
 
+// ── Fake notifier for tests ───────────────────────────────────────────────────
+
+class _FakeProofRetainSettings extends ProofRetainSettings {
+  @override
+  void build() {}
+
+  @override
+  Future<void> setRetainDefault(bool retain) async {}
+}
+
 // ── Pump helper ───────────────────────────────────────────────────────────────
 
 Future<void> pumpSubView(
@@ -42,13 +55,21 @@ Future<void> pumpSubView(
   }
 
   await tester.pumpWidget(
-    MaterialApp(
-      theme: AppTheme.light(ThemeVariant.clay, 'PlayfairDisplay'),
-      home: Scaffold(
-        body: ScreenshotProofSubView(
-          taskId: taskId,
-          taskName: taskName,
-          proofRepository: mockRepo,
+    ProviderScope(
+      overrides: [
+        proofRetainDefaultProvider.overrideWith((ref) async => true),
+        proofRetainSettingsProvider.overrideWith(
+          () => _FakeProofRetainSettings(),
+        ),
+      ],
+      child: MaterialApp(
+        theme: AppTheme.light(ThemeVariant.clay, 'PlayfairDisplay'),
+        home: Scaffold(
+          body: ScreenshotProofSubView(
+            taskId: taskId,
+            taskName: taskName,
+            proofRepository: mockRepo,
+          ),
         ),
       ),
     ),
@@ -82,6 +103,10 @@ void main() {
     // FilePicker.pickFiles uses named params with specific types.
     registerFallbackValue(FileType.any);
     registerFallbackValue(<String>[]);
+  });
+
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
   });
 
   group('ScreenshotProofSubView — picking state (AC: 1)', () {

@@ -4,13 +4,16 @@ import 'package:camera/camera.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:ontask/core/l10n/strings.dart';
 import 'package:ontask/core/theme/app_theme.dart';
+import 'package:ontask/features/proof/data/proof_prefs_provider.dart';
 import 'package:ontask/features/proof/data/proof_repository.dart';
 import 'package:ontask/features/proof/domain/proof_verification_result.dart';
 import 'package:ontask/features/proof/presentation/photo_capture_sub_view.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // Widget tests for PhotoCaptureSubView — Story 7.2 (FR31-32, AC: 1–5).
 //
@@ -44,6 +47,16 @@ void _clearCameraChannel() {
 
 // ── Pump helper ───────────────────────────────────────────────────────────────
 
+// ── Fake notifier for tests ───────────────────────────────────────────────────
+
+class _FakeProofRetainSettings extends ProofRetainSettings {
+  @override
+  void build() {}
+
+  @override
+  Future<void> setRetainDefault(bool retain) async {}
+}
+
 Future<PhotoCaptureSubView> pumpSubView(
   WidgetTester tester, {
   required MockProofRepository mockRepo,
@@ -59,9 +72,17 @@ Future<PhotoCaptureSubView> pumpSubView(
   );
 
   await tester.pumpWidget(
-    MaterialApp(
-      theme: AppTheme.light(ThemeVariant.clay, 'PlayfairDisplay'),
-      home: Scaffold(body: widget),
+    ProviderScope(
+      overrides: [
+        proofRetainDefaultProvider.overrideWith((ref) async => true),
+        proofRetainSettingsProvider.overrideWith(
+          () => _FakeProofRetainSettings(),
+        ),
+      ],
+      child: MaterialApp(
+        theme: AppTheme.light(ThemeVariant.clay, 'PlayfairDisplay'),
+        home: Scaffold(body: widget),
+      ),
     ),
   );
 
@@ -89,6 +110,10 @@ void main() {
   setUpAll(() {
     TestWidgetsFlutterBinding.ensureInitialized();
     registerFallbackValue(XFile(''));
+  });
+
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
   });
 
   tearDown(_clearCameraChannel);
@@ -226,15 +251,23 @@ void main() {
       _stubCameraChannel();
 
       await tester.pumpWidget(
-        MaterialApp(
-          theme: AppTheme.light(ThemeVariant.clay, 'PlayfairDisplay'),
-          home: MediaQuery(
-            data: const MediaQueryData(disableAnimations: true),
-            child: Scaffold(
-              body: PhotoCaptureSubView(
-                taskId: 'task-001',
-                taskName: 'Test',
-                proofRepository: mockRepo,
+        ProviderScope(
+          overrides: [
+            proofRetainDefaultProvider.overrideWith((ref) async => true),
+            proofRetainSettingsProvider.overrideWith(
+              () => _FakeProofRetainSettings(),
+            ),
+          ],
+          child: MaterialApp(
+            theme: AppTheme.light(ThemeVariant.clay, 'PlayfairDisplay'),
+            home: MediaQuery(
+              data: const MediaQueryData(disableAnimations: true),
+              child: Scaffold(
+                body: PhotoCaptureSubView(
+                  taskId: 'task-001',
+                  taskName: 'Test',
+                  proofRepository: mockRepo,
+                ),
               ),
             ),
           ),
