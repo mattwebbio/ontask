@@ -120,7 +120,7 @@ development_status:
   #       deployed before this epic can be tested end-to-end.
   # ─────────────────────────────────────────────────────────
   epic-6: in-progress
-  6-1-payment-method-setup: review
+  6-1-payment-method-setup: done
   6-2-stake-setting-ui: backlog
   6-3-charity-selection: backlog
   6-4-impact-dashboard: backlog
