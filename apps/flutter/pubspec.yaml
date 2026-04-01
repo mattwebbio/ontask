@@ -66,6 +66,11 @@ dependencies:
   # Do NOT replace with image_picker — gallery import is prohibited by FR31.
   camera: ^0.12.0+1
 
+  # File picker — system Files sheet for screenshot/document proof import (FR36, Story 7.3).
+  # Opens iCloud Drive / On My iPhone — no camera permission needed.
+  # Do NOT use image_picker (gallery-only) or camera (viewfinder-only) for this path.
+  file_picker: ^8.1.7
+
   # Observability & Error Tracking (ARCH-30, ARCH-31)
   # sentry_flutter: Sentry-compatible SDK for GlitchTip DSN integration; captures unhandled Dart + Flutter errors.
   sentry_flutter: ^8.14.0

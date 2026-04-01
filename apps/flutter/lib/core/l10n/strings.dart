@@ -996,4 +996,22 @@ class AppStrings {
 
   /// Shutter button accessibility label.
   static const String proofShutterLabel = 'Take photo';
+
+  // ── Screenshot & Document Proof (FR36, Story 7.3) ──────────────────────────
+  /// CTA to open the system file picker.
+  static const String proofScreenshotPickCta = 'Choose a file';
+
+  /// Subtitle below the pick CTA showing accepted formats and size limit.
+  static const String proofScreenshotPickSubtitle =
+      'PNG, JPG, or PDF \u2014 up to 25 MB';
+
+  /// "Choose another file" button in preview state.
+  static const String proofScreenshotRetakeCta = 'Choose another';
+
+  /// Alert title when the chosen file exceeds the 25 MB limit.
+  static const String proofScreenshotFileTooLargeTitle = 'File too large';
+
+  /// Alert message shown when the chosen file exceeds the 25 MB limit.
+  static const String proofScreenshotFileTooLargeMessage =
+      'Please choose a file smaller than 25 MB.';
 }

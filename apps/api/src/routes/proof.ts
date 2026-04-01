@@ -3,8 +3,10 @@ import { z } from 'zod'
 import { ok, err } from '../lib/response.js'
 
 // ── Proof submission router ───────────────────────────────────────────────────
-// Stub endpoint for AI-verified photo proof submission (Epic 7, Story 7.2).
-// FR31: camera capture only — no gallery import.
+// Stub endpoint for AI-verified photo or screenshot/document proof submission
+// (Epic 7, Stories 7.2–7.3, FR31, FR36).
+// FR31: camera capture only — no gallery import (photo path).
+// FR36: screenshot/document path — PNG, JPG, or PDF up to 25 MB.
 // FR32: AI verification stub — always returns verified: true by default.
 //       Add ?demo=fail to exercise the rejection path.
 //
@@ -35,18 +37,21 @@ const submitProofRoute = createRoute({
   method: 'post',
   path: '/v1/tasks/{taskId}/proof',
   tags: ['Proof'],
-  summary: 'Submit photo proof for AI verification',
+  summary: 'Submit photo or screenshot/document proof for AI verification',
   description:
-    'Accepts multipart/form-data with a `media` file field containing the captured photo. ' +
+    'Accepts multipart/form-data with a `media` file field containing the captured photo, ' +
+    'screenshot, or document (FR31: photo path; FR36: screenshot/document path — PNG, JPG, PDF up to 25 MB). ' +
     'Returns a stub verification result. ' +
     'Add ?demo=fail to exercise the rejection path. ' +
-    'Stub implementation (Story 7.2) — real AI pipeline deferred.',
+    'Use ?proofType=screenshot to indicate a screenshot/document submission (stub ignores this but documents intent). ' +
+    'Stub implementation (Stories 7.2–7.3) — real AI pipeline deferred.',
   request: {
     params: z.object({
       taskId: z.string().min(1),
     }),
     query: z.object({
       demo: z.string().optional(),
+      proofType: z.enum(['photo', 'screenshot']).optional(),
     }),
   },
   responses: {

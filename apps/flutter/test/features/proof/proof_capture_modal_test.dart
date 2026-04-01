@@ -113,12 +113,13 @@ void main() {
 
     testWidgets('tapping a path row shows sub-view with back button',
         (tester) async {
-      await pumpModal(tester);
+      // Use offline path (always a stub) to test generic sub-view navigation.
+      // Screenshot path now shows ScreenshotProofSubView (Story 7.3).
+      // Photo path requires taskId + proofRepository.
+      await pumpModal(tester, isOffline: true);
 
-      // Tap screenshot path (non-photo) to verify stub sub-view navigation.
-      // Photo path requires taskId + proofRepository; screenshot path tests
-      // the general sub-view navigation behaviour (back button visible).
-      await tester.tap(find.text(AppStrings.proofPathScreenshotTitle));
+      // Tap offline path to verify stub sub-view navigation.
+      await tester.tap(find.text(AppStrings.proofPathOfflineTitle));
       await tester.pump();
 
       // Back button and coming-soon placeholder visible.
@@ -126,15 +127,16 @@ void main() {
       expect(find.text(AppStrings.proofPathComingSoon), findsOneWidget);
 
       // Path selector rows no longer visible.
-      expect(find.text(AppStrings.proofPathScreenshotTitle), findsNothing);
+      expect(find.text(AppStrings.proofPathOfflineTitle), findsNothing);
     });
 
     testWidgets('tapping back from sub-view returns to path selector',
         (tester) async {
-      await pumpModal(tester);
+      // Use offline path (always a stub) to test generic back navigation.
+      await pumpModal(tester, isOffline: true);
 
-      // Navigate to sub-view.
-      await tester.tap(find.text(AppStrings.proofPathScreenshotTitle));
+      // Navigate to sub-view via offline path.
+      await tester.tap(find.text(AppStrings.proofPathOfflineTitle));
       await tester.pump();
       expect(find.text(AppStrings.proofModalBack), findsOneWidget);
 
