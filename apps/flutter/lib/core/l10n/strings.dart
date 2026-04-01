@@ -936,4 +936,39 @@ class AppStrings {
 
   /// Subtitle shown for cancelled stake entries in billing history.
   static const String billingCancelledNoCharge = 'cancelled — no charge';
+
+  // ── Proof Capture Modal (FR31, Story 7.1) ────────────────────────────────────
+  /// Sheet title — "Submit proof for [task name]"
+  static const String proofModalTitle = 'Submit proof for';
+
+  /// Photo/Video path title.
+  static const String proofPathPhotoTitle = 'Photo or Video';
+
+  /// Photo/Video path subtitle.
+  static const String proofPathPhotoSubtitle = 'Capture with your camera';
+
+  /// HealthKit Auto path title (iOS only — hidden on macOS).
+  static const String proofPathHealthKitTitle = 'HealthKit';
+
+  /// HealthKit Auto path subtitle.
+  static const String proofPathHealthKitSubtitle = 'Auto-verify from Apple Health';
+
+  /// Screenshot/Document path title.
+  static const String proofPathScreenshotTitle = 'Screenshot or Document';
+
+  /// Screenshot/Document path subtitle.
+  static const String proofPathScreenshotSubtitle = 'Upload PNG, JPG, or PDF';
+
+  /// Offline path title (shown only when device is offline).
+  static const String proofPathOfflineTitle = 'Save for Later';
+
+  /// Offline path subtitle.
+  static const String proofPathOfflineSubtitle =
+      "Proof saved — will sync when you're back online";
+
+  /// Back button label in sub-view.
+  static const String proofModalBack = 'Back';
+
+  /// Stub sub-view placeholder (shown until Stories 7.2–7.6 implement real sub-views).
+  static const String proofPathComingSoon = 'This proof path is coming soon.';
 }

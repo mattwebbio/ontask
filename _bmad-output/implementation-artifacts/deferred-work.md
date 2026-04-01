@@ -1,5 +1,11 @@
 # Deferred Work
 
+## Deferred from: code review of 7-1-proof-capture-modal-foundation (2026-04-01)
+
+- **`ProofSubmissionState` sealed class defined but unused** — Modal uses raw `ProofPath?` nullable state; the sealed class is dead code until Stories 7.2–7.6 wire up real sub-view logic. Address when the first concrete sub-view (Story 7.2 photo capture) is implemented. [`apps/flutter/lib/features/proof/domain/proof_submission_state.dart`]
+- **`ProofPath.fromJson` silently defaults unknown/null values to `ProofPath.photo`** — Receiving an unrecognised API string silently becomes `photo`; this will corrupt data when the proof API lands in Story 7.2. Change to throw `ArgumentError` or return nullable and let callers decide the fallback. [`apps/flutter/lib/features/proof/domain/proof_path.dart:14-26`]
+- **Sheet title string interpolation not l10n word-order safe** — `'${AppStrings.proofModalTitle} ${widget.taskName}'` hard-codes English word order. Use a placeholder-based string pattern when the app is localised. [`apps/flutter/lib/features/proof/presentation/proof_capture_modal.dart:113`]
+
 ## Deferred from: code review of 6-9-billing-history-api-contract-status (2026-04-01)
 
 - **Billing history stub entry IDs use version-nibble-0 UUIDs** — `00000000-0000-0000-0000-000000000011/12/13` in the `/v1/billing-history` stub do not pass RFC-4122 UUID validation (version nibble must be 1–5). Pre-existing pattern throughout `commitment-contracts.ts` stub data (e.g., lines 626, 636, 677–679, 734–736). hono/zod-openapi does not validate response bodies by default, so tests pass. Replace with valid RFC-4122 UUIDs when real DB integration lands or if strict response validation is ever enabled.

@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import '../../../../core/l10n/strings.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../proof/presentation/proof_capture_modal.dart';
 import '../../domain/now_task.dart';
 import '../../domain/proof_mode.dart';
 import 'commitment_row.dart';
@@ -354,11 +355,25 @@ class _NowTaskCardState extends State<NowTaskCard> {
       child: CupertinoButton(
         color: isCommitted ? colors.surfacePrimary : colors.accentPrimary,
         borderRadius: BorderRadius.circular(AppSpacing.md),
-        onPressed: () {
+        onPressed: () async {
           HapticFeedback.mediumImpact();
-          // For standard + HealthKit: mark done
-          // For photo + watchMode: stub proof flow (Epic 7)
-          widget.onComplete?.call();
+          if (widget.task.proofMode == ProofMode.photo) {
+            // Open proof capture modal — returns non-null if proof submitted.
+            final result = await showCupertinoModalPopup<Object?>(
+              context: context,
+              builder: (_) => ProofCaptureModal(
+                taskName: widget.task.title,
+                proofMode: widget.task.proofMode,
+              ),
+            );
+            if (!mounted) return;
+            if (result != null) {
+              widget.onComplete?.call();
+            }
+          } else {
+            // For standard + HealthKit + watchMode: mark done directly.
+            widget.onComplete?.call();
+          }
         },
         child: Row(
           mainAxisSize: MainAxisSize.min,
