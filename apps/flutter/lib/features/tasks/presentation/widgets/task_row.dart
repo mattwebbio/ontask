@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/l10n/strings.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -7,18 +8,20 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../lists/domain/list_member.dart';
 import '../../../now/domain/proof_mode.dart';
 import '../../../prediction/presentation/widgets/prediction_badge_async.dart';
+import '../../data/tasks_repository.dart';
 import '../../domain/energy_requirement.dart';
 import '../../domain/recurrence_rule.dart';
 import '../../domain/task.dart';
 import '../../domain/task_dependency.dart';
 import '../../domain/task_priority.dart';
 import '../../domain/time_window.dart';
+import 'task_proof_sheet.dart';
 
 /// Renders a single task row in a list.
 ///
 /// Displays title and optional due date badge. Tap opens inline edit mode.
 /// Swipe left reveals archive action.
-class TaskRow extends StatelessWidget {
+class TaskRow extends ConsumerWidget {
   const TaskRow({
     required this.task,
     this.onTap,
@@ -69,7 +72,7 @@ class TaskRow extends StatelessWidget {
   final List<ListMember> listMembers;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = Theme.of(context).extension<OnTaskColors>()!;
 
     return Dismissible(
@@ -135,7 +138,7 @@ class TaskRow extends StatelessWidget {
                                 : null,
                           ),
                     ),
-                    if (task.dueDate != null || _hasSchedulingHints || task.recurrenceRule != null || dependsOn.isNotEmpty || blocks.isNotEmpty) ...[
+                    if (task.dueDate != null || _hasSchedulingHints || task.recurrenceRule != null || dependsOn.isNotEmpty || blocks.isNotEmpty || (task.completedAt != null && task.proofRetained)) ...[
                       const SizedBox(height: AppSpacing.xs),
                       Wrap(
                         spacing: AppSpacing.sm,
@@ -334,6 +337,35 @@ class TaskRow extends StatelessWidget {
                                 ],
                               ),
                             ),
+                          // Proof retained indicator — shown when task is completed with retained proof (AC1, FR21)
+                          if (task.completedAt != null && task.proofRetained)
+                            GestureDetector(
+                              onTap: () => _onProofIndicatorTapped(context, ref),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    CupertinoIcons.camera_viewfinder,
+                                    size: 12,
+                                    color: colors.textSecondary,
+                                  ),
+                                  const SizedBox(width: 2),
+                                  Text(
+                                    task.completedByName != null
+                                        ? AppStrings.proofCompletedByLabel
+                                            .replaceAll('{name}', task.completedByName!)
+                                        : AppStrings.proofRetainedLabel,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall
+                                        ?.copyWith(
+                                          color: colors.textSecondary,
+                                          fontSize: 13,
+                                        ),
+                                  ),
+                                ],
+                              ),
+                            ),
                         ],
                       ),
                     ],
@@ -361,6 +393,60 @@ class TaskRow extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// Called when the proof indicator chip is tapped.
+  ///
+  /// Fetches proof data via [tasksRepositoryProvider] and opens [TaskProofSheet].
+  /// Shows a loading indicator while the request is in flight.
+  /// On error, shows a [CupertinoAlertDialog].
+  Future<void> _onProofIndicatorTapped(BuildContext context, WidgetRef ref) async {
+    // Show loading indicator while fetching
+    showCupertinoDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const CupertinoActivityIndicator(),
+    );
+
+    try {
+      final proofData = await ref.read(tasksRepositoryProvider).getTaskProof(task.id);
+      if (!context.mounted) return;
+      // Dismiss loading indicator
+      Navigator.of(context, rootNavigator: true).pop();
+
+      final proofMediaUrl = proofData['proofMediaUrl'] as String?;
+      final completedByName = proofData['completedByName'] as String?;
+      final completedAtStr = proofData['completedAt'] as String?;
+      final completedAt = completedAtStr != null ? DateTime.parse(completedAtStr) : null;
+
+      await showCupertinoModalPopup<void>(
+        context: context,
+        builder: (_) => TaskProofSheet(
+          taskId: task.id,
+          proofMediaUrl: proofMediaUrl,
+          completedByName: completedByName,
+          completedAt: completedAt,
+        ),
+      );
+    } catch (_) {
+      if (!context.mounted) return;
+      // Dismiss loading indicator
+      Navigator.of(context, rootNavigator: true).pop();
+
+      await showCupertinoDialog<void>(
+        context: context,
+        builder: (ctx) => CupertinoAlertDialog(
+          title: const Text(AppStrings.dialogErrorTitle),
+          content: const Text(AppStrings.proofLoadError),
+          actions: [
+            CupertinoDialogAction(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text(AppStrings.actionOk),
+            ),
+          ],
+        ),
+      );
+    }
   }
 
   bool get _hasSchedulingHints =>

@@ -90,6 +90,9 @@ const taskSchema = z.object({
   listName: z.string().nullable(),
   proofMode: z.enum(['standard', 'photo', 'watchMode', 'healthKit', 'calendarEvent']),
   proofModeIsCustom: z.boolean(),
+  proofRetained: z.boolean(),
+  proofMediaUrl: z.string().url().nullable(),
+  completedByName: z.string().nullable(),
 })
 
 const TaskResponseSchema = z.object({ data: taskSchema })
@@ -197,6 +200,9 @@ function stubTask(overrides: Partial<z.infer<typeof taskSchema>> = {}): z.infer<
     listName: null,
     proofMode: 'standard' as const,
     proofModeIsCustom: false,
+    proofRetained: false,
+    proofMediaUrl: null,
+    completedByName: null,
     ...overrides,
   }
 }
@@ -391,7 +397,18 @@ app.openapi(getTasksRoute, async (c) => {
     listId: 'b0000000-0000-4000-8000-000000000001',
     listName: 'Household',
   })
-  return c.json(list([stubTask(), assignedTask], null, false), 200)
+  // Stub: completed task with retained proof to exercise proof indicator in the UI (AC1, FR21)
+  const completedProofTask = stubTask({
+    id: 'a0000000-0000-4000-8000-000000000003',
+    title: 'Morning workout',
+    completedAt: '2026-04-01T08:00:00.000Z',
+    proofRetained: true,
+    proofMediaUrl: 'https://placehold.co/600x400.jpg',
+    completedByName: 'Jordan',
+    listId: 'b0000000-0000-4000-8000-000000000001',
+    listName: 'Household',
+  })
+  return c.json(list([stubTask(), assignedTask, completedProofTask], null, false), 200)
 })
 
 // ── GET /v1/tasks/today ──────────────────────────────────────────────────────
@@ -958,6 +975,85 @@ app.openapi(patchTaskProofModeRoute, async (c) => {
   const { id } = c.req.valid('param')
   const body = c.req.valid('json')
   return c.json(ok(stubTask({ id, proofMode: body.proofMode, proofModeIsCustom: true })), 200)
+})
+
+// ── GET /v1/tasks/:id/proof ──────────────────────────────────────────────────
+// IMPORTANT: Registered BEFORE PATCH /v1/tasks/{id} (catch-all) and before any
+// unqualified GET /v1/tasks/{id}. Specific sub-resource paths must come before
+// the parameterized catch-all (Dev Notes: route placement critical).
+
+const taskProofResponseSchema = z.object({
+  taskId: z.string().uuid(),
+  proofMediaUrl: z.string().url().nullable(),
+  proofRetained: z.boolean(),
+  completedAt: z.string().datetime().nullable(),
+  completedByUserId: z.string().uuid().nullable(),
+  completedByName: z.string().nullable(),
+})
+
+const TaskProofResponseSchema = z.object({ data: taskProofResponseSchema })
+
+const TaskProofForbiddenSchema = z.object({
+  error: z.object({ code: z.string(), message: z.string() }),
+})
+
+const getTaskProofRoute = createRoute({
+  method: 'get',
+  path: '/v1/tasks/{id}/proof',
+  tags: ['Tasks'],
+  summary: 'Get proof media for a completed task (FR21)',
+  description:
+    'Returns proof media URL and completion metadata for a task. ' +
+    'Access is scoped to members of the shared list only (NFR-S4). ' +
+    'Pass ?demo=withProof to exercise the retained-proof path in tests.',
+  request: {
+    params: z.object({ id: z.string().uuid() }),
+    query: z.object({
+      demo: z.string().optional(),
+    }),
+  },
+  responses: {
+    200: { content: { 'application/json': { schema: TaskProofResponseSchema } }, description: 'Proof data' },
+    403: { content: { 'application/json': { schema: TaskProofForbiddenSchema } }, description: 'Not a list member' },
+    404: { content: { 'application/json': { schema: ErrorSchema } }, description: 'Task not found' },
+  },
+})
+
+app.openapi(getTaskProofRoute, async (c) => {
+  // TODO(impl): verify caller is a list_member for the task's listId before returning the URL.
+  // If the task is not in a shared list, only the task owner (userId == jwt.sub) may access it.
+  // If proofRetained == false or proofMediaUrl IS NULL in DB: return null.
+  // Generate a 15-minute presigned Backblaze B2 URL (NFR-S4) — do NOT store presigned URLs in DB.
+  const { id } = c.req.valid('param')
+  const { demo } = c.req.valid('query')
+
+  if (demo === 'withProof') {
+    // Stub: exercise the retained-proof path — task completed with retained proof
+    return c.json(
+      ok({
+        taskId: id,
+        proofMediaUrl: 'https://placehold.co/600x400.jpg',
+        proofRetained: true,
+        completedAt: '2026-04-01T08:00:00.000Z',
+        completedByUserId: 'd0000000-0000-4000-8000-000000000002',
+        completedByName: 'Jordan',
+      }),
+      200,
+    )
+  }
+
+  // Stub: default path — task not completed or proof not retained
+  return c.json(
+    ok({
+      taskId: id,
+      proofMediaUrl: null,
+      proofRetained: false,
+      completedAt: null,
+      completedByUserId: null,
+      completedByName: null,
+    }),
+    200,
+  )
 })
 
 // ── PATCH /v1/tasks/:id ─────────────────────────────────────────────────────

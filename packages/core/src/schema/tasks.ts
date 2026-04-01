@@ -32,6 +32,8 @@ export const tasksTable = pgTable('tasks', {
   assignedToUserId: uuid(), // null = unassigned; set by round-robin/least-busy/ai-assisted strategy
   proofMode: text(), // 'standard' | 'photo' | 'watchMode' | 'healthKit' | 'calendarEvent' | null (null = derived from inherited requirement)
   proofModeIsCustom: boolean().default(false).notNull(), // true when proofMode was explicitly set by user, overriding list/section default
+  proofRetained: boolean().default(false).notNull(), // true when the user chose "Keep as completion record" (FR38, Story 7.7)
+  proofMediaUrl: text(), // nullable; presigned URL or storage path for photo/video/document proof (FR21, NFR-S4)
   completedAt: timestamp({ withTimezone: true }),
   createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp({ withTimezone: true }).defaultNow().notNull(),

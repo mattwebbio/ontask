@@ -78,6 +78,13 @@
       "when": 1775032177349,
       "tag": "0010_accountability_settings_cascade",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1743638400001,
+      "tag": "0011_shared_proof_visibility",
+      "breakpoints": true
     }
   ]
 }
