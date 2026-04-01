@@ -3,7 +3,9 @@ import 'package:flutter/material.dart' show Colors, showModalBottomSheet;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../proof/data/proof_repository.dart';
 import '../../scheduling/presentation/widgets/nudge_input_sheet.dart';
+import '../../../core/network/api_client.dart';
 import 'now_provider.dart';
 import 'timer_provider.dart';
 import 'widgets/now_card_skeleton.dart';
@@ -33,6 +35,7 @@ class NowScreen extends ConsumerStatefulWidget {
 class _NowScreenState extends ConsumerState<NowScreen> {
   late final Future<void> _skeletonDelay;
   bool _timerInitialised = false;
+  ProofRepository? _proofRepository;
 
   @override
   void initState() {
@@ -88,10 +91,16 @@ class _NowScreenState extends ConsumerState<NowScreen> {
               ? ref.read(taskTimerProvider.notifier).currentElapsed
               : timerState.elapsedSeconds;
 
+          // Lazily create ProofRepository once and cache it.
+          // Uses try/catch to tolerate test environments where apiClientProvider
+          // may not be fully configured (e.g., auth override as value provider).
+          _proofRepository ??= _tryCreateProofRepository();
+
           return NowTaskCard(
             task: task,
             timerRunning: timerState.isRunning,
             timerElapsedSeconds: elapsed,
+            proofRepository: _proofRepository,
             onComplete: () {
               ref.read(nowProvider.notifier).completeTask(task.id);
               // Navigate to the Chapter Break Screen after task completion.
@@ -118,6 +127,17 @@ class _NowScreenState extends ConsumerState<NowScreen> {
         },
       ),
     );
+  }
+
+  /// Attempts to create a [ProofRepository] using the Riverpod-provided
+  /// [ApiClient]. Returns null if the provider is unavailable (e.g., in tests
+  /// where [authStateProvider] is overridden as a value provider).
+  ProofRepository? _tryCreateProofRepository() {
+    try {
+      return ProofRepository(ref.read(apiClientProvider));
+    } catch (_) {
+      return null;
+    }
   }
 
   void _openNudgeSheet(String taskId, String taskTitle) {

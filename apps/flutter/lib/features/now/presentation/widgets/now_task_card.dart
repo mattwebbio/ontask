@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import '../../../../core/l10n/strings.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../proof/data/proof_repository.dart';
 import '../../../proof/presentation/proof_capture_modal.dart';
 import '../../domain/now_task.dart';
 import '../../domain/proof_mode.dart';
@@ -33,6 +34,9 @@ class NowTaskCard extends StatefulWidget {
   final VoidCallback? onNudge;
   final bool timerRunning;
   final int timerElapsedSeconds;
+  /// Optional [ProofRepository] for photo proof submission (Story 7.2).
+  /// When provided, the photo proof path submits via AI verification.
+  final ProofRepository? proofRepository;
 
   const NowTaskCard({
     required this.task,
@@ -43,6 +47,7 @@ class NowTaskCard extends StatefulWidget {
     this.onNudge,
     this.timerRunning = false,
     this.timerElapsedSeconds = 0,
+    this.proofRepository,
     super.key,
   });
 
@@ -363,7 +368,9 @@ class _NowTaskCardState extends State<NowTaskCard> {
               context: context,
               builder: (_) => ProofCaptureModal(
                 taskName: widget.task.title,
+                taskId: widget.task.id,
                 proofMode: widget.task.proofMode,
+                proofRepository: widget.proofRepository,
               ),
             );
             if (!mounted) return;

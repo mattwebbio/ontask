@@ -7,7 +7,10 @@ import 'package:flutter/material.dart' show Theme;
 import '../../../core/l10n/strings.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_theme.dart';
+import '../data/proof_repository.dart';
 import '../domain/proof_path.dart';
+import '../domain/proof_submission_state.dart';
+import 'photo_capture_sub_view.dart';
 import '../../now/domain/proof_mode.dart';
 
 /// Modal bottom sheet for selecting a proof path when submitting task proof.
@@ -22,14 +25,23 @@ class ProofCaptureModal extends StatefulWidget {
   const ProofCaptureModal({
     super.key,
     required this.taskName,
+    this.taskId,
     this.proofMode,
+    this.proofRepository,
   });
 
   /// The name of the task for which proof is being submitted.
   final String taskName;
 
+  /// The task ID used for photo proof submission (required for photo path).
+  final String? taskId;
+
   /// The proof mode pre-set on the task (used for context; does not force a path).
   final ProofMode? proofMode;
+
+  /// Injected [ProofRepository] for photo path submission.
+  /// Required when using the photo path — may be null for other paths.
+  final ProofRepository? proofRepository;
 
   @override
   State<ProofCaptureModal> createState() => _ProofCaptureModalState();
@@ -38,6 +50,10 @@ class ProofCaptureModal extends StatefulWidget {
 class _ProofCaptureModalState extends State<ProofCaptureModal> {
   ProofPath? _selectedPath;
   bool _isOffline = false;
+  // Tracks overall modal submission state — used to distinguish idle/path-selected/submitted
+  // and will be consumed for analytics and stake integration in Story 7.3+.
+  // ignore: unused_field
+  ProofSubmissionState _submissionState = const ProofSubmissionIdle();
 
   @override
   void initState() {
@@ -60,11 +76,17 @@ class _ProofCaptureModalState extends State<ProofCaptureModal> {
   }
 
   void _onPathSelected(ProofPath path) {
-    setState(() => _selectedPath = path);
+    setState(() {
+      _selectedPath = path;
+      _submissionState = ProofSubmissionPathSelected(path);
+    });
   }
 
   void _onBack() {
-    setState(() => _selectedPath = null);
+    setState(() {
+      _selectedPath = null;
+      _submissionState = const ProofSubmissionIdle();
+    });
   }
 
   void _onDismiss() {
@@ -177,14 +199,27 @@ class _ProofCaptureModalState extends State<ProofCaptureModal> {
     );
   }
 
-  /// Builds the stub sub-view for the selected [path].
+  /// Builds the sub-view for the selected [path].
   ///
-  /// Full implementations are in Stories 7.2–7.6. This is the placeholder.
+  /// Photo path: renders [PhotoCaptureSubView] (Story 7.2).
+  /// All other paths: stub placeholder (Stories 7.3–7.6).
   Widget _buildSubView(
     BuildContext context,
     OnTaskColors colors,
     ProofPath path,
   ) {
+    // ── Photo path — real implementation (Story 7.2) ──────────────────────
+    if (path == ProofPath.photo &&
+        widget.taskId != null &&
+        widget.proofRepository != null) {
+      return PhotoCaptureSubView(
+        taskId: widget.taskId!,
+        taskName: widget.taskName,
+        proofRepository: widget.proofRepository!,
+      );
+    }
+
+    // ── Other paths — stub placeholder (Stories 7.3–7.6) ─────────────────
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,

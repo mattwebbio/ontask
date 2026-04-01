@@ -10,7 +10,10 @@ enum ProofPath {
   screenshot,
   offline;
 
-  /// Parses a JSON string to [ProofPath]. Defaults to [photo] for unknown values.
+  /// Parses a JSON string to [ProofPath].
+  ///
+  /// Throws [ArgumentError] for unknown values — previously silently defaulted
+  /// to [photo] (deferred fix from Story 7.1).
   static ProofPath fromJson(String? value) {
     switch (value) {
       case 'photo':
@@ -22,7 +25,7 @@ enum ProofPath {
       case 'offline':
         return ProofPath.offline;
       default:
-        return ProofPath.photo;
+        throw ArgumentError.value(value, 'value', 'Unknown ProofPath value');
     }
   }
 
