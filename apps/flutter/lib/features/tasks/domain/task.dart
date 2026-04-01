@@ -53,5 +53,7 @@ abstract class Task with _$Task {
     @Default(false) bool proofRetained,
     // Display name of the member who completed this task; null when incomplete or unknown.
     String? completedByName,
+    // Commitment stake amount in cents; null = no stake set (FR22, Story 6.2).
+    int? stakeAmountCents,
   }) = _Task;
 }

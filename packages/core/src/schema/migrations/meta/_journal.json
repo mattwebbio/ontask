@@ -92,6 +92,13 @@
       "when": 1775056048076,
       "tag": "0012_commitment_contracts",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1775057880892,
+      "tag": "0013_stake_amount_cents",
+      "breakpoints": true
     }
   ]
 }

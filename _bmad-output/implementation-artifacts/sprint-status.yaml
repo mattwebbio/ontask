@@ -121,7 +121,7 @@ development_status:
   # ─────────────────────────────────────────────────────────
   epic-6: in-progress
   6-1-payment-method-setup: done
-  6-2-stake-setting-ui: ready-for-dev
+  6-2-stake-setting-ui: review
   6-3-charity-selection: backlog
   6-4-impact-dashboard: backlog
   6-5-automated-charge-processing-charity-disbursement: backlog

@@ -2,6 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/network/api_client.dart';
 import '../domain/commitment_payment_status.dart';
+import '../domain/task_stake.dart';
 
 part 'commitment_contracts_repository.g.dart';
 
@@ -72,6 +73,47 @@ class CommitmentContractsRepository {
     await _client.dio.delete<Map<String, dynamic>>(
       '/v1/payment-method',
       data: <String, dynamic>{},
+    );
+  }
+
+  // ── Stake methods (FR22, Story 6.2) ────────────────────────────────────────
+
+  /// Fetches the current stake amount for a task.
+  ///
+  /// `GET /v1/tasks/:taskId/stake`
+  Future<TaskStake> getTaskStake(String taskId) async {
+    final response = await _client.dio.get<Map<String, dynamic>>(
+      '/v1/tasks/$taskId/stake',
+    );
+    final data = response.data!['data'] as Map<String, dynamic>;
+    return TaskStake(
+      taskId: data['taskId'] as String,
+      stakeAmountCents: data['stakeAmountCents'] as int?,
+    );
+  }
+
+  /// Sets or updates the stake amount on a task.
+  ///
+  /// `PUT /v1/tasks/:taskId/stake`
+  /// Throws [DioException] with status 422 if no payment method is stored.
+  Future<TaskStake> setTaskStake(String taskId, int stakeAmountCents) async {
+    final response = await _client.dio.put<Map<String, dynamic>>(
+      '/v1/tasks/$taskId/stake',
+      data: {'taskId': taskId, 'stakeAmountCents': stakeAmountCents},
+    );
+    final data = response.data!['data'] as Map<String, dynamic>;
+    return TaskStake(
+      taskId: data['taskId'] as String,
+      stakeAmountCents: data['stakeAmountCents'] as int?,
+    );
+  }
+
+  /// Removes the stake from a task.
+  ///
+  /// `DELETE /v1/tasks/:taskId/stake`
+  Future<void> removeTaskStake(String taskId) async {
+    await _client.dio.delete<Map<String, dynamic>>(
+      '/v1/tasks/$taskId/stake',
     );
   }
 }

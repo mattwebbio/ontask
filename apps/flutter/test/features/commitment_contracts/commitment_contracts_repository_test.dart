@@ -267,4 +267,151 @@ void main() {
       );
     });
   });
+
+  // ── getTaskStake ──────────────────────────────────────────────────────────
+
+  group('CommitmentContractsRepository.getTaskStake (Story 6.2)', () {
+    test(
+        'fires GET /v1/tasks/task-id/stake and maps taskId and stakeAmountCents',
+        () async {
+      final mockDio = MockDio();
+      final mockClient = MockApiClient();
+      when(() => mockClient.dio).thenReturn(mockDio);
+
+      const expectedPath = '/v1/tasks/task-id/stake';
+
+      when(
+        () => mockDio.get<Map<String, dynamic>>(any()),
+      ).thenAnswer(
+        (_) async => Response(
+          requestOptions: RequestOptions(path: expectedPath),
+          statusCode: 200,
+          data: {
+            'data': {
+              'taskId': 'task-id',
+              'stakeAmountCents': 2500,
+            },
+          },
+        ),
+      );
+
+      final repo = CommitmentContractsRepository(mockClient);
+      final result = await repo.getTaskStake('task-id');
+
+      final captured =
+          verify(() => mockDio.get<Map<String, dynamic>>(captureAny()))
+              .captured;
+      expect(captured.single, equals(expectedPath));
+      expect(result.taskId, equals('task-id'));
+      expect(result.stakeAmountCents, equals(2500));
+    });
+
+    test('maps stakeAmountCents as null when no stake set', () async {
+      final mockDio = MockDio();
+      final mockClient = MockApiClient();
+      when(() => mockClient.dio).thenReturn(mockDio);
+
+      when(
+        () => mockDio.get<Map<String, dynamic>>(any()),
+      ).thenAnswer(
+        (_) async => Response(
+          requestOptions: RequestOptions(path: '/v1/tasks/task-id/stake'),
+          statusCode: 200,
+          data: {
+            'data': {
+              'taskId': 'task-id',
+              'stakeAmountCents': null,
+            },
+          },
+        ),
+      );
+
+      final repo = CommitmentContractsRepository(mockClient);
+      final result = await repo.getTaskStake('task-id');
+
+      expect(result.stakeAmountCents, isNull);
+    });
+  });
+
+  // ── setTaskStake ──────────────────────────────────────────────────────────
+
+  group('CommitmentContractsRepository.setTaskStake (Story 6.2)', () {
+    test(
+        'fires PUT /v1/tasks/task-id/stake with body {taskId, stakeAmountCents: 2500}',
+        () async {
+      final mockDio = MockDio();
+      final mockClient = MockApiClient();
+      when(() => mockClient.dio).thenReturn(mockDio);
+
+      const expectedPath = '/v1/tasks/task-id/stake';
+      Map<String, dynamic>? capturedBody;
+
+      when(
+        () => mockDio.put<Map<String, dynamic>>(
+          any(),
+          data: any(named: 'data'),
+        ),
+      ).thenAnswer((invocation) async {
+        capturedBody =
+            invocation.namedArguments[const Symbol('data')] as Map<String, dynamic>;
+        return Response(
+          requestOptions: RequestOptions(path: expectedPath),
+          statusCode: 200,
+          data: {
+            'data': {
+              'taskId': 'task-id',
+              'stakeAmountCents': 2500,
+            },
+          },
+        );
+      });
+
+      final repo = CommitmentContractsRepository(mockClient);
+      final result = await repo.setTaskStake('task-id', 2500);
+
+      final captured = verify(
+        () => mockDio.put<Map<String, dynamic>>(
+          captureAny(),
+          data: any(named: 'data'),
+        ),
+      ).captured;
+      expect(captured.single, equals(expectedPath));
+      expect(capturedBody, isNotNull);
+      expect(capturedBody!['taskId'], equals('task-id'));
+      expect(capturedBody!['stakeAmountCents'], equals(2500));
+      expect(result.stakeAmountCents, equals(2500));
+    });
+  });
+
+  // ── removeTaskStake ───────────────────────────────────────────────────────
+
+  group('CommitmentContractsRepository.removeTaskStake (Story 6.2)', () {
+    test('fires DELETE /v1/tasks/task-id/stake', () async {
+      final mockDio = MockDio();
+      final mockClient = MockApiClient();
+      when(() => mockClient.dio).thenReturn(mockDio);
+
+      const expectedPath = '/v1/tasks/task-id/stake';
+
+      when(
+        () => mockDio.delete<Map<String, dynamic>>(any()),
+      ).thenAnswer(
+        (_) async => Response(
+          requestOptions: RequestOptions(path: expectedPath),
+          statusCode: 200,
+          data: {
+            'data': {'removed': true},
+          },
+        ),
+      );
+
+      final repo = CommitmentContractsRepository(mockClient);
+      await repo.removeTaskStake('task-id');
+
+      final captured = verify(
+        () => mockDio.delete<Map<String, dynamic>>(captureAny()),
+      ).captured;
+      expect(captured.single, equals(expectedPath));
+    });
+  });
 }
