@@ -106,7 +106,7 @@ development_status:
   # Epic 5: Shared Lists & Household Coordination
   # ─────────────────────────────────────────────────────────
   epic-5: in-progress
-  5-1-list-sharing-invitations: in-progress
+  5-1-list-sharing-invitations: done
   5-2-task-assignment-strategies: backlog
   5-3-shared-tasks-in-personal-schedule: backlog
   5-4-accountability-settings-cascade: backlog
