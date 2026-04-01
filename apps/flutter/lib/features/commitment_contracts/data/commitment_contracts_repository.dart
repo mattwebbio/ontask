@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/network/api_client.dart';
+import '../domain/billing_entry.dart';
 import '../domain/charity_selection.dart';
 import '../domain/commitment_payment_status.dart';
 import '../domain/group_commitment.dart';
@@ -332,6 +333,34 @@ class CommitmentContractsRepository {
       charityBreakdown: breakdown,
       milestones: milestones,
     );
+  }
+
+  // ── Billing history (FR65, Story 6.9) ─────────────────────────────────────
+
+  /// Fetches the authenticated user's charge and cancellation history.
+  ///
+  /// `GET /v1/billing-history`
+  /// Returns entries ordered newest-first. Cancelled stakes have amountCents=null
+  /// and disbursementStatus='cancelled'.
+  Future<List<BillingEntry>> getBillingHistory() async {
+    final response = await _client.dio.get<Map<String, dynamic>>(
+      '/v1/billing-history',
+    );
+    final data = response.data!['data'] as Map<String, dynamic>;
+    final list = data['entries'] as List<dynamic>;
+    return list.map((e) {
+      final m = e as Map<String, dynamic>;
+      return BillingEntry(
+        id: m['id'] as String,
+        taskName: m['taskName'] as String,
+        date: DateTime.parse(m['date'] as String).toLocal(),
+        amountCents: m['amountCents'] != null
+            ? (m['amountCents'] as num).toInt()
+            : null,
+        disbursementStatus: m['disbursementStatus'] as String,
+        charityName: m['charityName'] as String?,
+      );
+    }).toList();
   }
 }
 

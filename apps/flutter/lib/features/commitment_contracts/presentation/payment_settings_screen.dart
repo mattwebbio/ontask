@@ -7,6 +7,7 @@ import '../../../core/l10n/strings.dart';
 import '../../../core/theme/app_theme.dart';
 import '../data/commitment_contracts_repository.dart';
 import '../domain/commitment_payment_status.dart';
+import 'billing_history_screen.dart';
 
 // TODO(impl): register ontaskhq.com/payment-setup-complete deep link handler in AppRouter.
 // Architecture note: Universal Link https://ontaskhq.com/payment-setup-complete?sessionToken=xxx
@@ -187,6 +188,7 @@ class _PaymentSettingsScreenState extends ConsumerState<PaymentSettingsScreen> {
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
       children: [
         if (!status.hasPaymentMethod) ...[
+
           // ── No payment method stored ─────────────────────────────────────
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
@@ -262,6 +264,42 @@ class _PaymentSettingsScreenState extends ConsumerState<PaymentSettingsScreen> {
             ),
           ],
         ],
+        // ── Billing History row — always visible ──────────────────────────────
+        const SizedBox(height: 16),
+        CupertinoButton(
+          minimumSize: const Size(44, 44),
+          padding: EdgeInsets.zero,
+          onPressed: () {
+            Navigator.of(context).push(
+              CupertinoPageRoute<void>(
+                builder: (_) => const BillingHistoryScreen(),
+              ),
+            );
+          },
+          child: Row(
+            children: [
+              Icon(
+                CupertinoIcons.clock,
+                color: colors.textPrimary,
+                size: 20,
+              ),
+              const SizedBox(width: 12),
+              Text(
+                AppStrings.billingHistoryNavLabel,
+                style: TextStyle(
+                  color: colors.textPrimary,
+                  fontSize: 17,
+                ),
+              ),
+              const Spacer(),
+              Icon(
+                CupertinoIcons.chevron_right,
+                color: colors.textSecondary,
+                size: 16,
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }

@@ -840,4 +840,127 @@ app.post('/v1/webhooks/stripe', async (c) => {
   return c.json({ received: true }, 200)
 })
 
+// ── Billing history schemas (FR65, Story 6.9) ────────────────────────────────
+
+const billingEntrySchema = z.object({
+  id: z.string().uuid(),
+  taskName: z.string(),
+  date: z.string().datetime(),           // ISO 8601 UTC — charge date or cancellation date
+  amountCents: z.number().int().nullable(), // null for cancelled entries
+  disbursementStatus: z.enum(['pending', 'completed', 'failed', 'cancelled']),
+  charityName: z.string().nullable(),    // null for cancelled entries
+})
+
+const billingHistoryResponseSchema = z.object({ data: z.object({ entries: z.array(billingEntrySchema) }) })
+
+// ── GET /v1/billing-history ───────────────────────────────────────────────────
+// Returns the authenticated user's charge and cancellation history (FR65, Story 6.9).
+
+const getBillingHistoryRoute = createRoute({
+  method: 'get',
+  path: '/v1/billing-history',
+  tags: ['Billing'],
+  summary: 'Get billing history for the authenticated user',
+  description:
+    "Returns the authenticated user's charge and cancellation history. " +
+    'Entries are ordered newest-first. Cancelled stakes have amountCents=null ' +
+    'and disbursementStatus="cancelled". Stub implementation (Story 6.9).',
+  responses: {
+    200: {
+      content: { 'application/json': { schema: billingHistoryResponseSchema } },
+      description: 'Billing history entries',
+    },
+  },
+})
+
+app.openapi(getBillingHistoryRoute, (c) => {
+  // TODO(impl): query charge_events joined to tasks for userId = JWT sub, order by date descending;
+  //             return cancelled stakes from tasks where stakeAmountCents was set then nulled
+  //             via POST /v1/tasks/:taskId/stake/cancel
+  const stubEntries = [
+    {
+      id: '00000000-0000-0000-0000-000000000011',
+      taskName: 'Complete quarterly report',
+      date: '2026-03-15T10:00:00.000Z',
+      amountCents: 5000,
+      disbursementStatus: 'completed' as const,
+      charityName: 'American Red Cross',
+    },
+    {
+      id: '00000000-0000-0000-0000-000000000012',
+      taskName: 'Finish side project milestone',
+      date: '2026-03-20T14:30:00.000Z',
+      amountCents: 2500,
+      disbursementStatus: 'pending' as const,
+      charityName: 'Doctors Without Borders',
+    },
+    {
+      id: '00000000-0000-0000-0000-000000000013',
+      taskName: 'Read three chapters',
+      date: '2026-03-25T09:00:00.000Z',
+      amountCents: null,
+      disbursementStatus: 'cancelled' as const,
+      charityName: null,
+    },
+  ]
+  return c.json(ok({ entries: stubEntries }), 200)
+})
+
+// ── Contract status schemas (FR71, Story 6.9) ────────────────────────────────
+
+const contractStatusSchema = z.object({
+  id: z.string().uuid(),
+  status: z.enum(['active', 'charged', 'cancelled', 'disputed']),
+  stakeAmountCents: z.number().int().nullable(),
+  chargeTimestamp: z.string().datetime().nullable(), // ISO 8601 UTC; null unless status='charged'
+})
+
+const ContractStatusResponseSchema = z.object({ data: contractStatusSchema })
+
+// ── GET /v1/contracts/:id/status ─────────────────────────────────────────────
+// Returns the status of a commitment contract by ID (FR71, Story 6.9).
+// Scoped to the authenticated user's contracts only — no cross-user access.
+
+const getContractStatusRoute = createRoute({
+  method: 'get',
+  path: '/v1/contracts/:id/status',
+  tags: ['Contracts'],
+  summary: 'Get contract status by ID',
+  description:
+    'Returns the status (active/charged/cancelled/disputed), stake amount, and charge timestamp ' +
+    'for the specified commitment contract. ' +
+    'Scoped to authenticated user only — returns 403 if contract belongs to another user, ' +
+    '404 if not found. Stub implementation (Story 6.9).',
+  request: {
+    params: z.object({ id: z.string().uuid() }),
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: ContractStatusResponseSchema } },
+      description: 'Contract status',
+    },
+    403: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Contract belongs to another user',
+    },
+    404: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Contract not found',
+    },
+  },
+})
+
+app.openapi(getContractStatusRoute, (c) => {
+  const { id } = c.req.valid('param')
+  // TODO(impl): query commitment_contracts where id = :id AND userId = JWT sub
+  // TODO(impl): return 404 if contract not found at all
+  // TODO(impl): return 403 if contract exists but userId != JWT sub — NEVER return another user's contract
+  return c.json(ok({
+    id,
+    status: 'active' as const,
+    stakeAmountCents: 2500,
+    chargeTimestamp: null,
+  }), 200)
+})
+
 export { app as commitmentContractsRouter }
