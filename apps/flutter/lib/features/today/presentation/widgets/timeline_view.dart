@@ -2,9 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' show Theme;
+import 'package:go_router/go_router.dart';
 
+import '../../../../core/l10n/strings.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../tasks/domain/task.dart';
+import '../../data/calendar_event_dto.dart';
 import '../../domain/timeline_block.dart';
 import 'timeline_painter.dart';
 import 'today_task_row.dart';
@@ -14,12 +17,20 @@ import 'today_task_row.dart';
 ///
 /// Follows UX-DR12: full CustomPainter build, RepaintBoundary, zero
 /// allocations in paint().
+///
+/// As of Story 3.4, also accepts [calendarBlocks] to display grey calendar
+/// event blocks from Google Calendar (AC6). Task blocks navigate to the
+/// task detail screen on tap (AC3); calendar event blocks show a brief
+/// info sheet.
 class TimelineView extends StatefulWidget {
   /// Tasks to render as timeline blocks.
   final List<Task> tasks;
 
-  /// Callback when a block is tapped. Stub for now -- task detail navigation
-  /// is deferred to a later story.
+  /// Calendar event blocks to display as grey immovable blocks (AC6, Story 3.4).
+  final List<CalendarEventDto> calendarBlocks;
+
+  /// Callback when a block is tapped. Wired in Story 3.4 to navigate to task
+  /// detail for task blocks; calendar event blocks show an info sheet.
   final void Function(TimelineBlock)? onBlockTapped;
 
   /// Height in logical pixels per hour.
@@ -27,6 +38,7 @@ class TimelineView extends StatefulWidget {
 
   const TimelineView({
     required this.tasks,
+    this.calendarBlocks = const [],
     this.onBlockTapped,
     this.hourHeight = 80.0,
     super.key,
@@ -64,7 +76,8 @@ class _TimelineViewState extends State<TimelineView> {
   @override
   void didUpdateWidget(covariant TimelineView oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (!identical(widget.tasks, oldWidget.tasks)) {
+    if (!identical(widget.tasks, oldWidget.tasks) ||
+        !identical(widget.calendarBlocks, oldWidget.calendarBlocks)) {
       _blocks = _buildBlocks();
     }
   }
@@ -87,7 +100,8 @@ class _TimelineViewState extends State<TimelineView> {
   }
 
   List<TimelineBlock> _buildBlocks() {
-    return widget.tasks.map((task) {
+    // Task blocks
+    final taskBlocks = widget.tasks.map((task) {
       final startTime = task.scheduledStartTime ?? task.dueDate ?? _now;
       final duration = task.durationMinutes ?? 30;
       final state = _determineState(task);
@@ -98,10 +112,29 @@ class _TimelineViewState extends State<TimelineView> {
         bounds: Rect.zero, // Computed in _computeBounds when width is known
         startTime: startTime,
         durationMinutes: duration,
-        isCalendarEvent: state == TodayTaskRowState.calendarEvent,
+        isCalendarEvent: false,
         state: state,
       );
     }).toList();
+
+    // Calendar event blocks (grey, immovable — AC6)
+    final calendarEventBlocks = widget.calendarBlocks.map((event) {
+      final startTime = event.startDateTime;
+      final endTime = event.endDateTime;
+      final durationMinutes = endTime.difference(startTime).inMinutes.clamp(15, 480);
+
+      return TimelineBlock(
+        taskId: event.id, // Use event ID as stable identifier
+        title: event.summary ?? AppStrings.timelineCalendarEvent,
+        bounds: Rect.zero,
+        startTime: startTime,
+        durationMinutes: durationMinutes,
+        isCalendarEvent: true,
+        state: TodayTaskRowState.calendarEvent,
+      );
+    }).toList();
+
+    return [...taskBlocks, ...calendarEventBlocks];
   }
 
   /// Compute bounds for all blocks using the available width.
@@ -131,6 +164,35 @@ class _TimelineViewState extends State<TimelineView> {
     return TodayTaskRowState.upcoming;
   }
 
+  /// Handles a block tap — navigates to task detail for task blocks,
+  /// shows an info sheet for calendar event blocks (AC3).
+  void _handleBlockTapped(TimelineBlock block) {
+    // Delegate to custom handler first (for testing / overrides)
+    if (widget.onBlockTapped != null) {
+      widget.onBlockTapped!(block);
+      return;
+    }
+
+    if (!block.isCalendarEvent) {
+      // Task block — navigate to task detail (AC3, FR79)
+      context.push('/tasks/${block.taskId}');
+    } else {
+      // Calendar event block — show brief info sheet (do NOT navigate)
+      showCupertinoModalPopup<void>(
+        context: context,
+        builder: (_) => CupertinoActionSheet(
+          title: Text(block.title),
+          message: Text(AppStrings.timelineCalendarEvent),
+          cancelButton: CupertinoActionSheetAction(
+            isDefaultAction: true,
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Close'),
+          ),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).extension<OnTaskColors>()!;
@@ -153,7 +215,7 @@ class _TimelineViewState extends State<TimelineView> {
                           orElse: () => null,
                         );
                 if (tappedBlock != null) {
-                  widget.onBlockTapped?.call(tappedBlock);
+                  _handleBlockTapped(tappedBlock);
                 }
               },
               child: CustomPaint(

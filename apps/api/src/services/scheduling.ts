@@ -1,6 +1,6 @@
 import { schedule } from '@ontask/scheduling'
 import type { ScheduleOutput } from '@ontask/core'
-import { fetchAllCalendarEvents } from './calendar/index.js'
+import { fetchAllCalendarEvents, syncScheduledBlocksToCalendar } from './calendar/index.js'
 
 /**
  * runScheduleForUser — orchestrates the scheduling engine for a single user.
@@ -27,6 +27,10 @@ export async function runScheduleForUser(
     windowStart: now,
     windowEnd,
   })
+
+  // Write scheduled blocks to write-enabled Google Calendar connections (AC1, AC2, NFR-I2)
+  // TODO(story-impl): pass real tasks array when task loading is wired (Story 3.4 stub: tasks: [])
+  await syncScheduledBlocksToCalendar(userId, result.scheduledBlocks, [], env)
 
   // The API service layer sets generatedAt — the engine never calls new Date()
   return { ...result, generatedAt: new Date() }

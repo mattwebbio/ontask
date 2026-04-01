@@ -4,6 +4,240 @@ import { eq } from 'drizzle-orm'
 import { createDb } from '../../db/index.js'
 import { decryptToken, encryptToken } from '../../lib/crypto.js'
 
+// ── Google Calendar write types ───────────────────────────────────────────────
+
+export interface WriteTaskBlockParams {
+  connectionId: string
+  userId: string
+  taskId: string
+  taskTitle: string
+  startTime: Date
+  endTime: Date
+}
+
+export interface UpdateTaskBlockParams {
+  connectionId: string
+  userId: string
+  googleEventId: string
+  startTime: Date
+  endTime: Date
+}
+
+// ── writeTaskBlock ────────────────────────────────────────────────────────────
+
+/**
+ * Creates a Google Calendar event for a scheduled task block.
+ *
+ * Uses the same token decrypt + refresh pattern as fetchGoogleCalendarEvents.
+ * Returns the new Google Calendar event ID on success, or null on any failure
+ * (partial failure tolerant — never throws).
+ *
+ * @param params - Connection, user, task, and time information
+ * @param env - Cloudflare worker bindings
+ * @returns Google Calendar event ID string, or null on failure
+ */
+export async function writeTaskBlock(
+  params: WriteTaskBlockParams,
+  env: CloudflareBindings,
+): Promise<string | null> {
+  const calendarTokenKey = env.CALENDAR_TOKEN_KEY
+  if (!calendarTokenKey) {
+    console.error('[calendar/google] writeTaskBlock: CALENDAR_TOKEN_KEY not set')
+    return null
+  }
+
+  try {
+    const tokenResult = await loadAndRefreshToken(params.connectionId, params.userId, env, calendarTokenKey)
+    if (!tokenResult) return null
+
+    const { accessToken, calendarId } = tokenResult
+
+    const eventBody = {
+      summary: params.taskTitle,
+      description: `Scheduled by On Task · https://app.ontaskhq.com/tasks/${params.taskId}`,
+      start: { dateTime: params.startTime.toISOString(), timeZone: 'UTC' },
+      end: { dateTime: params.endTime.toISOString(), timeZone: 'UTC' },
+    }
+
+    const encodedCalendarId = encodeURIComponent(calendarId)
+    const response = await fetch(
+      `https://www.googleapis.com/calendar/v3/calendars/${encodedCalendarId}/events`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(eventBody),
+      },
+    )
+
+    if (!response.ok) {
+      console.error(
+        `[calendar/google] writeTaskBlock: Google Calendar API returned ${response.status} for connection ${params.connectionId}`,
+      )
+      return null
+    }
+
+    const data = (await response.json()) as { id?: string }
+    if (!data.id) {
+      console.error('[calendar/google] writeTaskBlock: Response missing event id')
+      return null
+    }
+
+    return data.id
+  } catch (error) {
+    console.error(`[calendar/google] writeTaskBlock: Unexpected error for connection ${params.connectionId}:`, error)
+    return null
+  }
+}
+
+// ── updateTaskBlock ───────────────────────────────────────────────────────────
+
+export type UpdateTaskBlockResult = 'updated' | 'not_found' | 'error'
+
+/**
+ * Updates the time fields of an existing Google Calendar event.
+ *
+ * Uses PATCH to update only start/end times (partial update).
+ * Returns 'updated' on success, 'not_found' if the event was externally deleted
+ * (404), or 'error' for any other failure. Callers should only attempt a
+ * create-fallback on 'not_found' — 'error' typically means auth/network issues
+ * that would also cause a subsequent create to fail.
+ *
+ * @param params - Connection, user, event ID, and new time information
+ * @param env - Cloudflare worker bindings
+ * @returns UpdateTaskBlockResult
+ */
+export async function updateTaskBlock(
+  params: UpdateTaskBlockParams,
+  env: CloudflareBindings,
+): Promise<UpdateTaskBlockResult> {
+  const calendarTokenKey = env.CALENDAR_TOKEN_KEY
+  if (!calendarTokenKey) {
+    console.error('[calendar/google] updateTaskBlock: CALENDAR_TOKEN_KEY not set')
+    return 'error'
+  }
+
+  try {
+    const tokenResult = await loadAndRefreshToken(params.connectionId, params.userId, env, calendarTokenKey)
+    if (!tokenResult) return 'error'
+
+    const { accessToken, calendarId } = tokenResult
+
+    const patchBody = {
+      start: { dateTime: params.startTime.toISOString(), timeZone: 'UTC' },
+      end: { dateTime: params.endTime.toISOString(), timeZone: 'UTC' },
+    }
+
+    const encodedCalendarId = encodeURIComponent(calendarId)
+    const response = await fetch(
+      `https://www.googleapis.com/calendar/v3/calendars/${encodedCalendarId}/events/${params.googleEventId}`,
+      {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(patchBody),
+      },
+    )
+
+    if (response.status === 404) {
+      console.error(
+        `[calendar/google] updateTaskBlock: Event ${params.googleEventId} not found (externally deleted)`,
+      )
+      return 'not_found'
+    }
+
+    if (!response.ok) {
+      console.error(
+        `[calendar/google] updateTaskBlock: Google Calendar API returned ${response.status} for event ${params.googleEventId}`,
+      )
+      return 'error'
+    }
+
+    return 'updated'
+  } catch (error) {
+    console.error(`[calendar/google] updateTaskBlock: Unexpected error for connection ${params.connectionId}:`, error)
+    return 'error'
+  }
+}
+
+// ── Shared token loading helper ───────────────────────────────────────────────
+
+interface TokenResult {
+  accessToken: string
+  calendarId: string
+}
+
+/**
+ * Loads and optionally refreshes the access token for a connection.
+ * Mirrors the token pattern from fetchGoogleCalendarEvents.
+ * Returns null on any failure.
+ */
+async function loadAndRefreshToken(
+  connectionId: string,
+  userId: string,
+  env: CloudflareBindings,
+  calendarTokenKey: string,
+): Promise<TokenResult | null> {
+  const db = createDb(env.DATABASE_URL ?? '')
+
+  const rows = await db
+    .select({
+      calendarId: calendarConnectionsTable.calendarId,
+      userId: calendarConnectionsTable.userId,
+      accessToken: calendarConnectionsGoogleTable.accessToken,
+      refreshToken: calendarConnectionsGoogleTable.refreshToken,
+      tokenExpiry: calendarConnectionsGoogleTable.tokenExpiry,
+    })
+    .from(calendarConnectionsGoogleTable)
+    .innerJoin(
+      calendarConnectionsTable,
+      eq(calendarConnectionsGoogleTable.connectionId, calendarConnectionsTable.id),
+    )
+    .where(eq(calendarConnectionsTable.id, connectionId))
+    .limit(1)
+
+  if (rows.length === 0) {
+    console.error(`[calendar/google] loadAndRefreshToken: Connection not found: ${connectionId}`)
+    return null
+  }
+
+  const row = rows[0]
+
+  if (row.userId !== userId) {
+    console.error(`[calendar/google] loadAndRefreshToken: Connection ${connectionId} does not belong to user ${userId}`)
+    return null
+  }
+
+  let accessToken = await decryptToken(row.accessToken, calendarTokenKey)
+
+  const expiryMs = row.tokenExpiry.getTime()
+  const nowMs = Date.now()
+  if (expiryMs - nowMs < 60_000) {
+    const refreshToken = await decryptToken(row.refreshToken, calendarTokenKey)
+    const refreshed = await refreshGoogleToken(refreshToken, env)
+    if (!refreshed) {
+      console.error(`[calendar/google] loadAndRefreshToken: Token refresh failed for connection ${connectionId}`)
+      return null
+    }
+
+    accessToken = refreshed.accessToken
+
+    const encryptedAccess = await encryptToken(refreshed.accessToken, calendarTokenKey)
+    const newExpiry = new Date(Date.now() + refreshed.expiresIn * 1000)
+
+    await db
+      .update(calendarConnectionsGoogleTable)
+      .set({ accessToken: encryptedAccess, tokenExpiry: newExpiry })
+      .where(eq(calendarConnectionsGoogleTable.connectionId, connectionId))
+  }
+
+  return { accessToken, calendarId: row.calendarId }
+}
+
 // ── Google Calendar REST API client ─────────────────────────────────────────
 // Uses fetch() directly — the `googleapis` npm package pulls in Node.js-native
 // code incompatible with the Workers edge runtime (see Dev Notes).
@@ -206,5 +440,6 @@ function mapGoogleEventToCalendarEvent(item: GoogleCalendarEventItem): CalendarE
     startTime: new Date(item.start.dateTime ?? item.start.date ?? ''),
     endTime: new Date(item.end.dateTime ?? item.end.date ?? ''),
     isAllDay,
+    summary: item.summary,
   }
 }

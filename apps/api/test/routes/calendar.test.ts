@@ -295,3 +295,129 @@ describe('POST /v1/calendar/connect', () => {
     expect(body.error.code).toBe('CALENDAR_FETCH_FAILED')
   })
 })
+
+// ── PATCH /v1/calendar/connections/:id ────────────────────────────────────────
+
+describe('PATCH /v1/calendar/connections/:id', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('patch_calendarConnection_validId_updatesIsWrite', async () => {
+    const mockDb = {
+      select: vi.fn().mockReturnThis(),
+      from: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue([{ id: stubConnectionId, isWrite: false }]),
+      update: vi.fn().mockReturnThis(),
+      set: vi.fn().mockReturnThis(),
+    }
+    // Second where call (from update) resolves to nothing
+    let callCount = 0
+    mockDb.where.mockImplementation(() => {
+      callCount++
+      if (callCount === 1) return { ...mockDb, limit: vi.fn().mockResolvedValue([{ id: stubConnectionId, isWrite: false }]) }
+      return { ...mockDb, limit: vi.fn().mockResolvedValue([]) }
+    })
+    vi.mocked(createDb).mockReturnValue(mockDb as AnyJson)
+
+    // Simpler: mock select().from().where().limit() chain, then update chain
+    const selectMock = {
+      select: vi.fn().mockReturnThis(),
+      from: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue([{ id: stubConnectionId, isWrite: false }]),
+      update: vi.fn().mockReturnValue({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([]),
+        }),
+      }),
+    }
+    vi.mocked(createDb).mockReturnValue(selectMock as AnyJson)
+
+    const res = await app.request(
+      `/v1/calendar/connections/${stubConnectionId}`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': stubUserId,
+        },
+        body: JSON.stringify({ isWrite: true }),
+      },
+      stubEnv,
+    )
+
+    expect(res.status).toBe(200)
+    const body = (await res.json()) as AnyJson
+    expect(body).toHaveProperty('data')
+    expect(body.data.id).toBe(stubConnectionId)
+    expect(body.data.isWrite).toBe(true)
+  })
+
+  it('patch_calendarConnection_notOwned_returns404', async () => {
+    // DB returns no rows (connection doesn't belong to this user)
+    const mockDb = {
+      select: vi.fn().mockReturnThis(),
+      from: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue([]),
+    }
+    vi.mocked(createDb).mockReturnValue(mockDb as AnyJson)
+
+    const res = await app.request(
+      `/v1/calendar/connections/${stubConnectionId}`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': stubUserId,
+        },
+        body: JSON.stringify({ isWrite: true }),
+      },
+      stubEnv,
+    )
+
+    expect(res.status).toBe(404)
+    const body = (await res.json()) as AnyJson
+    expect(body.error.code).toBe('NOT_FOUND')
+  })
+
+  it('patch_calendarConnection_invalidUuid_returns400', async () => {
+    const res = await app.request(
+      '/v1/calendar/connections/not-a-valid-uuid',
+      {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': stubUserId,
+        },
+        body: JSON.stringify({ isWrite: true }),
+      },
+      stubEnv,
+    )
+
+    expect(res.status).toBeGreaterThanOrEqual(400)
+  })
+
+  it('patch_calendarConnection_noBody_returns400', async () => {
+    const res = await app.request(
+      `/v1/calendar/connections/${stubConnectionId}`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': stubUserId,
+        },
+        body: JSON.stringify({}),
+      },
+      stubEnv,
+    )
+
+    expect(res.status).toBeGreaterThanOrEqual(400)
+  })
+})

@@ -18,6 +18,7 @@ import '../../features/settings/presentation/farewell_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/settings/presentation/two_factor_setup_screen.dart';
 import '../../features/shell/presentation/app_shell.dart';
+import '../../features/today/presentation/task_detail_stub_screen.dart';
 import '../../features/today/presentation/today_screen.dart';
 
 part 'app_router.g.dart';
@@ -161,6 +162,16 @@ GoRouter appRouter(Ref ref) {
               GoRoute(
                 path: '/today',
                 builder: (context, state) => const TodayScreen(),
+                routes: [
+                  // Task detail stub — navigated from timeline task block tap (AC3, FR79).
+                  // Full task detail UI is a later story; this stub shows the task ID.
+                  GoRoute(
+                    path: 'tasks/:id',
+                    builder: (context, state) => TaskDetailStubScreen(
+                      taskId: state.pathParameters['id']!,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

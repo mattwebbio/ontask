@@ -29,6 +29,7 @@ export interface CalendarEvent {
   startTime: Date
   endTime: Date
   isAllDay: boolean
+  summary?: string // event title — used by UI; ignored by scheduling engine
 }
 
 export interface ScheduleInput {

@@ -68,3 +68,58 @@ abstract class _$Today extends $AsyncNotifier<List<Task>> {
     element.handleCreate(ref, build);
   }
 }
+
+/// AsyncNotifier for calendar events displayed in the Today tab timeline.
+///
+/// Loads events via [TodayRepository.getCalendarEvents] for today's window.
+/// Returns an empty list on failure — calendar events are optional.
+
+@ProviderFor(TodayCalendarEvents)
+final todayCalendarEventsProvider = TodayCalendarEventsProvider._();
+
+/// AsyncNotifier for calendar events displayed in the Today tab timeline.
+final class TodayCalendarEventsProvider
+    extends $AsyncNotifierProvider<TodayCalendarEvents, List<CalendarEventDto>> {
+  TodayCalendarEventsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'todayCalendarEventsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$todayCalendarEventsHash();
+
+  @$internal
+  @override
+  TodayCalendarEvents create() => TodayCalendarEvents();
+}
+
+String _$todayCalendarEventsHash() =>
+    r'a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2';
+
+/// AsyncNotifier for calendar events displayed in the Today tab timeline.
+
+abstract class _$TodayCalendarEvents
+    extends $AsyncNotifier<List<CalendarEventDto>> {
+  FutureOr<List<CalendarEventDto>> build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref =
+        this.ref as $Ref<AsyncValue<List<CalendarEventDto>>, List<CalendarEventDto>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<List<CalendarEventDto>>, List<CalendarEventDto>>,
+              AsyncValue<List<CalendarEventDto>>,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}

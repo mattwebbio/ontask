@@ -86,6 +86,12 @@
 - **Two separate `new Date()` calls in service layer for `windowStart` and `generatedAt`** — By-design stub pattern per dev notes; `generatedAt` may be a few milliseconds after `windowStart`. Will be resolved in Story 3.3 when real DB data and window calculation are wired. [`apps/api/src/services/scheduling.ts:22,31`]
 - **No integration test for morning-window + past-due-date constraint intersection** — 100% branch coverage confirmed. Would be an enhancement test, not a coverage gap. Low priority; consider adding in a future test-quality pass.
 
+## Deferred from: code review of 3-4-google-calendar-write-task-block-relationship (2026-03-31)
+
+- **`loadAndRefreshToken` userId check is in-memory only** — DB query filters by `connectionId` only; userId ownership is validated after the query. Functionally correct but not index-optimal. Pre-existing pattern from `fetchGoogleCalendarEvents`. [`apps/api/src/services/calendar/google.ts:175-200`]
+- **`onBlockTapped` override design concern** — `_handleBlockTapped` short-circuits to the injected callback if set, bypassing AC3 navigation. Production `TodayScreen` passes no override so production behavior is correct. Only affects test contexts that inject callbacks. [`apps/flutter/lib/features/today/presentation/widgets/timeline_view.dart:170-173`]
+- **Flutter `getCalendarEvents()` errors silently swallowed** — The catch block in `TodayRepository.getCalendarEvents()` returns `[]` with no debug logging. Intentional per partial-failure spec; add `debugPrint` for diagnosability in a future hardening pass. [`apps/flutter/lib/features/today/data/today_repository.dart:112`]
+
 ## Deferred from: code review of 3-3-google-calendar-read-available-time (2026-03-31)
 
 - **Empty accountEmail silently stored when Google userinfo call fails** — `exchangeGoogleCode` in `apps/api/src/routes/calendar.ts` sets `email = ''` and continues if the userinfo endpoint returns non-200. The `accountEmail` DB column is `notNull()` so an empty string satisfies the constraint, but data is silently degraded. Non-critical for scheduling correctness; address in a hardening pass when email is used for display or audit purposes.

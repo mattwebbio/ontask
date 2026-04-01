@@ -1,10 +1,11 @@
 import { OpenAPIHono, createRoute } from '@hono/zod-openapi'
 import { z } from 'zod'
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { calendarConnectionsTable, calendarConnectionsGoogleTable } from '@ontask/core'
 import { ok, err } from '../lib/response.js'
 import { createDb } from '../db/index.js'
 import { encryptToken } from '../lib/crypto.js'
+import { fetchAllCalendarEvents } from '../services/calendar/index.js'
 
 // ── Calendar router ──────────────────────────────────────────────────────────
 // Routes for Google Calendar OAuth connection and listing connections (FR46).
@@ -200,6 +201,159 @@ app.openapi(getCalendarConnectionsRoute, async (c) => {
         displayName: conn.displayName,
         isRead: conn.isRead,
         isWrite: conn.isWrite,
+      })),
+    ),
+    200,
+  )
+})
+
+// ── PATCH /v1/calendar/connections/:id ───────────────────────────────────────
+
+const PatchCalendarConnectionParamsSchema = z.object({
+  id: z.string().uuid(),
+})
+
+const PatchCalendarConnectionBodySchema = z
+  .object({
+    isWrite: z.boolean().optional(),
+  })
+  .refine((data) => data.isWrite !== undefined, {
+    message: 'At least one patchable field must be provided (isWrite)',
+  })
+
+const PatchCalendarConnectionResponseSchema = z.object({
+  data: z.object({
+    id: z.string().uuid(),
+    isWrite: z.boolean(),
+  }),
+})
+
+const patchCalendarConnectionRoute = createRoute({
+  method: 'patch',
+  path: '/v1/calendar/connections/{id}',
+  tags: ['Calendar'],
+  summary: 'Update a calendar connection (e.g. enable write access)',
+  description:
+    'Patches a calendar connection. Currently only `isWrite` is patchable. ' +
+    'Returns 404 if the connection does not exist or does not belong to the user. ' +
+    'Returns 400 if the request body contains no patchable fields (AC5).',
+  request: {
+    params: PatchCalendarConnectionParamsSchema,
+    body: {
+      content: { 'application/json': { schema: PatchCalendarConnectionBodySchema } },
+      required: true,
+    },
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: PatchCalendarConnectionResponseSchema } },
+      description: 'Connection updated successfully',
+    },
+    400: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Bad request — empty body or no patchable fields',
+    },
+    404: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Connection not found or not owned by user',
+    },
+  },
+})
+
+app.openapi(patchCalendarConnectionRoute, async (c) => {
+  const userId = c.req.header('x-user-id') ?? 'stub-user-id'
+  const { id } = c.req.valid('param')
+  const body = c.req.valid('json')
+
+  // Validate at least one patchable field is present (belt-and-suspenders after Zod refine)
+  if (body.isWrite === undefined) {
+    return c.json(err('BAD_REQUEST', 'At least one patchable field must be provided'), 400)
+  }
+
+  const db = createDb(c.env.DATABASE_URL ?? '')
+
+  // Ownership check — connection must exist and belong to this user
+  const rows = await db
+    .select({ id: calendarConnectionsTable.id, isWrite: calendarConnectionsTable.isWrite })
+    .from(calendarConnectionsTable)
+    .where(
+      and(
+        eq(calendarConnectionsTable.id, id),
+        eq(calendarConnectionsTable.userId, userId),
+      ),
+    )
+    .limit(1)
+
+  if (rows.length === 0) {
+    return c.json(err('NOT_FOUND', 'Calendar connection not found'), 404)
+  }
+
+  // Apply the patch
+  await db
+    .update(calendarConnectionsTable)
+    .set({ isWrite: body.isWrite, updatedAt: new Date() })
+    .where(eq(calendarConnectionsTable.id, id))
+
+  return c.json(ok({ id, isWrite: body.isWrite }), 200)
+})
+
+// ── GET /v1/calendar/events ───────────────────────────────────────────────────
+
+const CalendarEventSchema = z.object({
+  id: z.string(),
+  startTime: z.string().datetime(),
+  endTime: z.string().datetime(),
+  isAllDay: z.boolean(),
+  summary: z.string().optional(),
+})
+
+const CalendarEventsResponseSchema = z.object({
+  data: z.array(CalendarEventSchema),
+})
+
+const GetCalendarEventsQuerySchema = z.object({
+  windowStart: z.string().datetime().optional(),
+  windowEnd: z.string().datetime().optional(),
+})
+
+const getCalendarEventsRoute = createRoute({
+  method: 'get',
+  path: '/v1/calendar/events',
+  tags: ['Calendar'],
+  summary: 'Fetch calendar events within a window',
+  description:
+    'Returns all calendar events for the authenticated user within the given time window. ' +
+    'Used by the Flutter Today tab to display calendar event blocks on the timeline (AC6).',
+  request: {
+    query: GetCalendarEventsQuerySchema,
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: CalendarEventsResponseSchema } },
+      description: 'List of calendar events',
+    },
+  },
+})
+
+app.openapi(getCalendarEventsRoute, async (c) => {
+  const userId = c.req.header('x-user-id') ?? 'stub-user-id'
+  const query = c.req.valid('query')
+
+  const now = new Date()
+  const windowStart = query.windowStart ? new Date(query.windowStart) : now
+  const windowEnd = query.windowEnd
+    ? new Date(query.windowEnd)
+    : new Date(now.getTime() + 24 * 60 * 60_000) // default: next 24 hours
+
+  const events = await fetchAllCalendarEvents(userId, windowStart, windowEnd, c.env)
+
+  return c.json(
+    ok(
+      events.map((event) => ({
+        id: event.id,
+        startTime: event.startTime.toISOString(),
+        endTime: event.endTime.toISOString(),
+        isAllDay: event.isAllDay,
       })),
     ),
     200,
