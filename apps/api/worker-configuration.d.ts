@@ -14,6 +14,12 @@ declare namespace Cloudflare {
 		GLITCHTIP_DSN?: string;
 		/** PostHog API key for product analytics and feature flags (ARCH-30). Empty string disables analytics. */
 		POSTHOG_API_KEY?: string;
+		/** Google OAuth2 client ID for Google Calendar integration (Story 3.3). Set via `wrangler secret put GOOGLE_CLIENT_ID`. */
+		GOOGLE_CLIENT_ID?: string;
+		/** Google OAuth2 client secret for Google Calendar integration (Story 3.3). Set via `wrangler secret put GOOGLE_CLIENT_SECRET`. */
+		GOOGLE_CLIENT_SECRET?: string;
+		/** 32-byte AES key for encrypting Google Calendar OAuth tokens at rest (NFR-S4, Story 3.3). Set via `wrangler secret put CALENDAR_TOKEN_KEY`. */
+		CALENDAR_TOKEN_KEY?: string;
 	}
 }
 interface CloudflareBindings extends Cloudflare.Env {}
