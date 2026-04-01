@@ -405,7 +405,7 @@ class TaskRow extends ConsumerWidget {
     showCupertinoDialog<void>(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const CupertinoActivityIndicator(),
+      builder: (_) => const Center(child: CupertinoActivityIndicator()),
     );
 
     try {

@@ -162,8 +162,7 @@ class TaskProofSheet extends StatelessWidget {
           .replaceAll('{name}', completedByName!)
           .replaceAll('{dateTime}', dateStr);
     }
-    return AppStrings.proofCompletedByAtLabel
-        .replaceAll('{name}', '')
-        .replaceAll(' · {dateTime}', dateStr.isNotEmpty ? ' · $dateStr' : '');
+    // No name available — use simpler "Completed · date" form
+    return dateStr.isNotEmpty ? 'Completed · $dateStr' : 'Completed';
   }
 }

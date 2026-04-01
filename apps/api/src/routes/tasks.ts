@@ -919,68 +919,9 @@ app.openapi(getOverbookingStatusRoute, async (c) => {
   )
 })
 
-// ── GET /v1/tasks/:id ───────────────────────────────────────────────────────
-
-const getTaskRoute = createRoute({
-  method: 'get',
-  path: '/v1/tasks/{id}',
-  tags: ['Tasks'],
-  summary: 'Get a single task',
-  request: {
-    params: z.object({ id: z.string().uuid() }),
-  },
-  responses: {
-    200: { content: { 'application/json': { schema: TaskResponseSchema } }, description: 'Task found' },
-    404: { content: { 'application/json': { schema: ErrorSchema } }, description: 'Task not found' },
-  },
-})
-
-app.openapi(getTaskRoute, async (c) => {
-  // TODO(impl): verify ownership via userId
-  const { id } = c.req.valid('param')
-  return c.json(ok(stubTask({ id })), 200)
-})
-
-// ── PATCH /v1/tasks/:id/proof-mode ──────────────────────────────────────────
-// IMPORTANT: Registered BEFORE PATCH /v1/tasks/{id} (catch-all) to prevent
-// Hono from matching "proof-mode" as a task ID.
-
-const setTaskProofModeSchema = z.object({
-  // Note: 'calendarEvent' is NOT accepted here — read-only from calendar integration (Epic 3)
-  proofMode: z.enum(['standard', 'photo', 'watchMode', 'healthKit']),
-})
-
-const patchTaskProofModeRoute = createRoute({
-  method: 'patch',
-  path: '/v1/tasks/{id}/proof-mode',
-  tags: ['Tasks'],
-  summary: 'Override the proof mode for a specific task (FR20)',
-  description:
-    'Sets a per-task proof mode override (proofModeIsCustom = true). ' +
-    'This overrides any list- or section-level proof requirement for this task. ' +
-    'calendarEvent is NOT accepted — it is set only by calendar integration.',
-  request: {
-    params: z.object({ id: z.string().uuid() }),
-    body: { content: { 'application/json': { schema: setTaskProofModeSchema } }, required: true },
-  },
-  responses: {
-    200: { content: { 'application/json': { schema: TaskResponseSchema } }, description: 'Proof mode updated' },
-    404: { content: { 'application/json': { schema: ErrorSchema } }, description: 'Task not found' },
-    422: { content: { 'application/json': { schema: ErrorSchema } }, description: 'Validation error' },
-  },
-})
-
-app.openapi(patchTaskProofModeRoute, async (c) => {
-  // TODO(impl): set proofMode = body.proofMode, proofModeIsCustom = true in tasks table
-  const { id } = c.req.valid('param')
-  const body = c.req.valid('json')
-  return c.json(ok(stubTask({ id, proofMode: body.proofMode, proofModeIsCustom: true })), 200)
-})
-
 // ── GET /v1/tasks/:id/proof ──────────────────────────────────────────────────
-// IMPORTANT: Registered BEFORE PATCH /v1/tasks/{id} (catch-all) and before any
-// unqualified GET /v1/tasks/{id}. Specific sub-resource paths must come before
-// the parameterized catch-all (Dev Notes: route placement critical).
+// IMPORTANT: Registered BEFORE GET /v1/tasks/{id} (catch-all). Specific
+// sub-resource paths must come before the parameterized catch-all.
 
 const taskProofResponseSchema = z.object({
   taskId: z.string().uuid(),
@@ -1056,6 +997,63 @@ app.openapi(getTaskProofRoute, async (c) => {
   )
 })
 
+// ── GET /v1/tasks/:id ───────────────────────────────────────────────────────
+
+const getTaskRoute = createRoute({
+  method: 'get',
+  path: '/v1/tasks/{id}',
+  tags: ['Tasks'],
+  summary: 'Get a single task',
+  request: {
+    params: z.object({ id: z.string().uuid() }),
+  },
+  responses: {
+    200: { content: { 'application/json': { schema: TaskResponseSchema } }, description: 'Task found' },
+    404: { content: { 'application/json': { schema: ErrorSchema } }, description: 'Task not found' },
+  },
+})
+
+app.openapi(getTaskRoute, async (c) => {
+  // TODO(impl): verify ownership via userId
+  const { id } = c.req.valid('param')
+  return c.json(ok(stubTask({ id })), 200)
+})
+
+// ── PATCH /v1/tasks/:id/proof-mode ──────────────────────────────────────────
+// IMPORTANT: Registered BEFORE PATCH /v1/tasks/{id} (catch-all) to prevent
+// Hono from matching "proof-mode" as a task ID.
+
+const setTaskProofModeSchema = z.object({
+  // Note: 'calendarEvent' is NOT accepted here — read-only from calendar integration (Epic 3)
+  proofMode: z.enum(['standard', 'photo', 'watchMode', 'healthKit']),
+})
+
+const patchTaskProofModeRoute = createRoute({
+  method: 'patch',
+  path: '/v1/tasks/{id}/proof-mode',
+  tags: ['Tasks'],
+  summary: 'Override the proof mode for a specific task (FR20)',
+  description:
+    'Sets a per-task proof mode override (proofModeIsCustom = true). ' +
+    'This overrides any list- or section-level proof requirement for this task. ' +
+    'calendarEvent is NOT accepted — it is set only by calendar integration.',
+  request: {
+    params: z.object({ id: z.string().uuid() }),
+    body: { content: { 'application/json': { schema: setTaskProofModeSchema } }, required: true },
+  },
+  responses: {
+    200: { content: { 'application/json': { schema: TaskResponseSchema } }, description: 'Proof mode updated' },
+    404: { content: { 'application/json': { schema: ErrorSchema } }, description: 'Task not found' },
+    422: { content: { 'application/json': { schema: ErrorSchema } }, description: 'Validation error' },
+  },
+})
+
+app.openapi(patchTaskProofModeRoute, async (c) => {
+  // TODO(impl): set proofMode = body.proofMode, proofModeIsCustom = true in tasks table
+  const { id } = c.req.valid('param')
+  const body = c.req.valid('json')
+  return c.json(ok(stubTask({ id, proofMode: body.proofMode, proofModeIsCustom: true })), 200)
+})
 // ── PATCH /v1/tasks/:id ─────────────────────────────────────────────────────
 
 const patchTaskRoute = createRoute({
