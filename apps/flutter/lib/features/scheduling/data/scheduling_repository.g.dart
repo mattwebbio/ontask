@@ -17,7 +17,11 @@ final schedulingRepositoryProvider = SchedulingRepositoryProvider._();
 
 final class SchedulingRepositoryProvider
     extends
-        $FunctionalProvider<SchedulingRepository, SchedulingRepository, SchedulingRepository>
+        $FunctionalProvider<
+          SchedulingRepository,
+          SchedulingRepository,
+          SchedulingRepository
+        >
     with $Provider<SchedulingRepository> {
   /// Riverpod provider for [SchedulingRepository].
   SchedulingRepositoryProvider._()
@@ -36,8 +40,9 @@ final class SchedulingRepositoryProvider
 
   @$internal
   @override
-  $ProviderElement<SchedulingRepository> $createElement($ProviderPointer pointer) =>
-      $ProviderElement(pointer);
+  $ProviderElement<SchedulingRepository> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
 
   @override
   SchedulingRepository create(Ref ref) {
@@ -53,4 +58,5 @@ final class SchedulingRepositoryProvider
   }
 }
 
-String _$schedulingRepositoryHash() => r'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0';
+String _$schedulingRepositoryHash() =>
+    r'cd245f1447ec51005176093d8b39045d9da9658f';

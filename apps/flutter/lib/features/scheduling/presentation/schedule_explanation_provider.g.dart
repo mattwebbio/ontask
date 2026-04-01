@@ -34,6 +34,10 @@ final class ScheduleExplanationProvider
         $FutureModifier<ScheduleExplanation>,
         $FutureProvider<ScheduleExplanation> {
   /// Provider that fetches the scheduling explanation for a given task.
+  ///
+  /// Calls [SchedulingRepository.getScheduleExplanation] for the given [taskId].
+  /// Auto-disposes when the widget is removed — per-entity providers should not
+  /// be kept alive.
   ScheduleExplanationProvider._({
     required ScheduleExplanationFamily super.from,
     required String super.argument,
@@ -78,9 +82,14 @@ final class ScheduleExplanationProvider
   }
 }
 
-String _$scheduleExplanationHash() => r'b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1';
+String _$scheduleExplanationHash() =>
+    r'e295ea15f31b2a7bba3ff4b5feebc128f3112e68';
 
 /// Provider that fetches the scheduling explanation for a given task.
+///
+/// Calls [SchedulingRepository.getScheduleExplanation] for the given [taskId].
+/// Auto-disposes when the widget is removed — per-entity providers should not
+/// be kept alive.
 
 final class ScheduleExplanationFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<ScheduleExplanation>, String> {
@@ -94,6 +103,10 @@ final class ScheduleExplanationFamily extends $Family
       );
 
   /// Provider that fetches the scheduling explanation for a given task.
+  ///
+  /// Calls [SchedulingRepository.getScheduleExplanation] for the given [taskId].
+  /// Auto-disposes when the widget is removed — per-entity providers should not
+  /// be kept alive.
 
   ScheduleExplanationProvider call(String taskId) =>
       ScheduleExplanationProvider._(argument: taskId, from: this);

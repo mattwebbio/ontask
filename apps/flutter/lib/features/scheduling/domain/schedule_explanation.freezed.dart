@@ -207,7 +207,7 @@ return $default(_that.reasons);case _:
 
 class _ScheduleExplanation implements ScheduleExplanation {
   const _ScheduleExplanation({required final  List<String> reasons}): _reasons = reasons;
-
+  
 
  final  List<String> _reasons;
 @override List<String> get reasons {

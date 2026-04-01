@@ -72,14 +72,25 @@ abstract class _$Today extends $AsyncNotifier<List<Task>> {
 /// AsyncNotifier for calendar events displayed in the Today tab timeline.
 ///
 /// Loads events via [TodayRepository.getCalendarEvents] for today's window.
-/// Returns an empty list on failure — calendar events are optional.
+/// Returns an empty list on failure — calendar events are optional; they
+/// must never cause the Today tab to fail to load.
 
 @ProviderFor(TodayCalendarEvents)
 final todayCalendarEventsProvider = TodayCalendarEventsProvider._();
 
 /// AsyncNotifier for calendar events displayed in the Today tab timeline.
+///
+/// Loads events via [TodayRepository.getCalendarEvents] for today's window.
+/// Returns an empty list on failure — calendar events are optional; they
+/// must never cause the Today tab to fail to load.
 final class TodayCalendarEventsProvider
-    extends $AsyncNotifierProvider<TodayCalendarEvents, List<CalendarEventDto>> {
+    extends
+        $AsyncNotifierProvider<TodayCalendarEvents, List<CalendarEventDto>> {
+  /// AsyncNotifier for calendar events displayed in the Today tab timeline.
+  ///
+  /// Loads events via [TodayRepository.getCalendarEvents] for today's window.
+  /// Returns an empty list on failure — calendar events are optional; they
+  /// must never cause the Today tab to fail to load.
   TodayCalendarEventsProvider._()
     : super(
         from: null,
@@ -100,9 +111,13 @@ final class TodayCalendarEventsProvider
 }
 
 String _$todayCalendarEventsHash() =>
-    r'a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2';
+    r'c1588bb737224ffb282e7fb1c038312f4277e151';
 
 /// AsyncNotifier for calendar events displayed in the Today tab timeline.
+///
+/// Loads events via [TodayRepository.getCalendarEvents] for today's window.
+/// Returns an empty list on failure — calendar events are optional; they
+/// must never cause the Today tab to fail to load.
 
 abstract class _$TodayCalendarEvents
     extends $AsyncNotifier<List<CalendarEventDto>> {
@@ -111,11 +126,15 @@ abstract class _$TodayCalendarEvents
   @override
   void runBuild() {
     final ref =
-        this.ref as $Ref<AsyncValue<List<CalendarEventDto>>, List<CalendarEventDto>>;
+        this.ref
+            as $Ref<AsyncValue<List<CalendarEventDto>>, List<CalendarEventDto>>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<AsyncValue<List<CalendarEventDto>>, List<CalendarEventDto>>,
+              AnyNotifier<
+                AsyncValue<List<CalendarEventDto>>,
+                List<CalendarEventDto>
+              >,
               AsyncValue<List<CalendarEventDto>>,
               Object?,
               Object?

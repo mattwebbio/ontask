@@ -1,13 +1,16 @@
 import 'dart:async';
 
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart' show AnimatedCrossFade, CrossFadeState, Theme;
+import 'package:flutter/material.dart'
+    show AnimatedCrossFade, Colors, CrossFadeState, Theme, showModalBottomSheet;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/l10n/strings.dart';
+import '../../../core/motion/motion_tokens.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../features/shell/presentation/shell_providers.dart';
+import '../../scheduling/presentation/widgets/nudge_input_sheet.dart';
 import '../../tasks/domain/task.dart';
 import '../domain/day_health.dart';
 import 'schedule_change_provider.dart';
@@ -45,6 +48,18 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
   late final Future<void> _skeletonDelay;
   Timer? _autoDismissTimer;
 
+  /// Whether "The reveal" animation has already played this session.
+  ///
+  /// Set to true after the first transition from loading → data, so the
+  /// staggered appearance only plays once per session (not on every rebuild).
+  bool _hasPlayedReveal = false;
+
+  /// Task IDs that have changed in the latest schedule update.
+  ///
+  /// Populated when [scheduleChangeBannerVisibleProvider] becomes true, then
+  /// cleared after the "plan shifts" animation completes.
+  Set<String> _changedTaskIds = {};
+
   @override
   void initState() {
     super.initState();
@@ -75,6 +90,7 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
     final calendarEvents = calendarEventsState.value ?? <CalendarEventDto>[];
 
     // Listen for banner visibility → start/cancel 8-second auto-dismiss timer
+    // and capture changed task IDs for "The plan shifts" animation (UX-DR20).
     ref.listen<AsyncValue<bool>>(scheduleChangeBannerVisibleProvider,
         (previous, next) {
       if (next.value == true) {
@@ -82,6 +98,25 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
         _autoDismissTimer = Timer(const Duration(seconds: 8), () {
           if (mounted) {
             ref.read(scheduleChangeBannerVisibleProvider.notifier).dismiss();
+          }
+        });
+
+        // Capture changed task IDs so animated rows can identify themselves
+        final changesAsync = ref.read(scheduleChangesProvider);
+        changesAsync.whenData((changes) {
+          if (mounted) {
+            setState(() {
+              _changedTaskIds = changes.changes.map((c) => c.taskId).toSet();
+            });
+            // Clear the set after the animation duration so it doesn't persist
+            Future.delayed(
+              Duration(milliseconds: MotionTokens.planShiftsDurationMs + 100),
+              () {
+                if (mounted) {
+                  setState(() => _changedTaskIds = {});
+                }
+              },
+            );
           }
         });
       } else {
@@ -168,6 +203,16 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
               Expanded(
                 child: LayoutBuilder(
                   builder: (context, constraints) {
+                    // Mark reveal as played after first data render
+                    final playReveal = !_hasPlayedReveal;
+                    if (playReveal) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (mounted && !_hasPlayedReveal) {
+                          setState(() => _hasPlayedReveal = true);
+                        }
+                      });
+                    }
+
                     return AnimatedCrossFade(
                       duration: const Duration(milliseconds: 200),
                       crossFadeState: isTimeline
@@ -178,10 +223,14 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                         child: _TodayContent(
                           tasks: tasks,
                           healthDays: healthState.value ?? [],
+                          playReveal: playReveal,
+                          changedTaskIds: _changedTaskIds,
                           onComplete: (id) =>
                               ref.read(todayProvider.notifier).completeTask(id),
                           onReschedule: (id) =>
                               _showReschedulePicker(context, id),
+                          onNudge: (id, title) =>
+                              _showNudgeSheet(context, id, title),
                         ),
                       ),
                       secondChild: SizedBox(
@@ -252,6 +301,19 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
       ),
     );
   }
+
+  void _showNudgeSheet(BuildContext context, String taskId, String taskTitle) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => NudgeInputSheet(
+        taskId: taskId,
+        taskTitle: taskTitle,
+        onApplied: () => ref.read(todayProvider.notifier).refresh(),
+      ),
+    );
+  }
 }
 
 /// Main content widget for when tasks are loaded.
@@ -260,12 +322,24 @@ class _TodayContent extends StatelessWidget {
   final List<DayHealth> healthDays;
   final void Function(String) onComplete;
   final void Function(String) onReschedule;
+  final void Function(String taskId, String taskTitle) onNudge;
+
+  /// Whether "The reveal" stagger animation should play this build.
+  final bool playReveal;
+
+  /// Task IDs that changed in the latest schedule update.
+  ///
+  /// Rows whose [Task.id] is in this set will play "The plan shifts" animation.
+  final Set<String> changedTaskIds;
 
   const _TodayContent({
     required this.tasks,
     required this.healthDays,
     required this.onComplete,
     required this.onReschedule,
+    required this.onNudge,
+    required this.playReveal,
+    required this.changedTaskIds,
   });
 
   @override
@@ -314,6 +388,9 @@ class _TodayContent extends StatelessWidget {
             rowState: TodayTaskRowState.overdue,
             onComplete: onComplete,
             onReschedule: onReschedule,
+            onNudge: onNudge,
+            playReveal: playReveal,
+            changedTaskIds: changedTaskIds,
           ),
         ],
         // Morning section
@@ -323,6 +400,9 @@ class _TodayContent extends StatelessWidget {
             tasks: morning,
             onComplete: onComplete,
             onReschedule: onReschedule,
+            onNudge: onNudge,
+            playReveal: playReveal,
+            changedTaskIds: changedTaskIds,
           ),
         ],
         // Afternoon section
@@ -332,6 +412,9 @@ class _TodayContent extends StatelessWidget {
             tasks: afternoon,
             onComplete: onComplete,
             onReschedule: onReschedule,
+            onNudge: onNudge,
+            playReveal: playReveal,
+            changedTaskIds: changedTaskIds,
           ),
         ],
         // Evening section
@@ -341,6 +424,9 @@ class _TodayContent extends StatelessWidget {
             tasks: evening,
             onComplete: onComplete,
             onReschedule: onReschedule,
+            onNudge: onNudge,
+            playReveal: playReveal,
+            changedTaskIds: changedTaskIds,
           ),
         ],
         // Bottom padding
@@ -396,18 +482,33 @@ class _SectionDivider extends StatelessWidget {
   }
 }
 
-/// Sliver list of [TodayTaskRow] widgets.
+/// Sliver list of [TodayTaskRow] widgets with motion token support.
+///
+/// Handles:
+/// - "The reveal" (UX-DR20): staggered fade+slide on initial load
+/// - "The plan shifts" (UX-DR20): colour flash on schedule-changed rows
+/// - Reduce Motion: instant render when [MediaQuery.disableAnimations] is true
 class _TaskSliver extends StatelessWidget {
   final List<Task> tasks;
   final TodayTaskRowState? rowState;
   final void Function(String) onComplete;
   final void Function(String) onReschedule;
+  final void Function(String taskId, String taskTitle) onNudge;
+
+  /// Whether to play "The reveal" stagger animation this build.
+  final bool playReveal;
+
+  /// Task IDs currently playing "The plan shifts" animation.
+  final Set<String> changedTaskIds;
 
   const _TaskSliver({
     required this.tasks,
     this.rowState,
     required this.onComplete,
     required this.onReschedule,
+    required this.onNudge,
+    required this.playReveal,
+    required this.changedTaskIds,
   });
 
   @override
@@ -416,14 +517,33 @@ class _TaskSliver extends StatelessWidget {
       delegate: SliverChildBuilderDelegate(
         (context, index) {
           final task = tasks[index];
-          return TodayTaskRow(
+          final state = rowState ?? _determineState(task);
+          final isChanged = changedTaskIds.contains(task.id);
+
+          Widget row = TodayTaskRow(
             taskId: task.id,
             title: task.title,
             timeLabel: _formatTime(task.dueDate),
-            rowState: rowState ?? _determineState(task),
+            rowState: state,
             onComplete: () => onComplete(task.id),
             onReschedule: () => onReschedule(task.id),
+            onNudge: (state == TodayTaskRowState.upcoming ||
+                    state == TodayTaskRowState.current)
+                ? () => onNudge(task.id, task.title)
+                : null,
           );
+
+          // "The plan shifts" — colour flash on changed rows (UX-DR20)
+          if (isChanged) {
+            row = _PlanShiftsAnimation(child: row);
+          }
+
+          // "The reveal" — staggered fade+slide on initial load (UX-DR20)
+          if (playReveal) {
+            row = _RevealAnimation(index: index, child: row);
+          }
+
+          return row;
         },
         childCount: tasks.length,
       ),
@@ -452,5 +572,159 @@ class _TaskSliver extends StatelessWidget {
             : hour;
     if (minute == 0) return '$displayHour$period';
     return '$displayHour:${minute.toString().padLeft(2, '0')}$period';
+  }
+}
+
+// ── "The reveal" animation — staggered fade + upward slide ───────────────────
+
+/// Wraps a task row with "The reveal" animation: fade + slight upward slide
+/// with a per-row stagger delay (UX-DR20).
+///
+/// Respects Reduce Motion via [MediaQuery.disableAnimations] —
+/// when true, renders at full opacity immediately.
+class _RevealAnimation extends StatefulWidget {
+  final int index;
+  final Widget child;
+
+  const _RevealAnimation({required this.index, required this.child});
+
+  @override
+  State<_RevealAnimation> createState() => _RevealAnimationState();
+}
+
+class _RevealAnimationState extends State<_RevealAnimation>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _opacity;
+  late final Animation<Offset> _slide;
+  bool _animationStarted = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: Duration(milliseconds: MotionTokens.revealDurationMs),
+      vsync: this,
+    );
+    _opacity = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
+    _slide = Tween<Offset>(
+      begin: const Offset(0, 0.04),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Check disableAnimations in didChangeDependencies — not initState —
+    // per the established pattern from ChapterBreakScreen (Story 2.13).
+    if (!_animationStarted) {
+      _animationStarted = true;
+      final disableAnimations = MediaQuery.of(context).disableAnimations;
+      if (disableAnimations) {
+        _controller.value = 1.0; // instant — no animation
+      } else {
+        final stagger = Duration(
+          milliseconds: widget.index * MotionTokens.revealStaggerMs,
+        );
+        Future.delayed(stagger, () {
+          if (mounted) _controller.forward();
+        });
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _opacity,
+      child: SlideTransition(
+        position: _slide,
+        child: widget.child,
+      ),
+    );
+  }
+}
+
+// ── "The plan shifts" animation — colour flash on changed rows ────────────────
+
+/// Wraps a task row with "The plan shifts" animation: a quick background
+/// colour flash that fades back over [MotionTokens.planShiftsDurationMs] (UX-DR20).
+///
+/// One-shot per schedule change event — does not loop.
+/// Does NOT affect layout — uses [AnimatedContainer] background only.
+/// Respects Reduce Motion via [MediaQuery.disableAnimations].
+class _PlanShiftsAnimation extends StatefulWidget {
+  final Widget child;
+
+  const _PlanShiftsAnimation({required this.child});
+
+  @override
+  State<_PlanShiftsAnimation> createState() => _PlanShiftsAnimationState();
+}
+
+class _PlanShiftsAnimationState extends State<_PlanShiftsAnimation>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  bool _animationStarted = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: Duration(milliseconds: MotionTokens.planShiftsDurationMs),
+      vsync: this,
+    );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_animationStarted) {
+      _animationStarted = true;
+      final disableAnimations = MediaQuery.of(context).disableAnimations;
+      if (!disableAnimations) {
+        // Flash forward then reverse (pulse effect)
+        _controller.forward().then((_) {
+          if (mounted) _controller.reverse();
+        });
+      }
+      // Reduce Motion: no animation — render at normal state immediately
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<OnTaskColors>()!;
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Container(
+          color: Colors.transparent.withValues(
+            alpha: 0,
+          ),
+          child: ColorFiltered(
+            colorFilter: ColorFilter.mode(
+              colors.accentPrimary.withValues(alpha: _controller.value * 0.2),
+              BlendMode.srcOver,
+            ),
+            child: child,
+          ),
+        );
+      },
+      child: widget.child,
+    );
   }
 }

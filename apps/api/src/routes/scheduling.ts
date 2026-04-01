@@ -1,6 +1,7 @@
 import { OpenAPIHono, createRoute } from '@hono/zod-openapi'
 import { z } from 'zod'
 import { explain } from '@ontask/scheduling'
+import { parseSchedulingNudge } from '@ontask/ai'
 import { ok, err } from '../lib/response.js'
 import { runScheduleForUser } from '../services/scheduling.js'
 
@@ -183,6 +184,191 @@ app.openapi(getTaskScheduleRoute, async (c) => {
       isLocked: block.isLocked,
       isAtRisk: block.isAtRisk,
       explanation: { reasons: explanationOutput.reasons },
+    }),
+    200,
+  )
+})
+
+// ── POST /v1/tasks/:id/schedule/nudge ────────────────────────────────────────
+// IMPORTANT: registered AFTER the GET/POST routes — more-specific path prevents
+// route-order conflicts with /{id}/schedule.
+
+const NudgeRequestSchema = z.object({
+  utterance: z.string().min(1).openapi({ example: 'move my gym session to tomorrow morning' }),
+})
+
+const NudgeResponseSchema = z.object({
+  data: z.object({
+    taskId: z.string().openapi({ example: 'a0000000-0000-4000-8000-000000000001' }),
+    proposedStartTime: z
+      .string()
+      .openapi({ example: '2026-04-02T09:00:00.000Z' }),
+    proposedEndTime: z
+      .string()
+      .openapi({ example: '2026-04-02T09:30:00.000Z' }),
+    interpretation: z.string().openapi({ example: 'Tomorrow morning at 9 AM' }),
+    confidence: z.enum(['high', 'low']).openapi({ example: 'high' }),
+  }),
+})
+
+const NudgeConfirmRequestSchema = z.object({
+  proposedStartTime: z
+    .string()
+    .openapi({ example: '2026-04-02T09:00:00.000Z' }),
+})
+
+const postNudgeRoute = createRoute({
+  method: 'post',
+  path: '/v1/tasks/{id}/schedule/nudge',
+  tags: ['Scheduling'],
+  summary: 'Propose a schedule change using natural language (FR14)',
+  description:
+    'Accepts a natural language utterance (e.g. "move to tomorrow morning"), resolves it ' +
+    'via the AI nudge parser, and returns a scheduling proposal for user confirmation. ' +
+    'Does NOT apply the change — call POST /v1/tasks/:id/schedule/nudge/confirm to commit. ' +
+    'Returns 422 when confidence is low or the LLM times out (NFR-P3).',
+  request: {
+    params: z.object({
+      id: z.string().uuid().openapi({ example: 'a0000000-0000-4000-8000-000000000001' }),
+    }),
+    body: {
+      content: { 'application/json': { schema: NudgeRequestSchema } },
+    },
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: NudgeResponseSchema } },
+      description: 'Scheduling proposal — not yet applied',
+    },
+    404: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Task not found in schedule output after nudge',
+    },
+    422: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Could not interpret scheduling request (low confidence or timeout)',
+    },
+  },
+})
+
+app.openapi(postNudgeRoute, async (c) => {
+  const userId = c.req.header('x-user-id') ?? 'stub-user-id'
+  const { id: taskId } = c.req.valid('param')
+  const { utterance } = c.req.valid('json')
+
+  const now = new Date()
+  const windowEnd = new Date(now.getTime() + 14 * 24 * 60 * 60_000)
+
+  // Step 1: resolve utterance to a suggested date via AI (FR14, NFR-P3)
+  let nudgeOutput: Awaited<ReturnType<typeof parseSchedulingNudge>>
+  try {
+    nudgeOutput = await parseSchedulingNudge(
+      {
+        utterance,
+        taskId,
+        taskTitle: taskId, // TODO(story-impl): use real task title when task loading is wired
+        windowStart: now,
+        windowEnd,
+      },
+      c.env,
+    )
+  } catch (e) {
+    const message =
+      e instanceof Error &&
+      (e as NodeJS.ErrnoException).code === 'TIMEOUT'
+        ? e.message
+        : 'Could not interpret scheduling request'
+    return c.json(err('UNPROCESSABLE', message), 422)
+  }
+
+  // Step 2: low confidence → unprocessable
+  if (nudgeOutput.confidence === 'low') {
+    return c.json(
+      err('UNPROCESSABLE', 'Could not interpret scheduling request'),
+      422,
+    )
+  }
+
+  // Step 3: run schedule with the suggested date injected (proposal only — no DB write)
+  const { schedule: scheduleOutput } = await runScheduleForUser(userId, c.env, {
+    suggestedDates: { [taskId]: nudgeOutput.suggestedDate },
+  })
+
+  const block = scheduleOutput.scheduledBlocks.find((b) => b.taskId === taskId)
+  if (!block) {
+    return c.json(err('NOT_FOUND', `Task ${taskId} was not found in schedule output after nudge`), 404)
+  }
+
+  // Estimate end time: use the block's actual endTime if available
+  return c.json(
+    ok({
+      taskId,
+      proposedStartTime: block.startTime.toISOString(),
+      proposedEndTime: block.endTime.toISOString(),
+      interpretation: nudgeOutput.interpretation,
+      confidence: nudgeOutput.confidence,
+    }),
+    200,
+  )
+})
+
+// ── POST /v1/tasks/:id/schedule/nudge/confirm ─────────────────────────────────
+
+const postNudgeConfirmRoute = createRoute({
+  method: 'post',
+  path: '/v1/tasks/{id}/schedule/nudge/confirm',
+  tags: ['Scheduling'],
+  summary: 'Confirm and apply a proposed schedule nudge (FR14)',
+  description:
+    'Sets lockedStartTime on the task and re-runs the full schedule + calendar sync. ' +
+    'This is the commit step — only call after presenting the proposal from POST /nudge ' +
+    'to the user and receiving confirmation.',
+  request: {
+    params: z.object({
+      id: z.string().uuid().openapi({ example: 'a0000000-0000-4000-8000-000000000001' }),
+    }),
+    body: {
+      content: { 'application/json': { schema: NudgeConfirmRequestSchema } },
+    },
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: ScheduleResponseSchema } },
+      description: 'Confirmed scheduled block after applying the nudge',
+    },
+    404: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Task not found in schedule output after confirm',
+    },
+  },
+})
+
+app.openapi(postNudgeConfirmRoute, async (c) => {
+  const userId = c.req.header('x-user-id') ?? 'stub-user-id'
+  const { id: taskId } = c.req.valid('param')
+  const { proposedStartTime } = c.req.valid('json')
+
+  const lockedDate = new Date(proposedStartTime)
+
+  // Commit the change: set lockedStartTime via suggestedDates so the engine
+  // pins this task. TODO(story-impl): write lockedStartTime to DB when task
+  // persistence is wired — for now, pass as suggestedDates constraint.
+  const { schedule: scheduleOutput } = await runScheduleForUser(userId, c.env, {
+    suggestedDates: { [taskId]: lockedDate },
+  })
+
+  const block = scheduleOutput.scheduledBlocks.find((b) => b.taskId === taskId)
+  if (!block) {
+    return c.json(err('NOT_FOUND', `Task ${taskId} was not found in schedule output after confirm`), 404)
+  }
+
+  return c.json(
+    ok({
+      taskId: block.taskId,
+      startTime: block.startTime.toISOString(),
+      endTime: block.endTime.toISOString(),
+      isLocked: block.isLocked,
+      isAtRisk: block.isAtRisk,
     }),
     200,
   )
