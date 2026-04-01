@@ -1,7 +1,9 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart' show Colors, showModalBottomSheet;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../scheduling/presentation/widgets/nudge_input_sheet.dart';
 import 'now_provider.dart';
 import 'timer_provider.dart';
 import 'widgets/now_card_skeleton.dart';
@@ -111,8 +113,22 @@ class _NowScreenState extends ConsumerState<NowScreen> {
             onStop: () {
               ref.read(taskTimerProvider.notifier).stopTimer(task.id);
             },
+            onNudge: () => _openNudgeSheet(task.id, task.title),
           );
         },
+      ),
+    );
+  }
+
+  void _openNudgeSheet(String taskId, String taskTitle) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) => NudgeInputSheet(
+        taskId: taskId,
+        taskTitle: taskTitle,
+        onApplied: () => ref.read(nowProvider.notifier).refresh(),
       ),
     );
   }

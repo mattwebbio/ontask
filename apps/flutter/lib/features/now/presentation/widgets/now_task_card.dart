@@ -29,6 +29,7 @@ class NowTaskCard extends StatefulWidget {
   final VoidCallback? onStart;
   final VoidCallback? onPause;
   final VoidCallback? onStop;
+  final VoidCallback? onNudge;
   final bool timerRunning;
   final int timerElapsedSeconds;
 
@@ -38,6 +39,7 @@ class NowTaskCard extends StatefulWidget {
     this.onStart,
     this.onPause,
     this.onStop,
+    this.onNudge,
     this.timerRunning = false,
     this.timerElapsedSeconds = 0,
     super.key,
@@ -243,6 +245,22 @@ class _NowTaskCardState extends State<NowTaskCard> {
                 // ── Primary CTA ───────────────────────────────────────
                 if (widget.task.proofMode != ProofMode.calendarEvent) ...[
                   _buildCta(colors, isCommitted),
+                ],
+
+                // ── Reschedule with AI (nudge) ────────────────────────
+                if (widget.onNudge != null) ...[
+                  const SizedBox(height: AppSpacing.sm),
+                  CupertinoButton(
+                    minimumSize: const Size(44, 44),
+                    onPressed: widget.onNudge,
+                    child: Text(
+                      AppStrings.todayRowNudge,
+                      style: TextStyle(
+                        color: secondaryTextColor,
+                        fontSize: 15,
+                      ),
+                    ),
+                  ),
                 ],
               ],
             ),
