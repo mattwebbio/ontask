@@ -32,6 +32,7 @@ _TaskDto _$TaskDtoFromJson(Map<String, dynamic> json) => _TaskDto(
   updatedAt: json['updatedAt'] as String,
   durationMinutes: (json['durationMinutes'] as num?)?.toInt(),
   scheduledStartTime: json['scheduledStartTime'] as String?,
+  assignedToUserId: json['assignedToUserId'] as String?,
 );
 
 Map<String, dynamic> _$TaskDtoToJson(_TaskDto instance) => <String, dynamic>{
@@ -60,4 +61,5 @@ Map<String, dynamic> _$TaskDtoToJson(_TaskDto instance) => <String, dynamic>{
   'updatedAt': instance.updatedAt,
   'durationMinutes': instance.durationMinutes,
   'scheduledStartTime': instance.scheduledStartTime,
+  'assignedToUserId': instance.assignedToUserId,
 };

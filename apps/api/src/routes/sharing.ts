@@ -44,6 +44,7 @@ const listMemberSchema = z.object({
   avatarInitials: z.string(),
   role: z.enum(['owner', 'member']),
   joinedAt: z.string().datetime(),
+  roundRobinIndex: z.number().int(),
 })
 
 const InvitationResponseSchema = z.object({ data: invitationSchema })
@@ -108,6 +109,7 @@ function stubMembers(): z.infer<typeof listMemberSchema>[] {
       avatarInitials: 'J',
       role: 'owner',
       joinedAt: now,
+      roundRobinIndex: 0,
     },
     {
       userId: 'd0000000-0000-4000-8000-000000000002',
@@ -115,6 +117,7 @@ function stubMembers(): z.infer<typeof listMemberSchema>[] {
       avatarInitials: 'S',
       role: 'member',
       joinedAt: now,
+      roundRobinIndex: 1,
     },
   ]
 }
@@ -260,6 +263,129 @@ app.openapi(declineInvitationRoute, async (c) => {
   const { token } = c.req.valid('param')
   console.log(`[stub] Declining invitation token: ${token}`)
   return new Response(null, { status: 204 })
+})
+
+// ── POST /v1/lists/:id/assign ────────────────────────────────────────────────
+// Manually assigns a specific task to a specific member (FR18).
+// IMPORTANT: Registered BEFORE GET /v1/lists/{id}/members to avoid path conflicts.
+
+const assignTaskSchema = z.object({
+  taskId: z.string().uuid(),
+  assignedToUserId: z.string().uuid(),
+})
+
+const assignTaskResponseSchema = z.object({
+  taskId: z.string().uuid(),
+  assignedToUserId: z.string().uuid(),
+  listId: z.string().uuid(),
+})
+
+const AssignTaskResponseSchema = z.object({ data: assignTaskResponseSchema })
+
+const assignTaskRoute = createRoute({
+  method: 'post',
+  path: '/v1/lists/{id}/assign',
+  tags: ['Sharing'],
+  summary: 'Manually assign a task to a member',
+  description:
+    'Assigns a specific task to a specific member of the list. ' +
+    'Enforces FR18: a task can only be assigned to one member per due-date window.',
+  request: {
+    params: z.object({ id: z.string().uuid() }),
+    body: { content: { 'application/json': { schema: assignTaskSchema } }, required: true },
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: AssignTaskResponseSchema } },
+      description: 'Task assigned',
+    },
+    404: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'List or task not found',
+    },
+    409: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Task already assigned to a different member in the same due-date window (FR18)',
+    },
+    422: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Task does not belong to this list',
+    },
+  },
+})
+
+app.openapi(assignTaskRoute, async (c) => {
+  // TODO(impl): verify membership from JWT, enforce FR18 uniqueness constraint,
+  //             write assignedToUserId to tasks table via Drizzle
+  const { id } = c.req.valid('param')
+  const body = c.req.valid('json')
+  console.log(`[stub] Assigning task ${body.taskId} to user ${body.assignedToUserId} in list ${id}`)
+  return c.json(ok({ taskId: body.taskId, assignedToUserId: body.assignedToUserId, listId: id }), 200)
+})
+
+// ── POST /v1/lists/:id/auto-assign ───────────────────────────────────────────
+// Trigger strategy-based auto-assignment for all unassigned tasks in a list (FR17).
+
+const autoAssignResponseSchema = z.object({
+  assigned: z.number().int(),
+  strategy: z.string(),
+  assignments: z.array(z.object({
+    taskId: z.string().uuid(),
+    assignedToUserId: z.string().uuid(),
+  })),
+})
+
+const AutoAssignResponseSchema = z.object({ data: autoAssignResponseSchema })
+
+const autoAssignRoute = createRoute({
+  method: 'post',
+  path: '/v1/lists/{id}/auto-assign',
+  tags: ['Sharing'],
+  summary: 'Auto-assign all unassigned tasks using the configured strategy',
+  description:
+    'Triggers strategy-based assignment (round-robin, least-busy, or ai-assisted) ' +
+    'for all unassigned tasks in the list. Enforces FR18: no duplicate assignments per window.',
+  request: {
+    params: z.object({ id: z.string().uuid() }),
+    body: { content: { 'application/json': { schema: z.object({}) } }, required: false },
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: AutoAssignResponseSchema } },
+      description: 'Auto-assignment complete',
+    },
+    400: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'No assignment strategy configured on this list',
+    },
+    403: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Caller is not the list owner',
+    },
+    404: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'List not found',
+    },
+  },
+})
+
+app.openapi(autoAssignRoute, async (c) => {
+  // TODO(impl): implement round-robin, least-busy, AI-assisted logic;
+  //             enforce FR18 uniqueness; read strategy from lists table via Drizzle
+  const { id } = c.req.valid('param')
+  const members = stubMembers()
+  console.log(`[stub] Auto-assigning tasks for list ${id}`)
+  return c.json(
+    ok({
+      assigned: 2,
+      strategy: 'round-robin',
+      assignments: [
+        { taskId: 'a0000000-0000-4000-8000-000000000001', assignedToUserId: members[0].userId },
+        { taskId: 'a0000000-0000-4000-8000-000000000002', assignedToUserId: members[1].userId },
+      ],
+    }),
+    200,
+  )
 })
 
 // ── GET /v1/lists/:id/members ────────────────────────────────────────────────

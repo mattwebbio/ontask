@@ -9,6 +9,7 @@ import '../../features/auth/presentation/auth_screen.dart';
 import '../../features/auth/presentation/two_factor_verify_screen.dart';
 import '../../features/lists/presentation/accept_invitation_screen.dart';
 import '../../features/lists/presentation/list_detail_screen.dart';
+import '../../features/lists/presentation/list_settings_screen.dart';
 import '../../features/lists/presentation/lists_screen.dart';
 import '../../features/now/presentation/now_screen.dart';
 import '../../features/onboarding/presentation/onboarding_flow.dart';
@@ -202,6 +203,14 @@ GoRouter appRouter(Ref ref) {
                 path: '/lists',
                 builder: (context, state) => const ListsScreen(),
                 routes: [
+                  // IMPORTANT: /lists/:id/settings MUST be registered BEFORE /lists/:id
+                  // to avoid GoRouter matching "settings" as a list ID.
+                  GoRoute(
+                    path: ':id/settings',
+                    builder: (context, state) => ListSettingsScreen(
+                      listId: state.pathParameters['id']!,
+                    ),
+                  ),
                   GoRoute(
                     path: ':id',
                     builder: (context, state) => ListDetailScreen(

@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$TaskList {
 
- String get id; String get title; DateTime? get defaultDueDate; int get position; DateTime? get archivedAt; DateTime get createdAt; DateTime get updatedAt; bool get isShared; int get memberCount; List<String> get memberAvatarInitials;
+ String get id; String get title; DateTime? get defaultDueDate; int get position; DateTime? get archivedAt; DateTime get createdAt; DateTime get updatedAt; bool get isShared; int get memberCount; List<String> get memberAvatarInitials; String? get assignmentStrategy;
 /// Create a copy of TaskList
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $TaskListCopyWith<TaskList> get copyWith => _$TaskListCopyWithImpl<TaskList>(thi
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is TaskList&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.defaultDueDate, defaultDueDate) || other.defaultDueDate == defaultDueDate)&&(identical(other.position, position) || other.position == position)&&(identical(other.archivedAt, archivedAt) || other.archivedAt == archivedAt)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.isShared, isShared) || other.isShared == isShared)&&(identical(other.memberCount, memberCount) || other.memberCount == memberCount)&&const DeepCollectionEquality().equals(other.memberAvatarInitials, memberAvatarInitials));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is TaskList&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.defaultDueDate, defaultDueDate) || other.defaultDueDate == defaultDueDate)&&(identical(other.position, position) || other.position == position)&&(identical(other.archivedAt, archivedAt) || other.archivedAt == archivedAt)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.isShared, isShared) || other.isShared == isShared)&&(identical(other.memberCount, memberCount) || other.memberCount == memberCount)&&const DeepCollectionEquality().equals(other.memberAvatarInitials, memberAvatarInitials)&&(identical(other.assignmentStrategy, assignmentStrategy) || other.assignmentStrategy == assignmentStrategy));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,title,defaultDueDate,position,archivedAt,createdAt,updatedAt,isShared,memberCount,const DeepCollectionEquality().hash(memberAvatarInitials));
+int get hashCode => Object.hash(runtimeType,id,title,defaultDueDate,position,archivedAt,createdAt,updatedAt,isShared,memberCount,const DeepCollectionEquality().hash(memberAvatarInitials),assignmentStrategy);
 
 @override
 String toString() {
-  return 'TaskList(id: $id, title: $title, defaultDueDate: $defaultDueDate, position: $position, archivedAt: $archivedAt, createdAt: $createdAt, updatedAt: $updatedAt, isShared: $isShared, memberCount: $memberCount, memberAvatarInitials: $memberAvatarInitials)';
+  return 'TaskList(id: $id, title: $title, defaultDueDate: $defaultDueDate, position: $position, archivedAt: $archivedAt, createdAt: $createdAt, updatedAt: $updatedAt, isShared: $isShared, memberCount: $memberCount, memberAvatarInitials: $memberAvatarInitials, assignmentStrategy: $assignmentStrategy)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $TaskListCopyWith<$Res>  {
   factory $TaskListCopyWith(TaskList value, $Res Function(TaskList) _then) = _$TaskListCopyWithImpl;
 @useResult
 $Res call({
- String id, String title, DateTime? defaultDueDate, int position, DateTime? archivedAt, DateTime createdAt, DateTime updatedAt, bool isShared, int memberCount, List<String> memberAvatarInitials
+ String id, String title, DateTime? defaultDueDate, int position, DateTime? archivedAt, DateTime createdAt, DateTime updatedAt, bool isShared, int memberCount, List<String> memberAvatarInitials, String? assignmentStrategy
 });
 
 
@@ -62,7 +62,7 @@ class _$TaskListCopyWithImpl<$Res>
 
 /// Create a copy of TaskList
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? defaultDueDate = freezed,Object? position = null,Object? archivedAt = freezed,Object? createdAt = null,Object? updatedAt = null,Object? isShared = null,Object? memberCount = null,Object? memberAvatarInitials = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? title = null,Object? defaultDueDate = freezed,Object? position = null,Object? archivedAt = freezed,Object? createdAt = null,Object? updatedAt = null,Object? isShared = null,Object? memberCount = null,Object? memberAvatarInitials = null,Object? assignmentStrategy = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
@@ -74,7 +74,8 @@ as DateTime,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore
 as DateTime,isShared: null == isShared ? _self.isShared : isShared // ignore: cast_nullable_to_non_nullable
 as bool,memberCount: null == memberCount ? _self.memberCount : memberCount // ignore: cast_nullable_to_non_nullable
 as int,memberAvatarInitials: null == memberAvatarInitials ? _self.memberAvatarInitials : memberAvatarInitials // ignore: cast_nullable_to_non_nullable
-as List<String>,
+as List<String>,assignmentStrategy: freezed == assignmentStrategy ? _self.assignmentStrategy : assignmentStrategy // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 
@@ -159,10 +160,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String title,  DateTime? defaultDueDate,  int position,  DateTime? archivedAt,  DateTime createdAt,  DateTime updatedAt,  bool isShared,  int memberCount,  List<String> memberAvatarInitials)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String title,  DateTime? defaultDueDate,  int position,  DateTime? archivedAt,  DateTime createdAt,  DateTime updatedAt,  bool isShared,  int memberCount,  List<String> memberAvatarInitials,  String? assignmentStrategy)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _TaskList() when $default != null:
-return $default(_that.id,_that.title,_that.defaultDueDate,_that.position,_that.archivedAt,_that.createdAt,_that.updatedAt,_that.isShared,_that.memberCount,_that.memberAvatarInitials);case _:
+return $default(_that.id,_that.title,_that.defaultDueDate,_that.position,_that.archivedAt,_that.createdAt,_that.updatedAt,_that.isShared,_that.memberCount,_that.memberAvatarInitials,_that.assignmentStrategy);case _:
   return orElse();
 
 }
@@ -180,10 +181,10 @@ return $default(_that.id,_that.title,_that.defaultDueDate,_that.position,_that.a
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String title,  DateTime? defaultDueDate,  int position,  DateTime? archivedAt,  DateTime createdAt,  DateTime updatedAt,  bool isShared,  int memberCount,  List<String> memberAvatarInitials)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String title,  DateTime? defaultDueDate,  int position,  DateTime? archivedAt,  DateTime createdAt,  DateTime updatedAt,  bool isShared,  int memberCount,  List<String> memberAvatarInitials,  String? assignmentStrategy)  $default,) {final _that = this;
 switch (_that) {
 case _TaskList():
-return $default(_that.id,_that.title,_that.defaultDueDate,_that.position,_that.archivedAt,_that.createdAt,_that.updatedAt,_that.isShared,_that.memberCount,_that.memberAvatarInitials);case _:
+return $default(_that.id,_that.title,_that.defaultDueDate,_that.position,_that.archivedAt,_that.createdAt,_that.updatedAt,_that.isShared,_that.memberCount,_that.memberAvatarInitials,_that.assignmentStrategy);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -200,10 +201,10 @@ return $default(_that.id,_that.title,_that.defaultDueDate,_that.position,_that.a
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String title,  DateTime? defaultDueDate,  int position,  DateTime? archivedAt,  DateTime createdAt,  DateTime updatedAt,  bool isShared,  int memberCount,  List<String> memberAvatarInitials)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String title,  DateTime? defaultDueDate,  int position,  DateTime? archivedAt,  DateTime createdAt,  DateTime updatedAt,  bool isShared,  int memberCount,  List<String> memberAvatarInitials,  String? assignmentStrategy)?  $default,) {final _that = this;
 switch (_that) {
 case _TaskList() when $default != null:
-return $default(_that.id,_that.title,_that.defaultDueDate,_that.position,_that.archivedAt,_that.createdAt,_that.updatedAt,_that.isShared,_that.memberCount,_that.memberAvatarInitials);case _:
+return $default(_that.id,_that.title,_that.defaultDueDate,_that.position,_that.archivedAt,_that.createdAt,_that.updatedAt,_that.isShared,_that.memberCount,_that.memberAvatarInitials,_that.assignmentStrategy);case _:
   return null;
 
 }
@@ -215,7 +216,7 @@ return $default(_that.id,_that.title,_that.defaultDueDate,_that.position,_that.a
 
 
 class _TaskList implements TaskList {
-  const _TaskList({required this.id, required this.title, this.defaultDueDate, required this.position, this.archivedAt, required this.createdAt, required this.updatedAt, this.isShared = false, this.memberCount = 1, final  List<String> memberAvatarInitials = const <String>[]}): _memberAvatarInitials = memberAvatarInitials;
+  const _TaskList({required this.id, required this.title, this.defaultDueDate, required this.position, this.archivedAt, required this.createdAt, required this.updatedAt, this.isShared = false, this.memberCount = 1, final  List<String> memberAvatarInitials = const <String>[], this.assignmentStrategy}): _memberAvatarInitials = memberAvatarInitials;
   
 
 @override final  String id;
@@ -234,6 +235,7 @@ class _TaskList implements TaskList {
   return EqualUnmodifiableListView(_memberAvatarInitials);
 }
 
+@override final  String? assignmentStrategy;
 
 /// Create a copy of TaskList
 /// with the given fields replaced by the non-null parameter values.
@@ -245,16 +247,16 @@ _$TaskListCopyWith<_TaskList> get copyWith => __$TaskListCopyWithImpl<_TaskList>
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _TaskList&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.defaultDueDate, defaultDueDate) || other.defaultDueDate == defaultDueDate)&&(identical(other.position, position) || other.position == position)&&(identical(other.archivedAt, archivedAt) || other.archivedAt == archivedAt)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.isShared, isShared) || other.isShared == isShared)&&(identical(other.memberCount, memberCount) || other.memberCount == memberCount)&&const DeepCollectionEquality().equals(other._memberAvatarInitials, _memberAvatarInitials));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _TaskList&&(identical(other.id, id) || other.id == id)&&(identical(other.title, title) || other.title == title)&&(identical(other.defaultDueDate, defaultDueDate) || other.defaultDueDate == defaultDueDate)&&(identical(other.position, position) || other.position == position)&&(identical(other.archivedAt, archivedAt) || other.archivedAt == archivedAt)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt)&&(identical(other.isShared, isShared) || other.isShared == isShared)&&(identical(other.memberCount, memberCount) || other.memberCount == memberCount)&&const DeepCollectionEquality().equals(other._memberAvatarInitials, _memberAvatarInitials)&&(identical(other.assignmentStrategy, assignmentStrategy) || other.assignmentStrategy == assignmentStrategy));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,title,defaultDueDate,position,archivedAt,createdAt,updatedAt,isShared,memberCount,const DeepCollectionEquality().hash(_memberAvatarInitials));
+int get hashCode => Object.hash(runtimeType,id,title,defaultDueDate,position,archivedAt,createdAt,updatedAt,isShared,memberCount,const DeepCollectionEquality().hash(_memberAvatarInitials),assignmentStrategy);
 
 @override
 String toString() {
-  return 'TaskList(id: $id, title: $title, defaultDueDate: $defaultDueDate, position: $position, archivedAt: $archivedAt, createdAt: $createdAt, updatedAt: $updatedAt, isShared: $isShared, memberCount: $memberCount, memberAvatarInitials: $memberAvatarInitials)';
+  return 'TaskList(id: $id, title: $title, defaultDueDate: $defaultDueDate, position: $position, archivedAt: $archivedAt, createdAt: $createdAt, updatedAt: $updatedAt, isShared: $isShared, memberCount: $memberCount, memberAvatarInitials: $memberAvatarInitials, assignmentStrategy: $assignmentStrategy)';
 }
 
 
@@ -265,7 +267,7 @@ abstract mixin class _$TaskListCopyWith<$Res> implements $TaskListCopyWith<$Res>
   factory _$TaskListCopyWith(_TaskList value, $Res Function(_TaskList) _then) = __$TaskListCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String title, DateTime? defaultDueDate, int position, DateTime? archivedAt, DateTime createdAt, DateTime updatedAt, bool isShared, int memberCount, List<String> memberAvatarInitials
+ String id, String title, DateTime? defaultDueDate, int position, DateTime? archivedAt, DateTime createdAt, DateTime updatedAt, bool isShared, int memberCount, List<String> memberAvatarInitials, String? assignmentStrategy
 });
 
 
@@ -282,7 +284,7 @@ class __$TaskListCopyWithImpl<$Res>
 
 /// Create a copy of TaskList
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? title = null,Object? defaultDueDate = freezed,Object? position = null,Object? archivedAt = freezed,Object? createdAt = null,Object? updatedAt = null,Object? isShared = null,Object? memberCount = null,Object? memberAvatarInitials = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? title = null,Object? defaultDueDate = freezed,Object? position = null,Object? archivedAt = freezed,Object? createdAt = null,Object? updatedAt = null,Object? isShared = null,Object? memberCount = null,Object? memberAvatarInitials = null,Object? assignmentStrategy = freezed,}) {
   return _then(_TaskList(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,title: null == title ? _self.title : title // ignore: cast_nullable_to_non_nullable
@@ -294,7 +296,8 @@ as DateTime,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore
 as DateTime,isShared: null == isShared ? _self.isShared : isShared // ignore: cast_nullable_to_non_nullable
 as bool,memberCount: null == memberCount ? _self.memberCount : memberCount // ignore: cast_nullable_to_non_nullable
 as int,memberAvatarInitials: null == memberAvatarInitials ? _self._memberAvatarInitials : memberAvatarInitials // ignore: cast_nullable_to_non_nullable
-as List<String>,
+as List<String>,assignmentStrategy: freezed == assignmentStrategy ? _self.assignmentStrategy : assignmentStrategy // ignore: cast_nullable_to_non_nullable
+as String?,
   ));
 }
 

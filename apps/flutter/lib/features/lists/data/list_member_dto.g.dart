@@ -13,6 +13,7 @@ _ListMemberDto _$ListMemberDtoFromJson(Map<String, dynamic> json) =>
       avatarInitials: json['avatarInitials'] as String,
       role: json['role'] as String,
       joinedAt: json['joinedAt'] as String,
+      roundRobinIndex: (json['roundRobinIndex'] as num?)?.toInt() ?? 0,
     );
 
 Map<String, dynamic> _$ListMemberDtoToJson(_ListMemberDto instance) =>
@@ -22,4 +23,5 @@ Map<String, dynamic> _$ListMemberDtoToJson(_ListMemberDto instance) =>
       'avatarInitials': instance.avatarInitials,
       'role': instance.role,
       'joinedAt': instance.joinedAt,
+      'roundRobinIndex': instance.roundRobinIndex,
     };

@@ -20,6 +20,7 @@ abstract class ListDto with _$ListDto {
     @JsonKey(defaultValue: false) @Default(false) bool isShared,
     @JsonKey(defaultValue: 1) @Default(1) int memberCount,
     @JsonKey(defaultValue: <String>[]) @Default(<String>[]) List<String> memberAvatarInitials,
+    @JsonKey(defaultValue: null) String? assignmentStrategy,
   }) = _ListDto;
 
   factory ListDto.fromJson(Map<String, dynamic> json) => _$ListDtoFromJson(json);
@@ -37,5 +38,6 @@ abstract class ListDto with _$ListDto {
         isShared: isShared,
         memberCount: memberCount,
         memberAvatarInitials: memberAvatarInitials,
+        assignmentStrategy: assignmentStrategy,
       );
 }

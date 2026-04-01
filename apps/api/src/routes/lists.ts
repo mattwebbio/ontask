@@ -35,6 +35,7 @@ const listSchema = z.object({
   isShared: z.boolean(),
   memberCount: z.number().int(),
   memberAvatarInitials: z.array(z.string()).max(3),
+  assignmentStrategy: z.enum(['round-robin', 'least-busy', 'ai-assisted']).nullable(),
 })
 
 const sectionSchema = z.object({
@@ -82,6 +83,7 @@ function stubList(overrides: Partial<z.infer<typeof listSchema>> = {}): z.infer<
     isShared: false,
     memberCount: 1,
     memberAvatarInitials: [],
+    assignmentStrategy: null,
     ...overrides,
   }
 }
@@ -186,6 +188,41 @@ app.openapi(getListPredictionRoute, async (c) => {
     }),
     200,
   )
+})
+
+// ── PATCH /v1/lists/:id/settings ────────────────────────────────────────────
+// IMPORTANT: Registered BEFORE PATCH /v1/lists/{id} (catch-all) to prevent
+// Hono from matching "settings" as a list ID.
+
+const updateListSettingsSchema = z.object({
+  assignmentStrategy: z.enum(['round-robin', 'least-busy', 'ai-assisted']).nullable(),
+})
+
+const patchListSettingsRoute = createRoute({
+  method: 'patch',
+  path: '/v1/lists/{id}/settings',
+  tags: ['Lists'],
+  summary: 'Update list assignment strategy settings',
+  description:
+    'Updates the assignment strategy for a list. Strategy determines how tasks are ' +
+    'automatically distributed among members (FR17). Pass null to disable auto-assignment.',
+  request: {
+    params: z.object({ id: z.string().uuid() }),
+    body: { content: { 'application/json': { schema: updateListSettingsSchema } }, required: true },
+  },
+  responses: {
+    200: { content: { 'application/json': { schema: ListResponseSchema } }, description: 'Settings updated' },
+    403: { content: { 'application/json': { schema: ErrorSchema } }, description: 'Not list owner' },
+    404: { content: { 'application/json': { schema: ErrorSchema } }, description: 'List not found' },
+    422: { content: { 'application/json': { schema: ErrorSchema } }, description: 'Validation error' },
+  },
+})
+
+app.openapi(patchListSettingsRoute, async (c) => {
+  // TODO(impl): verify ownership from JWT, update lists table via Drizzle
+  const { id } = c.req.valid('param')
+  const body = c.req.valid('json')
+  return c.json(ok(stubList({ id, assignmentStrategy: body.assignmentStrategy })), 200)
 })
 
 // ── GET /v1/lists/:id ───────────────────────────────────────────────────────

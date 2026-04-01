@@ -18,5 +18,6 @@ abstract class TaskList with _$TaskList {
     @Default(false) bool isShared,
     @Default(1) int memberCount,
     @Default(<String>[]) List<String> memberAvatarInitials,
+    String? assignmentStrategy,
   }) = _TaskList;
 }

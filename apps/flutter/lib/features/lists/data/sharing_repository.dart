@@ -67,6 +67,32 @@ class SharingRepository {
     await _client.dio.post<void>('/v1/invitations/$token/decline');
   }
 
+  /// Manually assigns a specific task to a specific member (FR18).
+  ///
+  /// Returns `{ taskId, assignedToUserId, listId }`.
+  Future<Map<String, dynamic>> assignTask(
+    String listId,
+    String taskId,
+    String assignedToUserId,
+  ) async {
+    final response = await _client.dio.post<Map<String, dynamic>>(
+      '/v1/lists/$listId/assign',
+      data: {'taskId': taskId, 'assignedToUserId': assignedToUserId},
+    );
+    return response.data!['data'] as Map<String, dynamic>;
+  }
+
+  /// Triggers strategy-based auto-assignment for all unassigned tasks (FR17).
+  ///
+  /// Returns `{ assigned, strategy, assignments: [{ taskId, assignedToUserId }] }`.
+  Future<Map<String, dynamic>> autoAssign(String listId) async {
+    final response = await _client.dio.post<Map<String, dynamic>>(
+      '/v1/lists/$listId/auto-assign',
+      data: <String, dynamic>{},
+    );
+    return response.data!['data'] as Map<String, dynamic>;
+  }
+
   /// Fetches all members of a shared list.
   Future<List<ListMember>> getListMembers(String listId) async {
     final response = await _client.dio.get<Map<String, dynamic>>(

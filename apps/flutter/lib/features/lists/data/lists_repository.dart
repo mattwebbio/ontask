@@ -62,6 +62,19 @@ class ListsRepository {
   Future<void> archiveList(String id) async {
     await _client.dio.delete('/v1/lists/$id/archive');
   }
+
+  /// Updates the assignment strategy for a list (PATCH /v1/lists/{id}/settings).
+  ///
+  /// Pass [strategy] as `'round-robin'`, `'least-busy'`, `'ai-assisted'`, or `null` to disable.
+  Future<TaskList> updateAssignmentStrategy(String listId, String? strategy) async {
+    final response = await _client.dio.patch<Map<String, dynamic>>(
+      '/v1/lists/$listId/settings',
+      data: {'assignmentStrategy': strategy},
+    );
+    return ListDto.fromJson(
+      response.data!['data'] as Map<String, dynamic>,
+    ).toDomain();
+  }
 }
 
 /// Riverpod provider for [ListsRepository].

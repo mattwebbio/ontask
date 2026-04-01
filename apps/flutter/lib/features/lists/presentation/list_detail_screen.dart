@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:go_router/go_router.dart';
+
 import '../../../core/l10n/strings.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_theme.dart';
@@ -106,6 +108,15 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: colors.accentPrimary,
                           ),
+                    ),
+                  ),
+                  CupertinoButton(
+                    padding: EdgeInsets.zero,
+                    onPressed: () =>
+                        context.push('/lists/${widget.listId}/settings'),
+                    child: Icon(
+                      CupertinoIcons.settings,
+                      color: colors.accentPrimary,
                     ),
                   ),
                   CupertinoButton(

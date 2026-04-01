@@ -86,6 +86,7 @@ const taskSchema = z.object({
   completedAt: z.string().datetime().nullable(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
+  assignedToUserId: z.string().uuid().nullable(),
 })
 
 const TaskResponseSchema = z.object({ data: taskSchema })
@@ -189,6 +190,7 @@ function stubTask(overrides: Partial<z.infer<typeof taskSchema>> = {}): z.infer<
     completedAt: null,
     createdAt: now,
     updatedAt: now,
+    assignedToUserId: null,
     ...overrides,
   }
 }

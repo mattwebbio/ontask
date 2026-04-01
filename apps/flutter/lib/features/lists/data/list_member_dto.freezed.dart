@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$ListMemberDto {
 
- String get userId; String get displayName; String get avatarInitials; String get role; String get joinedAt;
+ String get userId; String get displayName; String get avatarInitials; String get role; String get joinedAt;@JsonKey(defaultValue: 0) int get roundRobinIndex;
 /// Create a copy of ListMemberDto
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $ListMemberDtoCopyWith<ListMemberDto> get copyWith => _$ListMemberDtoCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ListMemberDto&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.avatarInitials, avatarInitials) || other.avatarInitials == avatarInitials)&&(identical(other.role, role) || other.role == role)&&(identical(other.joinedAt, joinedAt) || other.joinedAt == joinedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ListMemberDto&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.avatarInitials, avatarInitials) || other.avatarInitials == avatarInitials)&&(identical(other.role, role) || other.role == role)&&(identical(other.joinedAt, joinedAt) || other.joinedAt == joinedAt)&&(identical(other.roundRobinIndex, roundRobinIndex) || other.roundRobinIndex == roundRobinIndex));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,userId,displayName,avatarInitials,role,joinedAt);
+int get hashCode => Object.hash(runtimeType,userId,displayName,avatarInitials,role,joinedAt,roundRobinIndex);
 
 @override
 String toString() {
-  return 'ListMemberDto(userId: $userId, displayName: $displayName, avatarInitials: $avatarInitials, role: $role, joinedAt: $joinedAt)';
+  return 'ListMemberDto(userId: $userId, displayName: $displayName, avatarInitials: $avatarInitials, role: $role, joinedAt: $joinedAt, roundRobinIndex: $roundRobinIndex)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $ListMemberDtoCopyWith<$Res>  {
   factory $ListMemberDtoCopyWith(ListMemberDto value, $Res Function(ListMemberDto) _then) = _$ListMemberDtoCopyWithImpl;
 @useResult
 $Res call({
- String userId, String displayName, String avatarInitials, String role, String joinedAt
+ String userId, String displayName, String avatarInitials, String role, String joinedAt,@JsonKey(defaultValue: 0) int roundRobinIndex
 });
 
 
@@ -65,14 +65,15 @@ class _$ListMemberDtoCopyWithImpl<$Res>
 
 /// Create a copy of ListMemberDto
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? userId = null,Object? displayName = null,Object? avatarInitials = null,Object? role = null,Object? joinedAt = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? userId = null,Object? displayName = null,Object? avatarInitials = null,Object? role = null,Object? joinedAt = null,Object? roundRobinIndex = null,}) {
   return _then(_self.copyWith(
 userId: null == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
 as String,displayName: null == displayName ? _self.displayName : displayName // ignore: cast_nullable_to_non_nullable
 as String,avatarInitials: null == avatarInitials ? _self.avatarInitials : avatarInitials // ignore: cast_nullable_to_non_nullable
 as String,role: null == role ? _self.role : role // ignore: cast_nullable_to_non_nullable
 as String,joinedAt: null == joinedAt ? _self.joinedAt : joinedAt // ignore: cast_nullable_to_non_nullable
-as String,
+as String,roundRobinIndex: null == roundRobinIndex ? _self.roundRobinIndex : roundRobinIndex // ignore: cast_nullable_to_non_nullable
+as int,
   ));
 }
 
@@ -157,10 +158,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String userId,  String displayName,  String avatarInitials,  String role,  String joinedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String userId,  String displayName,  String avatarInitials,  String role,  String joinedAt, @JsonKey(defaultValue: 0)  int roundRobinIndex)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ListMemberDto() when $default != null:
-return $default(_that.userId,_that.displayName,_that.avatarInitials,_that.role,_that.joinedAt);case _:
+return $default(_that.userId,_that.displayName,_that.avatarInitials,_that.role,_that.joinedAt,_that.roundRobinIndex);case _:
   return orElse();
 
 }
@@ -178,10 +179,10 @@ return $default(_that.userId,_that.displayName,_that.avatarInitials,_that.role,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String userId,  String displayName,  String avatarInitials,  String role,  String joinedAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String userId,  String displayName,  String avatarInitials,  String role,  String joinedAt, @JsonKey(defaultValue: 0)  int roundRobinIndex)  $default,) {final _that = this;
 switch (_that) {
 case _ListMemberDto():
-return $default(_that.userId,_that.displayName,_that.avatarInitials,_that.role,_that.joinedAt);case _:
+return $default(_that.userId,_that.displayName,_that.avatarInitials,_that.role,_that.joinedAt,_that.roundRobinIndex);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -198,10 +199,10 @@ return $default(_that.userId,_that.displayName,_that.avatarInitials,_that.role,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String userId,  String displayName,  String avatarInitials,  String role,  String joinedAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String userId,  String displayName,  String avatarInitials,  String role,  String joinedAt, @JsonKey(defaultValue: 0)  int roundRobinIndex)?  $default,) {final _that = this;
 switch (_that) {
 case _ListMemberDto() when $default != null:
-return $default(_that.userId,_that.displayName,_that.avatarInitials,_that.role,_that.joinedAt);case _:
+return $default(_that.userId,_that.displayName,_that.avatarInitials,_that.role,_that.joinedAt,_that.roundRobinIndex);case _:
   return null;
 
 }
@@ -213,7 +214,7 @@ return $default(_that.userId,_that.displayName,_that.avatarInitials,_that.role,_
 @JsonSerializable()
 
 class _ListMemberDto extends ListMemberDto {
-  const _ListMemberDto({required this.userId, required this.displayName, required this.avatarInitials, required this.role, required this.joinedAt}): super._();
+  const _ListMemberDto({required this.userId, required this.displayName, required this.avatarInitials, required this.role, required this.joinedAt, @JsonKey(defaultValue: 0) this.roundRobinIndex = 0}): super._();
   factory _ListMemberDto.fromJson(Map<String, dynamic> json) => _$ListMemberDtoFromJson(json);
 
 @override final  String userId;
@@ -221,6 +222,7 @@ class _ListMemberDto extends ListMemberDto {
 @override final  String avatarInitials;
 @override final  String role;
 @override final  String joinedAt;
+@override@JsonKey(defaultValue: 0) final  int roundRobinIndex;
 
 /// Create a copy of ListMemberDto
 /// with the given fields replaced by the non-null parameter values.
@@ -235,16 +237,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ListMemberDto&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.avatarInitials, avatarInitials) || other.avatarInitials == avatarInitials)&&(identical(other.role, role) || other.role == role)&&(identical(other.joinedAt, joinedAt) || other.joinedAt == joinedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ListMemberDto&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.avatarInitials, avatarInitials) || other.avatarInitials == avatarInitials)&&(identical(other.role, role) || other.role == role)&&(identical(other.joinedAt, joinedAt) || other.joinedAt == joinedAt)&&(identical(other.roundRobinIndex, roundRobinIndex) || other.roundRobinIndex == roundRobinIndex));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,userId,displayName,avatarInitials,role,joinedAt);
+int get hashCode => Object.hash(runtimeType,userId,displayName,avatarInitials,role,joinedAt,roundRobinIndex);
 
 @override
 String toString() {
-  return 'ListMemberDto(userId: $userId, displayName: $displayName, avatarInitials: $avatarInitials, role: $role, joinedAt: $joinedAt)';
+  return 'ListMemberDto(userId: $userId, displayName: $displayName, avatarInitials: $avatarInitials, role: $role, joinedAt: $joinedAt, roundRobinIndex: $roundRobinIndex)';
 }
 
 
@@ -255,7 +257,7 @@ abstract mixin class _$ListMemberDtoCopyWith<$Res> implements $ListMemberDtoCopy
   factory _$ListMemberDtoCopyWith(_ListMemberDto value, $Res Function(_ListMemberDto) _then) = __$ListMemberDtoCopyWithImpl;
 @override @useResult
 $Res call({
- String userId, String displayName, String avatarInitials, String role, String joinedAt
+ String userId, String displayName, String avatarInitials, String role, String joinedAt,@JsonKey(defaultValue: 0) int roundRobinIndex
 });
 
 
@@ -272,14 +274,15 @@ class __$ListMemberDtoCopyWithImpl<$Res>
 
 /// Create a copy of ListMemberDto
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? userId = null,Object? displayName = null,Object? avatarInitials = null,Object? role = null,Object? joinedAt = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? userId = null,Object? displayName = null,Object? avatarInitials = null,Object? role = null,Object? joinedAt = null,Object? roundRobinIndex = null,}) {
   return _then(_ListMemberDto(
 userId: null == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
 as String,displayName: null == displayName ? _self.displayName : displayName // ignore: cast_nullable_to_non_nullable
 as String,avatarInitials: null == avatarInitials ? _self.avatarInitials : avatarInitials // ignore: cast_nullable_to_non_nullable
 as String,role: null == role ? _self.role : role // ignore: cast_nullable_to_non_nullable
 as String,joinedAt: null == joinedAt ? _self.joinedAt : joinedAt // ignore: cast_nullable_to_non_nullable
-as String,
+as String,roundRobinIndex: null == roundRobinIndex ? _self.roundRobinIndex : roundRobinIndex // ignore: cast_nullable_to_non_nullable
+as int,
   ));
 }
 

@@ -43,6 +43,7 @@ abstract class TaskDto with _$TaskDto {
     required String updatedAt,
     int? durationMinutes,
     String? scheduledStartTime,
+    @JsonKey(defaultValue: null) String? assignedToUserId,
   }) = _TaskDto;
 
   factory TaskDto.fromJson(Map<String, dynamic> json) => _$TaskDtoFromJson(json);
@@ -76,6 +77,7 @@ abstract class TaskDto with _$TaskDto {
         scheduledStartTime: scheduledStartTime != null
             ? DateTime.parse(scheduledStartTime!)
             : null,
+        assignedToUserId: assignedToUserId,
       );
 
   static List<int>? _parseDaysOfWeek(String? value) {

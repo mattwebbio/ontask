@@ -105,3 +105,10 @@
 ## Deferred from: code review of 5-1-list-sharing-invitations (2026-03-31)
 
 - **`SharingRepository.getInvitationDetails` uses field name `inviterName` not `invitedByName`** [`apps/flutter/lib/features/lists/data/sharing_repository.dart:43`] — Coupled to `invitationDetailsSchema` patch (F11); both should be resolved together when the schema is updated to match the spec field names (`listId`, `invitedByName`, `inviteeEmail`, `expiresAt`).
+
+## Deferred from: code review of 5-2-task-assignment-strategies (2026-04-01)
+
+- **`console.log` in production API stub handlers** [`apps/api/src/routes/sharing.ts`] — Pre-existing pattern consistent with all other stub handlers in `sharing.ts` and `lists.ts`. Remove when real implementations replace stubs.
+- **Fake test repos instantiate real `ApiClient` / `AuthInterceptor`** [`apps/flutter/test/features/lists/list_settings_screen_test.dart`] — `_FakeListsRepository` and `_FakeSharingRepository` call `super(ApiClient(baseUrl: 'http://fake'))`, wiring up `AuthInterceptor` and `LoggingInterceptor`. All repository methods are overridden so no real Dio calls occur, but `AuthInterceptor` init touches `FlutterSecureStorage` (mocked). Pre-existing pattern from Story 5.1. Consider switching to `mocktail` full mocks in a future test hardening pass.
+- **`TaskList.assignmentStrategy` not validated as enum in Flutter domain layer** [`apps/flutter/lib/features/lists/domain/task_list.dart`] — Field is `String?` rather than a sealed type / enum. Consistent with project's no-enum-in-domain approach; Zod validates valid values at the API boundary. Revisit when domain modeling is formalized.
+- **Brief UI flash after `ref.invalidate(listsProvider)` during strategy update** [`apps/flutter/lib/features/lists/presentation/list_settings_screen.dart`] — After `updateAssignmentStrategy` succeeds, `ref.invalidate` triggers an async reload; the checkmark selection may briefly show the old state before re-render. Minor UX polish; spec does not require optimistic update patterns here.
