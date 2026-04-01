@@ -17,6 +17,9 @@ abstract class ListDto with _$ListDto {
     String? archivedAt,
     required String createdAt,
     required String updatedAt,
+    @JsonKey(defaultValue: false) @Default(false) bool isShared,
+    @JsonKey(defaultValue: 1) @Default(1) int memberCount,
+    @JsonKey(defaultValue: <String>[]) @Default(<String>[]) List<String> memberAvatarInitials,
   }) = _ListDto;
 
   factory ListDto.fromJson(Map<String, dynamic> json) => _$ListDtoFromJson(json);
@@ -31,5 +34,8 @@ abstract class ListDto with _$ListDto {
         archivedAt: archivedAt != null ? DateTime.parse(archivedAt!) : null,
         createdAt: DateTime.parse(createdAt),
         updatedAt: DateTime.parse(updatedAt),
+        isShared: isShared,
+        memberCount: memberCount,
+        memberAvatarInitials: memberAvatarInitials,
       );
 }

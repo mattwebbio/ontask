@@ -26,8 +26,9 @@ class AcceptInvitationScreen extends ConsumerStatefulWidget {
 class _AcceptInvitationScreenState
     extends ConsumerState<AcceptInvitationScreen> {
   // Invitation details loaded on init
+  String? _listId;
   String? _listTitle;
-  String? _inviterName;
+  String? _invitedByName;
   bool _isLoading = true;
   bool _isExpired = false;
   bool _isAccepting = false;
@@ -45,8 +46,9 @@ class _AcceptInvitationScreenState
       final details = await repo.getInvitationDetails(widget.token);
       if (mounted) {
         setState(() {
+          _listId = details.listId;
           _listTitle = details.listTitle;
-          _inviterName = details.inviterName;
+          _invitedByName = details.invitedByName;
           _isLoading = false;
         });
       }
@@ -64,11 +66,12 @@ class _AcceptInvitationScreenState
     setState(() => _isAccepting = true);
     try {
       final repo = ref.read(sharingRepositoryProvider);
-      await repo.acceptInvitation(widget.token);
+      final result = await repo.acceptInvitation(widget.token);
       if (mounted) {
         // FR86: if not yet subscribed, route to onboarding/trial path.
-        // Stub: always navigate to /lists.
-        context.go('/lists');
+        // Stub: always navigate to the specific list.
+        final listId = result['listId'] as String? ?? _listId;
+        context.go('/lists/${listId ?? ''}');
       }
     } catch (_) {
       if (mounted) {
@@ -134,6 +137,7 @@ class _AcceptInvitationScreenState
           SizedBox(
             width: double.infinity,
             child: CupertinoButton.filled(
+              minimumSize: const Size(44, 44),
               onPressed: () => context.go('/lists'),
               child: const Text(AppStrings.inviteGoToLists),
             ),
@@ -145,7 +149,7 @@ class _AcceptInvitationScreenState
 
   Widget _buildInvitationContent(BuildContext context, OnTaskColors colors) {
     final subtitle = AppStrings.inviteAcceptSubtitle
-        .replaceAll('{inviterName}', _inviterName ?? '');
+        .replaceAll('{inviterName}', _invitedByName ?? '');
 
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.xl),
@@ -171,12 +175,23 @@ class _AcceptInvitationScreenState
                   color: colors.textSecondary,
                 ),
           ),
+          const SizedBox(height: AppSpacing.lg),
+
+          // Trial note — always shown for non-subscribed users (stub: always shown)
+          Text(
+            AppStrings.invitationTrialNote,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: colors.textSecondary,
+                ),
+          ),
           const SizedBox(height: AppSpacing.xxxl),
 
           // Accept button
           SizedBox(
             width: double.infinity,
             child: CupertinoButton.filled(
+              minimumSize: const Size(44, 44),
               onPressed: (_isAccepting || _isDeclining) ? null : _acceptInvitation,
               child: Text(
                 _isAccepting
@@ -191,6 +206,7 @@ class _AcceptInvitationScreenState
           SizedBox(
             width: double.infinity,
             child: CupertinoButton(
+              minimumSize: const Size(44, 44),
               onPressed: (_isAccepting || _isDeclining) ? null : _declineInvitation,
               child: Text(
                 _isDeclining

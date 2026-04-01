@@ -32,6 +32,9 @@ const listSchema = z.object({
   archivedAt: z.string().datetime().nullable(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
+  isShared: z.boolean(),
+  memberCount: z.number().int(),
+  memberAvatarInitials: z.array(z.string()).max(3),
 })
 
 const sectionSchema = z.object({
@@ -76,6 +79,9 @@ function stubList(overrides: Partial<z.infer<typeof listSchema>> = {}): z.infer<
     archivedAt: null,
     createdAt: now,
     updatedAt: now,
+    isShared: false,
+    memberCount: 1,
+    memberAvatarInitials: [],
     ...overrides,
   }
 }

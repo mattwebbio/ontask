@@ -304,6 +304,7 @@ class AppStrings {
   static const String inviteDeclineButton = 'Decline';
   static const String inviteExpiredMessage = 'This invitation has expired or is no longer valid.';
   static const String inviteGoToLists = 'Go to Lists';
+  static const String invitationTrialNote = 'Start a free trial to join this list and access all features.';
   static const String listSharedIndicator = 'Shared';
   static const String listMemberCount = '{count} members';
   static const String createListButton = "Create a list";

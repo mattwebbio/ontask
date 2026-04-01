@@ -59,7 +59,8 @@ final class ListMembersNotifierProvider
   }
 }
 
-String _$listMembersNotifierHash() => r'b2c3d4e5f6a7b2c3d4e5f6a7b2c3d4e5f6a7b2c3';
+String _$listMembersNotifierHash() =>
+    r'b3a01e3d70bb31855ec75ae49ccd91ed25005e79';
 
 /// Notifier managing list member state for a given list.
 ///
@@ -106,7 +107,8 @@ abstract class _$ListMembersNotifier extends $AsyncNotifier<List<ListMember>> {
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref = this.ref as $Ref<AsyncValue<List<ListMember>>, List<ListMember>>;
+    final ref =
+        this.ref as $Ref<AsyncValue<List<ListMember>>, List<ListMember>>;
     final element =
         ref.element
             as $ClassProviderElement<

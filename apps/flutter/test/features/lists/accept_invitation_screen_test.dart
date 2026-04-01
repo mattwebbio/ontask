@@ -115,15 +115,17 @@ class _FakeSharingRepository extends SharingRepository {
   Future<InvitationDetails> getInvitationDetails(String token) async {
     if (shouldThrowOnDetails) throw Exception('Expired');
     return const InvitationDetails(
+      listId: 'list-1',
       listTitle: 'Household Chores',
-      inviterName: 'Jordan',
+      invitedByName: 'Jordan',
+      inviteeEmail: 'sam@example.com',
     );
   }
 
   @override
   Future<Map<String, dynamic>> acceptInvitation(String token) async {
     acceptInvitationCalled = true;
-    return {'listId': 'list-1', 'listTitle': 'Household Chores', 'memberCount': 2};
+    return {'listId': 'list-1', 'listTitle': 'Household Chores', 'invitedByName': 'Jordan', 'membershipId': 'mem-1'};
   }
 
   @override

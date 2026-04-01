@@ -123,11 +123,11 @@ GoRouter appRouter(Ref ref) {
       ),
 
       // Invitation accept screen — top-level route (no shell chrome / tab bar).
-      // Reached via deep link: /invite/:token (FR16).
+      // Reached via deep link: /invitation/:token (FR16).
       // Unauthenticated recipients will be redirected to /auth/sign-in first,
       // then must re-open the link after authentication (stub V1 behaviour).
       GoRoute(
-        path: '/invite/:token',
+        path: '/invitation/:token',
         builder: (context, state) => AcceptInvitationScreen(
           token: state.pathParameters['token']!,
         ),

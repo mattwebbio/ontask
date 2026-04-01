@@ -157,12 +157,17 @@ class _FakeSharingRepository extends SharingRepository {
 
   @override
   Future<InvitationDetails> getInvitationDetails(String token) async {
-    return const InvitationDetails(listTitle: 'Test', inviterName: 'Jordan');
+    return const InvitationDetails(
+      listId: 'list-1',
+      listTitle: 'Test',
+      invitedByName: 'Jordan',
+      inviteeEmail: 'sam@example.com',
+    );
   }
 
   @override
   Future<Map<String, dynamic>> acceptInvitation(String token) async {
-    return {'listId': 'list-1', 'listTitle': 'Test', 'memberCount': 2};
+    return {'listId': 'list-1', 'listTitle': 'Test', 'invitedByName': 'Jordan', 'membershipId': 'mem-1'};
   }
 
   @override

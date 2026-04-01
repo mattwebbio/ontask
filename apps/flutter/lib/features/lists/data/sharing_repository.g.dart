@@ -17,7 +17,11 @@ final sharingRepositoryProvider = SharingRepositoryProvider._();
 
 final class SharingRepositoryProvider
     extends
-        $FunctionalProvider<SharingRepository, SharingRepository, SharingRepository>
+        $FunctionalProvider<
+          SharingRepository,
+          SharingRepository,
+          SharingRepository
+        >
     with $Provider<SharingRepository> {
   /// Riverpod provider for [SharingRepository].
   SharingRepositoryProvider._()
@@ -36,8 +40,9 @@ final class SharingRepositoryProvider
 
   @$internal
   @override
-  $ProviderElement<SharingRepository> $createElement($ProviderPointer pointer) =>
-      $ProviderElement(pointer);
+  $ProviderElement<SharingRepository> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
 
   @override
   SharingRepository create(Ref ref) {
@@ -53,4 +58,4 @@ final class SharingRepositoryProvider
   }
 }
 
-String _$sharingRepositoryHash() => r'a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2';
+String _$sharingRepositoryHash() => r'9064be6e466b2f3b3e54aaafffd24f636ce9e666';

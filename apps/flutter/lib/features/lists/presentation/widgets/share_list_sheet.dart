@@ -172,6 +172,7 @@ class _ShareListSheetState extends ConsumerState<ShareListSheet> {
               SizedBox(
                 width: double.infinity,
                 child: CupertinoButton.filled(
+                  minimumSize: const Size(44, 44),
                   onPressed: _isSubmitting ? null : _sendInvitation,
                   child: Text(
                     _isSubmitting

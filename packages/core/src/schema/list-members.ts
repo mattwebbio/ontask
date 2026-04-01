@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, timestamp } from 'drizzle-orm/pg-core'
+import { pgTable, uuid, text, timestamp, unique } from 'drizzle-orm/pg-core'
 import { listsTable } from './lists.js'
 
 // ── List members table ───────────────────────────────────────────────────────
@@ -16,4 +16,6 @@ export const listMembersTable = pgTable('list_members', {
   joinedAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
   createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
-})
+}, (table) => [
+  unique('list_members_list_id_user_id_unique').on(table.listId, table.userId),
+])

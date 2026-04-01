@@ -19,19 +19,23 @@ const invitationSchema = z.object({
   listId: z.string().uuid(),
   inviteeEmail: z.string().email(),
   status: z.enum(['pending', 'accepted', 'declined']),
+  expiresAt: z.string().datetime(),
 })
 
 const invitationDetailsSchema = z.object({
+  listId: z.string().uuid(),
   listTitle: z.string(),
-  inviterName: z.string(),
-  inviterAvatarInitials: z.string(),
+  invitedByName: z.string(),
+  inviteeEmail: z.string().email(),
   status: z.enum(['pending', 'accepted', 'declined']),
+  expiresAt: z.string().datetime(),
 })
 
 const acceptInvitationResponseSchema = z.object({
   listId: z.string().uuid(),
   listTitle: z.string(),
-  memberCount: z.number().int(),
+  invitedByName: z.string(),
+  membershipId: z.string().uuid(),
 })
 
 const listMemberSchema = z.object({
@@ -72,15 +76,18 @@ function stubInvitation(
     listId,
     inviteeEmail: email,
     status: 'pending',
+    expiresAt: future,
   }
 }
 
 function stubInvitationDetails(): z.infer<typeof invitationDetailsSchema> {
   return {
+    listId: 'b0000000-0000-4000-8000-000000000001',
     listTitle: 'Household Chores',
-    inviterName: 'Jordan',
-    inviterAvatarInitials: 'J',
+    invitedByName: 'Jordan',
+    inviteeEmail: 'sam@example.com',
     status: 'pending',
+    expiresAt: future,
   }
 }
 
@@ -88,7 +95,8 @@ function stubAcceptResponse(listId: string): z.infer<typeof acceptInvitationResp
   return {
     listId,
     listTitle: 'Household Chores',
-    memberCount: 2,
+    invitedByName: 'Jordan',
+    membershipId: 'd0000000-0000-4000-8000-000000000099',
   }
 }
 
@@ -135,6 +143,10 @@ const shareListRoute = createRoute({
     404: {
       content: { 'application/json': { schema: ErrorSchema } },
       description: 'List not found',
+    },
+    409: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Invitation already pending for this email',
     },
     422: {
       content: { 'application/json': { schema: ErrorSchema } },

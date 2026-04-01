@@ -7,12 +7,16 @@ part 'sharing_repository.g.dart';
 
 /// Details returned when fetching an invitation by token.
 class InvitationDetails {
+  final String listId;
   final String listTitle;
-  final String inviterName;
+  final String invitedByName;
+  final String inviteeEmail;
 
   const InvitationDetails({
+    required this.listId,
     required this.listTitle,
-    required this.inviterName,
+    required this.invitedByName,
+    required this.inviteeEmail,
   });
 }
 
@@ -41,12 +45,16 @@ class SharingRepository {
     );
     final data = response.data!['data'] as Map<String, dynamic>;
     return InvitationDetails(
+      listId: data['listId'] as String,
       listTitle: data['listTitle'] as String,
-      inviterName: data['inviterName'] as String,
+      invitedByName: data['invitedByName'] as String,
+      inviteeEmail: data['inviteeEmail'] as String,
     );
   }
 
   /// Accepts a list invitation by token, adding the current user as a member.
+  ///
+  /// Returns `{ listId, listTitle, invitedByName, membershipId }`.
   Future<Map<String, dynamic>> acceptInvitation(String token) async {
     final response = await _client.dio.post<Map<String, dynamic>>(
       '/v1/invitations/$token/accept',
