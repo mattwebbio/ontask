@@ -586,6 +586,13 @@ class _TaskEditInlineState extends ConsumerState<TaskEditInline> {
 
   // ── Commitment stake (Epic 6, Story 6.2) ──────────────────────────────────
 
+  Color _stakeZoneColor(OnTaskColors colors, int? cents) {
+    if (cents == null || cents <= 0) return colors.textSecondary;
+    if (cents <= 2000) return colors.stakeZoneLow;
+    if (cents <= 7500) return colors.stakeZoneMid;
+    return colors.stakeZoneHigh;
+  }
+
   Future<void> _openStakeSheet() async {
     final result = await showCupertinoModalPopup<int?>(
       context: context,
@@ -1077,19 +1084,15 @@ class _TaskEditInlineState extends ConsumerState<TaskEditInline> {
                 Icon(
                   CupertinoIcons.lock,
                   size: 18,
-                  color: _localStakeAmountCents != null
-                      ? colors.stakeZoneLow
-                      : colors.textSecondary,
+                  color: _stakeZoneColor(colors, _localStakeAmountCents),
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 Text(
                   _localStakeAmountCents != null
-                      ? '${AppStrings.stakeAddButton}: ${CommitmentRow.formatAmount(_localStakeAmountCents!)}'
+                      ? CommitmentRow.formatAmount(_localStakeAmountCents!)
                       : AppStrings.stakeAddButton,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: _localStakeAmountCents != null
-                            ? colors.stakeZoneLow
-                            : colors.textSecondary,
+                        color: _stakeZoneColor(colors, _localStakeAmountCents),
                       ),
                 ),
               ],

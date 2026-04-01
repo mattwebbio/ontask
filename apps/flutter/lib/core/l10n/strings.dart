@@ -836,6 +836,7 @@ class AppStrings {
   static const String stakePaymentMethodRequired =
       "To lock in a stake, you'll need to add a payment method.";
   static const String stakeSetupPaymentCta = 'Set up payment';
+  static const String stakeAmountPlaceholder = 'e.g. 25';
   // NOTE: AppStrings.actionDelete, AppStrings.actionCancel, AppStrings.actionOk,
   //       AppStrings.dialogErrorTitle already exist — do NOT recreate.
   // NOTE: AppStrings.nowCardStakeLabel ('at stake') and

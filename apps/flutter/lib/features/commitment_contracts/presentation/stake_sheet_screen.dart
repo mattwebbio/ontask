@@ -228,7 +228,7 @@ class _StakeSheetScreenState extends ConsumerState<StakeSheetScreen> {
                       onChanged: (cents) {
                         setState(() => _stakeAmountCents = cents);
                       },
-                      onConfirm: _isLoading ? () {} : _onConfirm,
+                      onConfirm: _isLoading ? null : _onConfirm,
                     ),
 
                     // ── Remove stake (only if existing stake) ────────────

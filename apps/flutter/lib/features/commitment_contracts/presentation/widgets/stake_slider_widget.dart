@@ -101,7 +101,7 @@ class StakeSliderWidget extends StatefulWidget {
   final void Function(int? cents) onChanged;
 
   /// Called when the user taps the "Lock it in." confirm button.
-  final VoidCallback onConfirm;
+  final VoidCallback? onConfirm;
 
   @override
   State<StakeSliderWidget> createState() => _StakeSliderWidgetState();
@@ -127,6 +127,8 @@ class _StakeSliderWidgetState extends State<StakeSliderWidget> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.stakeAmountCents != widget.stakeAmountCents) {
       _sliderValue = (widget.stakeAmountCents ?? 0).toDouble().clamp(_sliderMin, _sliderMax);
+      _currentZone = _zoneForCents(_sliderValue.toInt());
+      _lastHapticPosition = _sliderValue;
     }
   }
 
@@ -169,7 +171,7 @@ class _StakeSliderWidgetState extends State<StakeSliderWidget> {
             controller: controller,
             keyboardType: TextInputType.number,
             autofocus: true,
-            placeholder: 'e.g. 25',
+            placeholder: AppStrings.stakeAmountPlaceholder,
           ),
         ),
         actions: [
@@ -360,7 +362,7 @@ class _StakeSliderWidgetState extends State<StakeSliderWidget> {
           child: CupertinoButton(
             minimumSize: const Size(44, 44),
             color: canConfirm ? colors.stakeZoneLow : CupertinoColors.systemGrey4,
-            onPressed: canConfirm ? widget.onConfirm : null,
+            onPressed: (canConfirm && widget.onConfirm != null) ? widget.onConfirm : null,
             child: Text(
               AppStrings.stakeConfirmButton,
               style: TextStyle(
