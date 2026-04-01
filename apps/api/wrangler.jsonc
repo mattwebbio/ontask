@@ -40,7 +40,33 @@
     "CALENDAR_WEBHOOK_SECRET": "",
     // Cloudflare AI Gateway base URL for routing LLM requests through the gateway (Story 3.7).
     // Set via `wrangler secret put AI_GATEWAY_URL` — never committed.
-    "AI_GATEWAY_URL": ""
+    "AI_GATEWAY_URL": "",
+    // Stripe API key for creating off-session PaymentIntents (Story 6.5).
+    // Set via `wrangler secret put STRIPE_SECRET_KEY` — never committed.
+    "STRIPE_SECRET_KEY": "",
+    // Stripe webhook signing secret for verifying webhook event signatures (Story 6.5).
+    // Set via `wrangler secret put STRIPE_WEBHOOK_SECRET` — never committed.
+    "STRIPE_WEBHOOK_SECRET": "",
+    // Every.org Partner Funds API key for charity disbursements (Story 6.5).
+    // Set via `wrangler secret put EVERY_ORG_API_KEY` — never committed.
+    "EVERY_ORG_API_KEY": ""
+  },
+
+  // ── Queues ─────────────────────────────────────────────────────────────────
+  "queues": {
+    "producers": [
+      { "queue": "charge-trigger-queue", "binding": "CHARGE_TRIGGER_QUEUE" },
+      { "queue": "every-org-queue", "binding": "EVERY_ORG_QUEUE" }
+    ],
+    "consumers": [
+      { "queue": "charge-trigger-queue", "max_batch_size": 10, "max_retries": 3, "dead_letter_queue": "charge-trigger-dlq" },
+      { "queue": "every-org-queue", "max_batch_size": 10, "max_retries": 10 }
+    ]
+  },
+
+  // ── Cron triggers ──────────────────────────────────────────────────────────
+  "triggers": {
+    "crons": ["*/5 * * * *"]
   }
 
   // "kv_namespaces": [],

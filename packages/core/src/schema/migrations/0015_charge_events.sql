@@ -1,0 +1,20 @@
+CREATE TABLE "charge_events" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"user_id" uuid NOT NULL,
+	"task_id" uuid NOT NULL,
+	"idempotency_key" text NOT NULL,
+	"stripe_payment_intent_id" text,
+	"amount_cents" integer NOT NULL,
+	"charity_amount_cents" integer NOT NULL,
+	"platform_amount_cents" integer NOT NULL,
+	"charity_id" text NOT NULL,
+	"charity_name" text NOT NULL,
+	"status" text NOT NULL,
+	"stripe_error" text,
+	"disbursement_error" text,
+	"charged_at" timestamp with time zone,
+	"disbursed_at" timestamp with time zone,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "charge_events_idempotencyKey_unique" UNIQUE("idempotency_key")
+);

@@ -13,6 +13,9 @@ import { schedulingRouter } from './routes/scheduling.js'
 import { calendarRouter } from './routes/calendar.js'
 import { sharingRouter } from './routes/sharing.js'
 import { commitmentContractsRouter } from './routes/commitment-contracts.js'
+import { chargeTriggerConsumer } from './queues/charge-trigger-consumer.js'
+import { everyOrgConsumer } from './queues/every-org-consumer.js'
+import { triggerOverdueCharges } from './lib/charge-scheduler.js'
 import { AppError } from './lib/errors.js'
 import { reportToGlitchTip } from './lib/glitchtip.js'
 import { err } from './lib/response.js'
@@ -79,4 +82,38 @@ app.doc('/v1/doc', {
   },
 })
 
+// ── Default export (HTTP fetch handler + test compatibility) ─────────────────
+// Keeps `export default app` so existing tests (which import the default and
+// call `.request()`) continue to work unchanged. Cloudflare Workers also
+// supports picking up the `queue` and `scheduled` named exports below
+// alongside the default `fetch` export. This is a non-breaking change.
 export default app
+
+// ── Queue consumer export (Story 6.5) ────────────────────────────────────────
+// Cloudflare Workers named queue export. Routes batch messages to the correct
+// consumer based on queue name (charge-trigger-queue or every-org-queue).
+export async function queue(
+  batch: MessageBatch<unknown>,
+  env: CloudflareBindings,
+  ctx: ExecutionContext
+): Promise<void> {
+  if (batch.queue === 'charge-trigger-queue') {
+    await chargeTriggerConsumer(batch, env, ctx)
+  } else if (batch.queue === 'every-org-queue') {
+    await everyOrgConsumer(batch, env, ctx)
+  } else {
+    console.warn(`Unknown queue: ${batch.queue}`)
+  }
+}
+
+// ── Scheduled handler export (Story 6.5) ─────────────────────────────────────
+// Cloudflare Workers named scheduled export. Runs every 5 minutes
+// (cron: */5 * * * *) to find overdue staked tasks and enqueue CHARGE_TRIGGER
+// messages.
+export async function scheduled(
+  _event: ScheduledEvent,
+  env: CloudflareBindings,
+  ctx: ExecutionContext
+): Promise<void> {
+  ctx.waitUntil(triggerOverdueCharges(env))
+}
