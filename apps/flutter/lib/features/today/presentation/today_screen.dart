@@ -14,6 +14,7 @@ import 'schedule_change_provider.dart';
 import 'schedule_health_provider.dart';
 import 'today_provider.dart';
 import 'today_view_mode_provider.dart';
+import '../data/calendar_event_dto.dart';
 import 'widgets/overbooking_warning_banner.dart';
 import 'widgets/schedule_change_banner.dart';
 import 'widgets/schedule_health_strip.dart';
@@ -70,6 +71,8 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
     final healthState = ref.watch(scheduleHealthProvider);
     final viewModeAsync = ref.watch(todayViewModeProvider);
     final viewMode = viewModeAsync.value ?? TodayViewMode.list;
+    final calendarEventsState = ref.watch(todayCalendarEventsProvider);
+    final calendarEvents = calendarEventsState.value ?? <CalendarEventDto>[];
 
     // Listen for banner visibility → start/cancel 8-second auto-dismiss timer
     ref.listen<AsyncValue<bool>>(scheduleChangeBannerVisibleProvider,
@@ -183,7 +186,10 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
                       ),
                       secondChild: SizedBox(
                         height: constraints.maxHeight,
-                        child: TimelineView(tasks: tasks),
+                        child: TimelineView(
+                          tasks: tasks,
+                          calendarBlocks: calendarEvents,
+                        ),
                       ),
                     );
                   },

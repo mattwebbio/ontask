@@ -9,3 +9,4 @@ export { calendarConnectionsGoogleTable } from './calendar-connections-google.js
 export { calendarConnectionsOutlookTable } from './calendar-connections-outlook.js'
 export { calendarConnectionsAppleTable } from './calendar-connections-apple.js'
 export { calendarEventsTable } from './calendar-events.js'
+export { taskCalendarBlocksTable } from './task-calendar-blocks.js'

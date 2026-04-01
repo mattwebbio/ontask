@@ -2,6 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../tasks/data/tasks_repository.dart';
 import '../../tasks/domain/task.dart';
+import '../data/calendar_event_dto.dart';
 import '../data/today_repository.dart';
 
 part 'today_provider.g.dart';
@@ -40,6 +41,29 @@ class Today extends _$Today {
     state = await AsyncValue.guard(() async {
       final repo = ref.read(todayRepositoryProvider);
       return repo.getTodayTasks();
+    });
+  }
+}
+
+/// AsyncNotifier for calendar events displayed in the Today tab timeline.
+///
+/// Loads events via [TodayRepository.getCalendarEvents] for today's window.
+/// Returns an empty list on failure — calendar events are optional; they
+/// must never cause the Today tab to fail to load.
+@riverpod
+class TodayCalendarEvents extends _$TodayCalendarEvents {
+  @override
+  Future<List<CalendarEventDto>> build() async {
+    final repo = ref.read(todayRepositoryProvider);
+    return repo.getCalendarEvents();
+  }
+
+  /// Re-fetches calendar events from the server.
+  Future<void> refresh() async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      final repo = ref.read(todayRepositoryProvider);
+      return repo.getCalendarEvents();
     });
   }
 }

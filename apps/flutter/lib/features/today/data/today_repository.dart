@@ -6,6 +6,7 @@ import '../../tasks/domain/task.dart';
 import '../domain/day_health.dart';
 import '../domain/overbooking_status.dart';
 import '../domain/schedule_change.dart';
+import 'calendar_event_dto.dart';
 import 'day_health_dto.dart';
 import 'overbooking_status_dto.dart';
 import 'schedule_change_dto.dart';
@@ -76,6 +77,42 @@ class TodayRepository {
     return OverbookingStatusDto.fromJson(
       response.data!['data'] as Map<String, dynamic>,
     ).toDomain();
+  }
+
+  /// Fetches calendar events for a time window (defaults to today).
+  ///
+  /// Calls `GET /v1/calendar/events?windowStart=<ISO>&windowEnd=<ISO>`.
+  /// Returns a flat list of [CalendarEventDto] for use in the timeline view (AC6).
+  /// Returns an empty list on failure — partial failure tolerant.
+  Future<List<CalendarEventDto>> getCalendarEvents({
+    DateTime? windowStart,
+    DateTime? windowEnd,
+  }) async {
+    try {
+      final now = DateTime.now();
+      final start = windowStart ?? DateTime(now.year, now.month, now.day);
+      final end = windowEnd ??
+          DateTime(now.year, now.month, now.day, 23, 59, 59);
+
+      final queryParams = <String, dynamic>{
+        'windowStart': start.toUtc().toIso8601String(),
+        'windowEnd': end.toUtc().toIso8601String(),
+      };
+
+      final response = await _client.dio.get<Map<String, dynamic>>(
+        '/v1/calendar/events',
+        queryParameters: queryParams,
+      );
+
+      final items = (response.data!['data'] as List)
+          .map(
+              (e) => CalendarEventDto.fromJson(e as Map<String, dynamic>))
+          .toList();
+      return items;
+    } catch (_) {
+      // Calendar events are optional — never crash the Today tab
+      return [];
+    }
   }
 }
 
