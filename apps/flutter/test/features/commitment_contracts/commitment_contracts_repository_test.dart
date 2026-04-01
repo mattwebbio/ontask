@@ -1263,4 +1263,116 @@ void main() {
       expect(result.members, isEmpty);
     });
   });
+
+  // ── getBillingHistory (AC1, Story 6.9) ────────────────────────────────────
+
+  group('CommitmentContractsRepository.getBillingHistory (AC1)', () {
+    test('fires GET /v1/billing-history', () async {
+      final mockDio = MockDio();
+      final mockClient = MockApiClient();
+      when(() => mockClient.dio).thenReturn(mockDio);
+
+      when(
+        () => mockDio.get<Map<String, dynamic>>(any()),
+      ).thenAnswer(
+        (_) async => Response(
+          requestOptions: RequestOptions(path: '/v1/billing-history'),
+          statusCode: 200,
+          data: {
+            'data': {
+              'entries': [],
+            },
+          },
+        ),
+      );
+
+      final repo = CommitmentContractsRepository(mockClient);
+      await repo.getBillingHistory();
+
+      final captured =
+          verify(() => mockDio.get<Map<String, dynamic>>(captureAny()))
+              .captured;
+      expect(captured.single, equals('/v1/billing-history'));
+    });
+
+    test('maps charged entry (amountCents via .toInt(), date via DateTime.parse, charityName)',
+        () async {
+      final mockDio = MockDio();
+      final mockClient = MockApiClient();
+      when(() => mockClient.dio).thenReturn(mockDio);
+
+      when(
+        () => mockDio.get<Map<String, dynamic>>(any()),
+      ).thenAnswer(
+        (_) async => Response(
+          requestOptions: RequestOptions(path: '/v1/billing-history'),
+          statusCode: 200,
+          data: {
+            'data': {
+              'entries': [
+                {
+                  'id': 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+                  'taskName': 'Complete quarterly report',
+                  'date': '2026-03-15T10:00:00.000Z',
+                  'amountCents': 5000,
+                  'disbursementStatus': 'completed',
+                  'charityName': 'American Red Cross',
+                },
+              ],
+            },
+          },
+        ),
+      );
+
+      final repo = CommitmentContractsRepository(mockClient);
+      final entries = await repo.getBillingHistory();
+
+      expect(entries.length, equals(1));
+      final entry = entries.first;
+      expect(entry.taskName, equals('Complete quarterly report'));
+      expect(entry.amountCents, equals(5000));
+      expect(entry.disbursementStatus, equals('completed'));
+      expect(entry.charityName, equals('American Red Cross'));
+      expect(entry.date, isA<DateTime>());
+    });
+
+    test('maps cancelled entry with amountCents == null, disbursementStatus "cancelled"',
+        () async {
+      final mockDio = MockDio();
+      final mockClient = MockApiClient();
+      when(() => mockClient.dio).thenReturn(mockDio);
+
+      when(
+        () => mockDio.get<Map<String, dynamic>>(any()),
+      ).thenAnswer(
+        (_) async => Response(
+          requestOptions: RequestOptions(path: '/v1/billing-history'),
+          statusCode: 200,
+          data: {
+            'data': {
+              'entries': [
+                {
+                  'id': 'c2eebc99-9c0b-4ef8-bb6d-6bb9bd380a33',
+                  'taskName': 'Read three chapters',
+                  'date': '2026-03-25T09:00:00.000Z',
+                  'amountCents': null,
+                  'disbursementStatus': 'cancelled',
+                  'charityName': null,
+                },
+              ],
+            },
+          },
+        ),
+      );
+
+      final repo = CommitmentContractsRepository(mockClient);
+      final entries = await repo.getBillingHistory();
+
+      expect(entries.length, equals(1));
+      final entry = entries.first;
+      expect(entry.amountCents, isNull);
+      expect(entry.disbursementStatus, equals('cancelled'));
+      expect(entry.charityName, isNull);
+    });
+  });
 }

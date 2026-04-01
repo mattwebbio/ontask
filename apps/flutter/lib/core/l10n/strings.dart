@@ -906,4 +906,34 @@ class AppStrings {
   static const String poolModeToggleLabel = 'Join pool mode';
   static const String poolModeOptInError =
       'Could not update pool mode preference. Please try again.';
+
+  // ── Billing history (FR65, Story 6.9) ────────────────────────────────────────
+  /// Navigation entry label in PaymentSettingsScreen.
+  static const String billingHistoryNavLabel = 'Billing History';
+
+  /// Screen title for BillingHistoryScreen navigation bar.
+  static const String billingHistoryTitle = 'Billing History';
+
+  /// Empty state message when no billing entries exist.
+  static const String billingHistoryEmpty =
+      'No charges or cancellations yet.';
+
+  /// Error message shown when billing history fails to load.
+  static const String billingHistoryLoadError =
+      'Could not load billing history. Please try again.';
+
+  /// Disbursement status label — charge forwarded to charity.
+  static const String billingStatusDonated = 'Donated';
+
+  /// Disbursement status label — charge awaiting processing.
+  static const String billingStatusPending = 'Pending';
+
+  /// Disbursement status label — charge processing failed.
+  static const String billingStatusFailed = 'Failed';
+
+  /// Disbursement status label — stake was cancelled, no charge.
+  static const String billingStatusCancelled = 'Cancelled';
+
+  /// Subtitle shown for cancelled stake entries in billing history.
+  static const String billingCancelledNoCharge = 'cancelled — no charge';
 }
