@@ -3,6 +3,8 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../core/network/api_client.dart';
 import '../domain/charity_selection.dart';
 import '../domain/commitment_payment_status.dart';
+import '../domain/impact_milestone.dart';
+import '../domain/impact_summary.dart';
 import '../domain/nonprofit.dart';
 import '../domain/task_stake.dart';
 
@@ -181,6 +183,48 @@ class CommitmentContractsRepository {
     return CharitySelection(
       charityId: data['charityId'] as String?,
       charityName: data['charityName'] as String?,
+    );
+  }
+  // ── Impact methods (FR27, Story 6.4) ────────────────────────────────────────
+
+  /// Fetches the authenticated user's aggregated impact summary.
+  ///
+  /// `GET /v1/impact`
+  /// Returns total donated, commitments kept/missed, charity breakdown,
+  /// and earned milestones. Stub implementation in Story 6.4 — real aggregation
+  /// deferred until Story 6.5 (Automated Charge Processing).
+  Future<ImpactSummary> getImpactSummary() async {
+    final response = await _client.dio.get<Map<String, dynamic>>(
+      '/v1/impact',
+    );
+    final responseData = response.data;
+    if (responseData == null) {
+      throw Exception('getImpactSummary: empty response body');
+    }
+    final data = responseData['data'] as Map<String, dynamic>;
+    final milestones = (data['milestones'] as List<dynamic>).map((e) {
+      final m = e as Map<String, dynamic>;
+      return ImpactMilestone(
+        id: m['id'] as String,
+        title: m['title'] as String,
+        body: m['body'] as String,
+        earnedAt: DateTime.parse(m['earnedAt'] as String),
+        shareText: m['shareText'] as String,
+      );
+    }).toList();
+    final breakdown = (data['charityBreakdown'] as List<dynamic>).map((e) {
+      final m = e as Map<String, dynamic>;
+      return CharityDonation(
+        charityName: m['charityName'] as String,
+        donatedCents: (m['donatedCents'] as num).toInt(),
+      );
+    }).toList();
+    return ImpactSummary(
+      totalDonatedCents: (data['totalDonatedCents'] as num).toInt(),
+      commitmentsKept: (data['commitmentsKept'] as num).toInt(),
+      commitmentsMissed: (data['commitmentsMissed'] as num).toInt(),
+      charityBreakdown: breakdown,
+      milestones: milestones,
     );
   }
 }

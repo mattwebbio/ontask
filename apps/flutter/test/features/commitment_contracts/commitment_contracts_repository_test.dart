@@ -644,4 +644,152 @@ void main() {
       expect(result.charityName, equals('American Red Cross'));
     });
   });
+
+  // ── getImpactSummary ──────────────────────────────────────────────────────
+
+  group('CommitmentContractsRepository.getImpactSummary (AC1, AC2)', () {
+    test(
+        'fires GET /v1/impact and maps totalDonatedCents, commitmentsKept, commitmentsMissed',
+        () async {
+      final mockDio = MockDio();
+      final mockClient = MockApiClient();
+      when(() => mockClient.dio).thenReturn(mockDio);
+
+      const expectedPath = '/v1/impact';
+      final earnedAt = DateTime.utc(2026, 1, 15, 12, 0, 0).toIso8601String();
+
+      when(
+        () => mockDio.get<Map<String, dynamic>>(any()),
+      ).thenAnswer(
+        (_) async => Response(
+          requestOptions: RequestOptions(path: expectedPath),
+          statusCode: 200,
+          data: {
+            'data': {
+              'totalDonatedCents': 2500,
+              'commitmentsKept': 3,
+              'commitmentsMissed': 1,
+              'charityBreakdown': [
+                {'charityName': 'American Red Cross', 'donatedCents': 2500},
+              ],
+              'milestones': [
+                {
+                  'id': 'first-kept',
+                  'title': 'First commitment kept.',
+                  'body': 'You showed up when it mattered.',
+                  'earnedAt': earnedAt,
+                  'shareText':
+                      'I kept my first commitment with On Task.',
+                },
+              ],
+            },
+          },
+        ),
+      );
+
+      final repo = CommitmentContractsRepository(mockClient);
+      final summary = await repo.getImpactSummary();
+
+      final captured =
+          verify(() => mockDio.get<Map<String, dynamic>>(captureAny()))
+              .captured;
+      expect(captured.single, equals(expectedPath));
+
+      expect(summary.totalDonatedCents, equals(2500));
+      expect(summary.commitmentsKept, equals(3));
+      expect(summary.commitmentsMissed, equals(1));
+    });
+
+    test('maps milestones list with correct id, title, body, earnedAt (as DateTime), shareText',
+        () async {
+      final mockDio = MockDio();
+      final mockClient = MockApiClient();
+      when(() => mockClient.dio).thenReturn(mockDio);
+
+      final earnedAt = DateTime.utc(2026, 1, 15, 12, 0, 0);
+
+      when(
+        () => mockDio.get<Map<String, dynamic>>(any()),
+      ).thenAnswer(
+        (_) async => Response(
+          requestOptions: RequestOptions(path: '/v1/impact'),
+          statusCode: 200,
+          data: {
+            'data': {
+              'totalDonatedCents': 2500,
+              'commitmentsKept': 3,
+              'commitmentsMissed': 1,
+              'charityBreakdown': [],
+              'milestones': [
+                {
+                  'id': 'first-kept',
+                  'title': 'First commitment kept.',
+                  'body': 'You showed up when it mattered.',
+                  'earnedAt': earnedAt.toIso8601String(),
+                  'shareText':
+                      'I kept my first commitment with On Task.',
+                },
+              ],
+            },
+          },
+        ),
+      );
+
+      final repo = CommitmentContractsRepository(mockClient);
+      final summary = await repo.getImpactSummary();
+
+      expect(summary.milestones.length, equals(1));
+      final m = summary.milestones.first;
+      expect(m.id, equals('first-kept'));
+      expect(m.title, equals('First commitment kept.'));
+      expect(m.body, equals('You showed up when it mattered.'));
+      expect(m.earnedAt, equals(earnedAt));
+      expect(m.shareText, equals('I kept my first commitment with On Task.'));
+    });
+
+    test('maps charityBreakdown list with correct charityName and donatedCents',
+        () async {
+      final mockDio = MockDio();
+      final mockClient = MockApiClient();
+      when(() => mockClient.dio).thenReturn(mockDio);
+
+      final earnedAt = DateTime.utc(2026, 1, 15).toIso8601String();
+
+      when(
+        () => mockDio.get<Map<String, dynamic>>(any()),
+      ).thenAnswer(
+        (_) async => Response(
+          requestOptions: RequestOptions(path: '/v1/impact'),
+          statusCode: 200,
+          data: {
+            'data': {
+              'totalDonatedCents': 2500,
+              'commitmentsKept': 3,
+              'commitmentsMissed': 1,
+              'charityBreakdown': [
+                {'charityName': 'American Red Cross', 'donatedCents': 2500},
+              ],
+              'milestones': [
+                {
+                  'id': 'first-kept',
+                  'title': 'First commitment kept.',
+                  'body': 'You showed up.',
+                  'earnedAt': earnedAt,
+                  'shareText': 'Share text.',
+                },
+              ],
+            },
+          },
+        ),
+      );
+
+      final repo = CommitmentContractsRepository(mockClient);
+      final summary = await repo.getImpactSummary();
+
+      expect(summary.charityBreakdown.length, equals(1));
+      final breakdown = summary.charityBreakdown.first;
+      expect(breakdown.charityName, equals('American Red Cross'));
+      expect(breakdown.donatedCents, equals(2500));
+    });
+  });
 }

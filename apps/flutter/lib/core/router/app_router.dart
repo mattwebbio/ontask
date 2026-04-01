@@ -13,6 +13,7 @@ import '../../features/lists/presentation/list_settings_screen.dart';
 import '../../features/lists/presentation/lists_screen.dart';
 import '../../features/now/presentation/now_screen.dart';
 import '../../features/onboarding/presentation/onboarding_flow.dart';
+import '../../features/commitment_contracts/presentation/impact_dashboard_screen.dart';
 import '../../features/settings/presentation/account_settings_screen.dart';
 import '../../features/settings/presentation/delete_account_screen.dart';
 import '../../features/settings/presentation/export_data_screen.dart';
@@ -251,6 +252,11 @@ GoRouter appRouter(Ref ref) {
                             const TwoFactorSetupScreen(),
                       ),
                     ],
+                  ),
+                  // Impact Dashboard sub-screen (Epic 6, Story 6.4).
+                  GoRoute(
+                    path: 'impact',
+                    builder: (context, state) => const ImpactDashboardScreen(),
                   ),
                 ],
               ),
