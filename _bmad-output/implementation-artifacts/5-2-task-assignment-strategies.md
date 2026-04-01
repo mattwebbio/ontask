@@ -1,6 +1,6 @@
 # Story 5.2: Task Assignment Strategies
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -18,190 +18,190 @@ so that work is balanced fairly without manual assignment overhead.
 
 ### Backend: DB schema — add `assignmentStrategy` to `lists` table
 
-- [ ] Add `assignmentStrategy` column to `packages/core/src/schema/lists.ts` (AC: 1)
-  - [ ] Column: `assignmentStrategy: text()` — nullable, no default (null means no strategy configured)
-  - [ ] Valid values: `'round-robin'` | `'least-busy'` | `'ai-assisted'` | `null`
-  - [ ] Follow existing `lists.ts` pattern: camelCase column name, no FK, no enum type (use text with application-level validation)
+- [x] Add `assignmentStrategy` column to `packages/core/src/schema/lists.ts` (AC: 1)
+  - [x] Column: `assignmentStrategy: text()` — nullable, no default (null means no strategy configured)
+  - [x] Valid values: `'round-robin'` | `'least-busy'` | `'ai-assisted'` | `null`
+  - [x] Follow existing `lists.ts` pattern: camelCase column name, no FK, no enum type (use text with application-level validation)
 
-- [ ] Add `assignedToUserId` column to `packages/core/src/schema/tasks.ts` (AC: 1, 2)
-  - [ ] Column: `assignedToUserId: uuid()` — nullable (null = unassigned)
-  - [ ] No FK constraint — follow the established `userId` / `listId` pattern: `// TODO(story-TBD): FK to users table when users schema is finalized`
-  - [ ] This field records the result of assignment by any strategy
+- [x] Add `assignedToUserId` column to `packages/core/src/schema/tasks.ts` (AC: 1, 2)
+  - [x] Column: `assignedToUserId: uuid()` — nullable (null = unassigned)
+  - [x] No FK constraint — follow the established `userId` / `listId` pattern: `// TODO(story-TBD): FK to users table when users schema is finalized`
+  - [x] This field records the result of assignment by any strategy
 
-- [ ] Add `roundRobinIndex` column to `packages/core/src/schema/list-members.ts` (AC: 1)
-  - [ ] Column: `roundRobinIndex: integer().default(0).notNull()` — tracks this member's position in the round-robin rotation sequence (0-based)
-  - [ ] Drizzle camelCase: write `roundRobinIndex`, DDL generates `round_robin_index`
+- [x] Add `roundRobinIndex` column to `packages/core/src/schema/list-members.ts` (AC: 1)
+  - [x] Column: `roundRobinIndex: integer().default(0).notNull()` — tracks this member's position in the round-robin rotation sequence (0-based)
+  - [x] Drizzle camelCase: write `roundRobinIndex`, DDL generates `round_robin_index`
 
-- [ ] Generate migration `packages/core/src/schema/migrations/0009_task_assignment_strategies.sql` (AC: 1, 2)
-  - [ ] Run `pnpm drizzle-kit generate` from `packages/core/` to produce the migration file
-  - [ ] Migration must: ADD `assignment_strategy` column to `lists`, ADD `assigned_to_user_id` column to `tasks`, ADD `round_robin_index` column to `list_members`
-  - [ ] Commit generated SQL file, updated `meta/_journal.json`, and `meta/0009_snapshot.json`
+- [x] Generate migration `packages/core/src/schema/migrations/0009_task_assignment_strategies.sql` (AC: 1, 2)
+  - [x] Run `pnpm drizzle-kit generate` from `packages/core/` to produce the migration file
+  - [x] Migration must: ADD `assignment_strategy` column to `lists`, ADD `assigned_to_user_id` column to `tasks`, ADD `round_robin_index` column to `list_members`
+  - [x] Commit generated SQL file, updated `meta/_journal.json`, and `meta/0009_snapshot.json`
 
 ### Backend: API — List Settings endpoints in `apps/api/src/routes/lists.ts`
 
-- [ ] Extend `listSchema` in `apps/api/src/routes/lists.ts` with the new field (AC: 1)
-  - [ ] Add `assignmentStrategy: z.enum(['round-robin', 'least-busy', 'ai-assisted']).nullable()` to `listSchema`
-  - [ ] Update `stubList()` to include `assignmentStrategy: null`
-  - [ ] Existing tests that mock `listSchema` must continue to pass — `assignmentStrategy: null` is the safe default
+- [x] Extend `listSchema` in `apps/api/src/routes/lists.ts` with the new field (AC: 1)
+  - [x] Add `assignmentStrategy: z.enum(['round-robin', 'least-busy', 'ai-assisted']).nullable()` to `listSchema`
+  - [x] Update `stubList()` to include `assignmentStrategy: null`
+  - [x] Existing tests that mock `listSchema` must continue to pass — `assignmentStrategy: null` is the safe default
 
-- [ ] Add `PATCH /v1/lists/{id}/settings` endpoint for updating assignment strategy (AC: 1)
-  - [ ] Request body schema: `{ assignmentStrategy: z.enum(['round-robin', 'least-busy', 'ai-assisted']).nullable() }`
-  - [ ] Response 200: `{ data: <full listSchema with updated assignmentStrategy> }`
-  - [ ] Response 403: caller is not the list owner
-  - [ ] Response 404: list not found
-  - [ ] Response 422: invalid strategy value (Zod parse error)
-  - [ ] Stub: return 200 with `stubList({ assignmentStrategy: body.assignmentStrategy })`; add `TODO(impl): verify ownership from JWT, update lists table via Drizzle`
-  - [ ] Tag: `'Lists'`
-  - [ ] Register BEFORE the parameterized `PATCH /v1/lists/{id}` route (which is catch-all for general list updates)
-  - [ ] Use `@hono/zod-openapi` `createRoute` pattern — no untyped routes
+- [x] Add `PATCH /v1/lists/{id}/settings` endpoint for updating assignment strategy (AC: 1)
+  - [x] Request body schema: `{ assignmentStrategy: z.enum(['round-robin', 'least-busy', 'ai-assisted']).nullable() }`
+  - [x] Response 200: `{ data: <full listSchema with updated assignmentStrategy> }`
+  - [x] Response 403: caller is not the list owner
+  - [x] Response 404: list not found
+  - [x] Response 422: invalid strategy value (Zod parse error)
+  - [x] Stub: return 200 with `stubList({ assignmentStrategy: body.assignmentStrategy })`; add `TODO(impl): verify ownership from JWT, update lists table via Drizzle`
+  - [x] Tag: `'Lists'`
+  - [x] Register BEFORE the parameterized `PATCH /v1/lists/{id}` route (which is catch-all for general list updates)
+  - [x] Use `@hono/zod-openapi` `createRoute` pattern — no untyped routes
 
 ### Backend: API — Task assignment endpoints in `apps/api/src/routes/sharing.ts`
 
 All new routes added to the existing `apps/api/src/routes/sharing.ts` file (exported as `sharingRouter`).
 
-- [ ] Extend `listMemberSchema` in `sharing.ts` to include `roundRobinIndex: z.number().int()` (AC: 1)
-  - [ ] This field is needed for the round-robin rotation display/logic
+- [x] Extend `listMemberSchema` in `sharing.ts` to include `roundRobinIndex: z.number().int()` (AC: 1)
+  - [x] This field is needed for the round-robin rotation display/logic
 
-- [ ] Add `POST /v1/lists/{id}/assign` — manually assign a specific task to a specific member (AC: 1, 2)
-  - [ ] Request body: `{ taskId: z.string().uuid(), assignedToUserId: z.string().uuid() }`
-  - [ ] Response 200: `{ data: { taskId, assignedToUserId, listId } }`
-  - [ ] Response 404: list or task not found
-  - [ ] Response 409: task already assigned to a different member in the same due-date window (FR18)
-  - [ ] Response 422: task does not belong to this list
-  - [ ] Stub: return 200 with static data; add `TODO(impl): verify membership, enforce FR18 uniqueness constraint, write assignedToUserId to tasks table`
-  - [ ] Tag: `'Sharing'`
-  - [ ] Register BEFORE `GET /v1/lists/{id}/members` in file (specific sub-paths before general ones)
+- [x] Add `POST /v1/lists/{id}/assign` — manually assign a specific task to a specific member (AC: 1, 2)
+  - [x] Request body: `{ taskId: z.string().uuid(), assignedToUserId: z.string().uuid() }`
+  - [x] Response 200: `{ data: { taskId, assignedToUserId, listId } }`
+  - [x] Response 404: list or task not found
+  - [x] Response 409: task already assigned to a different member in the same due-date window (FR18)
+  - [x] Response 422: task does not belong to this list
+  - [x] Stub: return 200 with static data; add `TODO(impl): verify membership, enforce FR18 uniqueness constraint, write assignedToUserId to tasks table`
+  - [x] Tag: `'Sharing'`
+  - [x] Register BEFORE `GET /v1/lists/{id}/members` in file (specific sub-paths before general ones)
 
-- [ ] Add `POST /v1/lists/{id}/auto-assign` — trigger strategy-based auto-assignment for all unassigned tasks in a list (AC: 1, 2)
-  - [ ] Request body: empty (`{}`)
-  - [ ] Response 200: `{ data: { assigned: number, strategy: string, assignments: [{ taskId, assignedToUserId }] } }`
-  - [ ] Response 400: no assignment strategy configured on this list
-  - [ ] Response 403: caller is not the list owner
-  - [ ] Response 404: list not found
-  - [ ] Stub: return 200 with static assignments using `stubMembers()`; add `TODO(impl): implement round-robin, least-busy, AI-assisted logic; enforce FR18 uniqueness`
-  - [ ] Tag: `'Sharing'`
+- [x] Add `POST /v1/lists/{id}/auto-assign` — trigger strategy-based auto-assignment for all unassigned tasks in a list (AC: 1, 2)
+  - [x] Request body: empty (`{}`)
+  - [x] Response 200: `{ data: { assigned: number, strategy: string, assignments: [{ taskId, assignedToUserId }] } }`
+  - [x] Response 400: no assignment strategy configured on this list
+  - [x] Response 403: caller is not the list owner
+  - [x] Response 404: list not found
+  - [x] Stub: return 200 with static assignments using `stubMembers()`; add `TODO(impl): implement round-robin, least-busy, AI-assisted logic; enforce FR18 uniqueness`
+  - [x] Tag: `'Sharing'`
 
 ### Backend: API — Task response extension in `apps/api/src/routes/tasks.ts`
 
-- [ ] Extend `taskSchema` in `apps/api/src/routes/tasks.ts` to include `assignedToUserId` (AC: 1, 2)
-  - [ ] Add `assignedToUserId: z.string().uuid().nullable()` to the existing `taskSchema`
-  - [ ] Update all `stubTask()` calls to include `assignedToUserId: null` as the default
-  - [ ] No breaking change: existing API consumers receive `null` for unassigned tasks
+- [x] Extend `taskSchema` in `apps/api/src/routes/tasks.ts` to include `assignedToUserId` (AC: 1, 2)
+  - [x] Add `assignedToUserId: z.string().uuid().nullable()` to the existing `taskSchema`
+  - [x] Update all `stubTask()` calls to include `assignedToUserId: null` as the default
+  - [x] No breaking change: existing API consumers receive `null` for unassigned tasks
 
 ### Flutter: Domain model extension
 
-- [ ] Extend `Task` domain model in `apps/flutter/lib/features/tasks/domain/task.dart` (AC: 1, 2)
-  - [ ] Add `String? assignedToUserId` — nullable, no `@Default` needed (nullable fields default to null in Freezed)
-  - [ ] Regenerate `task.freezed.dart` — commit generated file
+- [x] Extend `Task` domain model in `apps/flutter/lib/features/tasks/domain/task.dart` (AC: 1, 2)
+  - [x] Add `String? assignedToUserId` — nullable, no `@Default` needed (nullable fields default to null in Freezed)
+  - [x] Regenerate `task.freezed.dart` — commit generated file
 
-- [ ] Extend `TaskList` domain model in `apps/flutter/lib/features/lists/domain/task_list.dart` (AC: 1)
-  - [ ] Add `String? assignmentStrategy` — nullable, no `@Default` needed
-  - [ ] Regenerate `task_list.freezed.dart` — commit generated file
+- [x] Extend `TaskList` domain model in `apps/flutter/lib/features/lists/domain/task_list.dart` (AC: 1)
+  - [x] Add `String? assignmentStrategy` — nullable, no `@Default` needed
+  - [x] Regenerate `task_list.freezed.dart` — commit generated file
 
-- [ ] Extend `ListMember` domain model in `apps/flutter/lib/features/lists/domain/list_member.dart` (AC: 1)
-  - [ ] Add `@Default(0) int roundRobinIndex` — Freezed `@Default` syntax, not nullable
-  - [ ] Regenerate `list_member.freezed.dart` — commit generated file
+- [x] Extend `ListMember` domain model in `apps/flutter/lib/features/lists/domain/list_member.dart` (AC: 1)
+  - [x] Add `@Default(0) int roundRobinIndex` — Freezed `@Default` syntax, not nullable
+  - [x] Regenerate `list_member.freezed.dart` — commit generated file
 
 ### Flutter: DTO extension
 
-- [ ] Extend `TaskDto` in `apps/flutter/lib/features/tasks/data/task_dto.dart` (AC: 1, 2)
-  - [ ] Add `@JsonKey(defaultValue: null) String? assignedToUserId`
-  - [ ] Extend `toDomain()` to pass `assignedToUserId` through
-  - [ ] Regenerate `task_dto.freezed.dart` and `task_dto.g.dart` — commit
+- [x] Extend `TaskDto` in `apps/flutter/lib/features/tasks/data/task_dto.dart` (AC: 1, 2)
+  - [x] Add `@JsonKey(defaultValue: null) String? assignedToUserId`
+  - [x] Extend `toDomain()` to pass `assignedToUserId` through
+  - [x] Regenerate `task_dto.freezed.dart` and `task_dto.g.dart` — commit
 
-- [ ] Extend `ListDto` in `apps/flutter/lib/features/lists/data/list_dto.dart` (AC: 1)
-  - [ ] Add `@JsonKey(defaultValue: null) String? assignmentStrategy`
-  - [ ] Extend `toDomain()` to pass `assignmentStrategy` through
-  - [ ] Regenerate `list_dto.freezed.dart` and `list_dto.g.dart` — commit
+- [x] Extend `ListDto` in `apps/flutter/lib/features/lists/data/list_dto.dart` (AC: 1)
+  - [x] Add `@JsonKey(defaultValue: null) String? assignmentStrategy`
+  - [x] Extend `toDomain()` to pass `assignmentStrategy` through
+  - [x] Regenerate `list_dto.freezed.dart` and `list_dto.g.dart` — commit
 
-- [ ] Extend `ListMemberDto` in `apps/flutter/lib/features/lists/data/list_member_dto.dart` (AC: 1)
-  - [ ] Add `@JsonKey(defaultValue: 0) int roundRobinIndex` to the DTO
-  - [ ] Extend `toDomain()` to pass `roundRobinIndex` through
-  - [ ] Regenerate `list_member_dto.freezed.dart` and `list_member_dto.g.dart` — commit
+- [x] Extend `ListMemberDto` in `apps/flutter/lib/features/lists/data/list_member_dto.dart` (AC: 1)
+  - [x] Add `@JsonKey(defaultValue: 0) int roundRobinIndex` to the DTO
+  - [x] Extend `toDomain()` to pass `roundRobinIndex` through
+  - [x] Regenerate `list_member_dto.freezed.dart` and `list_member_dto.g.dart` — commit
 
 ### Flutter: Repository methods
 
-- [ ] Add assignment methods to `apps/flutter/lib/features/lists/data/sharing_repository.dart` (AC: 1, 2)
-  - [ ] `Future<Map<String, dynamic>> assignTask(String listId, String taskId, String assignedToUserId)` — `POST /v1/lists/$listId/assign`
-  - [ ] `Future<Map<String, dynamic>> autoAssign(String listId)` — `POST /v1/lists/$listId/auto-assign`
-  - [ ] Parse `response.data!['data']` — return raw map (same pattern as existing `shareList()` and `acceptInvitation()`)
-  - [ ] `SharingRepository` is the correct repository for these — do NOT add to `lists_repository.dart` (see Project Structure Notes)
+- [x] Add assignment methods to `apps/flutter/lib/features/lists/data/sharing_repository.dart` (AC: 1, 2)
+  - [x] `Future<Map<String, dynamic>> assignTask(String listId, String taskId, String assignedToUserId)` — `POST /v1/lists/$listId/assign`
+  - [x] `Future<Map<String, dynamic>> autoAssign(String listId)` — `POST /v1/lists/$listId/auto-assign`
+  - [x] Parse `response.data!['data']` — return raw map (same pattern as existing `shareList()` and `acceptInvitation()`)
+  - [x] `SharingRepository` is the correct repository for these — do NOT add to `lists_repository.dart` (see Project Structure Notes)
 
-- [ ] Add strategy update method to `apps/flutter/lib/features/lists/data/lists_repository.dart` (AC: 1)
-  - [ ] `Future<TaskList> updateAssignmentStrategy(String listId, String? strategy)` — `PATCH /v1/lists/$listId/settings`
-  - [ ] Parse `response.data!['data']` using `ListDto.fromJson(...)` → `.toDomain()`
-  - [ ] Regenerate `lists_repository.g.dart` if provider hash changes — commit
+- [x] Add strategy update method to `apps/flutter/lib/features/lists/data/lists_repository.dart` (AC: 1)
+  - [x] `Future<TaskList> updateAssignmentStrategy(String listId, String? strategy)` — `PATCH /v1/lists/$listId/settings`
+  - [x] Parse `response.data!['data']` using `ListDto.fromJson(...)` → `.toDomain()`
+  - [x] Regenerate `lists_repository.g.dart` if provider hash changes — commit
 
 ### Flutter: List Settings screen (new)
 
-- [ ] Create `apps/flutter/lib/features/lists/presentation/list_settings_screen.dart` (AC: 1)
-  - [ ] `ConsumerStatefulWidget` — receives `listId` via constructor param
-  - [ ] On mount: reads current list from `listsProvider` (already in scope via `ref.watch`) — no separate API call
-  - [ ] Shows three strategy options as a segmented or radio-style control using `CupertinoSlidingSegmentedControl` or `CupertinoListTile` rows with checkmarks:
+- [x] Create `apps/flutter/lib/features/lists/presentation/list_settings_screen.dart` (AC: 1)
+  - [x] `ConsumerStatefulWidget` — receives `listId` via constructor param
+  - [x] On mount: reads current list from `listsProvider` (already in scope via `ref.watch`) — no separate API call
+  - [x] Shows three strategy options as a segmented or radio-style control using `CupertinoSlidingSegmentedControl` or `CupertinoListTile` rows with checkmarks:
     - `'round-robin'` → label: `AppStrings.assignmentStrategyRoundRobin`
     - `'least-busy'` → label: `AppStrings.assignmentStrategyLeastBusy`
     - `'ai-assisted'` → label: `AppStrings.assignmentStrategyAiAssisted`
     - `null` → label: `AppStrings.assignmentStrategyNone` (no strategy / off)
-  - [ ] On selection change: calls `listsRepository.updateAssignmentStrategy(listId, newStrategy)` — show loading indicator while in-flight; on success, invalidate `listsProvider` via `ref.invalidate(listsProvider)` so the list row updates
-  - [ ] "Auto-assign now" `CupertinoButton` (enabled only when strategy != null): calls `sharingRepository.autoAssign(listId)` — show snackbar/toast on completion with count of tasks assigned
-  - [ ] Uses `colors.surfacePrimary` as background
-  - [ ] `minimumSize: const Size(44, 44)` on any `CupertinoButton`
-  - [ ] Error states: show `AppStrings.assignmentStrategyUpdateError` on failure
+  - [x] On selection change: calls `listsRepository.updateAssignmentStrategy(listId, newStrategy)` — show loading indicator while in-flight; on success, invalidate `listsProvider` via `ref.invalidate(listsProvider)` so the list row updates
+  - [x] "Auto-assign now" `CupertinoButton` (enabled only when strategy != null): calls `sharingRepository.autoAssign(listId)` — show snackbar/toast on completion with count of tasks assigned
+  - [x] Uses `colors.surfacePrimary` as background
+  - [x] `minimumSize: const Size(44, 44)` on any `CupertinoButton`
+  - [x] Error states: show `AppStrings.assignmentStrategyUpdateError` on failure
 
-- [ ] Register `/lists/:id/settings` route in `apps/flutter/lib/core/router/app_router.dart` (AC: 1)
-  - [ ] Route path: `/lists/:id/settings`
-  - [ ] Builder: `ListSettingsScreen(listId: state.pathParameters['id']!)`
-  - [ ] Register BEFORE `/lists/:id` catch-all route (specific before parameterized — same rule as API)
+- [x] Register `/lists/:id/settings` route in `apps/flutter/lib/core/router/app_router.dart` (AC: 1)
+  - [x] Route path: `/lists/:id/settings`
+  - [x] Builder: `ListSettingsScreen(listId: state.pathParameters['id']!)`
+  - [x] Register BEFORE `/lists/:id` catch-all route (specific before parameterized — same rule as API)
 
-- [ ] Add "Settings" entry point to `apps/flutter/lib/features/lists/presentation/list_detail_screen.dart` (AC: 1)
-  - [ ] Add a "Settings" `CupertinoButton` to the `CupertinoNavigationBar` trailing area (alongside the existing "Share" button)
-  - [ ] Only show when NOT in multi-select mode (`_isMultiSelectMode == false`)
-  - [ ] On tap: `context.push('/lists/${widget.listId}/settings')`
-  - [ ] Icon: `CupertinoIcons.settings` or text "Settings" — use icon to avoid crowding the nav bar with the existing "Share" text button
+- [x] Add "Settings" entry point to `apps/flutter/lib/features/lists/presentation/list_detail_screen.dart` (AC: 1)
+  - [x] Add a "Settings" `CupertinoButton` to the `CupertinoNavigationBar` trailing area (alongside the existing "Share" button)
+  - [x] Only show when NOT in multi-select mode (`_isMultiSelectMode == false`)
+  - [x] On tap: `context.push('/lists/${widget.listId}/settings')`
+  - [x] Icon: `CupertinoIcons.settings` or text "Settings" — use icon to avoid crowding the nav bar with the existing "Share" text button
 
 ### Flutter: Assignment badge on task rows (AC: 1, 2 visibility)
 
-- [ ] Update `apps/flutter/lib/features/tasks/presentation/widgets/task_row.dart` to show assignee badge when `task.assignedToUserId != null` (AC: 1, 2)
-  - [ ] Show a small avatar-initials circle (same style as shared indicator in `ListsScreen`) when `task.assignedToUserId` is set
-  - [ ] Derive initials: look up member from `ListMembersNotifier` by `userId` — if unavailable (not loaded or member not found), show a generic person icon (`CupertinoIcons.person`)
-  - [ ] Keep the badge lightweight — 20×20 circle, `colors.accentPrimary` background, white text
-  - [ ] This is display-only; tapping it does nothing in v1
+- [x] Update `apps/flutter/lib/features/tasks/presentation/widgets/task_row.dart` to show assignee badge when `task.assignedToUserId != null` (AC: 1, 2)
+  - [x] Show a small avatar-initials circle (same style as shared indicator in `ListsScreen`) when `task.assignedToUserId` is set
+  - [x] Derive initials: look up member from `ListMembersNotifier` by `userId` — if unavailable (not loaded or member not found), show a generic person icon (`CupertinoIcons.person`)
+  - [x] Keep the badge lightweight — 20×20 circle, `colors.accentPrimary` background, white text
+  - [x] This is display-only; tapping it does nothing in v1
 
 ### Flutter: l10n strings
 
-- [ ] Add to `apps/flutter/lib/core/l10n/strings.dart` under a new `// ── Task assignment strategies (FR17-18) ──` section (AC: 1)
-  - [ ] `static const String listSettingsTitle = 'List Settings';` — screen title
-  - [ ] `static const String assignmentStrategyLabel = 'Assignment strategy';` — section heading
-  - [ ] `static const String assignmentStrategyNone = 'None';` — no strategy configured
-  - [ ] `static const String assignmentStrategyRoundRobin = 'Round-robin';` — rotate through members
-  - [ ] `static const String assignmentStrategyLeastBusy = 'Least busy';` — fewest tasks in window
-  - [ ] `static const String assignmentStrategyAiAssisted = 'AI-assisted';` — considers duration + energy
-  - [ ] `static const String assignmentStrategyRoundRobinDesc = 'Tasks rotate through members in join order.';`
-  - [ ] `static const String assignmentStrategyLeastBusyDesc = 'Assigns to the member with fewest tasks in the due-date window.';`
-  - [ ] `static const String assignmentStrategyAiAssistedDesc = 'Considers task duration, workload, and energy preferences.';`
-  - [ ] `static const String assignmentAutoAssignButton = 'Auto-assign now';` — CTA
-  - [ ] `static const String assignmentAutoAssignSuccess = '{count} tasks assigned.';` — feedback
-  - [ ] `static const String assignmentStrategyUpdateError = 'Could not update strategy. Please try again.';`
-  - [ ] `static const String taskAssignedToLabel = 'Assigned';` — accessibility label for assignment badge
+- [x] Add to `apps/flutter/lib/core/l10n/strings.dart` under a new `// ── Task assignment strategies (FR17-18) ──` section (AC: 1)
+  - [x] `static const String listSettingsTitle = 'List Settings';` — screen title
+  - [x] `static const String assignmentStrategyLabel = 'Assignment strategy';` — section heading
+  - [x] `static const String assignmentStrategyNone = 'None';` — no strategy configured
+  - [x] `static const String assignmentStrategyRoundRobin = 'Round-robin';` — rotate through members
+  - [x] `static const String assignmentStrategyLeastBusy = 'Least busy';` — fewest tasks in window
+  - [x] `static const String assignmentStrategyAiAssisted = 'AI-assisted';` — considers duration + energy
+  - [x] `static const String assignmentStrategyRoundRobinDesc = 'Tasks rotate through members in join order.';`
+  - [x] `static const String assignmentStrategyLeastBusyDesc = 'Assigns to the member with fewest tasks in the due-date window.';`
+  - [x] `static const String assignmentStrategyAiAssistedDesc = 'Considers task duration, workload, and energy preferences.';`
+  - [x] `static const String assignmentAutoAssignButton = 'Auto-assign now';` — CTA
+  - [x] `static const String assignmentAutoAssignSuccess = '{count} tasks assigned.';` — feedback
+  - [x] `static const String assignmentStrategyUpdateError = 'Could not update strategy. Please try again.';`
+  - [x] `static const String taskAssignedToLabel = 'Assigned';` — accessibility label for assignment badge
 
 ### Tests
 
-- [ ] Widget test for `ListSettingsScreen` in `apps/flutter/test/features/lists/list_settings_screen_test.dart` (AC: 1)
-  - [ ] Screen renders all four strategy options (None, Round-robin, Least busy, AI-assisted)
-  - [ ] Tapping "Round-robin" calls `updateAssignmentStrategy(listId, 'round-robin')` — stub `listsRepository` with a `mocktail` mock
-  - [ ] "Auto-assign now" button is disabled when strategy is `null`; enabled when strategy is set
-  - [ ] Override `listsRepositoryProvider` AND `sharingRepositoryProvider` with stub notifiers — same `ProviderContainer` override pattern as Story 5.1 tests
-  - [ ] Do NOT mount with real `Dio` — override prevents real network calls
+- [x] Widget test for `ListSettingsScreen` in `apps/flutter/test/features/lists/list_settings_screen_test.dart` (AC: 1)
+  - [x] Screen renders all four strategy options (None, Round-robin, Least busy, AI-assisted)
+  - [x] Tapping "Round-robin" calls `updateAssignmentStrategy(listId, 'round-robin')` — stub `listsRepository` with a `mocktail` mock
+  - [x] "Auto-assign now" button is disabled when strategy is `null`; enabled when strategy is set
+  - [x] Override `listsRepositoryProvider` AND `sharingRepositoryProvider` with stub notifiers — same `ProviderContainer` override pattern as Story 5.1 tests
+  - [x] Do NOT mount with real `Dio` — override prevents real network calls
 
-- [ ] Unit test for `ListDto.fromJson` handles `assignmentStrategy` in `apps/flutter/test/features/lists/list_dto_test.dart` (AC: 1)
-  - [ ] Add to existing `list_dto_test.dart` created in Story 5.1 (or create it if not committed yet)
-  - [ ] JSON with `assignmentStrategy: 'round-robin'` parses correctly
-  - [ ] JSON WITHOUT `assignmentStrategy` field (old API stub) parses to `null` via `@JsonKey(defaultValue: null)`
+- [x] Unit test for `ListDto.fromJson` handles `assignmentStrategy` in `apps/flutter/test/features/lists/list_dto_test.dart` (AC: 1)
+  - [x] Add to existing `list_dto_test.dart` created in Story 5.1 (or create it if not committed yet)
+  - [x] JSON with `assignmentStrategy: 'round-robin'` parses correctly
+  - [x] JSON WITHOUT `assignmentStrategy` field (old API stub) parses to `null` via `@JsonKey(defaultValue: null)`
 
-- [ ] Unit test for `TaskDto.fromJson` handles `assignedToUserId` in `apps/flutter/test/features/tasks/task_dto_test.dart` (AC: 2)
-  - [ ] Create `apps/flutter/test/features/tasks/task_dto_test.dart` if it does not exist
-  - [ ] JSON with `assignedToUserId: 'some-uuid'` parses correctly
-  - [ ] JSON WITHOUT `assignedToUserId` parses to `null`
+- [x] Unit test for `TaskDto.fromJson` handles `assignedToUserId` in `apps/flutter/test/features/tasks/task_dto_test.dart` (AC: 2)
+  - [x] Create `apps/flutter/test/features/tasks/task_dto_test.dart` if it does not exist
+  - [x] JSON with `assignedToUserId: 'some-uuid'` parses correctly
+  - [x] JSON WITHOUT `assignedToUserId` parses to `null`
 
 ## Dev Notes
 
@@ -448,6 +448,68 @@ claude-sonnet-4-6
 
 ### Debug Log References
 
+None — implementation completed without blockers.
+
 ### Completion Notes List
 
+- Added `assignmentStrategy` (text, nullable) to `lists` schema; `assignedToUserId` (uuid, nullable) to `tasks` schema; `roundRobinIndex` (integer, default 0) to `list_members` schema. Drizzle camelCase naming applied throughout.
+- Generated migration `0009_task_assignment_strategies.sql` using drizzle-kit from `apps/api/` (where `drizzle.config.ts` lives). Migration is a clean ALTER TABLE — not a CREATE TABLE, because the snapshot correctly reflects the pre-existing state from migration 0008.
+- API: `PATCH /v1/lists/{id}/settings` added to `lists.ts`, registered before `GET /v1/lists/{id}` as required. `POST /v1/lists/{id}/assign` and `POST /v1/lists/{id}/auto-assign` added to `sharing.ts`, registered before `GET /v1/lists/{id}/members`. All endpoints use `createRoute` / `@hono/zod-openapi` pattern with full response schemas.
+- `listSchema` extended with `assignmentStrategy: z.enum([...]).nullable()`. `taskSchema` extended with `assignedToUserId`. `listMemberSchema` extended with `roundRobinIndex`. `stubList()`, `stubTask()`, `stubMembers()` all updated with safe defaults.
+- Flutter domain models (`Task`, `TaskList`, `ListMember`) extended. All DTOs (`TaskDto`, `ListDto`, `ListMemberDto`) extended with `@JsonKey(defaultValue:...)` for backward compatibility. All Freezed/json_serializable files regenerated.
+- `SharingRepository.assignTask()` and `SharingRepository.autoAssign()` added. `ListsRepository.updateAssignmentStrategy()` added.
+- `ListSettingsScreen` created as `ConsumerStatefulWidget` with radio-style strategy selection (CupertinoListTile rows with checkmarks), "Auto-assign now" CupertinoButton (disabled when strategy null), `surfacePrimary` background, `minimumSize: const Size(44, 44)`.
+- GoRouter: `/lists/:id/settings` route added BEFORE `/lists/:id` in the `StatefulShellBranch` routes.
+- `ListDetailScreen` trailing area: `CupertinoIcons.settings` button added (not in multi-select mode), navigates to `/lists/$listId/settings`.
+- `TaskRow`: `_AssigneeBadge` widget added — 20x20 circle with `accentPrimary` background showing member initials or generic person icon. Optional `listMembers` parameter added.
+- 13 l10n strings added to `AppStrings` under `// ── Task assignment strategies (FR17-18) ──` section.
+- Tests: 5 widget tests for `ListSettingsScreen`, 4 new unit tests for `ListDto` (assignmentStrategy), 5 unit tests for `TaskDto` (assignedToUserId). All 612 Flutter tests pass, 0 regressions.
+- Note: `inviterName` vs `invitedByName` inconsistency in `SharingRepository.getInvitationDetails` left untouched per Dev Notes (tracked in deferred-work.md).
+
 ### File List
+
+**New files:**
+- `packages/core/src/schema/migrations/0009_task_assignment_strategies.sql`
+- `packages/core/src/schema/migrations/meta/0009_snapshot.json`
+- `apps/flutter/lib/features/lists/presentation/list_settings_screen.dart`
+- `apps/flutter/test/features/lists/list_settings_screen_test.dart`
+- `apps/flutter/test/features/tasks/task_dto_test.dart`
+
+**Modified files:**
+- `packages/core/src/schema/migrations/meta/_journal.json`
+- `packages/core/src/schema/lists.ts`
+- `packages/core/src/schema/tasks.ts`
+- `packages/core/src/schema/list-members.ts`
+- `apps/api/src/routes/lists.ts`
+- `apps/api/src/routes/sharing.ts`
+- `apps/api/src/routes/tasks.ts`
+- `apps/flutter/lib/features/tasks/domain/task.dart`
+- `apps/flutter/lib/features/tasks/domain/task.freezed.dart`
+- `apps/flutter/lib/features/lists/domain/task_list.dart`
+- `apps/flutter/lib/features/lists/domain/task_list.freezed.dart`
+- `apps/flutter/lib/features/lists/domain/list_member.dart`
+- `apps/flutter/lib/features/lists/domain/list_member.freezed.dart`
+- `apps/flutter/lib/features/tasks/data/task_dto.dart`
+- `apps/flutter/lib/features/tasks/data/task_dto.freezed.dart`
+- `apps/flutter/lib/features/tasks/data/task_dto.g.dart`
+- `apps/flutter/lib/features/lists/data/list_dto.dart`
+- `apps/flutter/lib/features/lists/data/list_dto.freezed.dart`
+- `apps/flutter/lib/features/lists/data/list_dto.g.dart`
+- `apps/flutter/lib/features/lists/data/list_member_dto.dart`
+- `apps/flutter/lib/features/lists/data/list_member_dto.freezed.dart`
+- `apps/flutter/lib/features/lists/data/list_member_dto.g.dart`
+- `apps/flutter/lib/features/lists/data/lists_repository.dart`
+- `apps/flutter/lib/features/lists/data/lists_repository.g.dart`
+- `apps/flutter/lib/features/lists/data/sharing_repository.dart`
+- `apps/flutter/lib/features/lists/data/sharing_repository.g.dart`
+- `apps/flutter/lib/features/tasks/presentation/widgets/task_row.dart`
+- `apps/flutter/lib/features/lists/presentation/list_detail_screen.dart`
+- `apps/flutter/lib/core/l10n/strings.dart`
+- `apps/flutter/lib/core/router/app_router.dart`
+- `apps/flutter/lib/core/router/app_router.g.dart`
+- `apps/flutter/test/features/lists/list_dto_test.dart`
+
+
+## Change Log
+
+- 2026-04-01: Story 5.2 implemented — DB schema (3 new columns), API (3 new endpoints + 3 schema extensions), Flutter domain models + DTOs + repositories + ListSettingsScreen + assignee badge + l10n strings + router. All 612 tests pass.
