@@ -108,8 +108,9 @@ export async function chargeTriggerConsumer(
 
     if (existing.length > 0) {
       const existingStatus = existing[0].status
-      if (existingStatus === 'charged' || existingStatus === 'disbursed') {
-        // Already processed — ack without re-charging
+      if (existingStatus === 'charged' || existingStatus === 'disbursed' || existingStatus === 'disbursement_failed') {
+        // Already processed (or charge succeeded but disbursement failed — handled by every-org-consumer retry).
+        // Ack without re-charging to prevent duplicate Stripe charges and duplicate disbursement messages.
         message.ack()
         continue
       }

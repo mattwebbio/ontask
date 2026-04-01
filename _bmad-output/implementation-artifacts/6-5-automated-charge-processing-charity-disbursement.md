@@ -479,6 +479,14 @@ type QueueMessage<T> = {
 }
 ```
 
+### Review Findings
+
+- [ ] [Review][Patch] `disbursement_failed` status not included in charge-trigger idempotency short-circuit [`apps/api/src/queues/charge-trigger-consumer.ts`] — The idempotency check (step 2) only acks and skips when the existing row's status is `'charged'` or `'disbursed'`. If the row is `'disbursement_failed'` (Stripe charge succeeded, but Every.org disbursement failed), a queue retry of the charge-trigger message will fall through: the upsert resets status to `'pending'`, and a second Stripe charge attempt is made. Stripe's own idempotency key prevents a real double-charge, but the local DB state machine is corrupted and a duplicate Every.org disbursement message is enqueued. Fix: add `existingStatus === 'disbursement_failed'` to the ack-and-skip condition.
+- [x] [Review][Defer] `verifyWebhookSignature` stub always returns `false` — production webhooks will be rejected until `TODO(impl)` is replaced [`apps/api/src/services/stripe.ts`] — deferred, intentional stub per story scope
+- [x] [Review][Defer] `disburseDonation` stub always returns `{ success: false }` — Every.org consumer will throw on every call until `TODO(impl)` is replaced [`apps/api/src/services/every-org.ts`] — deferred, intentional stub per story scope
+- [x] [Review][Defer] `triggerOverdueCharges` is a full no-op stub — no tasks will ever be enqueued until `TODO(impl)` DB query is implemented [`apps/api/src/lib/charge-scheduler.ts`] — deferred, intentional stub per story scope
+- [x] [Review][Defer] No test file for `everyOrgConsumer` — the throw-on-failure path (NFR-R4 critical path) is untested [`apps/api/src/queues/every-org-consumer.ts`] — deferred, spec did not require it in this story; recommend adding in a follow-up
+
 ### Architecture: File locations
 
 New files to create:

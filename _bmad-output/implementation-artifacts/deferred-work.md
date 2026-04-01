@@ -1,5 +1,12 @@
 # Deferred Work
 
+## Deferred from: code review of 6-5-automated-charge-processing-charity-disbursement (2026-04-01)
+
+- **`charge-scheduler.ts` query is a stub** — `triggerOverdueCharges()` has a `TODO(impl)` DB query; the cron fires but does nothing until the query is wired. Implement when real task/stake DB data is available in a future hardening story.
+- **No integration tests for queue consumers** — Unit tests mock Stripe/Every.org; end-to-end queue flow (enqueue → consume → DB state transition) is not tested. Add integration tests when a test queue environment is available.
+- **`POST /v1/webhooks/stripe` webhook event routing incomplete** — Handler verifies the Stripe signature and parses the event, but only adds a `TODO(impl)` comment for routing `payment_intent.succeeded` / `payment_intent.payment_failed`. Full event routing deferred to a dedicated webhooks story.
+- **`charge-trigger-consumer.ts` has no test for `disbursement_failed` idempotency ack** — The patch (added in review) is not covered by a specific test. Add in a future test hardening pass.
+
 ## Deferred from: code review of 6-4-impact-dashboard (2026-04-01)
 
 - **No repository test for `getImpactSummary()` error path** — Happy-path tests cover mapping; network failure and malformed response paths are untested. Add in a future test hardening pass when Epic 6 error handling is formalized.
@@ -137,6 +144,13 @@
 ## Deferred from: code review of 5-4-accountability-settings-cascade (2026-04-01)
 
 - **`_journal.json` missing trailing newline at EOF** [`packages/core/src/schema/migrations/meta/_journal.json`] — `drizzle-kit generate` emits the file without a trailing newline. Pre-existing tool behavior; not caused by this story.
+
+## Deferred from: code review of 6-5-automated-charge-processing-charity-disbursement (2026-04-01)
+
+- **`verifyWebhookSignature` stub permanently returns `false`** — All real Stripe webhooks to `POST /v1/webhooks/stripe` will receive HTTP 400 until the `TODO(impl)` in `apps/api/src/services/stripe.ts` is replaced with real HMAC-SHA256 verification. Tests document the expected behavior once implemented.
+- **`disburseDonation` stub permanently returns `{ success: false }`** — Every.org consumer will throw on every disbursement message until `TODO(impl)` in `apps/api/src/services/every-org.ts` is replaced with the real Partner Funds API call.
+- **`triggerOverdueCharges` is a full no-op stub** — No tasks will ever be enqueued for charging until the DB query + `CHARGE_TRIGGER_QUEUE.send()` loop in `apps/api/src/lib/charge-scheduler.ts` is implemented. SQL query is fully spec'd in comments.
+- **No test file for `everyOrgConsumer`** — The throw-on-failure path (NFR-R4 critical path) is untested. Recommend adding `apps/api/src/queues/every-org-consumer.test.ts` covering: idempotency ack when status=`disbursed`, update to `disbursement_failed` + throw on failure, and success path update to `disbursed`.
 
 ## Deferred from: code review of 5-6-member-management-shared-ownership (2026-04-01)
 
