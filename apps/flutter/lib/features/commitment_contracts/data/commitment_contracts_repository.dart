@@ -1,7 +1,9 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/network/api_client.dart';
+import '../domain/charity_selection.dart';
 import '../domain/commitment_payment_status.dart';
+import '../domain/nonprofit.dart';
 import '../domain/task_stake.dart';
 
 part 'commitment_contracts_repository.g.dart';
@@ -114,6 +116,71 @@ class CommitmentContractsRepository {
   Future<void> removeTaskStake(String taskId) async {
     await _client.dio.delete<Map<String, dynamic>>(
       '/v1/tasks/$taskId/stake',
+    );
+  }
+
+  // ── Charity methods (FR26, Story 6.3) ───────────────────────────────────────
+
+  /// Searches or browses nonprofits from the Every.org catalog.
+  ///
+  /// `GET /v1/charities`
+  /// Pass [query] to search by name; pass [category] to filter by category.
+  /// Omit both to load the default catalog.
+  Future<List<Nonprofit>> searchCharities({
+    String? query,
+    String? category,
+  }) async {
+    final queryParams = <String, String>{
+      if (query != null) 'search': query,
+      if (category != null) 'category': category,
+    };
+    final response = await _client.dio.get<Map<String, dynamic>>(
+      '/v1/charities',
+      queryParameters: queryParams.isNotEmpty ? queryParams : null,
+    );
+    final data = response.data!['data'] as Map<String, dynamic>;
+    final list = data['nonprofits'] as List<dynamic>;
+    return list.map((e) {
+      final m = e as Map<String, dynamic>;
+      return Nonprofit(
+        id: m['id'] as String,
+        name: m['name'] as String,
+        description: m['description'] as String?,
+        logoUrl: m['logoUrl'] as String?,
+        categories: (m['categories'] as List<dynamic>).cast<String>(),
+      );
+    }).toList();
+  }
+
+  /// Fetches the user's current default charity.
+  ///
+  /// `GET /v1/charities/default`
+  Future<CharitySelection> getDefaultCharity() async {
+    final response = await _client.dio.get<Map<String, dynamic>>(
+      '/v1/charities/default',
+    );
+    final data = response.data!['data'] as Map<String, dynamic>;
+    return CharitySelection(
+      charityId: data['charityId'] as String?,
+      charityName: data['charityName'] as String?,
+    );
+  }
+
+  /// Sets the user's default charity.
+  ///
+  /// `PUT /v1/charities/default`
+  Future<CharitySelection> setDefaultCharity(
+    String charityId,
+    String charityName,
+  ) async {
+    final response = await _client.dio.put<Map<String, dynamic>>(
+      '/v1/charities/default',
+      data: {'charityId': charityId, 'charityName': charityName},
+    );
+    final data = response.data!['data'] as Map<String, dynamic>;
+    return CharitySelection(
+      charityId: data['charityId'] as String?,
+      charityName: data['charityName'] as String?,
     );
   }
 }

@@ -7,6 +7,8 @@ import '../../../core/l10n/strings.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_theme.dart';
 import '../data/commitment_contracts_repository.dart';
+import '../domain/nonprofit.dart';
+import 'charity_sheet_screen.dart';
 import 'payment_settings_screen.dart';
 import 'widgets/stake_slider_widget.dart';
 
@@ -37,11 +39,33 @@ class _StakeSheetScreenState extends ConsumerState<StakeSheetScreen> {
   bool? _hasPaymentMethod;
   int? _stakeAmountCents;
 
+  // ── Charity selection (Epic 6, Story 6.3) ────────────────────────────────
+  Nonprofit? _selectedCharity;
+
   @override
   void initState() {
     super.initState();
     _stakeAmountCents = widget.existingStakeAmountCents;
     _checkPaymentMethod();
+    _loadDefaultCharity();
+  }
+
+  Future<void> _loadDefaultCharity() async {
+    try {
+      final repository = ref.read(commitmentContractsRepositoryProvider);
+      final selection = await repository.getDefaultCharity();
+      if (!mounted) return;
+      if (selection.charityId != null && selection.charityName != null) {
+        setState(() {
+          _selectedCharity = Nonprofit(
+            id: selection.charityId!,
+            name: selection.charityName!,
+          );
+        });
+      }
+    } catch (e) {
+      // Non-blocking — charity selection is optional. Default to none.
+    }
   }
 
   Future<void> _checkPaymentMethod() async {
@@ -230,6 +254,91 @@ class _StakeSheetScreenState extends ConsumerState<StakeSheetScreen> {
                       },
                       onConfirm: _isLoading ? null : _onConfirm,
                     ),
+
+                    // ── Charity selection (Epic 6, Story 6.3) ────────────
+                    const SizedBox(height: AppSpacing.md),
+                    _selectedCharity == null
+                        ? CupertinoButton(
+                            minimumSize: const Size(44, 44),
+                            padding: EdgeInsets.zero,
+                            onPressed: () async {
+                              final selected =
+                                  await showCupertinoModalPopup<Nonprofit?>(
+                                context: context,
+                                builder: (_) => CharitySheetScreen(
+                                  currentCharityId: _selectedCharity?.id,
+                                ),
+                              );
+                              if (selected != null) {
+                                setState(() => _selectedCharity = selected);
+                              }
+                            },
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  CupertinoIcons.heart,
+                                  size: 18,
+                                  color: colors.textSecondary,
+                                ),
+                                const SizedBox(width: AppSpacing.xs),
+                                Text(
+                                  AppStrings.charitySelectCta,
+                                  style: TextStyle(
+                                    color: colors.textSecondary,
+                                    fontSize: 15,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        : GestureDetector(
+                            onTap: () async {
+                              final selected =
+                                  await showCupertinoModalPopup<Nonprofit?>(
+                                context: context,
+                                builder: (_) => CharitySheetScreen(
+                                  currentCharityId: _selectedCharity?.id,
+                                ),
+                              );
+                              if (selected != null) {
+                                setState(() => _selectedCharity = selected);
+                              }
+                            },
+                            child: Container(
+                              constraints: const BoxConstraints(minHeight: 44),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSpacing.sm,
+                                vertical: AppSpacing.xs,
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    CupertinoIcons.checkmark_circle_fill,
+                                    color: colors.accentPrimary,
+                                    size: 18,
+                                  ),
+                                  const SizedBox(width: AppSpacing.xs),
+                                  Expanded(
+                                    child: Text(
+                                      _selectedCharity!.name,
+                                      style: TextStyle(
+                                        color: colors.textPrimary,
+                                        fontSize: 15,
+                                      ),
+                                    ),
+                                  ),
+                                  Text(
+                                    AppStrings.charityChangeCta,
+                                    style: TextStyle(
+                                      color: colors.accentPrimary,
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
 
                     // ── Remove stake (only if existing stake) ────────────
                     if (widget.existingStakeAmountCents != null) ...[
