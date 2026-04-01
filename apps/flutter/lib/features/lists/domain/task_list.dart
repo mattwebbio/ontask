@@ -15,5 +15,8 @@ abstract class TaskList with _$TaskList {
     DateTime? archivedAt,
     required DateTime createdAt,
     required DateTime updatedAt,
+    @Default(false) bool isShared,
+    @Default(1) int memberCount,
+    @Default(<String>[]) List<String> memberAvatarInitials,
   }) = _TaskList;
 }

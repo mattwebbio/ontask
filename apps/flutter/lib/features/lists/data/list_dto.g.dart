@@ -14,6 +14,13 @@ _ListDto _$ListDtoFromJson(Map<String, dynamic> json) => _ListDto(
   archivedAt: json['archivedAt'] as String?,
   createdAt: json['createdAt'] as String,
   updatedAt: json['updatedAt'] as String,
+  isShared: json['isShared'] as bool? ?? false,
+  memberCount: (json['memberCount'] as num?)?.toInt() ?? 1,
+  memberAvatarInitials:
+      (json['memberAvatarInitials'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList() ??
+      [],
 );
 
 Map<String, dynamic> _$ListDtoToJson(_ListDto instance) => <String, dynamic>{
@@ -24,4 +31,7 @@ Map<String, dynamic> _$ListDtoToJson(_ListDto instance) => <String, dynamic>{
   'archivedAt': instance.archivedAt,
   'createdAt': instance.createdAt,
   'updatedAt': instance.updatedAt,
+  'isShared': instance.isShared,
+  'memberCount': instance.memberCount,
+  'memberAvatarInitials': instance.memberAvatarInitials,
 };

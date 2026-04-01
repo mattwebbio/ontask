@@ -7,6 +7,7 @@ import '../../features/auth/presentation/auth_provider.dart';
 import '../../features/chapter_break/presentation/chapter_break_screen.dart';
 import '../../features/auth/presentation/auth_screen.dart';
 import '../../features/auth/presentation/two_factor_verify_screen.dart';
+import '../../features/lists/presentation/accept_invitation_screen.dart';
 import '../../features/lists/presentation/list_detail_screen.dart';
 import '../../features/lists/presentation/lists_screen.dart';
 import '../../features/now/presentation/now_screen.dart';
@@ -119,6 +120,17 @@ GoRouter appRouter(Ref ref) {
       GoRoute(
         path: '/onboarding',
         builder: (context, state) => const OnboardingFlow(),
+      ),
+
+      // Invitation accept screen — top-level route (no shell chrome / tab bar).
+      // Reached via deep link: /invitation/:token (FR16).
+      // Unauthenticated recipients will be redirected to /auth/sign-in first,
+      // then must re-open the link after authentication (stub V1 behaviour).
+      GoRoute(
+        path: '/invitation/:token',
+        builder: (context, state) => AcceptInvitationScreen(
+          token: state.pathParameters['token']!,
+        ),
       ),
 
       // Chapter Break Screen — top-level route (no shell chrome / tab bar).

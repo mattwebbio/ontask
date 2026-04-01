@@ -57,6 +57,13 @@
       "when": 1743465600000,
       "tag": "0007_google_webhook_channel",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1743638400000,
+      "tag": "0008_list_sharing",
+      "breakpoints": true
     }
   ]
 }
