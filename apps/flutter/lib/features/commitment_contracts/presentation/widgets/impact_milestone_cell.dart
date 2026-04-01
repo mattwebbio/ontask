@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
+import '../../../../core/l10n/strings.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/impact_milestone.dart';
 
@@ -87,7 +88,14 @@ class ImpactMilestoneCell extends StatelessWidget {
             minimumSize: const Size(44, 44),
             padding: EdgeInsets.zero,
             onPressed: onShare,
-            child: const Icon(CupertinoIcons.share),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(CupertinoIcons.share, size: 18),
+                SizedBox(width: 4),
+                Text(AppStrings.impactShareButton),
+              ],
+            ),
           ),
         ],
       ),

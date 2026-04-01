@@ -36,7 +36,7 @@ class ImpactDashboardScreen extends ConsumerStatefulWidget {
 class _ImpactDashboardScreenState
     extends ConsumerState<ImpactDashboardScreen> {
   ImpactSummary? _summary;
-  bool _isLoading = false;
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -133,7 +133,7 @@ class _ImpactDashboardScreenState
           colors: colors,
         ),
         _StatCell(
-          value: '\$${(summary.totalDonatedCents / 100).toStringAsFixed(0)}',
+          value: '\$${summary.totalDonatedCents ~/ 100}',
           label: AppStrings.impactTotalDonatedLabel,
           colors: colors,
         ),

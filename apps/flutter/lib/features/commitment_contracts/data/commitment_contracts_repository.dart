@@ -197,7 +197,11 @@ class CommitmentContractsRepository {
     final response = await _client.dio.get<Map<String, dynamic>>(
       '/v1/impact',
     );
-    final data = response.data!['data'] as Map<String, dynamic>;
+    final responseData = response.data;
+    if (responseData == null) {
+      throw Exception('getImpactSummary: empty response body');
+    }
+    final data = responseData['data'] as Map<String, dynamic>;
     final milestones = (data['milestones'] as List<dynamic>).map((e) {
       final m = e as Map<String, dynamic>;
       return ImpactMilestone(
@@ -212,13 +216,13 @@ class CommitmentContractsRepository {
       final m = e as Map<String, dynamic>;
       return CharityDonation(
         charityName: m['charityName'] as String,
-        donatedCents: m['donatedCents'] as int,
+        donatedCents: (m['donatedCents'] as num).toInt(),
       );
     }).toList();
     return ImpactSummary(
-      totalDonatedCents: data['totalDonatedCents'] as int,
-      commitmentsKept: data['commitmentsKept'] as int,
-      commitmentsMissed: data['commitmentsMissed'] as int,
+      totalDonatedCents: (data['totalDonatedCents'] as num).toInt(),
+      commitmentsKept: (data['commitmentsKept'] as num).toInt(),
+      commitmentsMissed: (data['commitmentsMissed'] as num).toInt(),
       charityBreakdown: breakdown,
       milestones: milestones,
     );

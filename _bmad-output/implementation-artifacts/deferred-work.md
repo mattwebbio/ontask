@@ -1,5 +1,12 @@
 # Deferred Work
 
+## Deferred from: code review of 6-4-impact-dashboard (2026-04-01)
+
+- **No repository test for `getImpactSummary()` error path** — Happy-path tests cover mapping; network failure and malformed response paths are untested. Add in a future test hardening pass when Epic 6 error handling is formalized.
+- **`_formatDate` untestable as private static in `ImpactMilestoneCell`** — Date formatting logic is buried as a `static` in the widget class. Extract to `apps/flutter/lib/core/utils/time_format.dart` when that file is created (flagged in Stories 2.7/2.8 deferred work).
+- **No test for `SettingsScreen` impact tile or `/settings/impact` navigation integration** — Settings tile added without test coverage. Add when SettingsScreen test suite is expanded.
+- **`GET /v1/impact` OpenAPI definition missing `security` field** — Route does not declare bearer token security requirement in the OpenAPI spec. Pre-existing pattern across Epic 6 routes; address in a future OpenAPI hardening pass.
+
 ## Deferred from: code review of 6-3-charity-selection (2026-04-01)
 
 - **Stale search results visible during subsequent loads** — `_nonprofits` is not cleared when a new search begins in `CharitySheetScreen._loadCharities`; old results remain visible while `_isLoading=true` but `nonprofits.isNotEmpty`. The `CharitySearchDelegate` loading indicator only triggers when both `isLoading && nonprofits.isEmpty`, so during re-searches the list appears static with no loading feedback. Not a spec bug; address when UX polish pass lands on the charity sheet.

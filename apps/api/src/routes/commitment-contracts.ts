@@ -436,7 +436,7 @@ const impactSummarySchema = z.object({
   milestones: z.array(milestoneSchema),
 })
 
-const ImpactResponseSchema = z.object({ data: impactSummarySchema })
+const impactResponseSchema = z.object({ data: impactSummarySchema })
 
 // ── GET /v1/impact ────────────────────────────────────────────────────────────
 // Returns the authenticated user's impact summary and earned milestones.
@@ -453,7 +453,7 @@ const getImpactRoute = createRoute({
     'Stub implementation (Story 6.4).',
   responses: {
     200: {
-      content: { 'application/json': { schema: ImpactResponseSchema } },
+      content: { 'application/json': { schema: impactResponseSchema } },
       description: 'Impact summary with milestones',
     },
   },
@@ -475,28 +475,28 @@ const _stubImpactData = {
       id: 'first-kept',
       title: 'First commitment kept.',
       body: 'You showed up when it mattered.',
-      earnedAt: new Date().toISOString(),
+      earnedAt: '2026-01-15T00:00:00.000Z',
       shareText: 'I kept my first commitment with On Task. Your past self makes plans. Your future self keeps them.',
     },
     {
       id: 'first-donation',
       title: 'First donation made.',
       body: 'Even a missed commitment moved something good into the world.',
-      earnedAt: new Date().toISOString(),
+      earnedAt: '2026-02-01T00:00:00.000Z',
       shareText: 'I donated $25 to the American Red Cross through On Task accountability.',
     },
     {
       id: 'hundred-donated',
       title: '$100 donated.',
       body: "Look how far you've come.",
-      earnedAt: new Date().toISOString(),
+      earnedAt: '2026-03-01T00:00:00.000Z',
       shareText: "I've donated over $100 to charity through On Task. Accountability that does good.",
     },
   ],
 }
 
 app.openapi(getImpactRoute, (c) => {
-  return c.json({ data: _stubImpactData }, 200)
+  return c.json(ok(_stubImpactData), 200)
 })
 
 export { app as commitmentContractsRouter }
