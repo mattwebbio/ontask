@@ -2,6 +2,7 @@ import 'package:camera/camera.dart';
 import 'package:dio/dio.dart';
 
 import '../../../core/network/api_client.dart';
+import '../../../features/watch_mode/domain/watch_mode_session.dart';
 import '../domain/proof_verification_result.dart';
 
 /// Data layer for proof submission operations.
@@ -59,6 +60,62 @@ class ProofRepository {
     } catch (e) {
       return ProofVerificationError(
         message: 'Unexpected error during proof submission.',
+      );
+    }
+  }
+
+  /// Submits a screenshot or document file to the API for AI verification.
+  ///
+  /// Supports PNG, JPG, and PDF files up to 25 MB (FR36).
+  /// Posts `multipart/form-data` with the media file to
+  /// `POST /v1/tasks/{taskId}/proof` — same unified endpoint as photo proof.
+  ///
+  /// Returns [ProofVerificationApproved] on success, [ProofVerificationRejected]
+  /// with the API-provided reason on failure, or [ProofVerificationError]
+  /// on network/unexpected errors.
+  /// Submits Watch Mode session data to the API for verification.
+  ///
+  /// Posts a JSON body (NOT multipart) to `POST /v1/tasks/{taskId}/proof`
+  /// with `proofType=watchMode` query param.
+  ///
+  /// Returns [ProofVerificationApproved] on success, [ProofVerificationRejected]
+  /// with the API-provided reason on failure, or [ProofVerificationError]
+  /// on network/unexpected errors.
+  /// (Epic 7, Story 7.4, FR66-67)
+  Future<ProofVerificationResult> submitWatchModeProof(
+    String taskId,
+    WatchModeSession session,
+  ) async {
+    try {
+      final body = {
+        'durationSeconds': session.elapsed.inSeconds,
+        'activityPercentage': session.activityPercentage,
+      };
+
+      final response = await _client.dio.post<Map<String, dynamic>>(
+        '/v1/tasks/$taskId/proof',
+        data: body,
+        queryParameters: {'proofType': 'watchMode'},
+      );
+
+      final data = response.data!['data'] as Map<String, dynamic>;
+      final verified = data['verified'] as bool;
+      final reason = data['reason'] as String?;
+
+      if (verified) {
+        return const ProofVerificationApproved();
+      } else {
+        return ProofVerificationRejected(
+          reason: reason ?? 'Session could not be verified.',
+        );
+      }
+    } on DioException catch (e) {
+      return ProofVerificationError(
+        message: e.message ?? 'Network error during session submission.',
+      );
+    } catch (e) {
+      return ProofVerificationError(
+        message: 'Unexpected error during session submission.',
       );
     }
   }

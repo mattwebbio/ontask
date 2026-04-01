@@ -377,8 +377,24 @@ class _NowTaskCardState extends State<NowTaskCard> {
             if (result != null) {
               widget.onComplete?.call();
             }
+          } else if (widget.task.proofMode == ProofMode.watchMode) {
+            // Open proof capture modal with healthKit path pre-selected for Watch Mode.
+            // Watch Mode is iOS-only (UX-DR10) — macOS guard is in ProofCaptureModal path selector
+            final result = await showCupertinoModalPopup<Object?>(
+              context: context,
+              builder: (_) => ProofCaptureModal(
+                taskName: widget.task.title,
+                taskId: widget.task.id,
+                proofMode: widget.task.proofMode,
+                proofRepository: widget.proofRepository,
+              ),
+            );
+            if (!mounted) return;
+            if (result != null) {
+              widget.onComplete?.call();
+            }
           } else {
-            // For standard + HealthKit + watchMode: mark done directly.
+            // For standard + HealthKit + calendarEvent: mark done directly.
             widget.onComplete?.call();
           }
         },
