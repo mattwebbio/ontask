@@ -1,5 +1,9 @@
 # Deferred Work
 
+## Deferred from: code review of 7-7-proof-retention-settings (2026-04-01)
+
+- **`WatchModeSubView._onDone()` deferred bug — pops with non-null `ProofPath.watchMode` even without verified proof** — Pre-existing from Story 7.4 (previously logged under 7-5 review). This story preserves the bug intentionally; `_onDone()` remains unchanged per story dev notes. Address when `WatchModeSubView` is revisited for a future story or when `NowTaskCard` handles proof-path return values more granularly. [`apps/flutter/lib/features/watch_mode/presentation/watch_mode_sub_view.dart`]
+
 ## Deferred from: code review of 7-5-healthkit-auto-verification (2026-04-01)
 
 - **`WatchModeSubView._onDone()` pops with non-null value, triggering `onComplete` when user exits without submitting proof** — `_onDone` returns `ProofPath.watchMode` (non-null), which causes `NowTaskCard` to call `onComplete?.call()` even when the user dismissed without submitting proof. Pre-existing from Story 7.4; this story only changed the enum value (healthKit → watchMode). Address when `WatchModeSubView` is revisited or when `NowTaskCard` handles proof-path return values more granularly. [`apps/flutter/lib/features/watch_mode/presentation/watch_mode_sub_view.dart:323`]

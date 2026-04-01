@@ -1112,4 +1112,30 @@ class AppStrings {
   /// Error copy when enqueue write fails.
   static const String offlineProofErrorCopy =
       'Couldn\u2019t save your proof. Please try again.';
+
+  // ── Proof Retention Settings (FR38, NFR-R8, Story 7.7) ──────────────────────
+
+  /// Toggle label on the proof confirmation screen.
+  static const String proofRetainLabel = 'Keep as completion record';
+
+  /// Secondary label explaining retention on the proof confirmation screen.
+  static const String proofRetainSubtitle =
+      'Proof stays attached to this task until it\u2019s deleted';
+
+  /// Secondary label explaining discard on the proof confirmation screen.
+  static const String proofDiscardSubtitle =
+      'Proof will be deleted within 24 hours of verification';
+
+  /// Confirm CTA after choosing retention preference.
+  static const String proofRetainConfirmCta = 'Done';
+
+  /// Settings screen Privacy tile label.
+  static const String settingsPrivacy = 'Privacy';
+
+  /// Privacy settings: keep proof toggle label.
+  static const String privacyKeepProofByDefault = 'Keep proof by default';
+
+  /// Privacy settings: keep proof toggle subtitle.
+  static const String privacyKeepProofSubtitle =
+      'Proof photos and files are kept as completion records. Turn off to discard after verification.';
 }

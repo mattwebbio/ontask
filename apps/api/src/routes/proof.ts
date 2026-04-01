@@ -3,13 +3,15 @@ import { z } from 'zod'
 import { ok, err } from '../lib/response.js'
 
 // ── Proof submission router ───────────────────────────────────────────────────
-// Stub endpoint for AI-verified photo, screenshot/document, Watch Mode, HealthKit, or offline proof submission
-// (Epic 7, Stories 7.2–7.6, FR31, FR33-34, FR35-36, FR37, FR47, FR66-67).
+// Stub endpoints for AI-verified photo, screenshot/document, Watch Mode, HealthKit, or offline proof submission
+// and proof retention preference setting.
+// (Epic 7, Stories 7.2–7.7, FR31, FR33-34, FR35-36, FR37, FR38, FR47, FR66-67).
 // FR31: camera capture only — no gallery import (photo path).
 // FR33-34: Watch Mode passive camera monitoring (watchMode path).
 // FR35, FR47: HealthKit auto-verification — reads Apple Health data to verify task completion.
 // FR36: screenshot/document path — PNG, JPG, or PDF up to 25 MB.
 // FR37: offline queued proof — clientTimestamp validated server-side; charge reversal if predates deadline.
+// FR38: proof retention — user chooses whether proof is kept as a completion record (retain=true: B2 storage for task lifetime; retain=false: deletion within 24h).
 // FR32: AI verification stub — always returns verified: true by default.
 //       Add ?demo=fail to exercise the rejection path.
 // FR66-67: Watch Mode session summary — durationSeconds + activityPercentage in body.
@@ -51,10 +53,11 @@ const submitProofRoute = createRoute({
     'FR33-34/FR66-67: Watch Mode session path — passive camera monitoring, session summary submitted as JSON. ' +
     'FR35/FR47: HealthKit auto-verification — reads Apple Health data to verify task completion. ' +
     'FR37: offline path — clientTimestamp validated server-side; charge reversal triggered if predates task deadline. ' +
+    'FR38: After verification, user is presented a retention choice — use PATCH /v1/tasks/{taskId}/proof-retention to set preference. ' +
     'Returns a stub verification result. ' +
     'Add ?demo=fail to exercise the rejection path. ' +
     'Use ?proofType=screenshot, ?proofType=watchMode, ?proofType=healthKit, or ?proofType=offline to indicate submission type. ' +
-    'Stub implementation (Stories 7.2–7.6) — real AI pipeline deferred.',
+    'Stub implementation (Stories 7.2–7.7) — real AI pipeline deferred.',
   request: {
     params: z.object({
       taskId: z.string().min(1),
@@ -115,6 +118,47 @@ app.openapi(submitProofRoute, async (c) => {
     }),
     200,
   )
+})
+
+// ── PATCH /v1/tasks/{taskId}/proof-retention ──────────────────────────────────
+// Sets whether the submitted proof media is retained as a completion record.
+// (Epic 7, Story 7.7, FR38, NFR-R8, NFR-S4)
+
+const setProofRetentionRoute = createRoute({
+  method: 'patch',
+  path: '/v1/tasks/{taskId}/proof-retention',
+  tags: ['Proof'],
+  summary: 'Set proof retention preference for a submitted task',
+  description:
+    'Sets whether the submitted proof media is retained as a completion record on the task (FR38). ' +
+    'retain=true: proof stored in B2 for task lifetime (NFR-R8, NFR-S4). ' +
+    'retain=false: media scheduled for deletion within 24 hours of verification. ' +
+    'Updates proof_retained column in tasks table. ' +
+    'Stub implementation (Story 7.7) — real B2 deletion scheduling deferred.',
+  request: {
+    params: z.object({ taskId: z.string().min(1) }),
+    body: {
+      content: {
+        'application/json': {
+          schema: z.object({ retain: z.boolean() }),
+        },
+      },
+    },
+  },
+  responses: {
+    204: { description: 'Retention preference updated' },
+    400: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Bad request',
+    },
+  },
+})
+
+app.openapi(setProofRetentionRoute, async (c) => {
+  // TODO(impl): update tasks.proof_retained column in DB for taskId
+  // TODO(impl): if retain=false, enqueue B2 media deletion job (delete within 24h of verification)
+  // TODO(impl): if retain=true, ensure B2 media is preserved; update proof_submissions.mediaUrl
+  return c.body(null, 204)
 })
 
 export { app as proofRouter }

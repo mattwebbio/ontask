@@ -5,10 +5,12 @@ import 'dart:math' as math;
 import 'package:camera/camera.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart' show Theme;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/l10n/strings.dart';
 import '../../../core/motion/motion_tokens.dart';
 import '../../../core/theme/app_theme.dart';
+import '../data/proof_prefs_provider.dart';
 import '../data/proof_repository.dart';
 import '../domain/proof_path.dart';
 import '../domain/proof_verification_result.dart';
@@ -31,14 +33,14 @@ enum _CaptureState {
 ///
 /// Manages its own state machine: camera → capture → review → verify → result.
 ///
-/// This is a [StatefulWidget] (NOT [ConsumerStatefulWidget]) — no Riverpod
-/// provider reads are needed at widget level. The [ProofRepository] is
-/// injected via constructor.
+/// Migrated to [ConsumerStatefulWidget] in Story 7.7 to read
+/// [proofRetainDefaultProvider] and present the retention toggle after approval.
+/// The [ProofRepository] is injected via constructor.
 ///
-/// On successful verification, calls [Navigator.pop(context, ProofPath.photo)]
-/// so the caller ([ProofCaptureModal]) can trigger [onComplete].
-/// (Epic 7, Story 7.2, AC: 1–5, FR31-32, UX-DR30)
-class PhotoCaptureSubView extends StatefulWidget {
+/// On successful verification, presents the retention choice and then calls
+/// [onApproved] + [Navigator.pop(context, ProofPath.photo)] on Confirm.
+/// (Epic 7, Stories 7.2, 7.7, AC: 1–5, FR31-32, FR38, UX-DR30)
+class PhotoCaptureSubView extends ConsumerStatefulWidget {
   const PhotoCaptureSubView({
     super.key,
     required this.taskId,
@@ -56,17 +58,21 @@ class PhotoCaptureSubView extends StatefulWidget {
   /// Injected proof repository for API submission.
   final ProofRepository proofRepository;
 
-  /// Called when the proof is approved, before the modal is popped.
+  /// Called when the proof is approved and retention confirmed.
   final VoidCallback? onApproved;
 
   @override
-  State<PhotoCaptureSubView> createState() => _PhotoCaptureSubViewState();
+  ConsumerState<PhotoCaptureSubView> createState() =>
+      _PhotoCaptureSubViewState();
 }
 
-class _PhotoCaptureSubViewState extends State<PhotoCaptureSubView>
+class _PhotoCaptureSubViewState extends ConsumerState<PhotoCaptureSubView>
     with TickerProviderStateMixin {
   // ── State ──────────────────────────────────────────────────────────────────
   _CaptureState _captureState = _CaptureState.camera;
+
+  // ── Retention preference ───────────────────────────────────────────────────
+  bool _retainProof = true;
 
   // ── Camera ─────────────────────────────────────────────────────────────────
   CameraController? _cameraController;
@@ -108,6 +114,9 @@ class _PhotoCaptureSubViewState extends State<PhotoCaptureSubView>
     _approvalFadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _approvalFadeController, curve: Curves.easeIn),
     );
+    // Read synchronously from provider cache — keepAlive provider is pre-loaded.
+    // Falls back to true if not yet resolved.
+    _retainProof = ref.read(proofRetainDefaultProvider).value ?? true;
     _initCamera();
   }
 
@@ -217,12 +226,7 @@ class _PhotoCaptureSubViewState extends State<PhotoCaptureSubView>
       case ProofVerificationApproved():
         setState(() => _captureState = _CaptureState.approved);
         _approvalFadeController.forward();
-        // Auto-dismiss after 2 seconds.
-        Future.delayed(const Duration(seconds: 2), () {
-          if (!mounted) return;
-          widget.onApproved?.call();
-          Navigator.pop(context, ProofPath.photo);
-        });
+        // Do NOT auto-dismiss — wait for user to confirm retention choice.
       case ProofVerificationRejected(:final reason):
         setState(() {
           _captureState = _CaptureState.rejected;
@@ -233,6 +237,22 @@ class _PhotoCaptureSubViewState extends State<PhotoCaptureSubView>
           _captureState = _CaptureState.rejected;
           _rejectionReason = message;
         });
+    }
+  }
+
+  Future<void> _onConfirmRetention() async {
+    try {
+      await widget.proofRepository.setProofRetention(
+        widget.taskId,
+        retain: _retainProof,
+      );
+      if (!mounted) return;
+      widget.onApproved?.call();
+      Navigator.pop(context, ProofPath.photo);
+    } catch (e) {
+      debugPrint('PhotoCaptureSubView: setProofRetention error: $e');
+      if (!mounted) return;
+      // Show error state — reuse proofRetakeCta or add new error string
     }
   }
 
@@ -567,6 +587,55 @@ class _PhotoCaptureSubViewState extends State<PhotoCaptureSubView>
             ),
           ),
           const SizedBox(height: 16),
+          // ── Retention toggle (FR38, Story 7.7) ──────────────────────────────
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      AppStrings.proofRetainLabel,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      _retainProof
+                          ? AppStrings.proofRetainSubtitle
+                          : AppStrings.proofDiscardSubtitle,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: colors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              CupertinoSwitch(
+                value: _retainProof,
+                activeTrackColor: colors.accentPrimary,
+                onChanged: (value) => setState(() => _retainProof = value),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            width: double.infinity,
+            child: CupertinoButton(
+              minimumSize: const Size(44, 44),
+              color: colors.accentPrimary,
+              onPressed: _onConfirmRetention,
+              child: Text(
+                AppStrings.proofRetainConfirmCta,
+                style: TextStyle(color: colors.surfacePrimary),
+              ),
+            ),
+          ),
         ],
       ),
     );

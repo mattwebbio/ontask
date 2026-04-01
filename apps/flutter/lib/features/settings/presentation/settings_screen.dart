@@ -8,6 +8,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../commitment_contracts/presentation/payment_settings_screen.dart';
 import 'account_settings_screen.dart';
 import 'appearance_settings_screen.dart';
+import 'privacy_settings_screen.dart';
 import 'sessions_screen.dart';
 
 /// Root Settings screen — accessible via profile icon in the navigation header.
@@ -75,6 +76,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               onTap: () {
                 // Stub — Notifications implemented in Epic 8.
               },
+            ),
+            // ── Privacy ─────────────────────────────────────────────────────
+            _SettingsTile(
+              label: AppStrings.settingsPrivacy,
+              icon: CupertinoIcons.hand_raised,
+              onTap: () => Navigator.of(context).push(
+                CupertinoPageRoute<void>(
+                  builder: (_) => const PrivacySettingsScreen(),
+                ),
+              ),
             ),
             // ── Account ─────────────────────────────────────────────────────
             _SettingsTile(
