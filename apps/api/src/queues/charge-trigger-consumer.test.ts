@@ -152,7 +152,7 @@ describe('chargeTriggerConsumer — idempotency', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(createDb).mockReturnValue(mockDb as ReturnType<typeof createDb>)
+    vi.mocked(createDb).mockReturnValue(mockDb as unknown as ReturnType<typeof createDb>)
   })
 
   test('duplicate message with status="charged" is acked without re-charging', async () => {
