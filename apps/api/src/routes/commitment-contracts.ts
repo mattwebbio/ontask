@@ -293,4 +293,126 @@ app.openapi(deleteTaskStakeRoute, async (c) => {
   return c.json(ok({ removed: true }), 200)
 })
 
+// ── Charity schemas ────────────────────────────────────────────────────────────
+
+const nonprofitSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string().nullable(),
+  logoUrl: z.string().nullable(),
+  categories: z.array(z.string()),
+})
+
+const nonprofitListSchema = z.object({
+  nonprofits: z.array(nonprofitSchema),
+  total: z.number().int(),
+})
+
+const charitySelectionRequestSchema = z.object({
+  charityId: z.string(),
+  charityName: z.string(),
+})
+
+const charitySelectionResponseSchema = z.object({
+  charityId: z.string().nullable(),
+  charityName: z.string().nullable(),
+})
+
+const NonprofitListResponseSchema = z.object({ data: nonprofitListSchema })
+const CharitySelectionResponseSchema = z.object({ data: charitySelectionResponseSchema })
+
+// ── GET /v1/charities/default ─────────────────────────────────────────────────
+// Returns the user's current default charity selection.
+// CRITICAL: Must be registered BEFORE GET /v1/charities/:charityId (specific before parameterized).
+
+const getDefaultCharityRoute = createRoute({
+  method: 'get',
+  path: '/v1/charities/default',
+  tags: ['Charity'],
+  summary: "Get the user's default charity",
+  description:
+    "Returns the user's currently selected default charity for commitment stakes. " +
+    'Stub implementation (Story 6.3).',
+  responses: {
+    200: {
+      content: { 'application/json': { schema: CharitySelectionResponseSchema } },
+      description: 'Default charity selection',
+    },
+  },
+})
+
+app.openapi(getDefaultCharityRoute, async (c) => {
+  // TODO(impl): query commitment_contracts for userId = JWT sub; return charityId + charityName
+  return c.json(ok({ charityId: null, charityName: null }), 200)
+})
+
+// ── PUT /v1/charities/default ─────────────────────────────────────────────────
+// Sets the user's default charity for future stakes.
+
+const putDefaultCharityRoute = createRoute({
+  method: 'put',
+  path: '/v1/charities/default',
+  tags: ['Charity'],
+  summary: "Set the user's default charity",
+  description:
+    "Persists the user's selected charity as their default for commitment stakes. " +
+    'Stub implementation (Story 6.3).',
+  request: {
+    body: { content: { 'application/json': { schema: charitySelectionRequestSchema } }, required: true },
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: CharitySelectionResponseSchema } },
+      description: 'Default charity updated',
+    },
+  },
+})
+
+app.openapi(putDefaultCharityRoute, async (c) => {
+  const body = c.req.valid('json')
+  // TODO(impl): upsert commitment_contracts.charityId and commitment_contracts.charityName for userId = JWT sub
+  return c.json(ok({ charityId: body.charityId, charityName: body.charityName }), 200)
+})
+
+// ── GET /v1/charities ─────────────────────────────────────────────────────────
+// Search or browse nonprofits from Every.org.
+
+const getCharitiesRoute = createRoute({
+  method: 'get',
+  path: '/v1/charities',
+  tags: ['Charity'],
+  summary: 'Search or browse nonprofits',
+  description:
+    'Returns a list of nonprofits from the Every.org catalog. Supports filtering by search query and category. ' +
+    'Stub implementation (Story 6.3).',
+  request: {
+    query: z.object({
+      search: z.string().optional(),
+      category: z.string().optional(),
+    }),
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: NonprofitListResponseSchema } },
+      description: 'Nonprofit list',
+    },
+  },
+})
+
+// Stub nonprofit catalog — returns valid-looking data so Flutter UI renders correctly.
+// TODO(impl): proxy to Every.org search API — GET https://api.every.org/v0.2/search/{query}?apiKey=ENV
+//             fallback to browse endpoint for empty query; filter by category if provided
+//             NEVER log apiKey
+const _stubNonprofits = [
+  { id: 'american-red-cross', name: 'American Red Cross', description: 'Emergency response and disaster relief.', logoUrl: null, categories: ['Health'] },
+  { id: 'doctors-without-borders', name: 'Doctors Without Borders', description: 'Medical aid in crisis zones.', logoUrl: null, categories: ['Health'] },
+  { id: 'world-wildlife-fund', name: 'World Wildlife Fund', description: 'Conservation of nature and wildlife.', logoUrl: null, categories: ['Environment'] },
+  { id: 'unicef', name: 'UNICEF', description: "Children's rights and emergency relief worldwide.", logoUrl: null, categories: ['Human Rights'] },
+  { id: 'electronic-frontier-foundation', name: 'Electronic Frontier Foundation', description: 'Digital rights and civil liberties.', logoUrl: null, categories: ['Human Rights'] },
+]
+
+app.openapi(getCharitiesRoute, async (c) => {
+  return c.json(ok({ nonprofits: _stubNonprofits, total: _stubNonprofits.length }), 200)
+})
+
 export { app as commitmentContractsRouter }

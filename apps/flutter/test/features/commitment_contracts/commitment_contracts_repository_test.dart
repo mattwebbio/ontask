@@ -414,4 +414,234 @@ void main() {
       expect(captured.single, equals(expectedPath));
     });
   });
+
+  // ── searchCharities ───────────────────────────────────────────────────────
+
+  group('CommitmentContractsRepository.searchCharities (Story 6.3)', () {
+    test('fires GET /v1/charities with no params and maps nonprofit list', () async {
+      final mockDio = MockDio();
+      final mockClient = MockApiClient();
+      when(() => mockClient.dio).thenReturn(mockDio);
+
+      const expectedPath = '/v1/charities';
+
+      when(
+        () => mockDio.get<Map<String, dynamic>>(
+          any(),
+          queryParameters: any(named: 'queryParameters'),
+        ),
+      ).thenAnswer(
+        (_) async => Response(
+          requestOptions: RequestOptions(path: expectedPath),
+          statusCode: 200,
+          data: {
+            'data': {
+              'nonprofits': [
+                {
+                  'id': 'american-red-cross',
+                  'name': 'American Red Cross',
+                  'description': 'Emergency response and disaster relief.',
+                  'logoUrl': null,
+                  'categories': ['Health'],
+                },
+              ],
+              'total': 1,
+            },
+          },
+        ),
+      );
+
+      final repo = CommitmentContractsRepository(mockClient);
+      final results = await repo.searchCharities();
+
+      final captured = verify(
+        () => mockDio.get<Map<String, dynamic>>(
+          captureAny(),
+          queryParameters: any(named: 'queryParameters'),
+        ),
+      ).captured;
+      expect(captured.single, equals(expectedPath));
+
+      expect(results.length, equals(1));
+      expect(results.first.id, equals('american-red-cross'));
+      expect(results.first.name, equals('American Red Cross'));
+      expect(results.first.categories, equals(['Health']));
+    });
+
+    test("fires GET /v1/charities?search=red+cross when query='red cross'", () async {
+      final mockDio = MockDio();
+      final mockClient = MockApiClient();
+      when(() => mockClient.dio).thenReturn(mockDio);
+
+      Map<String, dynamic>? capturedQueryParams;
+
+      when(
+        () => mockDio.get<Map<String, dynamic>>(
+          any(),
+          queryParameters: any(named: 'queryParameters'),
+        ),
+      ).thenAnswer((invocation) async {
+        capturedQueryParams = invocation.namedArguments[const Symbol('queryParameters')]
+            as Map<String, dynamic>?;
+        return Response(
+          requestOptions: RequestOptions(path: '/v1/charities'),
+          statusCode: 200,
+          data: {
+            'data': {'nonprofits': [], 'total': 0},
+          },
+        );
+      });
+
+      final repo = CommitmentContractsRepository(mockClient);
+      await repo.searchCharities(query: 'red cross');
+
+      expect(capturedQueryParams, isNotNull);
+      expect(capturedQueryParams!['search'], equals('red cross'));
+    });
+
+    test("fires GET /v1/charities?category=Health when category='Health'", () async {
+      final mockDio = MockDio();
+      final mockClient = MockApiClient();
+      when(() => mockClient.dio).thenReturn(mockDio);
+
+      Map<String, dynamic>? capturedQueryParams;
+
+      when(
+        () => mockDio.get<Map<String, dynamic>>(
+          any(),
+          queryParameters: any(named: 'queryParameters'),
+        ),
+      ).thenAnswer((invocation) async {
+        capturedQueryParams = invocation.namedArguments[const Symbol('queryParameters')]
+            as Map<String, dynamic>?;
+        return Response(
+          requestOptions: RequestOptions(path: '/v1/charities'),
+          statusCode: 200,
+          data: {
+            'data': {'nonprofits': [], 'total': 0},
+          },
+        );
+      });
+
+      final repo = CommitmentContractsRepository(mockClient);
+      await repo.searchCharities(category: 'Health');
+
+      expect(capturedQueryParams, isNotNull);
+      expect(capturedQueryParams!['category'], equals('Health'));
+    });
+  });
+
+  // ── getDefaultCharity ─────────────────────────────────────────────────────
+
+  group('CommitmentContractsRepository.getDefaultCharity (Story 6.3)', () {
+    test('fires GET /v1/charities/default and maps charityId + charityName', () async {
+      final mockDio = MockDio();
+      final mockClient = MockApiClient();
+      when(() => mockClient.dio).thenReturn(mockDio);
+
+      const expectedPath = '/v1/charities/default';
+
+      when(
+        () => mockDio.get<Map<String, dynamic>>(any()),
+      ).thenAnswer(
+        (_) async => Response(
+          requestOptions: RequestOptions(path: expectedPath),
+          statusCode: 200,
+          data: {
+            'data': {
+              'charityId': 'american-red-cross',
+              'charityName': 'American Red Cross',
+            },
+          },
+        ),
+      );
+
+      final repo = CommitmentContractsRepository(mockClient);
+      final result = await repo.getDefaultCharity();
+
+      final captured =
+          verify(() => mockDio.get<Map<String, dynamic>>(captureAny())).captured;
+      expect(captured.single, equals(expectedPath));
+      expect(result.charityId, equals('american-red-cross'));
+      expect(result.charityName, equals('American Red Cross'));
+    });
+
+    test('maps charityId and charityName as null when no default set', () async {
+      final mockDio = MockDio();
+      final mockClient = MockApiClient();
+      when(() => mockClient.dio).thenReturn(mockDio);
+
+      when(
+        () => mockDio.get<Map<String, dynamic>>(any()),
+      ).thenAnswer(
+        (_) async => Response(
+          requestOptions: RequestOptions(path: '/v1/charities/default'),
+          statusCode: 200,
+          data: {
+            'data': {'charityId': null, 'charityName': null},
+          },
+        ),
+      );
+
+      final repo = CommitmentContractsRepository(mockClient);
+      final result = await repo.getDefaultCharity();
+
+      expect(result.charityId, isNull);
+      expect(result.charityName, isNull);
+    });
+  });
+
+  // ── setDefaultCharity ─────────────────────────────────────────────────────
+
+  group('CommitmentContractsRepository.setDefaultCharity (Story 6.3)', () {
+    test(
+        "fires PUT /v1/charities/default with correct body for 'American Red Cross'",
+        () async {
+      final mockDio = MockDio();
+      final mockClient = MockApiClient();
+      when(() => mockClient.dio).thenReturn(mockDio);
+
+      const expectedPath = '/v1/charities/default';
+      Map<String, dynamic>? capturedBody;
+
+      when(
+        () => mockDio.put<Map<String, dynamic>>(
+          any(),
+          data: any(named: 'data'),
+        ),
+      ).thenAnswer((invocation) async {
+        capturedBody =
+            invocation.namedArguments[const Symbol('data')] as Map<String, dynamic>;
+        return Response(
+          requestOptions: RequestOptions(path: expectedPath),
+          statusCode: 200,
+          data: {
+            'data': {
+              'charityId': 'american-red-cross',
+              'charityName': 'American Red Cross',
+            },
+          },
+        );
+      });
+
+      final repo = CommitmentContractsRepository(mockClient);
+      final result = await repo.setDefaultCharity(
+        'american-red-cross',
+        'American Red Cross',
+      );
+
+      final captured = verify(
+        () => mockDio.put<Map<String, dynamic>>(
+          captureAny(),
+          data: any(named: 'data'),
+        ),
+      ).captured;
+      expect(captured.single, equals(expectedPath));
+      expect(capturedBody, isNotNull);
+      expect(capturedBody!['charityId'], equals('american-red-cross'));
+      expect(capturedBody!['charityName'], equals('American Red Cross'));
+      expect(result.charityId, equals('american-red-cross'));
+      expect(result.charityName, equals('American Red Cross'));
+    });
+  });
 }

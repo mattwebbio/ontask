@@ -99,6 +99,13 @@
       "when": 1775057880892,
       "tag": "0013_stake_amount_cents",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1775059812255,
+      "tag": "0014_charity_selection",
+      "breakpoints": true
     }
   ]
 }

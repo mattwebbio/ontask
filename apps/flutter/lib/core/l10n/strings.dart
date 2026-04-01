@@ -841,4 +841,14 @@ class AppStrings {
   //       AppStrings.dialogErrorTitle already exist — do NOT recreate.
   // NOTE: AppStrings.nowCardStakeLabel ('at stake') and
   //       AppStrings.chapterBreakStakeLabel already exist.
+
+  // ── Charity selection (FR26, UX-DR8) ──────────────────────────────────────
+  static const String charitySheetTitle = 'Choose a cause';
+  static const String charitySearchPlaceholder = 'Search nonprofits…';
+  static const String charityConfirmButton = 'Confirm';
+  static const String charitySelectCta = 'Choose a cause';
+  static const String charityChangeCta = 'Change';
+  static const String charityLoadError = 'Could not load nonprofits. Please try again.';
+  static const String charitySetError = 'Could not save your charity selection. Please try again.';
+  static const String charitySearchEmpty = 'No nonprofits found. Try a different search.';
 }
