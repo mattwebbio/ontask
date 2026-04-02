@@ -9,6 +9,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../notifications/presentation/notification_centre_screen.dart';
 import '../../search/presentation/search_screen.dart';
 import '../../settings/presentation/settings_screen.dart';
+import '../../subscriptions/presentation/trial_countdown_banner.dart';
 import 'add_tab_sheet.dart';
 import 'macos_shell.dart';
 import 'shell_providers.dart';
@@ -111,95 +112,102 @@ class _AppShellState extends ConsumerState<AppShell> {
       }
     });
 
-    return CupertinoTabScaffold(
-      controller: _tabController,
-      tabBar: CupertinoTabBar(
-        activeColor: colors.accentPrimary,
-        onTap: _onTabTapped,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(CupertinoIcons.clock),
-            label: 'Now',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(CupertinoIcons.list_bullet),
-            label: 'Today',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(CupertinoIcons.add_circled),
-            label: 'Add',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(CupertinoIcons.collections),
-            label: 'Lists',
-          ),
-        ],
-      ),
-      tabBuilder: (context, index) {
-        // Wrap the navigation shell in a scaffold that includes a persistent
-        // navigation header with the settings (profile) icon (UX spec: "Settings
-        // accessible via profile/account icon in the navigation header").
-        return CupertinoPageScaffold(
-          navigationBar: CupertinoNavigationBar(
-            backgroundColor: colors.surfacePrimary,
-            middle: const Text('On Task'),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Bell icon with unread badge
-                Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    CupertinoButton(
-                      padding: EdgeInsets.zero,
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          CupertinoPageRoute<void>(
-                            builder: (_) => const NotificationCentreScreen(),
-                          ),
-                        );
-                      },
-                      child: Icon(
-                        CupertinoIcons.bell,
-                        color: colors.accentPrimary,
-                      ),
-                    ),
-                    // impl(8.5): unread badge — watch notificationHistoryProvider,
-                    //            show filled red dot with count when unreadCount > 0.
-                    //            Pattern: Consumer(builder: (ctx, ref, _) { ... })
-                    //            Place badge at top-right of bell icon using Positioned.
-                  ],
+    return Column(
+      children: [
+        const TrialCountdownBanner(),
+        Expanded(
+          child: CupertinoTabScaffold(
+            controller: _tabController,
+            tabBar: CupertinoTabBar(
+              activeColor: colors.accentPrimary,
+              onTap: _onTabTapped,
+              items: const [
+                BottomNavigationBarItem(
+                  icon: Icon(CupertinoIcons.clock),
+                  label: 'Now',
                 ),
-                CupertinoButton(
-                  padding: EdgeInsets.zero,
-                  onPressed: () => Navigator.of(context).push(
-                    CupertinoPageRoute<void>(
-                      builder: (_) => const SearchScreen(),
-                    ),
-                  ),
-                  child: Icon(
-                    CupertinoIcons.search,
-                    color: colors.accentPrimary,
-                  ),
+                BottomNavigationBarItem(
+                  icon: Icon(CupertinoIcons.list_bullet),
+                  label: 'Today',
                 ),
-                CupertinoButton(
-                  padding: EdgeInsets.zero,
-                  onPressed: () => Navigator.of(context).push(
-                    CupertinoPageRoute<void>(
-                      builder: (_) => const SettingsScreen(),
-                    ),
-                  ),
-                  child: Icon(
-                    CupertinoIcons.person_crop_circle,
-                    color: colors.accentPrimary,
-                  ),
+                BottomNavigationBarItem(
+                  icon: Icon(CupertinoIcons.add_circled),
+                  label: 'Add',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(CupertinoIcons.collections),
+                  label: 'Lists',
                 ),
               ],
             ),
+            tabBuilder: (context, index) {
+              // Wrap the navigation shell in a scaffold that includes a persistent
+              // navigation header with the settings (profile) icon (UX spec: "Settings
+              // accessible via profile/account icon in the navigation header").
+              return CupertinoPageScaffold(
+                navigationBar: CupertinoNavigationBar(
+                  backgroundColor: colors.surfacePrimary,
+                  middle: const Text('On Task'),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Bell icon with unread badge
+                      Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          CupertinoButton(
+                            padding: EdgeInsets.zero,
+                            onPressed: () {
+                              Navigator.of(context).push(
+                                CupertinoPageRoute<void>(
+                                  builder: (_) => const NotificationCentreScreen(),
+                                ),
+                              );
+                            },
+                            child: Icon(
+                              CupertinoIcons.bell,
+                              color: colors.accentPrimary,
+                            ),
+                          ),
+                          // impl(8.5): unread badge — watch notificationHistoryProvider,
+                          //            show filled red dot with count when unreadCount > 0.
+                          //            Pattern: Consumer(builder: (ctx, ref, _) { ... })
+                          //            Place badge at top-right of bell icon using Positioned.
+                        ],
+                      ),
+                      CupertinoButton(
+                        padding: EdgeInsets.zero,
+                        onPressed: () => Navigator.of(context).push(
+                          CupertinoPageRoute<void>(
+                            builder: (_) => const SearchScreen(),
+                          ),
+                        ),
+                        child: Icon(
+                          CupertinoIcons.search,
+                          color: colors.accentPrimary,
+                        ),
+                      ),
+                      CupertinoButton(
+                        padding: EdgeInsets.zero,
+                        onPressed: () => Navigator.of(context).push(
+                          CupertinoPageRoute<void>(
+                            builder: (_) => const SettingsScreen(),
+                          ),
+                        ),
+                        child: Icon(
+                          CupertinoIcons.person_crop_circle,
+                          color: colors.accentPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                child: widget.navigationShell,
+              );
+            },
           ),
-          child: widget.navigationShell,
-        );
-      },
+        ),
+      ],
     );
   }
 }

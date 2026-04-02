@@ -15,6 +15,7 @@ import { sharingRouter } from './routes/sharing.js'
 import { commitmentContractsRouter } from './routes/commitment-contracts.js'
 import { proofRouter } from './routes/proof.js'
 import { notificationsRouter } from './routes/notifications.js'
+import { subscriptionsRouter } from './routes/subscriptions.js'
 import { chargeTriggerConsumer } from './queues/charge-trigger-consumer.js'
 import { everyOrgConsumer } from './queues/every-org-consumer.js'
 import { triggerOverdueCharges } from './lib/charge-scheduler.js'
@@ -76,6 +77,7 @@ app.route('/', sharingRouter)
 app.route('/', commitmentContractsRouter)
 app.route('/', proofRouter)
 app.route('/', notificationsRouter)
+app.route('/', subscriptionsRouter)
 
 // ── OpenAPI documentation ──────────────────────────────────────────────────
 app.doc('/v1/doc', {

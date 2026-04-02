@@ -70,6 +70,15 @@ const appleRoute = createRoute({
 app.openapi(appleRoute, async (c) => {
   // TODO(impl): Verify Apple identity token with Apple's public keys,
   // upsert user record via Drizzle (casing: 'camelCase'), issue JWT + refresh token.
+  // TODO(impl): On NEW user creation (not existing user sign-in):
+  //   1. INSERT into users (id, email, createdAt, ...)
+  //   2. INSERT into subscriptions:
+  //      { userId, status: 'trialing',
+  //        trialStartedAt: NOW(),
+  //        trialEndsAt: NOW() + INTERVAL '14 days',
+  //        dataRetentionDeadline: NOW() + INTERVAL '44 days'  // 14 trial + 30 retention
+  //      }
+  //   Note: dataRetentionDeadline = trialEndsAt + 30 days for post-trial data retention (FR85)
   const _body = c.req.valid('json')
   return c.json(
     ok({
@@ -117,6 +126,15 @@ const googleRoute = createRoute({
 app.openapi(googleRoute, async (c) => {
   // TODO(impl): Verify Google ID token with Google's tokeninfo endpoint or JWKS,
   // upsert user record via Drizzle (casing: 'camelCase'), issue JWT + refresh token.
+  // TODO(impl): On NEW user creation (not existing user sign-in):
+  //   1. INSERT into users (id, email, createdAt, ...)
+  //   2. INSERT into subscriptions:
+  //      { userId, status: 'trialing',
+  //        trialStartedAt: NOW(),
+  //        trialEndsAt: NOW() + INTERVAL '14 days',
+  //        dataRetentionDeadline: NOW() + INTERVAL '44 days'  // 14 trial + 30 retention
+  //      }
+  //   Note: dataRetentionDeadline = trialEndsAt + 30 days for post-trial data retention (FR85)
   const _body = c.req.valid('json')
   return c.json(
     ok({
@@ -165,6 +183,15 @@ const emailRoute = createRoute({
 app.openapi(emailRoute, async (c) => {
   // TODO(impl): Look up user by email, verify bcrypt hash, issue JWT + refresh token.
   // Return INVALID_CREDENTIALS for both unknown email and wrong password (prevent enumeration).
+  // TODO(impl): On NEW user creation (not existing user sign-in):
+  //   1. INSERT into users (id, email, createdAt, ...)
+  //   2. INSERT into subscriptions:
+  //      { userId, status: 'trialing',
+  //        trialStartedAt: NOW(),
+  //        trialEndsAt: NOW() + INTERVAL '14 days',
+  //        dataRetentionDeadline: NOW() + INTERVAL '44 days'  // 14 trial + 30 retention
+  //      }
+  //   Note: dataRetentionDeadline = trialEndsAt + 30 days for post-trial data retention (FR85)
   const _body = c.req.valid('json')
   return c.json(
     err(
