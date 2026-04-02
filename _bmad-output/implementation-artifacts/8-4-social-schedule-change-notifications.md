@@ -424,6 +424,13 @@ None.
 - apps/flutter/lib/features/notifications/presentation/notification_handler.dart
 - _bmad-output/implementation-artifacts/8-4-social-schedule-change-notifications.md
 
+### Review Findings
+
+- [ ] [Review][Patch] `triggerScheduleChangeNotifications` stub comment recommends `''` for taskId but `shouldSendNotification` equality-matches taskId — a `scope='task'` preference row with `taskId=''` would incorrectly suppress the notification; recommend `null` or documenting that no task-level preference applies [`apps/api/src/lib/notification-scheduler.ts` — TODO(impl) comment block]
+- [x] [Review][Defer] `buildSocialCompletionBody` no guard for empty `taskTitle` — yields trailing space; pre-existing pattern across all pure helpers in this file [`apps/api/src/lib/notification-scheduler.ts:126`] — deferred, pre-existing
+- [x] [Review][Defer] `triggerScheduleChangeNotifications` has no call site wired — acceptable for stub story; same pattern as `triggerStakeWarningNotifications` [`apps/api/src/lib/notification-scheduler.ts`] — deferred, pre-existing
+- [x] [Review][Defer] Manually faked `.g.dart` hash causes `build_runner` regeneration on local dev — pre-existing from Story 8.2 [`apps/flutter/lib/features/notifications/presentation/notification_handler.g.dart:54`] — deferred, pre-existing
+
 ## Change Log
 
 - 2026-04-01: Story 8.4 implemented — added `buildSocialCompletionBody` and `buildScheduleChangeBody` pure helpers, `triggerScheduleChangeNotifications` dispatch stub, social notification TODO(impl) in task completion handler, 8 new tests (258 total, all passing), `AppStrings` notification copy for both new types, and `impl(8.4):` stubs in `NotificationHandler`. Status set to review.
