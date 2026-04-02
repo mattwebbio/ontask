@@ -429,19 +429,19 @@ app.post('/tools/complete-task', async (c) => {
 // Required scope: contracts:write
 
 app.post('/tools/create-contract', async (c) => {
-  const { userId, scopes } = c.get('mcpAuth')
-  if (!requireScope(scopes, 'contracts:write')) {
-    return c.json(
-      { content: [{ type: 'text', text: JSON.stringify({ error: { code: 'FORBIDDEN', message: 'contracts:write scope required' } }) }], isError: true },
-      403,
-    )
-  }
-
   const apiBinding = c.env.API
   if (!apiBinding) {
     return c.json(
       { content: [{ type: 'text', text: JSON.stringify({ error: { code: 'SERVICE_BINDING_UNAVAILABLE', message: 'API service binding is not configured' } }) }], isError: true },
       503,
+    )
+  }
+
+  const { userId, scopes } = c.get('mcpAuth')
+  if (!requireScope(scopes, 'contracts:write')) {
+    return c.json(
+      { content: [{ type: 'text', text: JSON.stringify({ error: { code: 'FORBIDDEN', message: 'contracts:write scope required' } }) }], isError: true },
+      403,
     )
   }
 

@@ -51,8 +51,7 @@ describe('POST /v1/contracts', () => {
       }),
     })
 
-    expect(res.status).toBeGreaterThanOrEqual(400)
-    expect(res.status).toBeLessThan(500)
+    expect(res.status).toBe(400)
   })
 
   it('with non-UUID taskId returns 422 validation error', async () => {
@@ -68,8 +67,7 @@ describe('POST /v1/contracts', () => {
       }),
     })
 
-    expect(res.status).toBeGreaterThanOrEqual(400)
-    expect(res.status).toBeLessThan(500)
+    expect(res.status).toBe(400)
   })
 
   it('with negative stakeAmountCents returns 422 validation error', async () => {
@@ -85,8 +83,7 @@ describe('POST /v1/contracts', () => {
       }),
     })
 
-    expect(res.status).toBeGreaterThanOrEqual(400)
-    expect(res.status).toBeLessThan(500)
+    expect(res.status).toBe(400)
   })
 
   it('with zero stakeAmountCents returns 422 validation error', async () => {
@@ -102,8 +99,7 @@ describe('POST /v1/contracts', () => {
       }),
     })
 
-    expect(res.status).toBeGreaterThanOrEqual(400)
-    expect(res.status).toBeLessThan(500)
+    expect(res.status).toBe(400)
   })
 
   it('with missing charityId returns 422 validation error', async () => {
@@ -120,8 +116,7 @@ describe('POST /v1/contracts', () => {
       }),
     })
 
-    expect(res.status).toBeGreaterThanOrEqual(400)
-    expect(res.status).toBeLessThan(500)
+    expect(res.status).toBe(400)
   })
 
   it('with missing deadline returns 422 validation error', async () => {
@@ -138,7 +133,6 @@ describe('POST /v1/contracts', () => {
       }),
     })
 
-    expect(res.status).toBeGreaterThanOrEqual(400)
-    expect(res.status).toBeLessThan(500)
+    expect(res.status).toBe(400)
   })
 })

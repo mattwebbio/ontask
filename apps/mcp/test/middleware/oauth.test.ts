@@ -231,6 +231,7 @@ describe('requireScope', () => {
   it('returns false when required scope is not present', () => {
     expect(requireScope(['tasks:read'], 'tasks:write')).toBe(false)
     expect(requireScope(['tasks:read'], 'contracts:read')).toBe(false)
+    expect(requireScope(['tasks:read', 'tasks:write'], 'contracts:write')).toBe(false)
   })
 
   it('returns false for empty scopes array', () => {
