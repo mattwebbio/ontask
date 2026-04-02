@@ -2,7 +2,9 @@
   "$schema": "../../node_modules/wrangler/config-schema.json",
   "name": "admin-api",
   "main": "src/index.ts",
-  "compatibility_date": "2026-03-29"
+  "compatibility_date": "2026-03-29",
+  // "vars": {},
+  // Workers Secrets (not committed): DATABASE_URL, ADMIN_JWT_SECRET
   // "compatibility_flags": [
   //   "nodejs_compat"
   // ],

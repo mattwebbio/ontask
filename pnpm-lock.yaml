@@ -39,10 +39,28 @@ importers:
 
   apps/admin-api:
     dependencies:
+      '@hono/zod-openapi':
+        specifier: ^1.2.4
+        version: 1.2.4(hono@4.12.9)(zod@4.3.6)
+      '@neondatabase/serverless':
+        specifier: ^1.0.2
+        version: 1.0.2
+      '@ontask/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      drizzle-orm:
+        specifier: ^0.45.2
+        version: 0.45.2(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.0)(@types/pg@8.20.0)
       hono:
         specifier: ^4.12.9
         version: 4.12.9
+      zod:
+        specifier: ^4.3.6
+        version: 4.3.6
     devDependencies:
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.4(@types/node@22.19.15)(tsx@4.21.0)(yaml@2.8.3)
       wrangler:
         specifier: ^4.4.0
         version: 4.78.0

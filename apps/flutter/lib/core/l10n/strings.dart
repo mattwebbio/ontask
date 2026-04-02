@@ -1161,4 +1161,14 @@ class AppStrings {
 
   /// "Under review" label on the task card when a dispute is pending.
   static const String taskUnderReview = 'Under review';
+
+  // ── Dispute Resolution Notifications (FR41, FR42, Story 7.9) ────────────────
+
+  /// Push notification body when a dispute is approved (stake cancelled).
+  static const String disputeApprovedNotificationBody =
+      'Your dispute was approved \u2014 your stake is safe.';
+
+  /// Push notification body when a dispute is rejected (charge processed).
+  static const String disputeRejectedNotificationBody =
+      'Your dispute was reviewed \u2014 your stake has been charged.';
 }

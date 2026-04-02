@@ -4,12 +4,19 @@
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy --minify",
-    "cf-typegen": "wrangler types --env-interface CloudflareBindings"
+    "cf-typegen": "wrangler types --env-interface CloudflareBindings",
+    "test": "vitest run"
   },
   "dependencies": {
-    "hono": "^4.12.9"
+    "@hono/zod-openapi": "^1.2.4",
+    "@neondatabase/serverless": "^1.0.2",
+    "@ontask/core": "workspace:*",
+    "drizzle-orm": "^0.45.2",
+    "hono": "^4.12.9",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
+    "vitest": "^3.2.4",
     "wrangler": "^4.4.0"
   }
 }
