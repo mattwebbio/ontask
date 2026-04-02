@@ -1,0 +1,279 @@
+/* On Task — Marketing Landing Page Styles
+   Light mode only. System fonts only. No external resources.
+   Target: ≤ 10KB, LCP < 2.5s, CLS < 0.1
+*/
+
+/* ─── Custom Properties ─────────────────────────────────────────── */
+:root {
+  --bg-primary: #faf9f7;
+  --text-primary: #1c1c1e;
+  --text-secondary: #696969;
+  --accent: #c0704a;
+  --accent-dark: #a05a38;
+  --surface-card: #f2f0ed;
+  --border: #e0dcd8;
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  --container-max: 1100px;
+  --radius: 12px;
+}
+
+/* ─── Reset & Base ───────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font);
+  line-height: 1.6;
+}
+
+/* ─── Container ──────────────────────────────────────────────────── */
+.container {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+/* ─── Header ─────────────────────────────────────────────────────── */
+.site-header {
+  padding: 20px 0;
+  border-bottom: 1px solid var(--border);
+  background-color: var(--bg-primary);
+}
+
+.wordmark {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: -0.3px;
+}
+
+/* ─── Hero ───────────────────────────────────────────────────────── */
+#hero {
+  padding: 72px 0 64px;
+  text-align: center;
+}
+
+#hero h1 {
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.5px;
+  color: var(--text-primary);
+  margin-bottom: 20px;
+}
+
+.hero-value-prop {
+  font-size: 19px;
+  color: var(--text-secondary);
+  max-width: 620px;
+  margin: 0 auto 36px;
+  line-height: 1.55;
+}
+
+.btn-app-store {
+  display: inline-block;
+  text-decoration: none;
+  transition: filter 0.15s;
+}
+
+.btn-app-store:hover,
+.btn-app-store:focus {
+  filter: brightness(0.85);
+}
+
+.btn-app-store svg {
+  display: block;
+}
+
+/* ─── Section Shared ─────────────────────────────────────────────── */
+.section-title {
+  font-size: 30px;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 40px;
+  color: var(--text-primary);
+}
+
+/* ─── Features ───────────────────────────────────────────────────── */
+#features {
+  padding: 64px 0;
+  background-color: var(--surface-card);
+}
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+}
+
+.feature-card {
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px 24px;
+}
+
+.feature-card h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 12px;
+}
+
+.feature-card p {
+  font-size: 15px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* ─── Pricing ────────────────────────────────────────────────────── */
+#pricing {
+  padding: 64px 0;
+}
+
+.pricing-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+  margin-bottom: 40px;
+}
+
+.pricing-card {
+  background-color: var(--surface-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px 24px;
+}
+
+.pricing-card--featured {
+  border-color: var(--accent);
+  border-width: 2px;
+}
+
+.pricing-tier {
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.pricing-amount {
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+  line-height: 1.1;
+}
+
+.pricing-period {
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+.pricing-amount--soon {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.pricing-description {
+  font-size: 15px;
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+
+.pricing-cta {
+  text-align: center;
+}
+
+.btn-primary {
+  display: inline-block;
+  background-color: var(--accent);
+  color: #ffffff;
+  text-decoration: none;
+  padding: 14px 28px;
+  font-size: 17px;
+  font-weight: 600;
+  font-family: var(--font);
+  border-radius: 10px;
+  transition: filter 0.15s;
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+  filter: brightness(0.9);
+}
+
+/* ─── Footer ─────────────────────────────────────────────────────── */
+.site-footer {
+  padding: 32px 0;
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+
+.site-footer p {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.site-footer a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.site-footer a:hover,
+.site-footer a:focus {
+  text-decoration: underline;
+}
+
+/* ─── Responsive: Tablet & Desktop (≥ 768px) ─────────────────────── */
+@media (min-width: 768px) {
+  .container {
+    padding: 0 32px;
+  }
+
+  #hero h1 {
+    font-size: 60px;
+  }
+
+  .feature-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .pricing-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ─── Mobile adjustments (≤ 767px) ──────────────────────────────── */
+@media (max-width: 767px) {
+  #hero {
+    padding: 48px 0 40px;
+  }
+
+  #hero h1 {
+    font-size: 36px;
+  }
+
+  .hero-value-prop {
+    font-size: 16px;
+  }
+
+  .btn-primary {
+    width: 100%;
+    text-align: center;
+  }
+}
