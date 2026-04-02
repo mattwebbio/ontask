@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy — On Task</title>
+  <meta name="robots" content="noindex" />
+  <link rel="stylesheet" href="../style.css" />
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="container">
+      <a href="/" class="wordmark" style="text-decoration:none;">On Task</a>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <article class="prose">
+
+        <h1>Privacy Policy</h1>
+        <p class="prose-meta">Effective date: April 2, 2026 &nbsp;·&nbsp; Last updated: April 2, 2026</p>
+
+        <h2>1. Introduction</h2>
+        <p>
+          On Task is operated by <!-- TODO(legal): insert legal entity name --> and is available at
+          <a href="https://ontaskhq.com">ontaskhq.com</a>. This Privacy Policy describes how we collect, use,
+          and handle your information when you use the On Task iOS app and website.
+        </p>
+        <p>
+          On Task is currently a US-only service. If you have questions or concerns about this policy,
+          please contact us at <a href="mailto:privacy@ontaskhq.com">privacy@ontaskhq.com</a>.
+        </p>
+
+        <h2>2. Information We Collect</h2>
+
+        <p><strong>Account Information</strong></p>
+        <p>
+          When you register, we collect your email address and display name. This information is required
+          to create and manage your account.
+        </p>
+
+        <p><strong>Task and Schedule Data</strong></p>
+        <p>
+          We store your tasks, subtasks, sections, lists, due dates, priorities, completion status, and
+          scheduling preferences on our servers. This data is required to power intelligent scheduling
+          and to sync your tasks across devices.
+        </p>
+
+        <p><strong>Calendar Data</strong></p>
+        <p>
+          If you grant calendar access, On Task reads your calendar events to avoid scheduling conflicts
+          and writes new time blocks when tasks are scheduled. This access uses Apple EventKit (for Apple
+          Calendar) or Google Calendar OAuth (for Google Calendar). Calendar content is not retained
+          beyond the active scheduling operation.
+        </p>
+
+        <p><strong>Commitment Contract Data</strong></p>
+        <p>
+          When you create a commitment contract, we store your chosen stake amount, selected charity,
+          task deadline, and charge history. On Task uses Stripe to store your payment method as a
+          SetupIntent token. <strong>On Task never receives or stores your raw card number</strong> —
+          all payment data is handled by Stripe under PCI SAQ A scope.
+        </p>
+
+        <p><strong>Proof Media (Photo and Video)</strong></p>
+        <p>
+          When you submit photo or video proof for a staked task, the media is processed by our AI model
+          to verify task completion. At submission, you are offered the option to "Attach to completed
+          task." If you select this option, the media is retained as a completion record for the lifetime
+          of the task. If you do not select this option, the media is permanently deleted immediately
+          after verification.
+        </p>
+
+        <p><strong>Watch Mode Camera Data</strong></p>
+        <p>
+          During a Watch Mode focus session, individual video frames from your Apple Watch camera are
+          processed in-flight by our AI model to verify that you are present and working.
+          <strong>Frames are never stored.</strong> We retain only session metadata: start time, end time,
+          associated task, and verification result.
+        </p>
+
+        <p><strong>HealthKit Data</strong></p>
+        <p>
+          If you grant HealthKit permission, On Task reads specific health metrics (such as activity data)
+          solely to verify completion of health-related tasks. This data is not shared with any third party
+          and is not retained beyond the verification event.
+        </p>
+
+        <p><strong>Usage Data</strong></p>
+        <p>
+          We collect app interaction logs, crash reports, and performance diagnostics via standard iOS
+          crash reporting. This data is used to fix bugs and improve the app.
+        </p>
+
+        <h2>3. How We Use Your Information</h2>
+        <ul>
+          <li>Operate and provide the On Task service, including intelligent scheduling and task management</li>
+          <li>Process commitment contract charges and disburse penalties to your chosen charity</li>
+          <li>Verify task completion via AI-based proof review (photo, video, Watch Mode, HealthKit)</li>
+          <li>Sync your tasks with your calendar</li>
+          <li>Communicate with you about your account, transactions, and service updates</li>
+          <li>Diagnose issues and improve the performance and reliability of the app</li>
+        </ul>
+
+        <h2>4. Third-Party Services</h2>
+        <ul>
+          <li>
+            <strong>Stripe</strong> — payment processing and card tokenization. On Task uses Stripe for all
+            financial transactions. Your payment data is governed by
+            <a href="https://stripe.com/privacy" target="_blank" rel="noopener">Stripe's Privacy Policy</a>.
+            On Task never receives or stores raw card numbers.
+          </li>
+          <li>
+            <strong>Every.org</strong> — charity disbursement. When a commitment contract penalty is
+            triggered, 50% of the charge amount is disbursed to your chosen charity via Every.org.
+            Disbursement data (amount and charity name) is shared with Every.org for processing.
+          </li>
+          <li>
+            <strong>Google Calendar</strong> (optional) — if you connect Google Calendar, On Task reads
+            and writes to your calendar via OAuth. Your Google Calendar data is governed by
+            <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google's Privacy Policy</a>.
+            On Task does not retain calendar content beyond active scheduling operations.
+          </li>
+          <li>
+            <strong>Apple HealthKit</strong> (optional) — health data is read via HealthKit solely for
+            proof verification of health-related tasks. This data is not shared with any third party and
+            is not retained beyond the verification event.
+          </li>
+          <li>
+            <strong>Apple Watch</strong> (optional) — Watch Mode uses the Watch camera for passive focus
+            session monitoring. Frame data is processed in-flight and is never stored.
+          </li>
+        </ul>
+
+        <h2>5. Data Retention</h2>
+        <ul>
+          <li><strong>Task and account data</strong> — retained for the lifetime of your account</li>
+          <li><strong>Proof media (attached to task)</strong> — retained until the associated task is deleted</li>
+          <li><strong>Proof media (not attached)</strong> — deleted immediately after AI verification</li>
+          <li><strong>Watch Mode frames</strong> — never stored; only session metadata is retained</li>
+          <li><strong>HealthKit data</strong> — not retained beyond the verification event</li>
+          <li>
+            <strong>Payment tokens and charge records</strong> — payment method tokens are managed by Stripe.
+            On Task retains charge records (amount, date, task, charity) for legal and tax compliance purposes.
+          </li>
+          <li>
+            <strong>After account deletion</strong> — all personal data is permanently deleted within 30 days,
+            except where retention is required by law (e.g., financial transaction records).
+          </li>
+        </ul>
+
+        <h2>6. Your Rights</h2>
+        <ul>
+          <li>
+            <strong>Access</strong> — you can view your data within the On Task app at any time.
+          </li>
+          <li>
+            <strong>Export</strong> — you can request an export of your personal data by emailing
+            <a href="mailto:privacy@ontaskhq.com">privacy@ontaskhq.com</a>.
+          </li>
+          <li>
+            <strong>Deletion</strong> — you can delete your account via Settings → Account → Delete Account.
+            All personal data is permanently deleted within 30 days. Commitment contract charge records may
+            be retained as required by law.
+          </li>
+          <li>
+            <strong>Correction</strong> — contact <a href="mailto:privacy@ontaskhq.com">privacy@ontaskhq.com</a>
+            to correct inaccurate personal data.
+          </li>
+          <li>
+            <strong>California residents (CCPA)</strong> — you have the right to know what personal
+            information is collected, to request deletion, and to opt out of the sale of your data.
+            On Task does not sell personal data.
+          </li>
+          <li>
+            <strong>GDPR (EU/UK users)</strong> — On Task is currently a US-only service. If you are in
+            the EU or UK, please be aware that GDPR-specific protections are not yet fully implemented.
+            Contact <a href="mailto:privacy@ontaskhq.com">privacy@ontaskhq.com</a> with any concerns.
+            <!-- TODO(legal): expand GDPR section before EU/UK launch -->
+          </li>
+        </ul>
+
+        <h2>7. Watch Mode &amp; Camera — Special Disclosure</h2>
+        <p>
+          Watch Mode is a focus tool that uses your Apple Watch camera as a digital body double — ambient
+          presence, not surveillance. During a Watch Mode session, the Watch camera periodically captures
+          individual frames of your work environment. These frames are analyzed by our AI model to verify
+          that you are present and working.
+        </p>
+        <p>
+          <strong>No video is recorded or stored.</strong> Individual frames are processed in-flight
+          and discarded immediately. The only data retained is session metadata: start time, end time,
+          the task being worked on, and the verification result.
+        </p>
+        <p>
+          Watch Mode is entirely opt-in. You choose it as your proof method when creating a staked task,
+          or as a standalone focus mode without any financial commitment.
+        </p>
+
+        <h2>8. HealthKit — Special Disclosure</h2>
+        <p>
+          On Task requests HealthKit access only when you choose HealthKit-verified proof for a specific
+          task, and only to verify that task's completion criteria (for example, confirming a workout
+          was logged). HealthKit data is read once for the verification event and is not retained.
+        </p>
+        <p>
+          <strong>HealthKit data is never used for advertising and is never shared with third parties.</strong>
+          On Task does not write to HealthKit.
+        </p>
+
+        <h2>9. Children's Privacy</h2>
+        <p>
+          On Task is not directed at children under the age of 13 and does not knowingly collect personal
+          information from children under 13. If you believe a child's data has been collected, please
+          contact us at <a href="mailto:privacy@ontaskhq.com">privacy@ontaskhq.com</a> and we will
+          promptly delete it.
+        </p>
+
+        <h2>10. Changes to This Policy</h2>
+        <p>
+          We may update this Privacy Policy from time to time. When we do, we will post the revised
+          policy on this page and update the "Last updated" date above. For material changes, we will
+          notify you via the app or by email.
+        </p>
+
+        <h2>11. Contact</h2>
+        <p>
+          Questions about this Privacy Policy? Contact us at
+          <a href="mailto:privacy@ontaskhq.com">privacy@ontaskhq.com</a>.
+        </p>
+
+      </article>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>© 2026 On Task &nbsp;·&nbsp; <a href="/privacy">Privacy Policy</a></p>
+    </div>
+  </footer>
+
+</body>
+</html>
