@@ -1,6 +1,6 @@
 # Story 11.2: Dispute Review & Resolution
 
-Status: review
+Status: in-progress
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -457,3 +457,16 @@ None — implementation completed cleanly on first pass.
 ### Change Log
 
 - 2026-04-02: Story 11.2 implementation complete. Created dispute queue list page and detail page for admin SPA; replaced stub DB handlers with real Drizzle ORM queries; added 2 new edge case tests. Total test count: 15 (was 13).
+
+---
+
+### Review Findings
+
+- [ ] [Review][Decision] AC1 dispute queue shows taskId not taskTitle — DisputesPage renders `Task ID: {dispute.taskId}`. The GET /admin/v1/disputes handler does not join the tasks table; `DisputeItemSchema` has no `taskTitle` field. AC1 explicitly requires task title in the queue. The spec Dev Notes accept taskId as a "placeholder until real DB" but the real DB path also omits the join. Needs a decision: accept as known gap for this story (defer), or patch the list endpoint and DisputesPage to include taskTitle via a task join.
+- [ ] [Review][Patch] resolvedByUserId stores operatorEmail string in UUID column — runtime Postgres type error [`apps/admin-api/src/routes/disputes.ts`]
+- [ ] [Review][Patch] Silent no-op on duplicate resolve: UPDATE returns 0 rows affected but handler returns 200 — no rowsAffected check after the update [`apps/admin-api/src/routes/disputes.ts`]
+- [ ] [Review][Patch] DisputeDetailPage: missing id param leaves loading state stuck forever — `if (!id) return` exits without calling `setLoading(false)` [`apps/admin/src/pages/DisputeDetailPage.tsx`]
+- [x] [Review][Defer] AC1: queue shows userId not userEmail [apps/admin-api/src/routes/disputes.ts] — deferred, pre-existing; spec explicitly accepts userId as placeholder
+- [x] [Review][Defer] AC3: Stripe charge cancellation/confirmation not implemented — deferred, pre-existing; explicitly deferred by story spec with TODO(impl) markers
+- [x] [Review][Defer] SLA threshold mismatch: AC says 24h trigger, code uses 18h/22h — deferred, pre-existing; intentional early-warning product decision documented in Dev Notes
+- [x] [Review][Defer] (c as any).get('operatorEmail') type cast — deferred, pre-existing; pre-existing OpenAPIHono Variables typing limitation documented in Dev Notes
