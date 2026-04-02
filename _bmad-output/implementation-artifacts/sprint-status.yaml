@@ -187,7 +187,7 @@ development_status:
   # ─────────────────────────────────────────────────────────
   epic-11: in-progress
   11-1-operator-authentication-dashboard-shell: done
-  11-2-dispute-review-resolution: review
+  11-2-dispute-review-resolution: done
   11-3-charge-reversal-refunds: backlog
   11-4-user-impersonation: backlog
   11-5-operator-alerts-business-event-monitoring: backlog
