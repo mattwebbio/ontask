@@ -32,7 +32,7 @@ import 'shell_providers.dart';
 /// iPad V1: Phone layout rendered centred — acceptable for V1 (UX-DR35).
 /// No LayoutBuilder breakpoint; single-column layout on all screen sizes.
 ///
-/// TODO(v1.1-ipad): Two-column layout upgrade path:
+/// v1.1-ipad: Two-column layout upgrade path:
 /// Use LayoutBuilder(builder: (context, constraints) {
 ///   if (constraints.maxWidth >= 600) {
 ///     return _iPadTwoColumnShell(navigationShell); // sidebar 240pt + content
