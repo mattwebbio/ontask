@@ -225,7 +225,7 @@ app.delete('/v1/mcp-tokens/:id', async (c) => {
   await db
     .update(mcpOauthTokensTable)
     .set({ revokedAt: new Date() })
-    .where(eq(mcpOauthTokensTable.id, tokenId))
+    .where(and(eq(mcpOauthTokensTable.id, tokenId), eq(mcpOauthTokensTable.userId, userId)))
 
   return new Response(null, { status: 204 })
 })

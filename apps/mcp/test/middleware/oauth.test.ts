@@ -172,6 +172,42 @@ describe('OAuth middleware', () => {
     expect(apiFetch).not.toHaveBeenCalled()
   })
 
+  it('returns 403 when valid token lacks required scope', async () => {
+    const apiFetch = makeApiResponse({
+      ok: true,
+      status: 200,
+      body: { data: { userId: 'user-uuid-123', scopes: ['tasks:read'] } },
+    })
+    // Build an app with a route that requires tasks:write
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const scopeApp = new Hono<{ Bindings: { API?: { fetch: (...args: any[]) => Promise<any> } } }>()
+    applyOauthMiddleware(scopeApp)
+    scopeApp.post('/tools/write-only', (c) => {
+      const { scopes } = c.get('mcpAuth')
+      if (!requireScope(scopes, 'tasks:write')) {
+        return c.json(
+          { content: [{ type: 'text', text: JSON.stringify({ error: { code: 'FORBIDDEN', message: 'tasks:write scope required' } }) }], isError: true },
+          403,
+        )
+      }
+      return c.json({ ok: true })
+    })
+
+    const res = await scopeApp.request(
+      '/tools/write-only',
+      { method: 'POST', headers: { Authorization: 'Bearer read-only-token' } },
+      { API: { fetch: apiFetch } },
+    )
+
+    expect(res.status).toBe(403)
+    const body = await res.json() as { content: Array<{ type: string; text: string }>; isError: boolean }
+    expect(body.isError).toBe(true)
+    const parsed = JSON.parse(body.content[0].text) as { error: { code: string } }
+    expect(parsed.error.code).toBe('FORBIDDEN')
+    // Token was valid — API was called to validate it
+    expect(apiFetch).toHaveBeenCalledOnce()
+  })
+
   it('does NOT apply to GET /tools (manifest discovery remains unauthenticated)', async () => {
     const apiFetch = makeApiResponse({ ok: true, status: 200, body: {} })
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

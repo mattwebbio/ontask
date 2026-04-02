@@ -207,7 +207,7 @@ app.get('/tools/get-commitment-status', async (c) => {
 
   if (!requireScope(scopes, 'contracts:read')) {
     return c.json(
-      { error: { code: 'FORBIDDEN', message: 'contracts:read scope required' } },
+      { content: [{ type: 'text', text: JSON.stringify({ error: { code: 'FORBIDDEN', message: 'contracts:read scope required' } }) }], isError: true },
       403,
     )
   }
