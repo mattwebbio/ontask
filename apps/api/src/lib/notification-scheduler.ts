@@ -119,6 +119,24 @@ export function buildDisputeFiledBody(taskTitle: string): string {
 }
 
 /**
+ * Build the social completion notification body copy (AC: 1, FR42).
+ * "[Name] completed [task title]"
+ * Example: "Jordan completed Morning workout"
+ */
+export function buildSocialCompletionBody(completedByName: string, taskTitle: string): string {
+  return `${completedByName} completed ${taskTitle}`
+}
+
+/**
+ * Build the schedule change notification body copy (AC: 2, FR42).
+ * "Your schedule was updated — [X] tasks were rescheduled"
+ * Example: "Your schedule was updated — 3 tasks were rescheduled"
+ */
+export function buildScheduleChangeBody(rescheduledCount: number): string {
+  return `Your schedule was updated — ${rescheduledCount} tasks were rescheduled`
+}
+
+/**
  * Build the dispute resolved notification body copy (affirming in both outcomes, UX-DR36).
  * AC 4 — approved: "[Task title] — dispute approved. Your $[amount] stake has been cancelled."
  *         rejected: "[Task title] — dispute reviewed. $[amount] charged. [Charity] receives $[charity amount]. Thanks for trying."
@@ -284,5 +302,44 @@ export async function triggerStakeWarningNotifications(env: CloudflareBindings):
   //          data: { taskId: task.id, type: 'stake_warning' },
   //        }
   //      }, env)
+  void env
+}
+
+/**
+ * Trigger schedule change notifications when scheduling engine detects ≥ 2 task moves.
+ * Called from the scheduling cron / runScheduleForUser post-run hook.
+ * (AC: 2, FR42, Story 8.4)
+ */
+export async function triggerScheduleChangeNotifications(env: CloudflareBindings): Promise<void> {
+  // TODO(impl): Trigger schedule change notifications when scheduling engine detects ≥ 2 task moves.
+  // This function is called from the scheduling cron / runScheduleForUser post-run hook.
+  //
+  // TODO(impl): const db = createDb(env.DATABASE_URL)
+  // TODO(impl): Query for users whose schedule was regenerated in the last cron window:
+  //   - Detect "meaningful changes" = hasMeaningfulChanges=true AND changeCount >= 2
+  //     (mirrors the hasMeaningfulChanges field in GET /v1/tasks/schedule-changes)
+  //   - Source: compare current schedule snapshot vs. previous snapshot stored per user
+  //     (storage mechanism TBD in Epic 3; for now document the intent)
+  //
+  // TODO(impl): For each user with meaningful changes:
+  //   1. Query device_tokens WHERE userId = userId
+  //   2. Query notification_preferences WHERE userId = userId
+  //   3. For each device token: enforce preferences using shouldSendNotification()
+  //      (no taskId for schedule-change notifications — pass '' or null; preference
+  //       check at global + device levels only, no per-task level applies here)
+  //   4. await sendPush({
+  //        deviceToken: token.token,
+  //        environment: token.environment,
+  //        payload: {
+  //          title: 'Schedule Updated',
+  //          body: buildScheduleChangeBody(changeCount),
+  //          data: { type: 'schedule_change', changeCount: String(changeCount) },
+  //        }
+  //      }, env)
+  //
+  // NOTE: Deep-link — data.type='schedule_change' should navigate to Today tab
+  //       with ScheduleChangeBannerVisible triggered (see notification_handler.dart).
+  // NOTE: Idempotency — store a schedule_change_notified_at timestamp per user
+  //       to avoid re-sending if cron fires again before next schedule regeneration.
   void env
 }

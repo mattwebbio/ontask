@@ -1240,4 +1240,17 @@ class AppStrings {
   /// Usage: '${task.title} ${AppStrings.notificationDisputeRejectedBody(amount, charityName, charityAmount)}'
   static String notificationDisputeRejectedBody(String amount, String charityName, String charityAmount) =>
       '— dispute reviewed. $amount charged. $charityName receives $charityAmount. Thanks for trying.';
+
+  // ── Social & Schedule Change Notifications (FR42, FR43, Story 8.4) ──────────
+
+  /// Social completion notification body.
+  /// Usage: AppStrings.notificationSocialCompletionBody(completedByName, taskTitle)
+  /// Server builds the push payload; this mirrors the server copy for in-app display.
+  static String notificationSocialCompletionBody(String completedByName, String taskTitle) =>
+      '$completedByName completed $taskTitle';
+
+  /// Schedule change notification body.
+  /// Usage: AppStrings.notificationScheduleChangeBody(count)
+  static String notificationScheduleChangeBody(int count) =>
+      'Your schedule was updated \u2014 $count tasks were rescheduled';
 }

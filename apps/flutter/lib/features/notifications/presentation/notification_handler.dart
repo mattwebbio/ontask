@@ -23,6 +23,14 @@ class NotificationHandler extends _$NotificationHandler {
     // impl(8.3): type 'dispute_filed'         → task detail (dispute pending state)
     // impl(8.3): type 'dispute_approved'      → task detail (stake cancelled state)
     // impl(8.3): type 'dispute_rejected'      → task detail or billing history
+    // impl(8.4): type 'social_completion'  → today tab or shared list view showing completed task
+    // impl(8.4): type 'schedule_change'    → today tab with ScheduleChangeBannerVisible triggered
+    //            NOTE: on 'schedule_change' tap, call:
+    //              ref.read(scheduleChangeBannerVisibleProvider.notifier).dismiss() — NO,
+    //              actually do NOT dismiss; instead invalidate scheduleChangesProvider so
+    //              banner re-evaluates from fresh data, then navigate to Today tab.
+    //            NOTE: ScheduleChangeBannerVisible is in:
+    //              apps/flutter/lib/features/today/presentation/schedule_change_provider.dart
     //
     // Example subscription pattern:
     //   final sub = Push.instance.onNotificationTap.listen((notification) {

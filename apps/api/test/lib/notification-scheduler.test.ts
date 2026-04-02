@@ -13,6 +13,8 @@ import {
   buildVerificationApprovedBody,
   buildDisputeFiledBody,
   buildDisputeResolvedBody,
+  buildSocialCompletionBody,
+  buildScheduleChangeBody,
 } from '../../src/lib/notification-scheduler.js'
 
 // ── Notification scheduler unit tests ─────────────────────────────────────────
@@ -334,5 +336,51 @@ describe('buildDisputeResolvedBody — both outcomes, affirming tone, UX-DR36 (A
     expect(body).not.toContain('owe')
     expect(body).not.toContain('penalty')
     expect(body).not.toContain('violation')
+  })
+})
+
+describe('buildSocialCompletionBody — social task completion (AC: 1)', () => {
+  it('includes completedByName and taskTitle in "[Name] completed [title]" format', () => {
+    const body = buildSocialCompletionBody('Jordan', 'Morning workout')
+    expect(body).toBe('Jordan completed Morning workout')
+    expect(body).toContain('Jordan')
+    expect(body).toContain('Morning workout')
+    expect(body).toContain('completed')
+  })
+
+  it('does NOT contain punitive language (UX-DR36)', () => {
+    const body = buildSocialCompletionBody('Alex', 'Read 10 pages')
+    expect(body).not.toContain('failed')
+    expect(body).not.toContain('owe')
+    expect(body).not.toContain('penalty')
+    expect(body).not.toContain('violation')
+  })
+
+  it('handles names with special characters (emoji, apostrophe) without crashing', () => {
+    expect(() => buildSocialCompletionBody("O'Brien", 'Cook dinner')).not.toThrow()
+    expect(() => buildSocialCompletionBody('😀 Alex', 'Morning run')).not.toThrow()
+    const bodyApostrophe = buildSocialCompletionBody("O'Brien", 'Cook dinner')
+    expect(bodyApostrophe).toContain("O'Brien")
+    const bodyEmoji = buildSocialCompletionBody('😀 Alex', 'Morning run')
+    expect(bodyEmoji).toContain('😀 Alex')
+  })
+})
+
+describe('buildScheduleChangeBody — schedule change notification (AC: 2)', () => {
+  it('includes the rescheduled count as a number in the string', () => {
+    const body = buildScheduleChangeBody(3)
+    expect(body).toContain('3')
+  })
+
+  it('includes "rescheduled" in the output', () => {
+    const body = buildScheduleChangeBody(5)
+    expect(body).toContain('rescheduled')
+  })
+
+  it('handles a count of 1 without crashing and produces valid output', () => {
+    expect(() => buildScheduleChangeBody(1)).not.toThrow()
+    const body = buildScheduleChangeBody(1)
+    expect(body).toContain('1')
+    expect(body).toContain('rescheduled')
   })
 })

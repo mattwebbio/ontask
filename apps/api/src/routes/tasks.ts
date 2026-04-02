@@ -1291,6 +1291,30 @@ app.openapi(completeTaskRoute, async (c) => {
     })
   }
 
+  // TODO(impl): Social notification — notify other list members (AC: 1, FR42, FR43)
+  //   ONLY fire if completedTask.listId IS NOT NULL AND completedTask.proofRetained === true
+  //   1. const userId = c.get('jwtPayload').sub  (same JWT pattern as other routes)
+  //   2. const db = createDb(c.env.DATABASE_URL)
+  //   3. Query list_members WHERE listId = completedTask.listId AND userId != userId
+  //      to get other member userIds
+  //   4. For each other member:
+  //      a. Query device_tokens WHERE userId = member.userId
+  //      b. Query notification_preferences WHERE userId = member.userId
+  //      c. For each device token: enforce preferences using shouldSendNotification()
+  //         (pass the COMPLETED task's id as taskId for per-task preference check)
+  //      d. await sendPush({
+  //           deviceToken: token.token,
+  //           environment: token.environment,
+  //           payload: {
+  //             title: completedByName ?? 'Someone',
+  //             body: buildSocialCompletionBody(completedByName ?? 'Someone', completedTask.title),
+  //             data: { taskId: completedTask.id, type: 'social_completion' },
+  //           }
+  //         }, c.env)
+  //   NOTE: completedByName is resolved server-side from list_members display name.
+  //   NOTE: Per FR43, 'social_completion' notifications respect the 3-level preference hierarchy.
+  //   NOTE: Do NOT notify the user who completed the task — only OTHER members.
+
   return c.json({ data: { completedTask, nextInstance } }, 200)
 })
 
