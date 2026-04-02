@@ -31,6 +31,12 @@ class NotificationHandler extends _$NotificationHandler {
     //              banner re-evaluates from fresh data, then navigate to Today tab.
     //            NOTE: ScheduleChangeBannerVisible is in:
     //              apps/flutter/lib/features/today/presentation/schedule_change_provider.dart
+    // impl(8.5): On any notification tap — also invalidate notificationHistoryProvider
+    //            so the badge count refreshes when the user returns to the main shell.
+    //            ref.invalidate(notificationHistoryProvider)
+    // impl(8.5): type 'reminder'             → today tab (task time approaching)
+    // impl(8.5): type 'deadline_today'       → task detail (due today)
+    // impl(8.5): type 'deadline_tomorrow'    → task detail (due tomorrow)
     //
     // Example subscription pattern:
     //   final sub = Push.instance.onNotificationTap.listen((notification) {

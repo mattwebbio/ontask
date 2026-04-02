@@ -1,5 +1,12 @@
 # Deferred Work
 
+## Deferred from: code review of 8-5-in-app-notification-centre-voiceover-live-activity-announcements (2026-04-01)
+
+- **Missing blank line before `@riverpod` for `notificationHistory`** — Cosmetic style inconsistency; convention in this file uses a blank line before `@riverpod`. Low risk. [`apps/flutter/lib/features/notifications/presentation/notifications_provider.dart`]
+- **`response.data!` null-assertion in `getNotificationHistory` gives opaque crash** — If the API returns an unexpected response shape, `response.data!['data']` throws an unhandled null error. Pre-existing pattern consistent with other repository methods; surfaces as an `AsyncValue.error` in the UI. Address when error-handling conventions are standardised. [`apps/flutter/lib/features/notifications/data/notifications_repository.dart`]
+- **`markAllRead()` typed as `<void>` discards server `markedRead` count** — Intentional for stub phase; the return value is not needed until real implementation. Update signature and return value when `PATCH /v1/notifications/read-all` is implemented. [`apps/flutter/lib/features/notifications/data/notifications_repository.dart`]
+- **`deferred-work.md` has pre-existing uncommitted modification** — Unrelated to Story 8.5 changes. Resolve separately.
+
 ## Deferred from: code review of 8-4-social-schedule-change-notifications (2026-04-01)
 
 - **`buildSocialCompletionBody` no guard for empty `taskTitle`** — Passing `""` for taskTitle yields a trailing space (e.g., `"Jordan completed "`). Pre-existing pattern across all pure helpers in this file; none guard against empty inputs. Address when input validation is added to helper functions globally. [`apps/api/src/lib/notification-scheduler.ts:126`]

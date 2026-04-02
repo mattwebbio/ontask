@@ -1253,4 +1253,20 @@ class AppStrings {
   /// Usage: AppStrings.notificationScheduleChangeBody(count)
   static String notificationScheduleChangeBody(int count) =>
       'Your schedule was updated \u2014 $count tasks were rescheduled';
+
+  // ── In-App Notification Centre (Story 8.5) ───────────────────────────────────
+
+  /// Navigation bar title for notification centre screen.
+  static const String notificationCentreTitle = 'Notifications';
+
+  /// Shown when notification history is empty.
+  static const String notificationCentreEmpty = 'No notifications yet';
+
+  /// Shown when notification history fails to load.
+  static const String notificationCentreLoadError = 'Couldn\u2019t load notifications';
+
+  /// Toolbar badge tooltip / accessibility label for unread count icon.
+  /// Usage: AppStrings.notificationBadgeLabel(count)
+  static String notificationBadgeLabel(int count) =>
+      '$count unread notification${count == 1 ? '' : 's'}';
 }

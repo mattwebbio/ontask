@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../notifications/presentation/notification_centre_screen.dart';
 import '../../search/presentation/search_screen.dart';
 import '../../settings/presentation/settings_screen.dart';
 import 'add_tab_sheet.dart';
@@ -145,6 +146,30 @@ class _AppShellState extends ConsumerState<AppShell> {
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
+                // Bell icon with unread badge
+                Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    CupertinoButton(
+                      padding: EdgeInsets.zero,
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          CupertinoPageRoute<void>(
+                            builder: (_) => const NotificationCentreScreen(),
+                          ),
+                        );
+                      },
+                      child: Icon(
+                        CupertinoIcons.bell,
+                        color: colors.accentPrimary,
+                      ),
+                    ),
+                    // impl(8.5): unread badge — watch notificationHistoryProvider,
+                    //            show filled red dot with count when unreadCount > 0.
+                    //            Pattern: Consumer(builder: (ctx, ref, _) { ... })
+                    //            Place badge at top-right of bell icon using Positioned.
+                  ],
+                ),
                 CupertinoButton(
                   padding: EdgeInsets.zero,
                   onPressed: () => Navigator.of(context).push(
