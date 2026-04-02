@@ -36,7 +36,7 @@ describe('GET /admin/v1/users/:userId/charges', () => {
     expect(item.charityName).toBeTypeOf('string')
   })
 
-  it('returns 200 with data array for unknown userId (stub always returns fixture)', async () => {
+  it('returns 200 with stub fixture for any userId (stub does not filter by userId)', async () => {
     // Stub fixture returns the same hardcoded charge regardless of userId.
     // TODO(impl): With real DB, an unknown userId should return an empty array.
     const res = await app.request('/admin/v1/users/00000000-0000-0000-0000-000000000000/charges')

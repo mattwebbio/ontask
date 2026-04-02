@@ -1,6 +1,6 @@
 import { OpenAPIHono, createRoute } from '@hono/zod-openapi'
 import { z } from 'zod'
-import { eq, and, sum } from 'drizzle-orm'
+import { eq, sum } from 'drizzle-orm'
 import { ok, err } from '../lib/response.js'
 import { getDb } from '../db/index.js'
 import { chargeEventsTable, tasksTable, operatorRefundLogsTable } from '@ontask/core'
@@ -86,47 +86,48 @@ app.openapi(getChargesRoute, async (c) => {
   if (databaseUrl) {
     const db = getDb(databaseUrl)
 
-    // SELECT charge_events.*, tasks.title FROM charge_events
-    //   LEFT JOIN tasks ON tasks.id = charge_events.task_id
-    //   WHERE charge_events.user_id = :userId
-    //   ORDER BY charge_events.created_at DESC
+    // Single JOIN query: charge_events LEFT JOIN tasks
     const rows = await db
-      .select()
+      .select({
+        id: chargeEventsTable.id,
+        taskId: chargeEventsTable.taskId,
+        taskTitle: tasksTable.title,
+        amountCents: chargeEventsTable.amountCents,
+        charityAmountCents: chargeEventsTable.charityAmountCents,
+        platformAmountCents: chargeEventsTable.platformAmountCents,
+        charityName: chargeEventsTable.charityName,
+        status: chargeEventsTable.status,
+        stripePaymentIntentId: chargeEventsTable.stripePaymentIntentId,
+        chargedAt: chargeEventsTable.chargedAt,
+        createdAt: chargeEventsTable.createdAt,
+      })
       .from(chargeEventsTable)
+      .leftJoin(tasksTable, eq(tasksTable.id, chargeEventsTable.taskId))
       .where(eq(chargeEventsTable.userId, userId))
       .orderBy(chargeEventsTable.createdAt)
 
-    const items = await Promise.all(rows.map(async (row) => {
-      // Fetch task title (fall back to taskId if not found)
-      let taskTitle = row.taskId
-      const taskRows = await db
-        .select({ title: tasksTable.title })
-        .from(tasksTable)
-        .where(eq(tasksTable.id, row.taskId))
-        .limit(1)
-      if (taskRows.length > 0) {
-        taskTitle = taskRows[0].title
-      }
+    // Aggregate refund totals per charge in a single query
+    const refundTotals = await db
+      .select({
+        chargeEventId: operatorRefundLogsTable.chargeEventId,
+        total: sum(operatorRefundLogsTable.amountCents),
+      })
+      .from(operatorRefundLogsTable)
+      .where(eq(operatorRefundLogsTable.userId, userId))
+      .groupBy(operatorRefundLogsTable.chargeEventId)
 
-      // TODO(impl): Compute refundStatus and refundedAmountCents from operator_refund_logs
-      // once the table is migrated and available. Query:
-      //   SELECT SUM(amount_cents) FROM operator_refund_logs
-      //   WHERE charge_event_id = row.id
-      const refundRows = await db
-        .select({ total: sum(operatorRefundLogsTable.amountCents) })
-        .from(operatorRefundLogsTable)
-        .where(eq(operatorRefundLogsTable.chargeEventId, row.id))
+    const refundMap = new Map(refundTotals.map(r => [r.chargeEventId, Number(r.total ?? 0)]))
 
-      const refundedTotal = refundRows[0]?.total ? Number(refundRows[0].total) : 0
+    const items = rows.map((row) => {
+      const refundedTotal = refundMap.get(row.id) ?? 0
       let refundStatus: 'none' | 'partial' | 'full' = 'none'
       if (refundedTotal > 0) {
         refundStatus = refundedTotal >= row.amountCents ? 'full' : 'partial'
       }
-
       return {
         id: row.id,
         taskId: row.taskId,
-        taskTitle,
+        taskTitle: row.taskTitle ?? row.taskId,
         amountCents: row.amountCents,
         charityAmountCents: row.charityAmountCents,
         platformAmountCents: row.platformAmountCents,
@@ -138,7 +139,7 @@ app.openapi(getChargesRoute, async (c) => {
         chargedAt: row.chargedAt ? row.chargedAt.toISOString() : null,
         createdAt: row.createdAt.toISOString(),
       }
-    }))
+    })
 
     return c.json(ok(items))
   }
@@ -254,12 +255,15 @@ app.openapi(postRefundRoute, async (c) => {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const operatorEmail = (c as any).get('operatorEmail') as string | undefined
+    if (!operatorEmail) {
+      return c.json(err('UNAUTHORIZED', 'Operator identity required for audit log'), 500)
+    }
 
     // 5. Insert into operator_refund_logs (immutable audit log — NFR-S6)
     await db.insert(operatorRefundLogsTable).values({
       chargeEventId: chargeId,
       userId: charge.userId,
-      operatorEmail: operatorEmail ?? 'unknown',
+      operatorEmail,
       amountCents,
       reason,
       // TODO(impl): stripeRefundId — set to Stripe refund.id once Stripe is wired
@@ -272,14 +276,17 @@ app.openapi(postRefundRoute, async (c) => {
     const refundStatus: 'full' | 'partial' = totalRefunded >= charge.amountCents ? 'full' : 'partial'
 
     // 7. Update charge_events.status to reflect refund outcome
-    // Use .returning() to detect race conditions (0 rows → already updated)
-    // TODO(impl): Use WHERE status NOT IN ('refunded') to prevent double-update race
+    // Use .returning() to detect race conditions (0 rows → charge disappeared unexpectedly)
     const newStatus = refundStatus === 'full' ? 'refunded' : 'partially_refunded'
-    await db
+    const updatedRows = await db
       .update(chargeEventsTable)
       .set({ status: newStatus, updatedAt: processedAt })
       .where(eq(chargeEventsTable.id, chargeId))
       .returning({ id: chargeEventsTable.id })
+
+    if (updatedRows.length === 0) {
+      return c.json(err('CHARGE_NOT_FOUND', 'Charge not found during status update'), 404)
+    }
 
     // 8. TODO(impl): Push notification to user (Story 8.3):
     //   Import sendPush from apps/admin-api/src/services/push.ts (mirror — do NOT import from apps/api)
