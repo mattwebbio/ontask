@@ -9,6 +9,19 @@ class SubscriptionsRepository {
   SubscriptionsRepository({required this.apiClient});
   final ApiClient apiClient;
 
+  /// Creates a Stripe Checkout session for the given subscription tier.
+  ///
+  /// `POST /v1/subscriptions/checkout-session`
+  /// Returns the Stripe Checkout hosted URL — Flutter opens this via [launchUrl].
+  /// Story 13.1 — replaces the direct URL launch from Story 9.3.
+  Future<String> createCheckoutSession({required String tier}) async {
+    final response = await apiClient.dio.post<Map<String, dynamic>>(
+      '/v1/subscriptions/checkout-session',
+      data: {'tier': tier},
+    );
+    return response.data!['data']['checkoutUrl'] as String;
+  }
+
   /// Activates a subscription from a Stripe Checkout session.
   /// Called when the Universal Link callback is received with session_id (Story 9.3, FR83).
   /// Invalidate [subscriptionStatusProvider] after calling this.

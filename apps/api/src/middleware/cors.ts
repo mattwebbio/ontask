@@ -55,4 +55,7 @@ export function applyScopedCors<T extends OpenAPIHono<{ Bindings: CloudflareBind
 
   // Payment setup endpoint — web-based payment flow needs CORS
   app.use('/v1/payment-setup/*', cors(paymentCorsOptions))
+
+  // Payment method setup-intent-client-secret — called from browser on ontaskhq.com/setup
+  app.use('/v1/payment-method/setup-intent-client-secret', cors(paymentCorsOptions))
 }

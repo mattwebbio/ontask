@@ -14,6 +14,7 @@ import '../../features/lists/presentation/lists_screen.dart';
 import '../../features/now/presentation/now_screen.dart';
 import '../../features/onboarding/presentation/onboarding_flow.dart';
 import '../../features/commitment_contracts/presentation/impact_dashboard_screen.dart';
+import '../../features/commitment_contracts/presentation/payment_setup_complete_screen.dart';
 import '../../features/settings/presentation/account_settings_screen.dart';
 import '../../features/subscriptions/presentation/subscription_settings_screen.dart';
 import '../../features/settings/presentation/delete_account_screen.dart';
@@ -178,6 +179,17 @@ GoRouter appRouter(Ref ref) {
         path: '/subscribe/success',
         builder: (context, state) => SubscribeSuccessScreen(
           sessionId: state.uri.queryParameters['session_id'] ?? '',
+        ),
+      ),
+
+      // Payment method setup callback — handles Universal Link return from Stripe.
+      // URL: ontaskhq.com/payment-setup-complete?sessionToken=xxx
+      // Registered as top-level route (no shell chrome during processing).
+      // Replaces the TODO(impl) stub from Story 6.1 — now that AASA is deployed (Story 13.1).
+      GoRoute(
+        path: '/payment-setup-complete',
+        builder: (context, state) => PaymentSetupCompleteScreen(
+          sessionToken: state.uri.queryParameters['sessionToken'] ?? '',
         ),
       ),
 

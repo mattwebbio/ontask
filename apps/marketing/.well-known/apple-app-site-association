@@ -1,0 +1,20 @@
+{
+  "_comment": "TODO(deploy): Replace <TEAM_ID> in appIDs below with the Apple Developer Team ID from App Store Connect (e.g. A1B2C3D4E5). Universal Links will silently fail if this placeholder is not replaced before deployment.",
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["<TEAM_ID>.com.ontaskhq.ontask"],
+        "components": [
+          { "/": "/setup" },
+          { "/": "/setup/*" },
+          { "/": "/payment-setup-complete" },
+          { "/": "/payment-setup-complete/*" },
+          { "/": "/subscribe" },
+          { "/": "/subscribe/*" },
+          { "/": "/subscribe/success" },
+          { "/": "/invitation/*" }
+        ]
+      }
+    ]
+  }
+}
