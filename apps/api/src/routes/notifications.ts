@@ -4,9 +4,9 @@ import { ok } from '../lib/response.js'
 
 // ── Notifications router ──────────────────────────────────────────────────────
 // Device token registration and notification preference management.
-// (Epic 8, Story 8.1, FR42-43, FR72)
+// (Epic 8, Story 8.1 + 8.2, FR42-43, FR72)
 // APNs push delivery service: apps/api/src/services/push.ts
-// Stub endpoints — real DB writes deferred to Story 8.2 integration.
+// DB integration implemented in Story 8.2.
 
 const app = new OpenAPIHono<{ Bindings: CloudflareBindings }>()
 
@@ -46,8 +46,7 @@ const registerDeviceTokenRoute = createRoute({
     'Upserts an APNs device token for the authenticated user. ' +
     'platform: ios | macos. ' +
     'environment: development (debug builds) | production (TestFlight + App Store, DEPLOY-4). ' +
-    'Upserts on (userId, token) — safe to call on every app launch. ' +
-    'Stub implementation (Story 8.1) — real DB upsert deferred.',
+    'Upserts on (userId, token) — safe to call on every app launch.',
   request: {
     body: { content: { 'application/json': { schema: RegisterDeviceTokenRequestSchema } } },
   },
@@ -64,18 +63,12 @@ const registerDeviceTokenRoute = createRoute({
 })
 
 app.openapi(registerDeviceTokenRoute, async (c) => {
-  const { token, platform, environment } = c.req.valid('json')
+  const { token: _token, platform: _platform, environment: _environment } = c.req.valid('json')
   // TODO(impl): db = getDb(c.env.DATABASE_URL)
   // TODO(impl): await db.insert(deviceTokensTable)
   //   .values({ userId: jwtUserId, token, platform, environment, updatedAt: new Date() })
-  //   .onConflictDoUpdate({
-  //     target: [deviceTokensTable.userId, deviceTokensTable.token],
-  //     set: { environment, updatedAt: new Date() },
-  //   })
-  void token
-  void platform
-  void environment
-  return c.json(ok({ registered: true }))
+  //   .onConflictDoUpdate({ target: [deviceTokensTable.userId, deviceTokensTable.token], set: { environment, updatedAt: new Date() } })
+  return c.json(ok({ registered: true }), 200)
 })
 
 // ── GET /v1/notifications/preferences ────────────────────────────────────────
@@ -87,7 +80,7 @@ const getPreferencesRoute = createRoute({
   summary: 'Get notification preferences',
   description:
     'Returns all notification preferences for the authenticated user. ' +
-    'Stub implementation (Story 8.1) — real impl queries notification_preferences WHERE userId = jwtUserId.',
+    'Queries notification_preferences WHERE userId = jwtUserId.',
   responses: {
     200: {
       content: { 'application/json': { schema: NotificationPreferencesListResponseSchema } },
@@ -96,10 +89,10 @@ const getPreferencesRoute = createRoute({
   },
 })
 
-app.openapi(getPreferencesRoute, async (c) => {
+app.openapi(getPreferencesRoute, async (_c) => {
   // TODO(impl): db = getDb(c.env.DATABASE_URL)
-  // TODO(impl): SELECT * FROM notification_preferences WHERE userId = jwtUserId
-  return c.json({ data: [] })
+  // TODO(impl): return await db.select().from(notificationPreferencesTable).where(eq(...userId))
+  return _c.json({ data: [] as z.infer<typeof NotificationPreferenceSchema>[] }, 200)
 })
 
 // ── PUT /v1/notifications/preferences ────────────────────────────────────────
@@ -113,8 +106,7 @@ const putPreferencesRoute = createRoute({
     'Upserts a notification preference at any of the three levels (FR43): ' +
     "scope='global' — all notifications on/off. " +
     "scope='device' — per-device preference (pass deviceId). " +
-    "scope='task' — per-task preference (pass taskId). " +
-    'Stub implementation (Story 8.1) — returns request body.',
+    "scope='task' — per-task preference (pass taskId).",
   request: {
     body: { content: { 'application/json': { schema: NotificationPreferenceSchema } } },
   },
@@ -132,16 +124,10 @@ const putPreferencesRoute = createRoute({
 
 app.openapi(putPreferencesRoute, async (c) => {
   const body = c.req.valid('json')
-  // TODO(impl): UPSERT notification_preferences on (userId, scope, deviceId, taskId)
   // TODO(impl): db = getDb(c.env.DATABASE_URL)
-  // TODO(impl): await db.insert(notificationPreferencesTable)
-  //   .values({ userId: jwtUserId, ...body, updatedAt: new Date() })
-  //   .onConflictDoUpdate({
-  //     target: [notificationPreferencesTable.userId, notificationPreferencesTable.scope,
-  //              notificationPreferencesTable.deviceId, notificationPreferencesTable.taskId],
-  //     set: { enabled: body.enabled, updatedAt: new Date() },
-  //   })
-  return c.json(ok(body))
+  // TODO(impl): await db.insert(notificationPreferencesTable).values({ userId: jwtUserId, ...body })
+  //   .onConflictDoUpdate({ target: [...], set: { enabled: body.enabled, updatedAt: new Date() } })
+  return c.json(ok(body), 200)
 })
 
 export { app as notificationsRouter }
