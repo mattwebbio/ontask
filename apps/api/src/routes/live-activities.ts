@@ -78,7 +78,7 @@ app.openapi(registerLiveActivityTokenRoute, async (c) => {
   // Stub: return registered: true regardless of DB availability.
   // TODO(impl): Replace stub with real DB upsert when DATABASE_URL available.
   void taskId; void activityType; void pushToken; void expiresAt
-  return c.json(ok({ registered: true }))
+  return c.json(ok({ registered: true }), 200)
 })
 
 export { app as liveActivitiesRouter }
