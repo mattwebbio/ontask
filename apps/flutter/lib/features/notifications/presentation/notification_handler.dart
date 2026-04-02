@@ -17,7 +17,12 @@ class NotificationHandler extends _$NotificationHandler {
     // impl(8.3): subscribe to Push.instance.onNotificationTap
     // impl(8.3): on tap, extract data['taskId'] and data['type']
     // impl(8.3): use GoRouter or Navigator to push task detail route
-    // impl(8.3): type 'stake_warning' → navigate to task detail with stake section visible
+    // impl(8.3): type 'stake_warning'         → task detail with stake section visible
+    // impl(8.3): type 'charge_succeeded'      → task detail (show billing history or task card)
+    // impl(8.3): type 'verification_approved' → task detail (proof accepted state)
+    // impl(8.3): type 'dispute_filed'         → task detail (dispute pending state)
+    // impl(8.3): type 'dispute_approved'      → task detail (stake cancelled state)
+    // impl(8.3): type 'dispute_rejected'      → task detail or billing history
     //
     // Example subscription pattern:
     //   final sub = Push.instance.onNotificationTap.listen((notification) {

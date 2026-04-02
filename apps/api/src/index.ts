@@ -18,6 +18,7 @@ import { notificationsRouter } from './routes/notifications.js'
 import { chargeTriggerConsumer } from './queues/charge-trigger-consumer.js'
 import { everyOrgConsumer } from './queues/every-org-consumer.js'
 import { triggerOverdueCharges } from './lib/charge-scheduler.js'
+import { triggerReminderNotifications, triggerDeadlineNotifications, triggerStakeWarningNotifications } from './lib/notification-scheduler.js'
 import { AppError } from './lib/errors.js'
 import { reportToGlitchTip } from './lib/glitchtip.js'
 import { err } from './lib/response.js'
@@ -120,4 +121,7 @@ export async function scheduled(
   ctx: ExecutionContext
 ): Promise<void> {
   ctx.waitUntil(triggerOverdueCharges(env))
+  ctx.waitUntil(triggerReminderNotifications(env))
+  ctx.waitUntil(triggerDeadlineNotifications(env))
+  ctx.waitUntil(triggerStakeWarningNotifications(env))
 }

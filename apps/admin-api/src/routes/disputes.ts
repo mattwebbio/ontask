@@ -237,9 +237,25 @@ app.openapi(resolveDisputeRoute, async (c) => {
   //   .where(eq(tasksTable.id, dispute.taskId))
   // TODO(impl): if decision='approved': cancel Stripe PaymentIntent, set tasks.completed_at=now()
   // TODO(impl): if decision='rejected': confirm Stripe PaymentIntent charge
-  // TODO(impl): send push notification to user (Story 8.3 APNs integration)
-  //   approved: AppStrings.disputeApprovedNotificationBody — "Your dispute was approved — your stake is safe."
-  //   rejected: AppStrings.disputeRejectedNotificationBody — "Your dispute was reviewed — your stake has been charged."
+  // TODO(impl): After updating verification_disputes.status = 'approved'|'rejected' (Story 8.3):
+  //   1. Look up the original dispute to get taskId, userId, stakeAmountCents, charityName, charityAmountCents
+  //   2. Query device_tokens in main DB for userId
+  //   3. Query notificationPreferencesTable WHERE userId = userId
+  //   4. For each token: enforce preferences (shouldSendNotification) + call sendPush({
+  //        payload: {
+  //          title: task.title,
+  //          body: buildDisputeResolvedBody(task.title, approved, amountCents, charityName, charityAmountCents),
+  //          data: { taskId, type: approved ? 'dispute_approved' : 'dispute_rejected' },
+  //        }
+  //      }, env)
+  //
+  // NOTE: admin-api is a SEPARATE Cloudflare Worker (apps/admin-api/). It has its own
+  //   wrangler config and does NOT import from apps/api/src/. Import sendPush from
+  //   apps/admin-api/src/services/push.ts (mirror of apps/api/src/services/push.ts).
+  //   Import buildDisputeResolvedBody from apps/admin-api/src/lib/notification-helpers.ts
+  //   (duplicate the pure helper — cannot import from apps/api/src/).
+  //   approved body:  "[Task title] — dispute approved. Your $[amount] stake has been cancelled."
+  //   rejected body:  "[Task title] — dispute reviewed. $[amount] charged. [Charity] receives $[charity amount]. Thanks for trying."
   return c.json(ok({ id, status: decision, resolvedAt }))
 })
 

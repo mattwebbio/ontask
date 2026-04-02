@@ -1212,5 +1212,32 @@ class AppStrings {
   /// Stake warning notification body template.
   /// Usage: '$stakeAmount staked, deadline in ${hours}h. $charityName gets half if it\'s not done.'
   static String notificationStakeWarningBody(String stakeAmount, int hours, String charityName) =>
-      '\$stakeAmount staked, deadline in ${hours}h. $charityName gets half if it\'s not done.';
+      '$stakeAmount staked, deadline in ${hours}h. $charityName gets half if it\'s not done.';
+
+  // ── Commitment, Charge & Verification Notifications (FR42, Story 8.3) ────────
+
+  /// Charge notification body (UX-DR36 — affirming, not punitive).
+  /// Usage: '${task.title} — ${AppStrings.notificationChargeBody(amount, charityName, charityAmount)}'
+  static String notificationChargeBody(String amount, String charityName, String charityAmount) =>
+      '— $amount charged. $charityName receives $charityAmount. Thanks for trying.';
+
+  /// Verification approved notification body.
+  /// Usage: '${task.title} ${AppStrings.notificationVerificationApprovedBody(amount)}'
+  static String notificationVerificationApprovedBody(String amount) =>
+      '— proof accepted. Your $amount stake is safe.';
+
+  /// Dispute filed notification body.
+  /// Usage: '${task.title} ${AppStrings.notificationDisputeFiledBody}'
+  static const String notificationDisputeFiledBody =
+      '— dispute filed. Your stake is on hold while we review.';
+
+  /// Dispute approved notification body (stake cancelled).
+  /// Usage: '${task.title} ${AppStrings.notificationDisputeApprovedBody(amount)}'
+  static String notificationDisputeApprovedBody(String amount) =>
+      '— dispute approved. Your $amount stake has been cancelled.';
+
+  /// Dispute rejected notification body (charge processed, affirming).
+  /// Usage: '${task.title} ${AppStrings.notificationDisputeRejectedBody(amount, charityName, charityAmount)}'
+  static String notificationDisputeRejectedBody(String amount, String charityName, String charityAmount) =>
+      '— dispute reviewed. $amount charged. $charityName receives $charityAmount. Thanks for trying.';
 }
