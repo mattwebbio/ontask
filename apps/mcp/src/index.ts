@@ -6,6 +6,7 @@ import { updateTask } from './tools/update-task.js'
 import { scheduleTask } from './tools/schedule-task.js'
 import { completeTask } from './tools/complete-task.js'
 import { applyOauthMiddleware, requireScope } from './middleware/oauth.js'
+import { createContract } from './tools/create-contract.js'
 
 // ── OnTask MCP Server ─────────────────────────────────────────────────────────
 // Cloudflare Worker hosting the On Task MCP server.
@@ -167,6 +168,20 @@ const toolManifest = {
             type: 'string',
             description: 'UUID of the task to complete',
           },
+        },
+      },
+    },
+    {
+      name: 'create_contract',
+      description: 'Create a commitment contract for a task. Requires the user to have a stored payment method. Returns a setupUrl if payment method setup is needed.',
+      inputSchema: {
+        type: 'object',
+        required: ['taskId', 'stakeAmountCents', 'charityId', 'deadline'],
+        properties: {
+          taskId: { type: 'string', description: 'UUID of the task to attach the contract to' },
+          stakeAmountCents: { type: 'number', description: 'Stake amount in cents (positive integer, e.g. 2500 = $25.00)' },
+          charityId: { type: 'string', description: 'Every.org charity slug or ID (e.g. "american-red-cross")' },
+          deadline: { type: 'string', description: 'Contract deadline as ISO 8601 UTC datetime string' },
         },
       },
     },
@@ -405,6 +420,43 @@ app.post('/tools/complete-task', async (c) => {
   }
 
   const result = await completeTask(body, apiBinding, userId)
+  return c.json(result)
+})
+
+// ── Tool: create_contract ─────────────────────────────────────────────────────
+// POST /tools/create-contract
+// Body: { taskId, stakeAmountCents, charityId, deadline }
+// Required scope: contracts:write
+
+app.post('/tools/create-contract', async (c) => {
+  const apiBinding = c.env.API
+  if (!apiBinding) {
+    return c.json(
+      { content: [{ type: 'text', text: JSON.stringify({ error: { code: 'SERVICE_BINDING_UNAVAILABLE', message: 'API service binding is not configured' } }) }], isError: true },
+      503,
+    )
+  }
+
+  const { userId, scopes } = c.get('mcpAuth')
+  if (!requireScope(scopes, 'contracts:write')) {
+    return c.json(
+      { content: [{ type: 'text', text: JSON.stringify({ error: { code: 'FORBIDDEN', message: 'contracts:write scope required' } }) }], isError: true },
+      403,
+    )
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let body: any
+  try {
+    body = await c.req.json()
+  } catch {
+    return c.json(
+      { content: [{ type: 'text', text: JSON.stringify({ error: { code: 'INVALID_JSON', message: 'Request body must be valid JSON' } }) }], isError: true },
+      400,
+    )
+  }
+
+  const result = await createContract(body, apiBinding, userId)
   return c.json(result)
 })
 

@@ -1,5 +1,5 @@
 # generated: 2026-03-29
-# last_updated: 2026-04-01 (story 10-2 review)
+# last_updated: 2026-04-02 (story 10-5 created)
 # project: ontask
 # project_key: NOKEY
 # tracking_system: file-system
@@ -176,10 +176,10 @@ development_status:
   # ─────────────────────────────────────────────────────────
   epic-10: in-progress
   10-1-rest-api-tasks-lists: done
-  10-2-rest-api-scheduling-operations-rate-limit-enforcement: review
-  10-3-mcp-server-core-task-operations: backlog
-  10-4-mcp-server-oauth-authentication-token-scoping: backlog
-  10-5-mcp-server-commitment-contract-tools: backlog
+  10-2-rest-api-scheduling-operations-rate-limit-enforcement: done
+  10-3-mcp-server-core-task-operations: done
+  10-4-mcp-server-oauth-authentication-token-scoping: review
+  10-5-mcp-server-commitment-contract-tools: review
   epic-10-retrospective: optional
 
   # ─────────────────────────────────────────────────────────

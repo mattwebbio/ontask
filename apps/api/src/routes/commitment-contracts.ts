@@ -987,4 +987,72 @@ app.openapi(getContractStatusRoute, (c) => {
   }), 200)
 })
 
+// ── Commitment contract creation schemas (FR45, Story 10.5) ───────────────────
+
+const createContractRequestSchema = z.object({
+  taskId: z.string().uuid(),
+  stakeAmountCents: z.number().int().positive(),
+  charityId: z.string().min(1),
+  deadline: z.string().datetime(),
+})
+
+const contractSchema = z.object({
+  id: z.string().uuid(),
+  taskId: z.string().uuid(),
+  stakeAmountCents: z.number().int(),
+  charityId: z.string(),
+  deadline: z.string().datetime(),
+  status: z.enum(['active', 'charged', 'cancelled', 'disputed']),
+  createdAt: z.string().datetime(),
+})
+
+const NoPaymentMethodErrorSchema = z.object({
+  error: z.object({ code: z.string(), message: z.string(), setupUrl: z.string() }),
+})
+
+const CreateContractResponseSchema = z.object({ data: contractSchema })
+
+// ── POST /v1/contracts ────────────────────────────────────────────────────────
+// Creates a commitment contract (FR45, Story 10.5).
+// Requires a stored payment method — returns 422 NO_PAYMENT_METHOD with setupUrl if none.
+// Stub: always returns 422 (no payment methods in stub).
+
+const createContractRoute = createRoute({
+  method: 'post',
+  path: '/v1/contracts',
+  tags: ['Contracts'],
+  summary: 'Create a commitment contract',
+  description:
+    'Creates a commitment contract linking a task to a stake amount, charity, and deadline. ' +
+    'Requires the authenticated user to have a stored payment method. ' +
+    'Returns 422 NO_PAYMENT_METHOD with a setupUrl if no payment method is stored. ' +
+    'Stub implementation (Story 10.5).',
+  request: {
+    body: { content: { 'application/json': { schema: createContractRequestSchema } }, required: true },
+  },
+  responses: {
+    201: {
+      content: { 'application/json': { schema: CreateContractResponseSchema } },
+      description: 'Contract created',
+    },
+    422: {
+      content: { 'application/json': { schema: NoPaymentMethodErrorSchema } },
+      description: 'No payment method stored — setupUrl provided for payment setup',
+    },
+  },
+})
+
+app.openapi(createContractRoute, async (c) => {
+  const body = c.req.valid('json')
+  const userId = c.req.header('x-user-id') ?? 'stub-user-id'
+  void userId
+  void body
+  // TODO(impl): check stripePaymentMethodId for userId — if null, return 422 NO_PAYMENT_METHOD
+  // Stub: always returns 422 (no payment methods in stub)
+  return c.json(
+    { error: { code: 'NO_PAYMENT_METHOD', message: 'Payment method required. Visit the URL to set up.', setupUrl: 'https://ontaskhq.com/setup' } },
+    422,
+  )
+})
+
 export { app as commitmentContractsRouter }

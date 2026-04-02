@@ -1,5 +1,10 @@
 # Deferred Work
 
+## Deferred from: code review of 10-4-mcp-server-oauth-authentication-token-scoping (2026-04-02)
+
+- **`sha256Hex` function duplicated across `internal.ts` and `mcp-tokens.ts`** — identical implementation copied into both API route files. Extract to `apps/api/src/lib/crypto.ts` when the opportunity arises; no correctness impact now. [`apps/api/src/routes/internal.ts:17-24`, `apps/api/src/routes/mcp-tokens.ts:28-35`]
+- **Raw token transmitted as URL query parameter to internal validation endpoint** — `GET /internal/mcp-tokens/validate?token=<raw>` passes the raw bearer token in the query string; Cloudflare and intermediary systems may log request URLs. Risk is low (Service Binding, not network-traversing). Resolve by switching to POST with JSON body when convenient. [`apps/mcp/src/middleware/oauth.ts:176-181`]
+
 ## Deferred from: code review of 9-2-paywall-screen (2026-04-01)
 
 - ~~**`ref.watch(subscriptionStatusProvider)` result ignored with `// ignore: unused_local_variable`**~~ — **Resolved in Story 9.3**: `PaywallScreen` converted to `ConsumerStatefulWidget`, `statusAsync.whenData` used to navigate to `/now` on active state, `// ignore:` comment removed.
