@@ -1,6 +1,6 @@
 # Story 11.3: Charge Reversal & Refunds
 
-Status: review
+Status: in-progress
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -548,6 +548,16 @@ apps/admin/src/pages/DashboardShell.tsx (modified)
 _bmad-output/implementation-artifacts/sprint-status.yaml (modified)
 _bmad-output/implementation-artifacts/11-3-charge-reversal-refunds.md (modified)
 
+### Review Findings
+
+- [ ] [Review][Patch] operatorEmail silently falls back to 'unknown' on audit log insert — AC3/NFR-S6 requires real operator identity; return 500 or treat missing email as auth failure instead of persisting 'unknown' [apps/admin-api/src/routes/charges.ts:262]
+- [ ] [Review][Patch] updatedAt set on charge_events update but column not verified in schema — if charge_events has no updatedAt column this will fail on real DB path; verify against packages/core/src/schema/charge-events.ts and remove if absent [apps/admin-api/src/routes/charges.ts:280]
+- [ ] [Review][Patch] N+1 query pattern in GET charges real DB path — spec calls for a single LEFT JOIN tasks query but implementation does one query per row for taskTitle plus one per row for refund total; replace with joined query [apps/admin-api/src/routes/charges.ts:97–108]
+- [ ] [Review][Patch] .returning() result discarded — race condition guard non-functional; assign result and return 409 if 0 rows updated [apps/admin-api/src/routes/charges.ts:282–286]
+- [ ] [Review][Patch] Test description misleading for unknown-userId case — test says "returns empty array" but stub always returns one item; correct test name or assertion [apps/admin-api/test/routes/charges.test.ts:~49]
+- [x] [Review][Defer] charge_events.status enum may not include 'refunded'/'partially_refunded' — schema defined in earlier story may use a fixed enum; migration needed before real DB path works — deferred, pre-existing schema gap
+
 ## Change Log
 
 - 2026-04-02: Story 11.3 implemented — charge history API, refund endpoint, operator_refund_logs audit table, UsersPage + UserChargesPage admin UI, 10 new tests (25 total passing). Status: review.
+- 2026-04-02: Code review complete — 5 patch findings, 1 deferred. Status: in-progress.

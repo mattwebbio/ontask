@@ -248,3 +248,7 @@
 
 - **`this.context` anti-pattern extended in new code** [`apps/flutter/lib/features/lists/presentation/list_settings_screen.dart`] — 7 new occurrences added (pre-existing count was 5; total now 12). Methods accept a `BuildContext` parameter but internally use `this.context` instead. Pre-existing codebase pattern; functionally safe while `mounted` checks are in place. Clean up in a future refactor pass when touching this file.
 - **Empty member list renders enabled Leave List button** [`apps/flutter/lib/features/lists/presentation/list_settings_screen.dart:200`] — When `membersAsync` data is an empty list, `ownerCount == 0`, `isLastOwner == false`, and the Leave List button renders enabled with no members present. Unreachable in production (members list includes at least the current user). Handle defensively when real member data is wired.
+
+## Deferred from: code review of 11-3-charge-reversal-refunds (2026-04-02)
+
+- **`charge_events.status` enum may not include 'refunded'/'partially_refunded'** [`apps/admin-api/src/routes/charges.ts:277`] — The charge_events table status column was defined in an earlier story with a fixed set of values ('pending' | 'charged' | 'failed' | 'disbursed' | 'disbursement_failed'). The new refund code writes 'refunded' and 'partially_refunded' to this column. If the column is a Postgres enum, this will fail on the real DB path. Requires a schema migration and update to packages/core/src/schema/charge-events.ts before the real DB path is enabled.
