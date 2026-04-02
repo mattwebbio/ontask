@@ -150,7 +150,7 @@ development_status:
   # Epic 8: Notifications & Alerts
   # ─────────────────────────────────────────────────────────
   epic-8: in-progress
-  8-1-apns-infrastructure-device-token-management: review
+  8-1-apns-infrastructure-device-token-management: done
   8-2-task-reminder-deadline-notifications: backlog
   8-3-commitment-charge-verification-notifications: backlog
   8-4-social-schedule-change-notifications: backlog

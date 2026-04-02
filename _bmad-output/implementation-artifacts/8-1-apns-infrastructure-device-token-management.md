@@ -703,6 +703,12 @@ claude-sonnet-4-6
 - _bmad-output/implementation-artifacts/8-1-apns-infrastructure-device-token-management.md (MODIFIED — tasks checked, dev record filled, status=review)
 - _bmad-output/implementation-artifacts/sprint-status.yaml (MODIFIED — 8-1 status=review)
 
+### Review Findings
+
+- [ ] [Review][Patch] Remove `flutter_riverpod` import — only `riverpod_annotation` should be imported [apps/flutter/lib/features/notifications/presentation/notifications_provider.dart:1]
+- [ ] [Review][Patch] Escape `AsyncValue<void>` angle brackets in doc comment using backticks [apps/flutter/lib/features/notifications/presentation/notifications_provider.dart:7]
+- [ ] [Review][Patch] Remove unused `mocktail` import — placeholder test uses none of its API [apps/flutter/test/features/notifications/notifications_repository_test.dart:2]
+
 ### Change Log
 
 - 2026-04-01: Story 8.1 created — APNs infrastructure foundation: push.ts service stub, device_tokens and notification_preferences schemas, notifications.ts route, Flutter push package integration with token registration.
