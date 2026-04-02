@@ -332,4 +332,31 @@ app.openapi(archiveListRoute, async (c) => {
   return new Response(null, { status: 204 })
 })
 
+// ── DELETE /v1/lists/:id ─────────────────────────────────────────────────────
+// IMPORTANT: Registered AFTER DELETE /v1/lists/{id}/archive to prevent Hono
+// from matching "archive" as a list ID (catch-all comes after specific paths).
+
+const deleteListRoute = createRoute({
+  method: 'delete',
+  path: '/v1/lists/{id}',
+  tags: ['Lists'],
+  summary: 'Hard-delete a list (FR44)',
+  description:
+    'Permanently removes a list and cascade-deletes its tasks. ' +
+    'Prefer DELETE /v1/lists/{id}/archive for soft-delete (reversible). ' +
+    'Stub; real implementation cascades via Drizzle.',
+  request: {
+    params: z.object({ id: z.string().uuid() }),
+  },
+  responses: {
+    204: { description: 'List deleted' },
+    404: { content: { 'application/json': { schema: ErrorSchema } }, description: 'List not found' },
+  },
+})
+
+app.openapi(deleteListRoute, async (c) => {
+  // TODO(impl): hard-delete list and cascade to tasks via Drizzle; verify ownership from JWT
+  return new Response(null, { status: 204 })
+})
+
 export { app as listsRouter }
