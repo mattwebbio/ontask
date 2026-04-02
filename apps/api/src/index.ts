@@ -16,6 +16,7 @@ import { sharingRouter } from './routes/sharing.js'
 import { commitmentContractsRouter } from './routes/commitment-contracts.js'
 import { proofRouter } from './routes/proof.js'
 import { notificationsRouter } from './routes/notifications.js'
+import { liveActivitiesRouter } from './routes/live-activities.js'
 import { subscriptionsRouter } from './routes/subscriptions.js'
 import { mcpTokensRouter } from './routes/mcp-tokens.js'
 import { internalRouter } from './routes/internal.js'
@@ -83,6 +84,7 @@ app.route('/', sharingRouter)
 app.route('/', commitmentContractsRouter)
 app.route('/', proofRouter)
 app.route('/', notificationsRouter)
+app.route('/', liveActivitiesRouter)
 app.route('/', subscriptionsRouter)
 app.route('/', mcpTokensRouter)
 // ── Internal routes (Service Binding only — NOT public API) ───────────────
