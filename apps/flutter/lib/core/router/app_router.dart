@@ -104,7 +104,8 @@ GoRouter appRouter(Ref ref) {
         final subStatus = subscriptionAsync.value;
         final isOnPaywallRoute = state.matchedLocation == '/paywall';
         final isOnSettingsRoute = state.matchedLocation.startsWith('/settings');
-        if (subStatus.isExpired && !isOnPaywallRoute && !isOnSettingsRoute) {
+        final isOnSubscribeSuccessRoute = state.matchedLocation.startsWith('/subscribe/success');
+        if (subStatus.isExpired && !isOnPaywallRoute && !isOnSettingsRoute && !isOnSubscribeSuccessRoute) {
           return '/paywall';
         }
         if (!subStatus.isExpired && isOnPaywallRoute) {

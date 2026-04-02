@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/l10n/strings.dart';
 import '../data/subscriptions_repository.dart';
+import '../domain/subscription_status.dart';
 import 'subscriptions_provider.dart';
 
 /// Paywall Screen — full-screen route shown when a user's trial has expired.
@@ -25,12 +26,15 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Watch subscription status — when it becomes active post-payment, navigate away.
-    final statusAsync = ref.watch(subscriptionStatusProvider);
-    statusAsync.whenData((status) {
-      if (status.isActive && mounted) {
-        context.go('/now');
-      }
+    // Listen to subscription status — when it becomes active post-payment, navigate away.
+    // ref.listen is used (not statusAsync.whenData in build) so navigation fires after
+    // the build phase completes, avoiding GoRouter assertions during build (P2, Story 9.3).
+    ref.listen<AsyncValue<SubscriptionStatus>>(subscriptionStatusProvider, (_, next) {
+      next.whenData((status) {
+        if (status.isActive && mounted) {
+          context.go('/now');
+        }
+      });
     });
 
     return CupertinoPageScaffold(
