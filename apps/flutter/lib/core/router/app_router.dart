@@ -96,7 +96,9 @@ GoRouter appRouter(Ref ref) {
         return '/now';
       }
 
-      // Paywall gate — expired trial blocks all authenticated routes (FR88).
+      // Paywall gate — expired trial or elapsed grace period blocks all authenticated routes (FR88).
+      // grace_period users (isGracePeriod) have FULL access — no redirect fires until server
+      // transitions state to 'expired' (after 7-day window). isGracePeriod != isExpired (Story 9.5).
       // Reads subscription status synchronously if cached; otherwise defers to
       // subscriptionStatusProvider loading state (no redirect until data available).
       final subscriptionAsync = ref.read(subscriptionStatusProvider);

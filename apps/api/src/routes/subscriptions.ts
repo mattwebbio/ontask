@@ -1,6 +1,8 @@
 import { OpenAPIHono, createRoute } from '@hono/zod-openapi'
 import { z } from 'zod'
-import { ok } from '../lib/response.js'
+import { ok, err } from '../lib/response.js'
+import { verifyWebhookSignature } from '../services/stripe.js'
+import { sendPush } from '../services/push.js'
 
 // ── Subscriptions router ──────────────────────────────────────────────────────
 // Subscription lifecycle: trial, activation, management, payment failure.
@@ -289,6 +291,69 @@ app.openapi(cancelSubscriptionRoute, async (_c) => {
     }),
     200,
   )
+})
+
+// ── POST /v1/subscriptions/webhook/stripe ────────────────────────────────────
+
+const StripeWebhookRequestSchema = z.object({
+  type: z.string(),    // e.g. 'invoice.payment_failed', 'invoice.payment_succeeded'
+  data: z.object({
+    object: z.record(z.string(), z.unknown()),
+  }),
+})
+
+const StripeWebhookResponseSchema = z.object({
+  data: z.object({
+    received: z.boolean(),
+  }),
+})
+
+const stripeWebhookRoute = createRoute({
+  method: 'post',
+  path: '/v1/subscriptions/webhook/stripe',
+  tags: ['Subscriptions'],
+  summary: 'Stripe webhook receiver for subscription events',
+  description:
+    'Receives Stripe webhook events for subscription lifecycle management. ' +
+    'Handles invoice.payment_failed (begin grace period, send push notification, FR90). ' +
+    'Handles invoice.payment_succeeded (end grace period, restore active status). ' +
+    'Story 9.5 stub — TODO(impl): verify Stripe webhook signature, process event type, ' +
+    'update DB subscription status, send APNs push via services/push.ts.',
+  request: {
+    body: {
+      content: { 'application/json': { schema: StripeWebhookRequestSchema } },
+    },
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: StripeWebhookResponseSchema } },
+      description: 'Webhook received',
+    },
+    400: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Invalid webhook payload or signature',
+    },
+  },
+})
+
+app.openapi(stripeWebhookRoute, async (_c) => {
+  // TODO(impl): const rawBody = await _c.req.text() — MUST be raw, unparsed body
+  // TODO(impl): const sig = _c.req.header('stripe-signature') ?? ''
+  // TODO(impl): const valid = verifyWebhookSignature(rawBody, sig, _c.env)
+  // TODO(impl): if (!valid) return _c.json(err('INVALID_SIGNATURE', '...'), 400)
+  // TODO(impl): const event = _c.req.valid('json')
+  // TODO(impl): if (event.type === 'invoice.payment_failed') {
+  //   TODO(impl): update subscription status to 'grace_period' in DB
+  //   TODO(impl): set grace period expiry = now + 7 days
+  //   TODO(impl): call sendPush() from services/push.ts with FR90 message:
+  //     title: "Payment failed", body: "Your payment didn't go through — update your payment method to keep access"
+  // TODO(impl): } else if (event.type === 'invoice.payment_succeeded') {
+  //   TODO(impl): update subscription status back to 'active'
+  //   TODO(impl): clear grace period state
+  // TODO(impl): }
+  // TODO(impl): emit 'payment_failed' analytics event (NFR-B1)
+  // Stub: acknowledge receipt unconditionally.
+  return _c.json(ok({ received: true }), 200)
 })
 
 export const subscriptionsRouter = app

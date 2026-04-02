@@ -353,4 +353,73 @@ void main() {
       expect(fakeRepo.cancelCallCount, 0);
     });
   });
+
+  // Story 9.5 tests: grace period state UI.
+
+  const gracePeriodStatus = SubscriptionStatus(
+    state: SubscriptionState.gracePeriod,
+    currentPeriodEnd: null,
+  );
+
+  testWidgets('grace period state renders subscriptionGracePeriodStatusLabel text',
+      (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          subscriptionStatusProvider.overrideWith((_) async => gracePeriodStatus),
+        ],
+        child: const CupertinoApp(home: SubscriptionSettingsScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text(AppStrings.subscriptionGracePeriodStatusLabel), findsOneWidget);
+  });
+
+  testWidgets('grace period state renders subscriptionGracePeriodUpdateCta button',
+      (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          subscriptionStatusProvider.overrideWith((_) async => gracePeriodStatus),
+        ],
+        child: const CupertinoApp(home: SubscriptionSettingsScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text(AppStrings.subscriptionGracePeriodUpdateCta), findsOneWidget);
+  });
+
+  testWidgets('grace period state shows body text', (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          subscriptionStatusProvider.overrideWith((_) async => gracePeriodStatus),
+        ],
+        child: const CupertinoApp(home: SubscriptionSettingsScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text(AppStrings.subscriptionGracePeriodBody), findsOneWidget);
+  });
+
+  testWidgets('grace period state with currentPeriodEnd shows access-until date',
+      (tester) async {
+    final gracePeriodWithDate = SubscriptionStatus(
+      state: SubscriptionState.gracePeriod,
+      currentPeriodEnd: DateTime(2026, 5, 8),
+    );
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          subscriptionStatusProvider.overrideWith((_) async => gracePeriodWithDate),
+        ],
+        child: const CupertinoApp(home: SubscriptionSettingsScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.text(AppStrings.subscriptionGracePeriodAccessUntil('2026-05-08')),
+      findsOneWidget,
+    );
+  });
 }

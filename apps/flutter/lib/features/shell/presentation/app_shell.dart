@@ -9,6 +9,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../notifications/presentation/notification_centre_screen.dart';
 import '../../search/presentation/search_screen.dart';
 import '../../settings/presentation/settings_screen.dart';
+import '../../subscriptions/presentation/grace_period_banner.dart';
 import '../../subscriptions/presentation/trial_countdown_banner.dart';
 import 'add_tab_sheet.dart';
 import 'macos_shell.dart';
@@ -115,6 +116,7 @@ class _AppShellState extends ConsumerState<AppShell> {
     return Column(
       children: [
         const TrialCountdownBanner(),
+        const GracePeriodBanner(),
         Expanded(
           child: CupertinoTabScaffold(
             controller: _tabController,
