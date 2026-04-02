@@ -1193,4 +1193,24 @@ class AppStrings {
   /// Error shown when device token registration fails.
   static const String notificationsTokenRegistrationError =
       'Couldn\u2019t register for notifications \u2014 try again later.';
+
+  // ── Task Reminder & Deadline Notifications (FR42, FR72, Story 8.2) ────────────
+
+  /// Reminder notification body — shown X minutes before task scheduled time.
+  /// Usage: '${task.title} ${AppStrings.notificationReminderBody(formattedTime)}'
+  static String notificationReminderBody(String time) => 'Coming up at $time';
+
+  /// Deadline notification body — task due today.
+  static const String notificationDeadlineToday = 'is due today';
+
+  /// Deadline notification body — task due tomorrow.
+  static const String notificationDeadlineTomorrow = 'is due tomorrow';
+
+  /// Stake warning notification title prefix (warm tone, UX-DR32).
+  static const String notificationStakeWarningTitlePrefix = '⚠';
+
+  /// Stake warning notification body template.
+  /// Usage: '$stakeAmount staked, deadline in ${hours}h. $charityName gets half if it\'s not done.'
+  static String notificationStakeWarningBody(String stakeAmount, int hours, String charityName) =>
+      '\$stakeAmount staked, deadline in ${hours}h. $charityName gets half if it\'s not done.';
 }
