@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-29
-last_updated: 2026-04-02 # Story 11.5 review
+last_updated: 2026-04-02 # Story 12.1 review
 project: ontask
 project_key: NOKEY
 tracking_system: file-system
@@ -185,19 +185,19 @@ development_status:
   # ─────────────────────────────────────────────────────────
   # Epic 11: Operator Dashboard
   # ─────────────────────────────────────────────────────────
-  epic-11: in-progress
+  epic-11: done
   11-1-operator-authentication-dashboard-shell: done
   11-2-dispute-review-resolution: done
   11-3-charge-reversal-refunds: done
   11-4-user-impersonation: done
-  11-5-operator-alerts-business-event-monitoring: review
+  11-5-operator-alerts-business-event-monitoring: done
   epic-11-retrospective: optional
 
   # ─────────────────────────────────────────────────────────
   # Epic 12: iOS Live Activities & Widgets
   # ─────────────────────────────────────────────────────────
-  epic-12: backlog
-  12-1-live-activity-extension-foundation-push-token-storage: backlog
+  epic-12: in-progress
+  12-1-live-activity-extension-foundation-push-token-storage: review
   12-2-live-activity-task-timer-commitment-countdown: backlog
   12-3-live-activity-watch-mode-voiceover-announcements: backlog
   12-4-server-side-live-activity-push-updates: backlog

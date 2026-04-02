@@ -72,6 +72,11 @@ dependencies:
   # Covers iOS and macOS. Do NOT use firebase_messaging or flutter_local_notifications.
   push: ^3.3.3
 
+  # Live Activities — ActivityKit bridge for Dynamic Island + Lock Screen (ARCH-28, Story 12.1)
+  # iOS only. All calls MUST be guarded with `if (Platform.isIOS)`.
+  # macOS does NOT support Live Activities — the macOS build ignores this target entirely.
+  live_activities: ^1.8.4
+
   # Camera capture — in-app viewfinder for photo proof submission (FR31, Story 7.2).
   # Do NOT replace with image_picker — gallery import is prohibited by FR31.
   camera: ^0.12.0+1
