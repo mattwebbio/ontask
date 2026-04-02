@@ -138,7 +138,7 @@ class TaskRow extends ConsumerWidget {
                                 : null,
                           ),
                     ),
-                    if (task.dueDate != null || _hasSchedulingHints || task.recurrenceRule != null || dependsOn.isNotEmpty || blocks.isNotEmpty || (task.completedAt != null && task.proofRetained)) ...[
+                    if (task.dueDate != null || _hasSchedulingHints || task.recurrenceRule != null || dependsOn.isNotEmpty || blocks.isNotEmpty || (task.completedAt != null && task.proofRetained) || task.proofDisputePending) ...[
                       const SizedBox(height: AppSpacing.xs),
                       Wrap(
                         spacing: AppSpacing.sm,
@@ -366,6 +366,15 @@ class TaskRow extends ConsumerWidget {
                                 ],
                               ),
                             ),
+                          // "Under review" badge — shown when a dispute is pending operator review (FR39, Story 7.8)
+                          if (task.proofDisputePending) ...[
+                            const SizedBox(width: 4),
+                            _ProofBadge(
+                              label: AppStrings.taskUnderReview,
+                              color: colors.scheduleCritical,
+                              icon: CupertinoIcons.clock,
+                            ),
+                          ],
                         ],
                       ),
                     ],
@@ -532,6 +541,39 @@ class TaskRow extends ConsumerWidget {
       case ProofMode.standard:
         return '';
     }
+  }
+}
+
+/// Small pill badge used for proof-related status indicators on the task row.
+///
+/// Used for the "Under review" badge when a verification dispute is pending (FR39, Story 7.8).
+class _ProofBadge extends StatelessWidget {
+  const _ProofBadge({
+    required this.label,
+    required this.color,
+    required this.icon,
+  });
+
+  final String label;
+  final Color color;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 12, color: color),
+        const SizedBox(width: 2),
+        Text(
+          label,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: color,
+                fontSize: 13,
+              ),
+        ),
+      ],
+    );
   }
 }
 

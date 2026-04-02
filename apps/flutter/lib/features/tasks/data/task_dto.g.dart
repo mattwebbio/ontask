@@ -38,6 +38,7 @@ _TaskDto _$TaskDtoFromJson(Map<String, dynamic> json) => _TaskDto(
   proofModeIsCustom: json['proofModeIsCustom'] as bool? ?? false,
   proofMediaUrl: json['proofMediaUrl'] as String?,
   proofRetained: json['proofRetained'] as bool? ?? false,
+  proofDisputePending: json['proof_dispute_pending'] as bool? ?? false,
   completedByName: json['completedByName'] as String?,
 );
 
@@ -73,5 +74,6 @@ Map<String, dynamic> _$TaskDtoToJson(_TaskDto instance) => <String, dynamic>{
   'proofModeIsCustom': instance.proofModeIsCustom,
   'proofMediaUrl': instance.proofMediaUrl,
   'proofRetained': instance.proofRetained,
+  'proof_dispute_pending': instance.proofDisputePending,
   'completedByName': instance.completedByName,
 };

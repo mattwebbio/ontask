@@ -16,7 +16,7 @@ part 'proof_repository.g.dart';
 ///
 /// Constructor takes [ApiClient] and [AppDatabase] via injection — consistent
 /// with [SharingRepository] and other data layer classes in this project.
-/// (Epic 7, Stories 7.2–7.6, FR31-32, FR35-36, FR37, ARCH-26)
+/// (Epic 7, Stories 7.2–7.8, FR31-32, FR35-36, FR37, FR38, FR39, ARCH-26)
 class ProofRepository {
   ProofRepository(this._client, this._db);
 
@@ -241,6 +241,19 @@ class ProofRepository {
         clientTimestamp: now,
         // status defaults to 'pending' via column default
       ),
+    );
+  }
+
+  /// Files a dispute against a failed AI verification for the given task.
+  ///
+  /// Calls POST /v1/tasks/{taskId}/disputes — no-proof-required (FR39).
+  /// The stake charge is placed on hold server-side immediately.
+  /// On success, the task enters "Under review" state (FR40).
+  ///
+  /// Throws [DioException] on network failure — callers handle error state.
+  Future<void> fileDispute(String taskId) async {
+    await _client.dio.post<Map<String, dynamic>>(
+      '/v1/tasks/$taskId/disputes',
     );
   }
 

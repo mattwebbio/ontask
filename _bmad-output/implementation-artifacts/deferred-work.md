@@ -1,5 +1,15 @@
 # Deferred Work
 
+## Deferred from: code review of 7-8-ai-verification-dispute-filing — Story 7.8 (2026-04-01)
+
+- **Dispute CTA integration test is shallow** — `photo_capture_sub_view_test.dart` mocks `fileDispute` directly rather than tapping the button from the rejected state. Getting to the rejected state requires complex camera mocking. `DisputeConfirmationView` itself has 7 separate tests; the gap is the sub-view state transition. Address when camera mocking infrastructure is added. [`apps/flutter/test/features/proof/photo_capture_sub_view_test.dart`]
+- **`WatchModeSubView._onDone()` deferred bug — pops with non-null `ProofPath.watchMode` even without verified proof** — Pre-existing, unchanged by Story 7.8. Same as prior entries.
+
+## Deferred from: code review of 7-8-ai-verification-dispute-filing (2026-04-01)
+
+- **`stakeAmountCents` absent from `TaskDto` and `toDomain()`** — `Task` domain model declares `int? stakeAmountCents` (added in Story 6.2) but `TaskDto` does not map the field, so the value is silently lost on API deserialization. Address when stake display or charge logic is wired to the task list. [`apps/flutter/lib/features/tasks/data/task_dto.dart`]
+- **`catch (_)` in `_parseDaysOfWeek` swallows parse errors silently** — Malformed JSON in the `recurrence_days_of_week` API field returns `null` with no log or user feedback. Low severity for now; consider logging or surfacing once recurrence editing lands. [`apps/flutter/lib/features/tasks/data/task_dto.dart:102`]
+
 ## Deferred from: code review of 7-7-proof-retention-settings (2026-04-01)
 
 - **`WatchModeSubView._onDone()` deferred bug — pops with non-null `ProofPath.watchMode` even without verified proof** — Pre-existing from Story 7.4 (previously logged under 7-5 review). This story preserves the bug intentionally; `_onDone()` remains unchanged per story dev notes. Address when `WatchModeSubView` is revisited for a future story or when `NowTaskCard` handles proof-path return values more granularly. [`apps/flutter/lib/features/watch_mode/presentation/watch_mode_sub_view.dart`]

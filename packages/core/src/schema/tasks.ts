@@ -33,6 +33,7 @@ export const tasksTable = pgTable('tasks', {
   proofMode: text(), // 'standard' | 'photo' | 'watchMode' | 'healthKit' | 'calendarEvent' | null (null = derived from inherited requirement)
   proofModeIsCustom: boolean().default(false).notNull(), // true when proofMode was explicitly set by user, overriding list/section default
   proofRetained: boolean().default(false).notNull(), // true when the user chose "Keep as completion record" (FR38, Story 7.7)
+  proofDisputePending: boolean().default(false).notNull(), // true when a dispute is pending operator review (FR39, Story 7.8)
   proofMediaUrl: text(), // nullable; presigned URL or storage path for photo/video/document proof (FR21, NFR-S4)
   stakeAmountCents: integer(), // nullable; stake amount in US cents; null means no stake set (FR22, Story 6.2)
   stakeModificationDeadline: timestamp({ withTimezone: true }), // nullable; set to (dueDate - 24h) when stake is locked; null means unstaked (FR63, Story 6.6)

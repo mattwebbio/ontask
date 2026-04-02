@@ -51,6 +51,8 @@ abstract class Task with _$Task {
     String? proofMediaUrl,
     // True when the user chose "Keep as completion record" (FR38, Story 7.7).
     @Default(false) bool proofRetained,
+    // True when a verification dispute is pending operator review (FR39, Story 7.8).
+    @Default(false) bool proofDisputePending,
     // Display name of the member who completed this task; null when incomplete or unknown.
     String? completedByName,
     // Commitment stake amount in cents; null = no stake set (FR22, Story 6.2).

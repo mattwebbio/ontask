@@ -3,15 +3,16 @@ import { z } from 'zod'
 import { ok, err } from '../lib/response.js'
 
 // ── Proof submission router ───────────────────────────────────────────────────
-// Stub endpoints for AI-verified photo, screenshot/document, Watch Mode, HealthKit, or offline proof submission
-// and proof retention preference setting.
-// (Epic 7, Stories 7.2–7.7, FR31, FR33-34, FR35-36, FR37, FR38, FR47, FR66-67).
+// Stub endpoints for AI-verified photo, screenshot/document, Watch Mode, HealthKit, or offline proof submission,
+// proof retention preference setting, and AI verification dispute filing.
+// (Epic 7, Stories 7.2–7.8, FR31, FR33-34, FR35-36, FR37, FR38-40, FR47, FR66-67).
 // FR31: camera capture only — no gallery import (photo path).
 // FR33-34: Watch Mode passive camera monitoring (watchMode path).
 // FR35, FR47: HealthKit auto-verification — reads Apple Health data to verify task completion.
 // FR36: screenshot/document path — PNG, JPG, or PDF up to 25 MB.
 // FR37: offline queued proof — clientTimestamp validated server-side; charge reversal if predates deadline.
 // FR38: proof retention — user chooses whether proof is kept as a completion record (retain=true: B2 storage for task lifetime; retain=false: deletion within 24h).
+// FR39-40: dispute filing — no-proof-required review request; stake charge placed on hold immediately.
 // FR32: AI verification stub — always returns verified: true by default.
 //       Add ?demo=fail to exercise the rejection path.
 // FR66-67: Watch Mode session summary — durationSeconds + activityPercentage in body.
@@ -159,6 +160,59 @@ app.openapi(setProofRetentionRoute, async (c) => {
   // TODO(impl): if retain=false, enqueue B2 media deletion job (delete within 24h of verification)
   // TODO(impl): if retain=true, ensure B2 media is preserved; update proof_submissions.mediaUrl
   return c.body(null, 204)
+})
+
+// ── POST /v1/tasks/{taskId}/disputes ─────────────────────────────────────────
+// Files a no-proof-required dispute for a failed AI verification (FR39, FR40).
+
+const DisputeResponseSchema = z.object({
+  data: z.object({
+    disputeId: z.string(),
+    taskId: z.string(),
+    status: z.literal('pending'),
+  }),
+})
+
+const postDisputeRoute = createRoute({
+  method: 'post',
+  path: '/v1/tasks/{taskId}/disputes',
+  tags: ['Proof'],
+  summary: 'File a dispute against a failed AI verification result',
+  description:
+    'Files a no-proof-required dispute for a failed AI verification on the given task (FR39). ' +
+    'Immediately places the stake charge on hold — no charge is processed while under review. ' +
+    'Dispute is queued for human operator review with a 24-hour SLA (NFR-R3, FR40). ' +
+    'Stub implementation (Story 7.8) — real DB write and charge-hold deferred.',
+  request: {
+    params: z.object({ taskId: z.string().min(1) }),
+  },
+  responses: {
+    201: {
+      content: { 'application/json': { schema: DisputeResponseSchema } },
+      description: 'Dispute filed — stake charge placed on hold',
+    },
+    400: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Bad request',
+    },
+  },
+})
+
+app.openapi(postDisputeRoute, async (c) => {
+  const { taskId } = c.req.valid('param')
+  // TODO(impl): insert row into verification_disputes table
+  //   (taskId, userId from JWT, proofSubmissionId, status='pending', filedAt=now())
+  // TODO(impl): place stake charge on hold — set tasks.charge_status = 'on_hold' or update
+  //   commitment_contracts.status = 'disputed' for this taskId
+  // TODO(impl): notify operator queue (Story 11.2) of new dispute
+  return c.json(
+    ok({
+      disputeId: '00000000-0000-4000-a000-000000000078',
+      taskId,
+      status: 'pending' as const,
+    }),
+    201,
+  )
 })
 
 export { app as proofRouter }
