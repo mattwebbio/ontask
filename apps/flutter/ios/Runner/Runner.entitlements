@@ -14,5 +14,9 @@
 	<string>development</string>
 	<key>com.apple.developer.live-activities</key>
 	<true/>
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>group.com.ontaskhq.ontask</string>
+	</array>
 </dict>
 </plist>

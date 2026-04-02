@@ -95,6 +95,14 @@ class LiveActivitiesRepository {
         activityType: LiveActivityType.taskTimer,
         pushToken: activityId, // Token delivered async via activityUpdateStream
       );
+      // TODO(impl): Write active task data to App Group UserDefaults for WidgetKit.
+      // widgetDataWriter.writeWidgetData(
+      //   activeTaskTitle: taskTitle,
+      //   activeElapsedSeconds: elapsedSeconds,
+      //   scheduleHealth: 'healthy',
+      //   todayTasks: [],
+      // );
+      // widgetDataWriter.reloadWidgets();
     }
     return activityId;
   }
@@ -183,6 +191,14 @@ class LiveActivitiesRepository {
   }) async {
     if (defaultTargetPlatform != TargetPlatform.iOS) return;
     await _plugin.endActivity(activityId);
+    // TODO(impl): Clear active task data in App Group UserDefaults after activity ends.
+    // widgetDataWriter.writeWidgetData(
+    //   activeTaskTitle: null,
+    //   activeElapsedSeconds: null,
+    //   scheduleHealth: 'healthy',
+    //   todayTasks: [],
+    // );
+    // widgetDataWriter.reloadWidgets();
   }
 }
 
