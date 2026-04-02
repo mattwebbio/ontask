@@ -49,7 +49,14 @@
     "STRIPE_WEBHOOK_SECRET": "",
     // Every.org Partner Funds API key for charity disbursements (Story 6.5).
     // Set via `wrangler secret put EVERY_ORG_API_KEY` — never committed.
-    "EVERY_ORG_API_KEY": ""
+    "EVERY_ORG_API_KEY": "",
+    // APNs push notification credentials (Story 8.1, ARCH-27).
+    // Set via `wrangler secret put APNS_KEY` — p8 key file contents, never committed.
+    "APNS_KEY": "",
+    // Set via `wrangler secret put APNS_KEY_ID` — 10-char Key ID from Apple Developer portal.
+    "APNS_KEY_ID": "",
+    // Set via `wrangler secret put APNS_TEAM_ID` — 10-char Team ID from Apple Developer portal.
+    "APNS_TEAM_ID": ""
   },
 
   // ── Queues ─────────────────────────────────────────────────────────────────

@@ -67,6 +67,9 @@ importers:
 
   apps/api:
     dependencies:
+      '@fivesheepco/cloudflare-apns2':
+        specifier: ^13.0.0
+        version: 13.0.0
       '@hono/zod-openapi':
         specifier: ^1.2.4
         version: 1.2.4(hono@4.12.9)(zod@4.3.6)
@@ -789,6 +792,10 @@ packages:
     cpu: [x64]
     os: [win32]
 
+  '@fivesheepco/cloudflare-apns2@13.0.0':
+    resolution: {integrity: sha512-5nwOFOMatOr21PyRLb/Ya3EROA9lq05aIKFaIYSdZg7DGHmDKZzdIigxsCz9Y0nQPGnszRZxOCiKYyTp1/6ESQ==}
+    engines: {node: '>=20'}
+
   '@hono/zod-openapi@1.2.4':
     resolution: {integrity: sha512-cZu71bpODTbtIDoUsIIYPrs58wJ565Tbg6FE+JshU0irBAd6KxrP+k62Amm/mjA7tTOQ3+ingODHKGFOnv+Ibw==}
     engines: {node: '>=16.0.0'}
@@ -1150,6 +1157,9 @@ packages:
 
   '@speed-highlight/core@1.2.15':
     resolution: {integrity: sha512-BMq1K3DsElxDWawkX6eLg9+CKJrTVGCBAWVuHXVUV2u0s2711qiChLSId6ikYPfxhdYocLNt3wWwSvDiTvFabw==}
+
+  '@tsndr/cloudflare-worker-jwt@3.2.1':
+    resolution: {integrity: sha512-1AfDEgu7DTbU0sXDSOKh4D5t7+RJ0dIRRaDmoX3LFeW0AxQdunuqTQ7AVGwNJqOnxrbxiruyvX01cf9HHqEvXQ==}
 
   '@types/babel__core@7.20.5':
     resolution: {integrity: sha512-qoQprZvz5wQFJwMDqeseRXWv3rqMvhgpbXFfVyWhbx9X47POIA6i/+dXefEmZKoAgOaTdaIgNSMqMIU61yRyzA==}
@@ -2448,6 +2458,10 @@ snapshots:
   '@esbuild/win32-x64@0.27.3':
     optional: true
 
+  '@fivesheepco/cloudflare-apns2@13.0.0':
+    dependencies:
+      '@tsndr/cloudflare-worker-jwt': 3.2.1
+
   '@hono/zod-openapi@1.2.4(hono@4.12.9)(zod@4.3.6)':
     dependencies:
       '@asteasolutions/zod-to-openapi': 8.5.0(zod@4.3.6)
@@ -2694,6 +2708,8 @@ snapshots:
   '@sindresorhus/is@7.2.0': {}
 
   '@speed-highlight/core@1.2.15': {}
+
+  '@tsndr/cloudflare-worker-jwt@3.2.1': {}
 
   '@types/babel__core@7.20.5':
     dependencies:

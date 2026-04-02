@@ -30,6 +30,12 @@ declare namespace Cloudflare {
 		STRIPE_WEBHOOK_SECRET?: string;
 		/** Every.org Partner Funds API key for charity disbursements (Story 6.5). Set via `wrangler secret put EVERY_ORG_API_KEY`. */
 		EVERY_ORG_API_KEY?: string;
+		/** APNs p8 key file contents for push notification delivery (Story 8.1, ARCH-27). Set via `wrangler secret put APNS_KEY`. */
+		APNS_KEY?: string;
+		/** APNs 10-character Key ID from Apple Developer portal (Story 8.1). Set via `wrangler secret put APNS_KEY_ID`. */
+		APNS_KEY_ID?: string;
+		/** APNs 10-character Team ID from Apple Developer portal (Story 8.1). Set via `wrangler secret put APNS_TEAM_ID`. */
+		APNS_TEAM_ID?: string;
 		/** Cloudflare Queue binding for charge trigger messages (Story 6.5). */
 		CHARGE_TRIGGER_QUEUE: Queue;
 		/** Cloudflare Queue binding for Every.org disbursement messages (Story 6.5). */

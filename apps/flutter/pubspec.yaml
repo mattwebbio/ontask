@@ -68,6 +68,10 @@ dependencies:
   # are guarded with `if (Platform.isIOS)` at call sites.
   health: ^13.3.1
 
+  # APNs push notification handling — APNs-direct, no FCM dependency (ARCH-27, Story 8.1).
+  # Covers iOS and macOS. Do NOT use firebase_messaging or flutter_local_notifications.
+  push: ^3.3.3
+
   # Camera capture — in-app viewfinder for photo proof submission (FR31, Story 7.2).
   # Do NOT replace with image_picker — gallery import is prohibited by FR31.
   camera: ^0.12.0+1

@@ -1171,4 +1171,26 @@ class AppStrings {
   /// Push notification body when a dispute is rejected (charge processed).
   static const String disputeRejectedNotificationBody =
       'Your dispute was reviewed \u2014 your stake has been charged.';
+
+  // ── Push Notifications (FR42, FR43, Story 8.1) ───────────────────────────────
+
+  /// System permission request — never shown as a pre-permission dialog in this
+  /// story; the OS dialog fires after requestPermissionAndRegisterToken() is called.
+  /// These strings are for future Settings → Notifications UI (Story 8.x).
+
+  /// Label for global notifications toggle in Settings.
+  static const String notificationsGlobalToggleLabel = 'Push Notifications';
+
+  /// Subtitle when global notifications are enabled.
+  static const String notificationsGlobalEnabledSubtitle = 'Notifications are on for all devices.';
+
+  /// Subtitle when global notifications are disabled.
+  static const String notificationsGlobalDisabledSubtitle = 'All push notifications are off.';
+
+  /// Label for per-device toggle (used in a future per-device settings screen).
+  static const String notificationsThisDeviceLabel = 'This device';
+
+  /// Error shown when device token registration fails.
+  static const String notificationsTokenRegistrationError =
+      'Couldn\u2019t register for notifications \u2014 try again later.';
 }
