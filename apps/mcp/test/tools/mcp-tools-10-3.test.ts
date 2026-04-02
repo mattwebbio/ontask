@@ -45,10 +45,12 @@ function makeMockApiBinding(overrides: {
   }
 }
 
+const STUB_USER_ID = '00000000-0000-4000-a000-000000000001'
+
 describe('create_task', () => {
   it('with structured title returns MCP content format', async () => {
     const mockApi = makeMockApiBinding()
-    const result = await createTask({ title: 'Buy groceries' }, mockApi)
+    const result = await createTask({ title: 'Buy groceries' }, mockApi, STUB_USER_ID)
 
     expect(result.isError).toBeUndefined()
     expect(result.content).toHaveLength(1)
@@ -82,7 +84,7 @@ describe('create_task', () => {
         }),
     }
 
-    const result = await createTask({ input: 'call the dentist Thursday at 2pm' }, mockApi)
+    const result = await createTask({ input: 'call the dentist Thursday at 2pm' }, mockApi, STUB_USER_ID)
 
     expect(result.isError).toBeUndefined()
     expect(result.content[0].type).toBe('text')
@@ -102,7 +104,7 @@ describe('create_task', () => {
 
   it('with neither input nor title returns error MCP result', async () => {
     const mockApi = makeMockApiBinding()
-    const result = await createTask({}, mockApi)
+    const result = await createTask({}, mockApi, STUB_USER_ID)
 
     expect(result.isError).toBe(true)
     expect(result.content[0].type).toBe('text')
@@ -122,7 +124,7 @@ describe('list_tasks', () => {
       }),
     })
 
-    const result = await listTasks({}, mockApi)
+    const result = await listTasks({}, mockApi, STUB_USER_ID)
 
     expect(result.isError).toBeUndefined()
     expect(result.content).toHaveLength(1)
@@ -139,7 +141,7 @@ describe('list_tasks', () => {
     })
     const listId = 'b0000000-0000-4000-8000-000000000001'
 
-    await listTasks({ listId }, mockApi)
+    await listTasks({ listId }, mockApi, STUB_USER_ID)
 
     const callUrl = mockApi.fetch.mock.calls[0][0] as string
     expect(callUrl).toContain(`listId=${listId}`)
@@ -156,6 +158,7 @@ describe('update_task', () => {
     const result = await updateTask(
       { id: stubTask.id, title: 'Updated Task Title', priority: 'high' },
       mockApi,
+      STUB_USER_ID,
     )
 
     expect(result.isError).toBeUndefined()
@@ -176,7 +179,7 @@ describe('update_task', () => {
   it('returns error result when id is missing', async () => {
     const mockApi = makeMockApiBinding()
     // @ts-expect-error — intentionally missing id to test validation
-    const result = await updateTask({ title: 'Test' }, mockApi)
+    const result = await updateTask({ title: 'Test' }, mockApi, STUB_USER_ID)
 
     expect(result.isError).toBe(true)
     const data = JSON.parse(result.content[0].text)
@@ -198,7 +201,7 @@ describe('schedule_task', () => {
       json: async () => ({ data: scheduledBlock }),
     })
 
-    const result = await scheduleTask({ id: stubTask.id }, mockApi)
+    const result = await scheduleTask({ id: stubTask.id }, mockApi, STUB_USER_ID)
 
     expect(result.isError).toBeUndefined()
     expect(result.content[0].type).toBe('text')
@@ -223,7 +226,7 @@ describe('complete_task', () => {
       json: async () => ({ data: { completedTask, nextInstance: null } }),
     })
 
-    const result = await completeTask({ id: stubTask.id }, mockApi)
+    const result = await completeTask({ id: stubTask.id }, mockApi, STUB_USER_ID)
 
     expect(result.isError).toBeUndefined()
     expect(result.content[0].type).toBe('text')
@@ -245,7 +248,7 @@ describe('Service Binding unavailable', () => {
       fetch: vi.fn().mockRejectedValue(new Error('Service binding unavailable')),
     }
 
-    const result = await createTask({ title: 'Test Task' }, unavailableApi)
+    const result = await createTask({ title: 'Test Task' }, unavailableApi, STUB_USER_ID)
 
     // Must NOT throw — must return a structured error result
     expect(result.isError).toBe(true)
@@ -261,7 +264,7 @@ describe('Service Binding unavailable', () => {
       fetch: vi.fn().mockRejectedValue(new Error('Service binding unavailable')),
     }
 
-    const result = await listTasks({}, unavailableApi)
+    const result = await listTasks({}, unavailableApi, STUB_USER_ID)
 
     expect(result.isError).toBe(true)
     const data = JSON.parse(result.content[0].text)
