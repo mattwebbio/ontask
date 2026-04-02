@@ -1,17 +1,17 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { NavLink, useNavigate, Routes, Route } from 'react-router-dom'
-import { isAuthenticated, getOperatorEmail, clearAuth } from '../lib/auth'
+import { isAuthenticated, getOperatorEmail, clearAuth, getToken } from '../lib/auth'
 import DisputesPage from './DisputesPage'
 import DisputeDetailPage from './DisputeDetailPage'
 import UsersPage from './UsersPage'
 import UserChargesPage from './UserChargesPage'
+import ImpersonateUserPage from './ImpersonateUserPage'
+import MonitoringPage from './MonitoringPage'
+
+const API_BASE = import.meta.env.VITE_ADMIN_API_URL ?? 'http://localhost:8787'
 
 function BillingPage() {
   return <h2>Billing</h2>
-}
-
-function MonitoringPage() {
-  return <h2>Monitoring</h2>
 }
 
 // ── Sidebar styles ────────────────────────────────────────────────────────────
@@ -32,16 +32,66 @@ const navLinkActiveStyle: React.CSSProperties = {
   fontWeight: 'bold',
 }
 
+// ── Alert badge style ─────────────────────────────────────────────────────────
+
+const badgeStyle: React.CSSProperties = {
+  background: '#e74c3c',
+  color: '#fff',
+  borderRadius: '50%',
+  padding: '0.1rem 0.4rem',
+  fontSize: '0.7rem',
+  marginLeft: '0.4rem',
+  fontWeight: 'bold',
+  display: 'inline-block',
+}
+
 // ── Dashboard shell ───────────────────────────────────────────────────────────
 
 export default function DashboardShell() {
   const navigate = useNavigate()
   const operatorEmail = getOperatorEmail()
+  const [unacknowledgedAlertCount, setUnacknowledgedAlertCount] = useState(0)
 
   useEffect(() => {
     if (!isAuthenticated()) {
       navigate('/login', { replace: true })
     }
+  }, [navigate])
+
+  // ── Alert polling (every 60 seconds) ─────────────────────────────────────────
+  useEffect(() => {
+    async function pollAlerts() {
+      try {
+        const token = getToken()
+        const res = await fetch(`${API_BASE}/admin/v1/alerts`, {
+          headers: { 'Authorization': `Bearer ${token}` },
+        })
+        if (res.status === 401) {
+          clearAuth()
+          navigate('/login')
+          return
+        }
+        if (!res.ok) {
+          // Non-401 errors: silently ignore — don't interrupt operator workflow
+          return
+        }
+        const body = await res.json() as { data?: { unacknowledgedCount?: number } }
+        setUnacknowledgedAlertCount(body.data?.unacknowledgedCount ?? 0)
+      } catch {
+        // Silently ignore network errors — never show a polling error to the operator
+      }
+    }
+
+    // Initial poll on mount
+    void pollAlerts()
+
+    // Poll every 60 seconds
+    const intervalId = setInterval(() => {
+      void pollAlerts()
+    }, 60_000)
+
+    return () => clearInterval(intervalId)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate])
 
   function handleLogout() {
@@ -86,6 +136,11 @@ export default function DashboardShell() {
           style={({ isActive }) => isActive ? navLinkActiveStyle : navLinkStyle}
         >
           Monitoring
+          {unacknowledgedAlertCount > 0 && (
+            <span style={badgeStyle}>
+              {unacknowledgedAlertCount}
+            </span>
+          )}
         </NavLink>
       </nav>
 
@@ -129,6 +184,7 @@ export default function DashboardShell() {
             <Route path="/disputes/:id" element={<DisputeDetailPage />} />
             <Route path="/users" element={<UsersPage />} />
             <Route path="/users/:userId/charges" element={<UserChargesPage />} />
+            <Route path="/users/:userId/impersonate-view" element={<ImpersonateUserPage />} />
             <Route path="/billing" element={<BillingPage />} />
             <Route path="/monitoring" element={<MonitoringPage />} />
             <Route path="/" element={<DisputesPage />} />
