@@ -62,13 +62,19 @@ describe('Story 10.2 — GET /v1/tasks/:id/schedule (AC: 1)', () => {
     expect(body.error.code).toBe('NOT_FOUND')
   })
 
-  it('rate limit headers are present on scheduling responses', async () => {
+  // P5: Name reflects that we verify header values, not just presence.
+  it('rate limit headers are present with correct values on scheduling responses', async () => {
+    // This user has made requests in prior tests in this describe block.
+    // We only know it has made at least 2 requests (the two tests above).
+    // Assert X-RateLimit-Remaining is a non-negative integer strictly less than 1000.
     const res = await app.request(`/v1/tasks/${validTaskId}/schedule`, {
       method: 'GET',
       headers: { 'x-user-id': 'story-10-2-schedule-test' },
     })
-    expect(res.headers.get('X-RateLimit-Limit')).toBeTruthy()
-    expect(res.headers.get('X-RateLimit-Remaining')).toBeTruthy()
+    expect(res.headers.get('X-RateLimit-Limit')).toBe('1000')
+    // P4: Assert exact decrement — this test is the 5th request for this user in this file.
+    const remaining = Number(res.headers.get('X-RateLimit-Remaining'))
+    expect(remaining).toBe(995) // 1000 - 5
     expect(res.headers.get('X-RateLimit-Reset')).toBeTruthy()
   })
 })

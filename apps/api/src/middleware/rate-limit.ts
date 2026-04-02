@@ -15,20 +15,15 @@ const WINDOW_SECS = 3600 // 1 hour
 // In-memory fallback counter (test + local environments)
 const memoryCounters = new Map<string, { count: number; windowStart: number }>()
 
-function getWindowStart(): number {
-  // Top of the current hour (Unix seconds)
-  return Math.floor(Date.now() / 1000 / WINDOW_SECS) * WINDOW_SECS
-}
-
-function getResetTimestamp(): number {
-  return getWindowStart() + WINDOW_SECS
-}
 
 export function applyRateLimitHeaders(app: OpenAPIHono<{ Bindings: CloudflareBindings }>): void {
   app.use('*', async (c, next) => {
+    // P1: Capture a single timestamp at the top of the middleware so that both
+    // window-boundary calculations and retryAfter use the same instant.
+    const nowSecs = Math.floor(Date.now() / 1000)
     const userId = c.req.header('x-user-id') ?? 'anonymous'
-    const windowStart = getWindowStart()
-    const resetTs = getResetTimestamp()
+    const windowStart = Math.floor(nowSecs / WINDOW_SECS) * WINDOW_SECS
+    const resetTs = windowStart + WINDOW_SECS
 
     // In-memory counter (stub — no KV available in tests)
     let entry = memoryCounters.get(userId)
@@ -42,12 +37,15 @@ export function applyRateLimitHeaders(app: OpenAPIHono<{ Bindings: CloudflareBin
     const isExceeded = entry.count > RATE_LIMIT
 
     if (isExceeded) {
-      const retryAfter = resetTs - Math.floor(Date.now() / 1000)
+      // P2: Clamp retryAfter to at least 1 so it is never zero or negative.
+      const retryAfter = Math.max(1, resetTs - nowSecs)
       return c.json(
         err('RATE_LIMIT_EXCEEDED', `Rate limit exceeded. Try again after ${retryAfter} seconds.`, {
           retryAfter,
         }),
         429,
+        // P3: Emit Retry-After header for standards compliance (RFC 6585 §4).
+        { 'Retry-After': String(retryAfter) },
       )
     }
 
