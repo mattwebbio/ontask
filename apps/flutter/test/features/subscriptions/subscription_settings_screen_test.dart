@@ -101,5 +101,24 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text(AppStrings.subscriptionExpiredLabel), findsOneWidget);
     });
+
+    // Deferred from Story 9.1 code review — error branch was missing coverage.
+    testWidgets('error state shows subscriptionSettingsLoadError text',
+        (tester) async {
+      final completer = Completer<SubscriptionStatus>();
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            subscriptionStatusProvider.overrideWith((_) => completer.future),
+          ],
+          child: const CupertinoApp(home: SubscriptionSettingsScreen()),
+        ),
+      );
+      await tester.pump();
+      // Drive the provider into error state.
+      completer.completeError(Exception('test error'));
+      await tester.pumpAndSettle();
+      expect(find.text(AppStrings.subscriptionSettingsLoadError), findsOneWidget);
+    });
   });
 }

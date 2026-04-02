@@ -43,3 +43,60 @@ describe('GET /v1/subscriptions/me', () => {
     expect(body.data.trialDaysRemaining).toBe(14)
   })
 })
+
+// Tests for GET /v1/subscriptions/paywall-config — Story 9.2 (FR88, FR83, AC: 1)
+// Handler is a stub (real Stripe Price IDs deferred to Story 9.3).
+
+describe('GET /v1/subscriptions/paywall-config', () => {
+  it('returns 200', async () => {
+    const res = await app.request('/v1/subscriptions/paywall-config')
+    expect(res.status).toBe(200)
+  })
+
+  it('response shape has data.tiers array', async () => {
+    const res = await app.request('/v1/subscriptions/paywall-config')
+    const body = await res.json() as { data: { tiers: unknown[] } }
+    expect(body).toHaveProperty('data')
+    expect(body.data).toHaveProperty('tiers')
+    expect(Array.isArray(body.data.tiers)).toBe(true)
+  })
+
+  it('data.tiers has exactly 3 entries', async () => {
+    const res = await app.request('/v1/subscriptions/paywall-config')
+    const body = await res.json() as { data: { tiers: unknown[] } }
+    expect(body.data.tiers).toHaveLength(3)
+  })
+
+  it('all tiers have required fields: tier, displayName, priceDisplay, available', async () => {
+    const res = await app.request('/v1/subscriptions/paywall-config')
+    const body = await res.json() as {
+      data: { tiers: Array<{ tier: string; displayName: string; priceDisplay: string; available: boolean }> }
+    }
+    for (const tier of body.data.tiers) {
+      expect(tier).toHaveProperty('tier')
+      expect(tier).toHaveProperty('displayName')
+      expect(tier).toHaveProperty('priceDisplay')
+      expect(tier).toHaveProperty('available')
+    }
+  })
+
+  it('individual tier available is true', async () => {
+    const res = await app.request('/v1/subscriptions/paywall-config')
+    const body = await res.json() as {
+      data: { tiers: Array<{ tier: string; available: boolean }> }
+    }
+    const individual = body.data.tiers.find((t) => t.tier === 'individual')
+    expect(individual).toBeDefined()
+    expect(individual!.available).toBe(true)
+  })
+
+  it('individual tier stripePriceId is null (stub phase)', async () => {
+    const res = await app.request('/v1/subscriptions/paywall-config')
+    const body = await res.json() as {
+      data: { tiers: Array<{ tier: string; stripePriceId: string | null }> }
+    }
+    const individual = body.data.tiers.find((t) => t.tier === 'individual')
+    expect(individual).toBeDefined()
+    expect(individual!.stripePriceId).toBeNull()
+  })
+})

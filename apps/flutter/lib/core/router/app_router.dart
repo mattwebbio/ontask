@@ -20,6 +20,7 @@ import '../../features/settings/presentation/delete_account_screen.dart';
 import '../../features/settings/presentation/export_data_screen.dart';
 import '../../features/settings/presentation/farewell_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
+import '../../features/subscriptions/presentation/paywall_screen.dart';
 import '../../features/settings/presentation/two_factor_setup_screen.dart';
 import '../../features/shell/presentation/app_shell.dart';
 import '../../features/today/presentation/task_detail_stub_screen.dart';
@@ -89,6 +90,15 @@ GoRouter appRouter(Ref ref) {
         return '/now';
       }
 
+      // Paywall gate — expired trial blocks all authenticated routes (FR88).
+      // Reads subscription status synchronously if cached; otherwise defers to
+      // subscriptionStatusProvider loading state (no redirect until data available).
+      // impl(9.2): Read subscriptionStatusProvider and redirect to /paywall
+      //   when status.isExpired is true and current route is not /paywall.
+      //   Use ref.read(subscriptionStatusProvider) — do NOT use ref.watch inside redirect.
+      //   Guard: only redirect when subscriptionStatusProvider has data (AsyncData).
+      //   Skip redirect for /settings/* so expired users can reach /settings/subscription.
+
       return null;
     },
     routes: [
@@ -123,6 +133,13 @@ GoRouter appRouter(Ref ref) {
       GoRoute(
         path: '/onboarding',
         builder: (context, state) => const OnboardingFlow(),
+      ),
+
+      // Paywall route — top-level, no shell chrome (Epic 9, Story 9.2, FR88).
+      // Shown as the first screen when trial has expired and no active subscription.
+      GoRoute(
+        path: '/paywall',
+        builder: (context, state) => const PaywallScreen(),
       ),
 
       // Invitation accept screen — top-level route (no shell chrome / tab bar).
