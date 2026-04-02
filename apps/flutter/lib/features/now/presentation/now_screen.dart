@@ -38,6 +38,10 @@ class _NowScreenState extends ConsumerState<NowScreen> {
   bool _timerInitialised = false;
   ProofRepository? _proofRepository;
 
+  /// Stores the active Live Activity ID so it can be ended on pause/complete.
+  /// Non-null only on iOS when a Live Activity is running.
+  String? _liveActivityId;
+
   @override
   void initState() {
     super.initState();
@@ -97,12 +101,35 @@ class _NowScreenState extends ConsumerState<NowScreen> {
           // may not be fully configured (e.g., auth override as value provider).
           _proofRepository ??= _tryCreateProofRepository();
 
+          // After task loads, check if commitment_countdown should start.
+          // A staked task with deadline within 2 hours triggers the countdown.
+          // TODO(impl): Check task.dueDate and task.stakeAmountCents here.
+          //   if (task.stakeAmountCents != null && task.dueDate != null) {
+          //     final hoursUntilDeadline = task.dueDate!.difference(DateTime.now()).inHours;
+          //     if (hoursUntilDeadline <= 2 && _liveActivityId == null) {
+          //       ref.read(liveActivitiesRepositoryProvider)
+          //         .startCommitmentCountdownActivity(
+          //           taskId: task.id,
+          //           taskTitle: task.title,
+          //           deadlineTimestamp: task.dueDate!,
+          //           stakeAmount: task.stakeAmountCents! / 100.0,
+          //         )
+          //         .then((id) => _liveActivityId = id);
+          //     }
+          //   }
+
           return NowTaskCard(
             task: task,
             timerRunning: timerState.isRunning,
             timerElapsedSeconds: elapsed,
             proofRepository: _proofRepository,
             onComplete: () {
+              // End Live Activity before navigating away.
+              // TODO(impl): if (_liveActivityId != null) {
+              //   ref.read(liveActivitiesRepositoryProvider)
+              //     .endActivity(activityId: _liveActivityId!, finalStatus: 'completed');
+              //   _liveActivityId = null;
+              // }
               ref.read(nowProvider.notifier).completeTask(task.id);
               // Navigate to the Chapter Break Screen after task completion.
               // Use context.push so the user can navigate back via system
@@ -116,9 +143,26 @@ class _NowScreenState extends ConsumerState<NowScreen> {
             onStart: () {
               ref.read(taskTimerProvider.notifier).startTimer(task.id);
               ref.read(nowProvider.notifier).startTask(task.id);
+              // Start Live Activity (iOS only — guarded inside repository).
+              // TODO(impl): Uncomment when LiveActivitiesRepository.startTaskTimerActivity is wired.
+              // ref.read(liveActivitiesRepositoryProvider)
+              //   .startTaskTimerActivity(
+              //     taskId: task.id,
+              //     taskTitle: task.title,
+              //     stakeAmount: task.stakeAmountCents != null
+              //         ? task.stakeAmountCents! / 100.0
+              //         : null,
+              //   )
+              //   .then((id) => _liveActivityId = id);
             },
             onPause: () {
               ref.read(taskTimerProvider.notifier).pauseTimer(task.id);
+              // End Live Activity on pause (stale timer in Dynamic Island is bad UX).
+              // TODO(impl): if (_liveActivityId != null) {
+              //   ref.read(liveActivitiesRepositoryProvider)
+              //     .endActivity(activityId: _liveActivityId!);
+              //   _liveActivityId = null;
+              // }
             },
             onStop: () {
               ref.read(taskTimerProvider.notifier).stopTimer(task.id);

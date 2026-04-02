@@ -23,39 +23,11 @@ struct OnTaskActivityAttributes: ActivityAttributes {
 }
 
 // MARK: — Widget Bundle Entry Point
+// Full Live Activity UI (Dynamic Island + Lock Screen views) is in
+// OnTaskLiveActivityLiveActivity.swift (Story 12.2).
 @main
 struct OnTaskLiveActivityBundle: WidgetBundle {
     var body: some Widget {
         OnTaskLiveActivityWidget()
-    }
-}
-
-// MARK: — Live Activity Widget
-// UI implementation (Dynamic Island + Lock Screen views) is in Story 12.2.
-// This story only scaffolds the extension with the attributes definition.
-// Provide a minimal placeholder widget body so the target compiles.
-struct OnTaskLiveActivityWidget: Widget {
-    var body: some WidgetConfiguration {
-        ActivityConfiguration(for: OnTaskActivityAttributes.self) { context in
-            // Lock Screen UI — Story 12.2 implements this.
-            // Placeholder: show task title text.
-            Text(context.state.taskTitle)
-                .padding()
-        } dynamicIsland: { context in
-            // Dynamic Island UI — Story 12.2 implements this.
-            DynamicIsland {
-                DynamicIslandExpandedRegion(.leading) {
-                    Text(context.state.taskTitle)
-                }
-            } compactLeading: {
-                Text(context.state.taskTitle)
-                    .font(.caption2)
-                    .lineLimit(1)
-            } compactTrailing: {
-                EmptyView()
-            } minimal: {
-                EmptyView()
-            }
-        }
     }
 }

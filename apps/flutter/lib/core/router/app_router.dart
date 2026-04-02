@@ -193,6 +193,40 @@ GoRouter appRouter(Ref ref) {
         ),
       ),
 
+      // Live Activity deep link stubs — handle ontask:// URL scheme taps from
+      // Dynamic Island expanded buttons (Story 12.2, AC 3).
+      //
+      // The ontask:// scheme is triggered by iOS when the user taps Done/Pause
+      // in the Live Activity. go_router handles these via its URI routing.
+      //
+      // TODO(impl): Full deep link routing for the ontask:// custom scheme requires
+      //   platform-level configuration (LSApplicationQueriesSchemes in Info.plist is
+      //   already registered from Epic 1 Universal Links). Wire the scheme handler via
+      //   go_router's initialLocation or a platform channel MethodChannel in a future
+      //   story. The routes below establish the correct path shapes.
+      //
+      // ontask://task/done?taskId=<id> — marks task complete from Live Activity "Done" tap.
+      // GoRoute(
+      //   path: '/task/done',
+      //   builder: (context, state) {
+      //     final taskId = state.uri.queryParameters['taskId'];
+      //     // TODO(impl): Trigger task completion for taskId
+      //     // ref.read(nowProvider.notifier).completeTask(taskId!);
+      //     return const SizedBox.shrink(); // No UI — immediate action + pop
+      //   },
+      // ),
+      //
+      // ontask://task/pause?taskId=<id> — pauses task timer from Live Activity "Pause" tap.
+      // GoRoute(
+      //   path: '/task/pause',
+      //   builder: (context, state) {
+      //     final taskId = state.uri.queryParameters['taskId'];
+      //     // TODO(impl): Trigger task pause for taskId
+      //     // ref.read(taskTimerProvider.notifier).pauseTimer(taskId!);
+      //     return const SizedBox.shrink();
+      //   },
+      // ),
+
       // Chapter Break Screen — top-level route (no shell chrome / tab bar).
       // Shown after significant milestones: task completed, commitment locked,
       // missed commitment recovery (UX-DR13). Navigate here via:

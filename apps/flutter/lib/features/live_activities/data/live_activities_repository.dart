@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:live_activities/live_activities.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../core/network/api_client.dart';
@@ -9,22 +9,26 @@ part 'live_activities_repository.g.dart';
 /// Repository for managing Live Activities via the live_activities plugin.
 ///
 /// CRITICAL: ALL calls to the live_activities plugin MUST be wrapped in
-/// `if (Platform.isIOS)` guards. macOS does NOT support Live Activities.
+/// `if (defaultTargetPlatform != TargetPlatform.iOS)` guards.
+/// macOS does NOT support Live Activities.
 /// The macOS build ignores the OnTaskLiveActivity extension target entirely.
 /// ARCH-28: live_activities Flutter plugin bridges to OnTaskLiveActivity Swift extension.
 class LiveActivitiesRepository {
-  const LiveActivitiesRepository({required this.apiClient});
+  LiveActivitiesRepository({
+    required this.apiClient,
+    LiveActivities? plugin,
+  }) : _plugin = plugin ?? LiveActivities();
 
   final ApiClient apiClient;
-  final _plugin = const LiveActivities();
+  final LiveActivities _plugin;
 
   /// Initialises the live_activities plugin and registers the push token callback.
   ///
-  /// Call once during app startup (after auth completes), guarded with Platform.isIOS.
+  /// Call once during app startup (after auth completes), guarded with iOS platform check.
   /// The plugin calls [onActivityUpdate] when the ActivityKit push token changes —
   /// we must re-POST the new token to the server (ARCH-28 background token refresh).
   Future<void> init({required String activityType, String? taskId}) async {
-    if (!Platform.isIOS) return;
+    if (defaultTargetPlatform != TargetPlatform.iOS) return;
     await _plugin.init(appGroupId: 'group.com.ontaskhq.ontask');
     // TODO(impl): _plugin.activityUpdateStream.listen((update) {
     //   if (update.activityToken != null) {
@@ -46,7 +50,7 @@ class LiveActivitiesRepository {
     required String activityType,
     required String pushToken,
   }) async {
-    if (!Platform.isIOS) return;
+    if (defaultTargetPlatform != TargetPlatform.iOS) return;
     // expiresAt: ActivityKit tokens expire with the activity (iOS max 8 hours).
     final expiresAt = DateTime.now().add(const Duration(hours: 8)).toUtc().toIso8601String();
     await apiClient.dio.post<void>(
@@ -58,6 +62,94 @@ class LiveActivitiesRepository {
         'expiresAt': expiresAt,
       },
     );
+  }
+
+  /// Starts a task_timer Live Activity.
+  ///
+  /// [taskId] is stored in OnTaskActivityAttributes (static, not ContentState).
+  /// [taskTitle] goes in ContentState.taskTitle.
+  /// [elapsedSeconds] initial value — typically 0 or resumed elapsed.
+  /// Returns the activityId string for later updates/end calls.
+  ///
+  /// ARCH-28: ALL plugin calls guarded with Platform.isIOS.
+  Future<String?> startTaskTimerActivity({
+    required String taskId,
+    required String taskTitle,
+    int elapsedSeconds = 0,
+    double? stakeAmount,
+  }) async {
+    if (defaultTargetPlatform != TargetPlatform.iOS) return null;
+    // activityType maps to OnTaskActivityAttributes static field (not ContentState)
+    // ContentState fields mirror OnTaskActivityAttributes.ContentState in Swift.
+    // Field names are camelCase to match Swift CodingKeys exactly.
+    final activityId = await _plugin.createActivity({
+      'taskId': taskId,
+      'taskTitle': taskTitle,
+      'elapsedSeconds': elapsedSeconds,
+      'deadlineTimestamp': null,
+      'stakeAmount': stakeAmount,
+      'activityStatus': 'active',
+    });
+    if (activityId != null) {
+      await registerToken(
+        taskId: taskId,
+        activityType: LiveActivityType.taskTimer,
+        pushToken: activityId, // Token delivered async via activityUpdateStream
+      );
+    }
+    return activityId;
+  }
+
+  /// Starts a commitment_countdown Live Activity.
+  ///
+  /// Activates when deadline is within 2 hours (caller's responsibility to check).
+  /// [deadlineTimestamp] is the deadline as a DateTime (serialised to ISO 8601).
+  Future<String?> startCommitmentCountdownActivity({
+    required String taskId,
+    required String taskTitle,
+    required DateTime deadlineTimestamp,
+    double? stakeAmount,
+  }) async {
+    if (defaultTargetPlatform != TargetPlatform.iOS) return null;
+    final activityId = await _plugin.createActivity({
+      'taskId': taskId,
+      'taskTitle': taskTitle,
+      'elapsedSeconds': null,
+      'deadlineTimestamp': deadlineTimestamp.toIso8601String(),
+      'stakeAmount': stakeAmount,
+      'activityStatus': 'active',
+    });
+    if (activityId != null) {
+      await registerToken(
+        taskId: taskId,
+        activityType: LiveActivityType.commitmentCountdown,
+        pushToken: activityId,
+      );
+    }
+    return activityId;
+  }
+
+  /// Updates the elapsed seconds for a running task_timer activity.
+  ///
+  /// Called periodically from the Flutter timer (not on every second — only on
+  /// meaningful updates to avoid excessive plugin calls).
+  Future<void> updateElapsedSeconds({
+    required String activityId,
+    required int elapsedSeconds,
+  }) async {
+    if (defaultTargetPlatform != TargetPlatform.iOS) return;
+    await _plugin.updateActivity(activityId, {'elapsedSeconds': elapsedSeconds});
+  }
+
+  /// Ends any Live Activity by ID with final status.
+  ///
+  /// [finalStatus] must be 'completed' or 'failed' — maps to Status enum.
+  Future<void> endActivity({
+    required String activityId,
+    String finalStatus = 'completed',
+  }) async {
+    if (defaultTargetPlatform != TargetPlatform.iOS) return;
+    await _plugin.endActivity(activityId);
   }
 }
 
