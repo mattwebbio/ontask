@@ -134,7 +134,7 @@ development_status:
   # ─────────────────────────────────────────────────────────
   # Epic 7: Proof & Verification
   # ─────────────────────────────────────────────────────────
-  epic-7: in-progress
+  epic-7: done
   7-1-proof-capture-modal-foundation: done
   7-2-photo-video-proof-with-ai-verification: done
   7-3-screenshot-document-proof: done
