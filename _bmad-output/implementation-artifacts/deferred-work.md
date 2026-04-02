@@ -1,5 +1,9 @@
 # Deferred Work
 
+## Deferred from: code review of 9-1-free-trial-launch-status-visibility (2026-04-01)
+
+- **Missing error-state widget test for `SubscriptionSettingsScreen`** — The error branch (showing `subscriptionSettingsLoadError`) is not covered by the 4 existing widget tests. Add a test using a `Completer` that `completeError(...)` to cover this path. [`apps/flutter/test/features/subscriptions/subscription_settings_screen_test.dart`]
+
 ## Deferred from: code review of 8-5-in-app-notification-centre-voiceover-live-activity-announcements (2026-04-01)
 
 - **Missing blank line before `@riverpod` for `notificationHistory`** — Cosmetic style inconsistency; convention in this file uses a blank line before `@riverpod`. Low risk. [`apps/flutter/lib/features/notifications/presentation/notifications_provider.dart`]

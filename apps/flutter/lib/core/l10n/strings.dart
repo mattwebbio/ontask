@@ -1269,4 +1269,36 @@ class AppStrings {
   /// Usage: AppStrings.notificationBadgeLabel(count)
   static String notificationBadgeLabel(int count) =>
       '$count unread notification${count == 1 ? '' : 's'}';
+
+  // ── Subscriptions — Trial Status & Settings (FR82, FR87, Story 9.1) ─────────
+
+  /// Navigation bar title for subscription settings screen.
+  static const String subscriptionSettingsTitle = 'Subscription';
+
+  /// Shown when subscription settings fail to load.
+  static const String subscriptionSettingsLoadError = 'Couldn\u2019t load subscription status';
+
+  /// Section label for trial status.
+  static const String subscriptionTrialStatusLabel = 'Free Trial';
+
+  /// Trial days remaining message — AC: 2, FR87.
+  /// Usage: AppStrings.subscriptionTrialDaysRemaining(days)
+  static String subscriptionTrialDaysRemaining(int days) =>
+      days == 0
+          ? 'Your free trial expires today'
+          : days == 1
+              ? '1 day remaining in your free trial'
+              : '$days days remaining in your free trial';
+
+  /// Shown when trial has expired and no subscription active.
+  static const String subscriptionExpiredLabel = 'Your free trial has ended';
+
+  /// Persistent trial countdown banner text (final 3 days).
+  /// Usage: AppStrings.trialCountdownBannerText(days)
+  static String trialCountdownBannerText(int days) =>
+      days == 0
+          ? 'Your free trial ends today \u2014 subscribe to keep access'
+          : days == 1
+              ? '1 day left in your free trial \u2014 subscribe to keep access'
+              : '$days days left in your free trial \u2014 subscribe to keep access';
 }

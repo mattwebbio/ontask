@@ -113,6 +113,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               icon: CupertinoIcons.heart_fill,
               onTap: () => context.push('/settings/impact'),
             ),
+            // ── Subscription (Epic 9, Story 9.1) ───────────────────────────────
+            _SettingsTile(
+              label: AppStrings.subscriptionSettingsTitle,
+              icon: CupertinoIcons.calendar_badge_plus,
+              onTap: () => context.push('/settings/subscription'),
+            ),
           ],
         ),
       ),

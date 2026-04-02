@@ -15,6 +15,7 @@ import '../../features/now/presentation/now_screen.dart';
 import '../../features/onboarding/presentation/onboarding_flow.dart';
 import '../../features/commitment_contracts/presentation/impact_dashboard_screen.dart';
 import '../../features/settings/presentation/account_settings_screen.dart';
+import '../../features/subscriptions/presentation/subscription_settings_screen.dart';
 import '../../features/settings/presentation/delete_account_screen.dart';
 import '../../features/settings/presentation/export_data_screen.dart';
 import '../../features/settings/presentation/farewell_screen.dart';
@@ -257,6 +258,11 @@ GoRouter appRouter(Ref ref) {
                   GoRoute(
                     path: 'impact',
                     builder: (context, state) => const ImpactDashboardScreen(),
+                  ),
+                  // Subscription settings sub-screen (Epic 9, Story 9.1).
+                  GoRoute(
+                    path: 'subscription',
+                    builder: (context, state) => const SubscriptionSettingsScreen(),
                   ),
                 ],
               ),
