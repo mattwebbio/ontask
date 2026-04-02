@@ -97,6 +97,26 @@ app.openapi(submitProofRoute, async (c) => {
   // TODO(impl): Story 7.5 — read HealthKit verification data from request body; match against task activityType; store in proof_submissions; auto-verify if data within buffer window
   // TODO(impl): Story 7.6 — read clientTimestamp from request body; compare against task deadline; trigger charge reversal via stripe service if clientTimestamp < deadline
 
+  // TODO(impl): When verified=true AND task has stakeAmountCents:
+  //   1. const userId = c.get('jwtPayload').sub (same JWT pattern as other routes)
+  //   2. const db = createDb(c.env.DATABASE_URL)
+  //   3. Query tasks WHERE id = taskId to get title, stakeAmountCents
+  //   4. If stakeAmountCents IS NOT NULL: cancel the stake
+  //      - Update tasks.stakeAmountCents = null (or commitment_contracts.status = 'cancelled')
+  //   5. Query device_tokens WHERE userId = userId
+  //   6. Query notificationPreferencesTable WHERE userId = userId
+  //   7. For each token: enforce preferences + call sendPush({
+  //        payload: {
+  //          title: task.title,
+  //          body: buildVerificationApprovedBody(task.title, task.stakeAmountCents),
+  //          data: { taskId, type: 'verification_approved' },
+  //        }
+  //      }, c.env)
+  //
+  // NOTE: When verified=false (rejection), Story 8.3 does NOT send a push here.
+  //       The user already sees the rejection in-app. Notification on rejection
+  //       is only triggered after dispute resolution (AC 4).
+
   // Demo failure path for testing rejection flow.
   if (demo === 'fail') {
     return c.json(
@@ -205,6 +225,17 @@ app.openapi(postDisputeRoute, async (c) => {
   // TODO(impl): place stake charge on hold — set tasks.charge_status = 'on_hold' or update
   //   commitment_contracts.status = 'disputed' for this taskId
   // TODO(impl): notify operator queue (Story 11.2) of new dispute
+  // TODO(impl): After inserting the dispute row and placing stake on hold:
+  //   1. const userId = c.get('jwtPayload').sub
+  //   2. Query device_tokens WHERE userId = userId
+  //   3. Query notificationPreferencesTable WHERE userId = userId
+  //   4. Enforce preferences + for each token: call sendPush({
+  //        payload: {
+  //          title: taskTitle,
+  //          body: buildDisputeFiledBody(taskTitle),
+  //          data: { taskId, type: 'dispute_filed' },
+  //        }
+  //      }, c.env)
   return c.json(
     ok({
       disputeId: '00000000-0000-4000-a000-000000000078',

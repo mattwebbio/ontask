@@ -9,6 +9,10 @@ import {
   buildDeadlineBody,
   buildStakeWarningBody,
   shouldSendNotification,
+  buildChargeNotificationBody,
+  buildVerificationApprovedBody,
+  buildDisputeFiledBody,
+  buildDisputeResolvedBody,
 } from '../../src/lib/notification-scheduler.js'
 
 // ── Notification scheduler unit tests ─────────────────────────────────────────
@@ -237,5 +241,79 @@ describe('hoursUntil', () => {
     const hours = hoursUntil(future)
     expect(hours).toBeGreaterThanOrEqual(1)
     expect(hours).toBeLessThanOrEqual(2)
+  })
+})
+
+// ── Story 8.3: Commitment, Charge & Verification Notification helpers ──────────
+// (FR42, UX-DR36, AC: 1–4)
+
+describe('buildChargeNotificationBody — affirming tone, UX-DR36 (AC: 1)', () => {
+  it('includes task title, charge amount, charity name, and charity amount', () => {
+    const body = buildChargeNotificationBody('Complete report', 2000, 'Red Cross', 1000)
+    expect(body).toContain('Complete report')
+    expect(body).toContain('$20')
+    expect(body).toContain('Red Cross')
+    expect(body).toContain('$10')
+  })
+
+  it('includes "Thanks for trying" affirming phrase and does NOT contain punitive language', () => {
+    // UX-DR36: affirming, never punitive
+    const body = buildChargeNotificationBody('Morning run', 1000, 'UNICEF', 500)
+    expect(body).toContain('Thanks for trying')
+    expect(body).not.toContain('failed')
+    expect(body).not.toContain('owe')
+    expect(body).not.toContain('penalty')
+  })
+})
+
+describe('buildVerificationApprovedBody — stake safe (AC: 2)', () => {
+  it('includes task title, stake amount, and "stake is safe"', () => {
+    const body = buildVerificationApprovedBody('Finish project', 5000)
+    expect(body).toContain('Finish project')
+    expect(body).toContain('$50')
+    expect(body).toContain('stake is safe')
+  })
+
+  it('does NOT contain punitive language', () => {
+    // UX-DR36: affirming, never punitive
+    const body = buildVerificationApprovedBody('Exercise 30 min', 2000)
+    expect(body).not.toContain('failed')
+    expect(body).not.toContain('owe')
+    expect(body).not.toContain('penalty')
+    expect(body).not.toContain('charged')
+  })
+})
+
+describe('buildDisputeFiledBody — stake on hold (AC: 3)', () => {
+  it('includes task title, "dispute filed", and "on hold"', () => {
+    const body = buildDisputeFiledBody('Write chapter 3')
+    expect(body).toContain('Write chapter 3')
+    expect(body).toContain('dispute filed')
+    expect(body).toContain('on hold')
+  })
+})
+
+describe('buildDisputeResolvedBody — both outcomes, affirming tone, UX-DR36 (AC: 4)', () => {
+  it('approved=true — includes task title, "cancelled", and stake amount', () => {
+    const body = buildDisputeResolvedBody('Submit report', true, 3000, 'Doctors Without Borders', 1500)
+    expect(body).toContain('Submit report')
+    expect(body).toContain('$30')
+    expect(body).toContain('cancelled')
+  })
+
+  it('approved=false — includes task title, charge amount, charity name, and "Thanks for trying"', () => {
+    const body = buildDisputeResolvedBody('Morning workout', false, 2000, 'UNICEF', 1000)
+    expect(body).toContain('Morning workout')
+    expect(body).toContain('$20')
+    expect(body).toContain('UNICEF')
+    expect(body).toContain('Thanks for trying')
+  })
+
+  it('approved=false — does NOT contain punitive language (UX-DR36)', () => {
+    const body = buildDisputeResolvedBody('Read 10 pages', false, 1000, 'Red Cross', 500)
+    expect(body).not.toContain('failed')
+    expect(body).not.toContain('owe')
+    expect(body).not.toContain('penalty')
+    expect(body).not.toContain('rejected')
   })
 })

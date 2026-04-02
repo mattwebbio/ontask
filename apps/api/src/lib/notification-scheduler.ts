@@ -90,6 +90,53 @@ export function buildStakeWarningBody(
 }
 
 /**
+ * Build the charge notification body copy (affirming tone, UX-DR36).
+ * AC 1: "[Task title] — $[amount] charged. [Charity] receives $[charity amount]. Thanks for trying."
+ */
+export function buildChargeNotificationBody(
+  taskTitle: string,
+  amountCents: number,
+  charityName: string,
+  charityAmountCents: number
+): string {
+  return `${taskTitle} — ${formatDollars(amountCents)} charged. ${charityName} receives ${formatDollars(charityAmountCents)}. Thanks for trying.`
+}
+
+/**
+ * Build the verification approved notification body copy.
+ * AC 2: "[Task title] — proof accepted. Your $[amount] stake is safe."
+ */
+export function buildVerificationApprovedBody(taskTitle: string, amountCents: number): string {
+  return `${taskTitle} — proof accepted. Your ${formatDollars(amountCents)} stake is safe.`
+}
+
+/**
+ * Build the dispute filed notification body copy.
+ * AC 3: "[Task title] — dispute filed. Your stake is on hold while we review."
+ */
+export function buildDisputeFiledBody(taskTitle: string): string {
+  return `${taskTitle} — dispute filed. Your stake is on hold while we review.`
+}
+
+/**
+ * Build the dispute resolved notification body copy (affirming in both outcomes, UX-DR36).
+ * AC 4 — approved: "[Task title] — dispute approved. Your $[amount] stake has been cancelled."
+ *         rejected: "[Task title] — dispute reviewed. $[amount] charged. [Charity] receives $[charity amount]. Thanks for trying."
+ */
+export function buildDisputeResolvedBody(
+  taskTitle: string,
+  approved: boolean,
+  amountCents: number,
+  charityName: string,
+  charityAmountCents: number
+): string {
+  if (approved) {
+    return `${taskTitle} — dispute approved. Your ${formatDollars(amountCents)} stake has been cancelled.`
+  }
+  return `${taskTitle} — dispute reviewed. ${formatDollars(amountCents)} charged. ${charityName} receives ${formatDollars(charityAmountCents)}. Thanks for trying.`
+}
+
+/**
  * Check if a user's preferences allow sending a notification to a specific device.
  * Returns true if the notification should be sent (preference is ON or absent).
  *

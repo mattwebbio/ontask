@@ -834,6 +834,30 @@ app.post('/v1/webhooks/stripe', async (c) => {
   //   charge_events inline if latency budget allows (must be < 30s total).
   // On payment_intent.payment_failed: update charge_events.status = 'failed',
   //   store stripeError from the event's last_payment_error.message.
+  //
+  // TODO(impl): if (event.type === 'payment_intent.succeeded') {
+  //   // Extract taskId, userId, amountCents, charityName from event.data.object.metadata
+  //   // const db = createDb(c.env.DATABASE_URL)
+  //   // Query charge_events WHERE stripePaymentIntentId = event.data.object.id LIMIT 1
+  //   //   to retrieve charityName and charityAmountCents
+  //   // Query device_tokens WHERE userId = userId
+  //   // Query notificationPreferencesTable WHERE userId = userId
+  //   // For each device token:
+  //   //   1. Enforce preferences (global → task → device) using shouldSendNotification()
+  //   //   2. await sendPush({
+  //   //        deviceToken: token.token,
+  //   //        environment: token.environment,
+  //   //        payload: {
+  //   //          title: taskTitle,
+  //   //          body: buildChargeNotificationBody(taskTitle, amountCents, charityName, charityAmountCents),
+  //   //          data: { taskId, type: 'charge_succeeded' },
+  //   //        }
+  //   //      }, c.env)
+  // }
+  // TODO(impl): if (event.type === 'payment_intent.payment_failed') {
+  //   // update charge_events.status = 'failed', store stripeError
+  //   // Notification for payment failure is NOT spec'd — do not add one
+  // }
   void event
 
   // Step 6: Return 200 immediately after acknowledging — must be within 30s (NFR-I4)
