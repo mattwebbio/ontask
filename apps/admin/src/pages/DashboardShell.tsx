@@ -1,13 +1,8 @@
 import { useEffect } from 'react'
 import { NavLink, useNavigate, Routes, Route } from 'react-router-dom'
 import { isAuthenticated, getOperatorEmail, clearAuth } from '../lib/auth'
-
-// ── Placeholder pages for nav sections ───────────────────────────────────────
-// Full implementations deferred to later stories.
-
-function DisputesPage() {
-  return <h2>Disputes</h2>
-}
+import DisputesPage from './DisputesPage'
+import DisputeDetailPage from './DisputeDetailPage'
 
 function UsersPage() {
   return <h2>Users</h2>
@@ -133,6 +128,7 @@ export default function DashboardShell() {
         <main style={{ flex: 1, padding: '1.5rem' }}>
           <Routes>
             <Route path="/disputes" element={<DisputesPage />} />
+            <Route path="/disputes/:id" element={<DisputeDetailPage />} />
             <Route path="/users" element={<UsersPage />} />
             <Route path="/billing" element={<BillingPage />} />
             <Route path="/monitoring" element={<MonitoringPage />} />
