@@ -3,10 +3,8 @@ import { NavLink, useNavigate, Routes, Route } from 'react-router-dom'
 import { isAuthenticated, getOperatorEmail, clearAuth } from '../lib/auth'
 import DisputesPage from './DisputesPage'
 import DisputeDetailPage from './DisputeDetailPage'
-
-function UsersPage() {
-  return <h2>Users</h2>
-}
+import UsersPage from './UsersPage'
+import UserChargesPage from './UserChargesPage'
 
 function BillingPage() {
   return <h2>Billing</h2>
@@ -130,6 +128,7 @@ export default function DashboardShell() {
             <Route path="/disputes" element={<DisputesPage />} />
             <Route path="/disputes/:id" element={<DisputeDetailPage />} />
             <Route path="/users" element={<UsersPage />} />
+            <Route path="/users/:userId/charges" element={<UserChargesPage />} />
             <Route path="/billing" element={<BillingPage />} />
             <Route path="/monitoring" element={<MonitoringPage />} />
             <Route path="/" element={<DisputesPage />} />
