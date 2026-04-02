@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/l10n/strings.dart';
 import 'subscriptions_provider.dart';
@@ -10,7 +11,7 @@ import 'subscriptions_provider.dart';
 /// Wrap around tab content in AppShell. Conditionally visible — renders
 /// empty SizedBox when not in final 3-day window.
 ///
-/// impl(9.1): Tap navigates to Settings → Subscription (/settings/subscription).
+/// Tap navigates to Settings → Subscription (/settings/subscription).
 class TrialCountdownBanner extends ConsumerWidget {
   const TrialCountdownBanner({super.key});
 
@@ -19,18 +20,16 @@ class TrialCountdownBanner extends ConsumerWidget {
     final statusAsync = ref.watch(subscriptionStatusProvider);
     return statusAsync.when(
       loading: () => const SizedBox.shrink(),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
       data: (status) {
         if (!status.showTrialCountdownBanner) return const SizedBox.shrink();
         final days = status.trialDaysRemaining ?? 0;
         return GestureDetector(
-          onTap: () {
-            // impl(9.1): context.push('/settings/subscription') when route is registered.
-          },
+          onTap: () => context.push('/settings/subscription'),
           child: Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            color: CupertinoColors.systemYellow.withOpacity(0.85),
+            color: CupertinoColors.systemYellow.withValues(alpha: 0.85),
             child: Text(
               AppStrings.trialCountdownBannerText(days),
               style: const TextStyle(

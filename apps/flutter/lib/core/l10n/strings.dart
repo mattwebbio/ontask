@@ -1284,9 +1284,11 @@ class AppStrings {
   /// Trial days remaining message — AC: 2, FR87.
   /// Usage: AppStrings.subscriptionTrialDaysRemaining(days)
   static String subscriptionTrialDaysRemaining(int days) =>
-      days == 1
-          ? '1 day remaining in your free trial'
-          : '$days days remaining in your free trial';
+      days == 0
+          ? 'Your free trial expires today'
+          : days == 1
+              ? '1 day remaining in your free trial'
+              : '$days days remaining in your free trial';
 
   /// Shown when trial has expired and no subscription active.
   static const String subscriptionExpiredLabel = 'Your free trial has ended';
@@ -1294,7 +1296,9 @@ class AppStrings {
   /// Persistent trial countdown banner text (final 3 days).
   /// Usage: AppStrings.trialCountdownBannerText(days)
   static String trialCountdownBannerText(int days) =>
-      days == 1
+      days == 0
           ? 'Your free trial ends today \u2014 subscribe to keep access'
-          : '$days days left in your free trial \u2014 subscribe to keep access';
+          : days == 1
+              ? '1 day left in your free trial \u2014 subscribe to keep access'
+              : '$days days left in your free trial \u2014 subscribe to keep access';
 }
