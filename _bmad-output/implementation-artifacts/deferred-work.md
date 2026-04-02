@@ -1,5 +1,9 @@
 # Deferred Work
 
+## Deferred from: code review of 12-5-widgetkit-home-screen-widgets (2026-04-02)
+
+- **Sequential UUIDs in `project.pbxproj` risk collision** — All new `OnTaskWidget` target UUIDs follow the pattern `A1B2C3D4E5F601234567890A–21`. They are syntactically valid and brace-balanced, but non-random. If a future story uses the same sequential increment it will collide. Use truly random 24-char hex UUIDs in future `project.pbxproj` edits. [`apps/flutter/ios/Runner.xcodeproj/project.pbxproj`]
+
 ## Deferred from: code review of 12-3-live-activity-watch-mode-voiceover-announcements (2026-04-02)
 
 - **`UIAccessibility.post` from Widget Extension may silently drop announcements** — Live Activity extensions run in a separate process; UIKit accessibility notifications posted from them may not reach the system-level VoiceOver announcer. Requires device validation. Pre-existing architectural design per ARCH-28. [`apps/flutter/ios/OnTaskLiveActivity/OnTaskLiveActivityLiveActivity.swift`]

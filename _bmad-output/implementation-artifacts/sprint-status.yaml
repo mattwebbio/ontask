@@ -201,7 +201,7 @@ development_status:
   12-2-live-activity-task-timer-commitment-countdown: done
   12-3-live-activity-watch-mode-voiceover-announcements: done
   12-4-server-side-live-activity-push-updates: done
-  12-5-widgetkit-home-screen-widgets: backlog
+  12-5-widgetkit-home-screen-widgets: ready-for-dev
   epic-12-retrospective: optional
 
   # ─────────────────────────────────────────────────────────
