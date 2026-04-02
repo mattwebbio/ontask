@@ -1,5 +1,22 @@
 # Deferred Work
 
+## Deferred from: Story 13.4 — App Store Connect Provisioning Configuration (2026-04-02)
+
+The following are manual App Store Connect steps that cannot be automated from this repo. They must be completed before Story 13.5 (TestFlight first build) can succeed:
+
+- **Create iOS App Store Connect app record** — bundle ID `com.ontaskhq.ontask`, name "On Task". [apps/flutter/fastlane/APP_STORE_SETUP.md Step 1]
+- **Create macOS Mac App Store app record** — same bundle ID. [apps/flutter/fastlane/APP_STORE_SETUP.md Step 2]
+- **Configure TestFlight internal test group** — at minimum one tester (developer account). [apps/flutter/fastlane/APP_STORE_SETUP.md Step 3]
+- **Create iOS App Store Distribution certificate** — install in local Keychain. [apps/flutter/fastlane/APP_STORE_SETUP.md Step 4]
+- **Create iOS App Store distribution provisioning profile** for `com.ontaskhq.ontask` and extension targets. [apps/flutter/fastlane/APP_STORE_SETUP.md Steps 5–6]
+- **Create macOS App Store distribution provisioning profile**. [apps/flutter/fastlane/APP_STORE_SETUP.md Step 7]
+- **Enable capabilities on App ID** in developer.apple.com: Push Notifications, Associated Domains (ontaskhq.com), HealthKit, Sign In with Apple, App Groups. [apps/flutter/fastlane/APP_STORE_SETUP.md Step 9]
+- **Set FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD and FASTLANE_TEAM_ID** environment variables for Fastlane. [apps/flutter/fastlane/APP_STORE_SETUP.md Step 8]
+
+## Deferred from: code review of 13-4-app-store-connect-provisioning-configuration (2026-04-02)
+
+- **`Runner.entitlements` not referenced in `project.pbxproj`** — `apps/flutter/ios/Runner/Runner.entitlements` exists and is populated with correct entitlements, but `CODE_SIGN_ENTITLEMENTS` is not set for the Runner target in `project.pbxproj`. The file may be orphaned by Xcode for distribution builds. Pre-existing across entire project history; story explicitly prohibits modifying `project.pbxproj`. Investigate and add `CODE_SIGN_ENTITLEMENTS = Runner/Runner.entitlements` to Runner Debug/Profile/Release build configurations in `project.pbxproj` before Story 13.5 TestFlight build.
+
 ## Deferred from: code review of 13-1-aasa-file-payment-setup-page (2026-04-02)
 
 - **`stripePost`/`stripeGet` helpers duplicated across route files** — Identical helper functions defined in both `apps/api/src/routes/commitment-contracts.ts` and `apps/api/src/routes/subscriptions.ts`. Should be extracted to `apps/api/src/services/stripe.ts` but involves refactoring across both files. Extract when both files are stable and the Drizzle TS2345 incompatibility in `subscriptions.ts` is resolved.

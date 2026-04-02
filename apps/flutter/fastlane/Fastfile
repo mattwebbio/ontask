@@ -3,20 +3,29 @@ default_platform(:ios)
 platform :ios do
   desc "Upload a new beta build to TestFlight"
   lane :beta do
-    # Fetch latest build number from App Store Connect and increment
-    latest = app_store_build_number(
-      app_identifier: "com.ontaskhq.ontask",
-      live: false,
-    )
-    increment_build_number(build_number: latest + 1)
+    entitlements_path = "../ios/Runner/Runner.entitlements"
 
-    # Build the Flutter IPA
-    sh("flutter build ipa --release", chdir: "../")
+    begin
+      # Patch aps-environment to production before building (DEPLOY-4)
+      sh("plutil -replace aps-environment -string production '#{entitlements_path}'")
+      # Fetch latest build number from App Store Connect and increment
+      latest = app_store_build_number(
+        app_identifier: "com.ontaskhq.ontask",
+        live: false,
+      )
+      increment_build_number(build_number: latest + 1)
 
-    # Upload to TestFlight (skip waiting for processing — check ASC manually)
-    upload_to_testflight(
-      ipa: "../build/ios/ipa/ontask.ipa",
-      skip_waiting_for_build_processing: true,
-    )
+      # Build the Flutter IPA
+      sh("flutter build ipa --release", chdir: "../")
+
+      # Upload to TestFlight (skip waiting for processing — check ASC manually)
+      upload_to_testflight(
+        ipa: "../build/ios/ipa/ontask.ipa",
+        skip_waiting_for_build_processing: true,
+      )
+    ensure
+      # Always restore development entitlement for local dev (runs even on failure)
+      sh("plutil -replace aps-environment -string development '#{entitlements_path}'")
+    end
   end
 end
