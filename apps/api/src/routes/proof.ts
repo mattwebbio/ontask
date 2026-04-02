@@ -117,6 +117,32 @@ app.openapi(submitProofRoute, async (c) => {
   //       The user already sees the rejection in-app. Notification on rejection
   //       is only triggered after dispute resolution (AC 4).
 
+  // TODO(impl): After proof verification succeeds (verified=true) — send Live Activity 'end' push (Story 12.4)
+  // Trigger 3: Proof submitted & verified → activityStatus: 'completed'
+  // Trigger 4: Watch Mode AI detection complete → same 'end' push on proofType=watchMode
+  // TODO(impl): const { sendLiveActivityUpdate } = await import('../services/live-activity.js')
+  // TODO(impl): const userId = c.get('jwtPayload').sub
+  // TODO(impl): const db = createDb(c.env.DATABASE_URL)
+  // TODO(impl): const task = await db.select().from(tasksTable).where(eq(tasksTable.id, taskId)).limit(1)
+  // TODO(impl): const latRows = await db.select().from(liveActivityTokensTable)
+  //   .where(and(
+  //     eq(liveActivityTokensTable.userId, userId),
+  //     eq(liveActivityTokensTable.taskId, taskId),
+  //   ))
+  //   .limit(1)
+  // TODO(impl): if (latRows.length > 0 && verified === true) {
+  //   const result = await sendLiveActivityUpdate({
+  //     pushToken: latRows[0].pushToken,
+  //     expiresAt: latRows[0].expiresAt,
+  //     event: 'end',
+  //     contentState: {
+  //       taskTitle: task[0].title,
+  //       activityStatus: 'completed',
+  //     },
+  //   }, c.env)
+  //   if (result.tokenExpired) { DELETE FROM live_activity_tokens WHERE id = latRows[0].id }
+  // }
+
   // Demo failure path for testing rejection flow.
   if (demo === 'fail') {
     return c.json(
