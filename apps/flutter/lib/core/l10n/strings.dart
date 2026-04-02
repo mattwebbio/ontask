@@ -1376,4 +1376,35 @@ class AppStrings {
 
   /// "Manage subscription" CTA in Settings → Subscription (opens ontaskhq.com/account).
   static const String subscriptionManageCta = 'Manage subscription';
+
+  // ── Subscriptions — Cancellation & Reactivation (FR49, FR89, Story 9.4) ──────
+
+  /// Settings → Subscription section title when subscription is cancelled (pending expiry).
+  static const String subscriptionCancelledStatusLabel = 'Subscription Cancelled';
+
+  /// Message shown when subscription is cancelled — shows the access-until date.
+  /// Usage: AppStrings.subscriptionActiveUntil(date)
+  /// AC: 2, FR89: "Your subscription is active until [date]"
+  static String subscriptionActiveUntil(String date) =>
+      'Your subscription is active until $date';
+
+  /// "Reactivate" CTA in Settings → Subscription when cancelled (opens ontaskhq.com/account).
+  static const String subscriptionReactivateCta = 'Reactivate subscription';
+
+  /// Cancellation confirmation dialog title.
+  static const String subscriptionCancelConfirmTitle = 'Cancel Subscription?';
+
+  /// Cancellation confirmation dialog body — reminds user of continued access.
+  static const String subscriptionCancelConfirmBody =
+      'You\'ll keep access until the end of your current billing period. Active commitment contracts will continue until their individual deadlines.';
+
+  /// Cancellation confirmation dialog "Cancel Subscription" action label.
+  static const String subscriptionCancelConfirmAction = 'Cancel Subscription';
+
+  /// Cancellation confirmation dialog dismiss label.
+  static const String subscriptionCancelConfirmDismiss = 'Keep Subscription';
+
+  /// Error shown when cancellation fails.
+  static const String subscriptionCancelError =
+      'Couldn\u2019t cancel your subscription. Please try again or visit ontaskhq.com/account.';
 }

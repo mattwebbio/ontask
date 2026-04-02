@@ -40,6 +40,7 @@ class SubscriptionStatus {
 
   bool get isTrialing => state == SubscriptionState.trialing;
   bool get isActive => state == SubscriptionState.active;
+  bool get isCancelled => state == SubscriptionState.cancelled;
   bool get isExpired => state == SubscriptionState.expired;
 
   /// True when the trial countdown banner should be shown (final 3 days).
