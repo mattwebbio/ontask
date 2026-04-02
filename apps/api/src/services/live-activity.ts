@@ -52,9 +52,9 @@ export async function sendLiveActivityUpdate(
   env: CloudflareBindings
 ): Promise<{ success: boolean; tokenExpired: boolean }> {
   const apns = new ApnsClient({
-    team: env.APNS_TEAM_ID,
-    keyId: env.APNS_KEY_ID,
-    signingKey: env.APNS_KEY,
+    team: env.APNS_TEAM_ID!,
+    keyId: env.APNS_KEY_ID!,
+    signingKey: env.APNS_KEY!,
     defaultTopic: LIVE_ACTIVITY_TOPIC,
     // Use production unless ENVIRONMENT is explicitly 'development'
     host: env.ENVIRONMENT === 'development' ? 'api.sandbox.push.apple.com' : 'api.push.apple.com',

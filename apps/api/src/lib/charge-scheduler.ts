@@ -38,6 +38,7 @@ export async function triggerOverdueCharges(env: CloudflareBindings): Promise<vo
   //      idempotencyKey: `charge-${task.id}-${task.userId}`,
   //      payload: {
   //        taskId: task.id,
+  //        taskTitle: task.title,
   //        userId: task.userId,
   //        stakeAmountCents: task.stakeAmountCents,
   //        stripeCustomerId: contract.stripeCustomerId,
