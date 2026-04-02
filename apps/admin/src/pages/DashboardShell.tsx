@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Outlet, NavLink, useNavigate, Routes, Route } from 'react-router-dom'
+import { NavLink, useNavigate, Routes, Route } from 'react-router-dom'
 import { isAuthenticated, getOperatorEmail, clearAuth } from '../lib/auth'
 
 // ── Placeholder pages for nav sections ───────────────────────────────────────
@@ -138,7 +138,6 @@ export default function DashboardShell() {
             <Route path="/monitoring" element={<MonitoringPage />} />
             <Route path="/" element={<DisputesPage />} />
           </Routes>
-          <Outlet />
         </main>
       </div>
     </div>

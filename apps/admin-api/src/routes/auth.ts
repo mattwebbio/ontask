@@ -11,6 +11,11 @@ import { ok, err } from '../lib/response.js'
 
 const app = new OpenAPIHono<{ Bindings: CloudflareBindings }>()
 
+// Fallback used when ADMIN_JWT_SECRET is not configured (local dev / tests only).
+// Randomised per-process startup — unpredictable and cannot be shared across restarts.
+// TODO(impl): Remove fallback once ADMIN_JWT_SECRET is always provisioned.
+const FALLBACK_JWT_SECRET = crypto.randomUUID()
+
 // ── Schema definitions ────────────────────────────────────────────────────────
 
 const LoginRequestSchema = z.object({
@@ -106,7 +111,7 @@ app.openapi(loginRoute, async (c) => {
   // TODO(impl): TOTP stub accepts any 6-digit code — replace with real RFC 6238 verification
 
   const now = Math.floor(Date.now() / 1000)
-  const jwtSecret = c.env?.ADMIN_JWT_SECRET ?? 'dev-secret-do-not-use-in-production'
+  const jwtSecret = c.env?.ADMIN_JWT_SECRET ?? FALLBACK_JWT_SECRET
 
   const token = await signJwt(
     {
