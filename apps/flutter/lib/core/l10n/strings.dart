@@ -1396,7 +1396,7 @@ class AppStrings {
 
   /// Cancellation confirmation dialog body — reminds user of continued access.
   static const String subscriptionCancelConfirmBody =
-      'You\'ll keep access until the end of your current billing period. Active commitment contracts will continue until their individual deadlines.';
+      'You\u2019ll keep access until the end of your current billing period. Active commitment contracts will continue until their individual deadlines.';
 
   /// Cancellation confirmation dialog "Cancel Subscription" action label.
   static const String subscriptionCancelConfirmAction = 'Cancel Subscription';

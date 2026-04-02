@@ -223,7 +223,7 @@ void main() {
 
     // Story 9.4 tests: cancelled state UI.
 
-    const _cancelledStatus = SubscriptionStatus(
+    const cancelledStatus = SubscriptionStatus(
       state: SubscriptionState.cancelled,
       currentPeriodEnd: null,
     );
@@ -233,7 +233,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
-            subscriptionStatusProvider.overrideWith((_) async => _cancelledStatus),
+            subscriptionStatusProvider.overrideWith((_) async => cancelledStatus),
           ],
           child: const CupertinoApp(home: SubscriptionSettingsScreen()),
         ),
@@ -247,7 +247,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
-            subscriptionStatusProvider.overrideWith((_) async => _cancelledStatus),
+            subscriptionStatusProvider.overrideWith((_) async => cancelledStatus),
           ],
           child: const CupertinoApp(home: SubscriptionSettingsScreen()),
         ),
