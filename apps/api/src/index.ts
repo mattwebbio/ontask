@@ -1,5 +1,6 @@
 import { OpenAPIHono } from '@hono/zod-openapi'
 import { applyScopedCors } from './middleware/cors.js'
+import { applyRateLimitHeaders } from './middleware/rate-limit.js'
 import { healthRouter } from './routes/health.js'
 import { authRouter } from './routes/auth.js'
 import { usersRouter } from './routes/users.js'
@@ -58,6 +59,9 @@ app.onError((error, c) => {
 // requests with no useful error message.
 applyScopedCors(app)
 
+// ── Rate limit headers (Story 10.1 — FR80, NFR-I6) ────────────────────────
+applyRateLimitHeaders(app)
+
 // ── Routes ─────────────────────────────────────────────────────────────────
 app.route('/', healthRouter)
 app.route('/', authRouter)
@@ -81,6 +85,17 @@ app.route('/', subscriptionsRouter)
 
 // ── OpenAPI documentation ──────────────────────────────────────────────────
 app.doc('/v1/doc', {
+  openapi: '3.0.0',
+  info: {
+    title: 'OnTask API',
+    version: '1.0.0',
+    description: 'OnTask REST API — task management platform',
+  },
+})
+
+// Alias: OpenAPI spec at /v1/openapi.json (Story 10.1 — FR44)
+// The canonical doc endpoint /v1/doc remains unchanged.
+app.doc('/v1/openapi.json', {
   openapi: '3.0.0',
   info: {
     title: 'OnTask API',
