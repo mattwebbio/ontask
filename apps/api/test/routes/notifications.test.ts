@@ -178,3 +178,66 @@ describe('PUT /v1/notifications/preferences', () => {
     expect(res.status).toBe(400)
   })
 })
+
+// ── Story 8.5 — Notification history routes ───────────────────────────────────
+
+describe('GET /v1/notifications', () => {
+  it('returns 200 with data.notifications array and data.unreadCount', async () => {
+    const res = await app.request('/v1/notifications', {
+      method: 'GET',
+    })
+
+    expect(res.status).toBe(200)
+    const body = await res.json() as { data: { notifications: unknown[]; unreadCount: number } }
+    expect(body).toHaveProperty('data')
+    expect(body.data).toHaveProperty('notifications')
+    expect(body.data).toHaveProperty('unreadCount')
+  })
+
+  it('returns notifications as an array (empty from stub)', async () => {
+    const res = await app.request('/v1/notifications', {
+      method: 'GET',
+    })
+
+    expect(res.status).toBe(200)
+    const body = await res.json() as { data: { notifications: unknown[] } }
+    expect(Array.isArray(body.data.notifications)).toBe(true)
+  })
+
+  it('returns unreadCount as a non-negative integer', async () => {
+    const res = await app.request('/v1/notifications', {
+      method: 'GET',
+    })
+
+    expect(res.status).toBe(200)
+    const body = await res.json() as { data: { unreadCount: number } }
+    expect(typeof body.data.unreadCount).toBe('number')
+    expect(body.data.unreadCount).toBeGreaterThanOrEqual(0)
+    expect(Number.isInteger(body.data.unreadCount)).toBe(true)
+  })
+})
+
+describe('PATCH /v1/notifications/read-all', () => {
+  it('returns 200 with data.markedRead shape', async () => {
+    const res = await app.request('/v1/notifications/read-all', {
+      method: 'PATCH',
+    })
+
+    expect(res.status).toBe(200)
+    const body = await res.json() as { data: { markedRead: number } }
+    expect(body).toHaveProperty('data')
+    expect(body.data).toHaveProperty('markedRead')
+  })
+
+  it('returns markedRead as a non-negative integer', async () => {
+    const res = await app.request('/v1/notifications/read-all', {
+      method: 'PATCH',
+    })
+
+    expect(res.status).toBe(200)
+    const body = await res.json() as { data: { markedRead: number } }
+    expect(typeof body.data.markedRead).toBe('number')
+    expect(body.data.markedRead).toBeGreaterThanOrEqual(0)
+    expect(Number.isInteger(body.data.markedRead)).toBe(true)
+  })
+})

@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:push/push.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../core/network/api_client.dart';
+import '../domain/notification_item.dart';
 
 part 'notifications_repository.g.dart';
 
@@ -45,6 +46,42 @@ class NotificationsRepository {
     // kDebugMode covers local simulator and device debug builds.
     const bool isRelease = bool.fromEnvironment('dart.vm.product');
     return isRelease ? 'production' : 'development';
+  }
+
+  /// Fetches the notification history for the current user.
+  /// Returns notifications in reverse chronological order (server-sorted).
+  /// AC: 1 — feeds NotificationCentreScreen.
+  Future<NotificationHistoryResult> getNotificationHistory() async {
+    final response = await apiClient.dio.get<Map<String, dynamic>>(
+      '/v1/notifications',
+    );
+    final data = (response.data!['data'] as Map<String, dynamic>);
+    final items = (data['notifications'] as List<dynamic>)
+        .map((e) => _parseNotificationItem(e as Map<String, dynamic>))
+        .toList();
+    return NotificationHistoryResult(
+      notifications: items,
+      unreadCount: data['unreadCount'] as int,
+    );
+  }
+
+  /// Marks all notifications as read server-side.
+  Future<void> markAllRead() async {
+    await apiClient.dio.patch<void>('/v1/notifications/read-all');
+  }
+
+  NotificationItem _parseNotificationItem(Map<String, dynamic> json) {
+    return NotificationItem(
+      id: json['id'] as String,
+      type: json['type'] as String,
+      title: json['title'] as String,
+      body: json['body'] as String,
+      taskId: json['taskId'] as String?,
+      readAt: json['readAt'] != null
+          ? DateTime.parse(json['readAt'] as String)
+          : null,
+      createdAt: DateTime.parse(json['createdAt'] as String),
+    );
   }
 
   /// Updates notification preference at any of the three levels (FR43):

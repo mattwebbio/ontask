@@ -12,6 +12,26 @@ const app = new OpenAPIHono<{ Bindings: CloudflareBindings }>()
 
 // ── Schemas ───────────────────────────────────────────────────────────────────
 
+const NotificationItemSchema = z.object({
+  id: z.string().uuid(),
+  type: z.enum([
+    'reminder', 'deadline_today', 'deadline_tomorrow', 'stake_warning',
+    'charge_succeeded', 'verification_approved', 'dispute_filed',
+    'dispute_approved', 'dispute_rejected', 'social_completion', 'schedule_change',
+  ]),
+  title: z.string(),
+  body: z.string(),
+  taskId: z.string().uuid().nullable(),
+  readAt: z.string().datetime().nullable(),  // null = unread
+  createdAt: z.string().datetime(),
+})
+const NotificationHistoryResponseSchema = z.object({
+  data: z.object({
+    notifications: z.array(NotificationItemSchema),
+    unreadCount: z.number().int().min(0),
+  }),
+})
+
 const RegisterDeviceTokenRequestSchema = z.object({
   token: z.string().min(1),                                         // APNs device token hex string
   platform: z.enum(['ios', 'macos']),
@@ -128,6 +148,62 @@ app.openapi(putPreferencesRoute, async (c) => {
   // TODO(impl): await db.insert(notificationPreferencesTable).values({ userId: jwtUserId, ...body })
   //   .onConflictDoUpdate({ target: [...], set: { enabled: body.enabled, updatedAt: new Date() } })
   return c.json(ok(body), 200)
+})
+
+// ── GET /v1/notifications ─────────────────────────────────────────────────────
+
+const getNotificationHistoryRoute = createRoute({
+  method: 'get',
+  path: '/v1/notifications',
+  tags: ['Notifications'],
+  summary: 'Get notification history',
+  description:
+    'Returns recent notifications for the authenticated user in reverse chronological order. ' +
+    'unreadCount is derived from items where readAt is null. ' +
+    'Results are capped at 50 items (pagination deferred to a future story).',
+  responses: {
+    200: {
+      content: { 'application/json': { schema: NotificationHistoryResponseSchema } },
+      description: 'Notification history',
+    },
+  },
+})
+
+app.openapi(getNotificationHistoryRoute, async (_c) => {
+  // TODO(impl): const db = createDb(c.env.DATABASE_URL)
+  // TODO(impl): const jwtUserId = c.get('jwtPayload').sub
+  // TODO(impl): Query notification_log WHERE userId = jwtUserId
+  //   ORDER BY createdAt DESC
+  //   LIMIT 50  (reasonable cap; paginate in a future story)
+  // TODO(impl): Derive unreadCount = count(items WHERE readAt IS NULL)
+  return _c.json({ data: { notifications: [], unreadCount: 0 } }, 200)
+})
+
+// ── PATCH /v1/notifications/read-all ─────────────────────────────────────────
+
+const markAllReadRoute = createRoute({
+  method: 'patch',
+  path: '/v1/notifications/read-all',
+  tags: ['Notifications'],
+  summary: 'Mark all notifications as read',
+  description:
+    'Marks all unread notifications as read for the authenticated user. ' +
+    'Returns the count of notifications that were marked read.',
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: z.object({ data: z.object({ markedRead: z.number().int() }) }),
+        },
+      },
+      description: 'Notifications marked read',
+    },
+  },
+})
+
+app.openapi(markAllReadRoute, async (_c) => {
+  // TODO(impl): UPDATE notification_log SET readAt = NOW() WHERE userId = jwtUserId AND readAt IS NULL
+  return _c.json({ data: { markedRead: 0 } }, 200)
 })
 
 export { app as notificationsRouter }

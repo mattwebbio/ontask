@@ -1,5 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../data/notifications_repository.dart';
+import '../domain/notification_item.dart';
 
 part 'notifications_provider.g.dart';
 
@@ -10,4 +11,12 @@ part 'notifications_provider.g.dart';
 Future<void> registerDeviceToken(Ref ref) async {
   final repo = ref.read(notificationsRepositoryProvider);
   await repo.requestPermissionAndRegisterToken();
+}
+
+/// Fetches notification history. Async provider — callers use AsyncValue pattern.
+/// Invalidate on NotificationCentreScreen open to refresh unread count.
+@riverpod
+Future<NotificationHistoryResult> notificationHistory(Ref ref) async {
+  final repo = ref.read(notificationsRepositoryProvider);
+  return repo.getNotificationHistory();
 }
