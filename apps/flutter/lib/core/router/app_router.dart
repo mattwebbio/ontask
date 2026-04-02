@@ -70,8 +70,20 @@ GoRouter appRouter(Ref ref) {
       // Farewell screen is accessible post-deletion even when unauthenticated.
       if (isOnFarewellRoute) return null;
 
-      if (!isAuthenticated && !isTwoFactorRequired && !isOnAuthRoute) return '/auth/sign-in';
-      if (isAuthenticated && isOnAuthRoute) return '/now';
+      if (!isAuthenticated && !isTwoFactorRequired && !isOnAuthRoute) {
+        final location = state.matchedLocation;
+        if (location.startsWith('/invitation/')) {
+          return '/auth/sign-in?redirect=${Uri.encodeComponent(location)}';
+        }
+        return '/auth/sign-in';
+      }
+      if (isAuthenticated && isOnAuthRoute) {
+        final redirectTarget = state.uri.queryParameters['redirect'];
+        if (redirectTarget != null && redirectTarget.isNotEmpty) {
+          return Uri.decodeComponent(redirectTarget);
+        }
+        return '/now';
+      }
 
       // Onboarding gate (only for authenticated users):
       // isOnboardingCompleted is read from the notifier.  In test environments
@@ -89,7 +101,8 @@ GoRouter appRouter(Ref ref) {
         //      and call AuthStateNotifier.prewarmPrefs(prefs) in setUp.
         onboardingCompleted = AuthStateNotifier.isOnboardingCompletedFromPrefs;
       }
-      if (isAuthenticated && !onboardingCompleted && !isOnOnboardingRoute) {
+      final isOnInvitationRoute = state.matchedLocation.startsWith('/invitation/');
+      if (isAuthenticated && !onboardingCompleted && !isOnOnboardingRoute && !isOnInvitationRoute) {
         return '/onboarding';
       }
       if (isAuthenticated && onboardingCompleted && isOnOnboardingRoute) {
@@ -107,7 +120,7 @@ GoRouter appRouter(Ref ref) {
         final isOnPaywallRoute = state.matchedLocation == '/paywall';
         final isOnSettingsRoute = state.matchedLocation.startsWith('/settings');
         final isOnSubscribeSuccessRoute = state.matchedLocation.startsWith('/subscribe/success');
-        if (subStatus.isExpired && !isOnPaywallRoute && !isOnSettingsRoute && !isOnSubscribeSuccessRoute) {
+        if (subStatus.isExpired && !isOnPaywallRoute && !isOnSettingsRoute && !isOnSubscribeSuccessRoute && !isOnInvitationRoute) {
           return '/paywall';
         }
         if (!subStatus.isExpired && isOnPaywallRoute) {
@@ -170,8 +183,9 @@ GoRouter appRouter(Ref ref) {
 
       // Invitation accept screen — top-level route (no shell chrome / tab bar).
       // Reached via deep link: /invitation/:token (FR16).
-      // Unauthenticated recipients will be redirected to /auth/sign-in first,
-      // then must re-open the link after authentication (stub V1 behaviour).
+      // Unauthenticated recipients are redirected to /auth/sign-in?redirect=/invitation/:token
+      // so the token is preserved through sign-up and the user lands back here automatically
+      // (Story 9.6 — upgraded from V1 stub behaviour).
       GoRoute(
         path: '/invitation/:token',
         builder: (context, state) => AcceptInvitationScreen(

@@ -36,6 +36,10 @@ const acceptInvitationResponseSchema = z.object({
   listTitle: z.string(),
   invitedByName: z.string(),
   membershipId: z.string().uuid(),
+  isNewUser: z.boolean().describe(
+    'True when the accepting user was created during this invitation flow (FR86). ' +
+    'Client uses this to show trial-start context before navigating to the list.'
+  ),
 })
 
 const listMemberSchema = z.object({
@@ -99,6 +103,7 @@ function stubAcceptResponse(listId: string): z.infer<typeof acceptInvitationResp
     listTitle: 'Household Chores',
     invitedByName: 'Jordan',
     membershipId: 'd0000000-0000-4000-8000-000000000099',
+    isNewUser: false,
   }
 }
 
@@ -235,6 +240,10 @@ const acceptInvitationRoute = createRoute({
 app.openapi(acceptInvitationRoute, async (c) => {
   // TODO(impl): verify token, check expiry, insert list_member row via Drizzle,
   //             update invitation status to 'accepted'
+  // TODO(impl): check if invitee email matches an existing user — if not,
+  //             set isNewUser: true. New user's trial is provisioned by auth.ts
+  //             on their first sign-up. isNewUser flag lets the client show
+  //             trial-start context after invitation acceptance (FR86).
   const { token } = c.req.valid('param')
   console.log(`[stub] Accepting invitation token: ${token}`)
   return c.json(ok(stubAcceptResponse('b0000000-0000-4000-8000-000000000001')), 200)

@@ -69,3 +69,48 @@ describe('Lists routes', () => {
     expect(res.status).toBe(204)
   })
 })
+
+// Tests for POST /v1/invitations/:token/accept — Story 9.6 (FR86, AC: 1)
+// Validates new isNewUser field in accept response schema.
+
+describe('POST /v1/invitations/:token/accept (Story 9.6 — isNewUser field)', () => {
+  it('returns 200 for valid token', async () => {
+    const res = await app.request('/v1/invitations/test-token/accept', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    })
+    expect(res.status).toBe(200)
+  })
+
+  it('response shape includes isNewUser boolean', async () => {
+    const res = await app.request('/v1/invitations/test-token/accept', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    })
+    const body = await res.json() as { data: { isNewUser: boolean } }
+    expect(body.data).toHaveProperty('isNewUser')
+    expect(typeof body.data.isNewUser).toBe('boolean')
+  })
+
+  it('stub returns isNewUser: false', async () => {
+    const res = await app.request('/v1/invitations/test-token/accept', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    })
+    const body = await res.json() as { data: { isNewUser: boolean } }
+    expect(body.data.isNewUser).toBe(false)
+  })
+
+  it('response shape includes all required fields', async () => {
+    const res = await app.request('/v1/invitations/test-token/accept', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    })
+    const body = await res.json() as { data: Record<string, unknown> }
+    expect(body.data).toHaveProperty('listId')
+    expect(body.data).toHaveProperty('listTitle')
+    expect(body.data).toHaveProperty('invitedByName')
+    expect(body.data).toHaveProperty('membershipId')
+    expect(body.data).toHaveProperty('isNewUser')
+  })
+})
