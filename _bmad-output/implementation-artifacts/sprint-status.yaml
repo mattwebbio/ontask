@@ -196,12 +196,12 @@ development_status:
   # ─────────────────────────────────────────────────────────
   # Epic 12: iOS Live Activities & Widgets
   # ─────────────────────────────────────────────────────────
-  epic-12: in-progress
+  epic-12: done
   12-1-live-activity-extension-foundation-push-token-storage: done
   12-2-live-activity-task-timer-commitment-countdown: done
   12-3-live-activity-watch-mode-voiceover-announcements: done
   12-4-server-side-live-activity-push-updates: done
-  12-5-widgetkit-home-screen-widgets: ready-for-dev
+  12-5-widgetkit-home-screen-widgets: done
   epic-12-retrospective: optional
 
   # ─────────────────────────────────────────────────────────
