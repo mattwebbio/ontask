@@ -120,5 +120,74 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text(AppStrings.subscriptionSettingsLoadError), findsOneWidget);
     });
+
+    // Story 9.3 tests: active subscription state UI.
+
+    testWidgets(
+        'active state renders subscriptionActiveStatusLabel text',
+        (tester) async {
+      const activeStatus = SubscriptionStatus(
+        state: SubscriptionState.active,
+        currentPeriodEnd: null,
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            subscriptionStatusProvider
+                .overrideWith((_) async => activeStatus),
+          ],
+          child: const CupertinoApp(home: SubscriptionSettingsScreen()),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.text(AppStrings.subscriptionActiveStatusLabel),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets(
+        'active state renders subscriptionManageCta button',
+        (tester) async {
+      const activeStatus = SubscriptionStatus(
+        state: SubscriptionState.active,
+        currentPeriodEnd: null,
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            subscriptionStatusProvider
+                .overrideWith((_) async => activeStatus),
+          ],
+          child: const CupertinoApp(home: SubscriptionSettingsScreen()),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text(AppStrings.subscriptionManageCta), findsOneWidget);
+    });
+
+    testWidgets(
+        'active state with renewal date shows formatted renewal date',
+        (tester) async {
+      final activeStatus = SubscriptionStatus(
+        state: SubscriptionState.active,
+        currentPeriodEnd: DateTime(2026, 5, 1),
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            subscriptionStatusProvider
+                .overrideWith((_) async => activeStatus),
+          ],
+          child: const CupertinoApp(home: SubscriptionSettingsScreen()),
+        ),
+      );
+      await tester.pumpAndSettle();
+      // Renewal date should be displayed in formatted form.
+      expect(
+        find.text(AppStrings.subscriptionRenewalDate('2026-05-01')),
+        findsOneWidget,
+      );
+    });
   });
 }
