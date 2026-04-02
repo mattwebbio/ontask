@@ -89,7 +89,14 @@ app.doc('/v1/doc', {
   info: {
     title: 'OnTask API',
     version: '1.0.0',
-    description: 'OnTask REST API — task management platform',
+    description:
+      'OnTask REST API — task management platform.\n\n' +
+      '**Rate Limiting (NFR-I6):** 1000 requests per hour per authenticated user. ' +
+      'Rate limit state is communicated via response headers: ' +
+      '`X-RateLimit-Limit` (window limit), `X-RateLimit-Remaining` (remaining in window), ' +
+      '`X-RateLimit-Reset` (Unix timestamp when window resets). ' +
+      'Exceeding the limit returns `429 Too Many Requests` with `Retry-After` semantics ' +
+      'in the error body (`details.retryAfter` in seconds).',
   },
 })
 
@@ -100,7 +107,14 @@ app.doc('/v1/openapi.json', {
   info: {
     title: 'OnTask API',
     version: '1.0.0',
-    description: 'OnTask REST API — task management platform',
+    description:
+      'OnTask REST API — task management platform.\n\n' +
+      '**Rate Limiting (NFR-I6):** 1000 requests per hour per authenticated user. ' +
+      'Rate limit state is communicated via response headers: ' +
+      '`X-RateLimit-Limit` (window limit), `X-RateLimit-Remaining` (remaining in window), ' +
+      '`X-RateLimit-Reset` (Unix timestamp when window resets). ' +
+      'Exceeding the limit returns `429 Too Many Requests` with `Retry-After` semantics ' +
+      'in the error body (`details.retryAfter` in seconds).',
   },
 })
 
