@@ -3,6 +3,7 @@ import { adminCors } from './middleware/cors.js'
 import { adminAuthMiddleware } from './middleware/admin-auth.js'
 import { authRouter } from './routes/auth.js'
 import { disputesRouter } from './routes/disputes.js'
+import { chargesRouter } from './routes/charges.js'
 
 // ── Admin API — Operator Hono Worker ─────────────────────────────────────────
 // Routes: api.ontaskhq.com/admin/v1/*
@@ -20,8 +21,10 @@ app.route('/', authRouter)
 // All other admin routes require authentication
 app.use('/admin/v1/disputes/*', adminAuthMiddleware)
 app.use('/admin/v1/disputes', adminAuthMiddleware)
-// (additional route guards added as new routes are added in later stories)
+app.use('/admin/v1/users/*', adminAuthMiddleware)
+app.use('/admin/v1/charges/*', adminAuthMiddleware)
 
 app.route('/', disputesRouter)
+app.route('/', chargesRouter)
 
 export default app
