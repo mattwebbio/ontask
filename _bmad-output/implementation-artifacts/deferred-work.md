@@ -1,5 +1,11 @@
 # Deferred Work
 
+## Deferred from: code review of 12-3-live-activity-watch-mode-voiceover-announcements (2026-04-02)
+
+- **`UIAccessibility.post` from Widget Extension may silently drop announcements** — Live Activity extensions run in a separate process; UIKit accessibility notifications posted from them may not reach the system-level VoiceOver announcer. Requires device validation. Pre-existing architectural design per ARCH-28. [`apps/flutter/ios/OnTaskLiveActivity/OnTaskLiveActivityLiveActivity.swift`]
+- **`elapsed == 1800` milestone VoiceOver announcement cannot fire while update stubs are commented out** — `startWatchModeActivity` stubs in `WatchModeSubView` and `updateElapsedSeconds` are TODO-commented; `elapsedSeconds` stays at 0. Activates when Story 12.4 enables server push or the stubs are uncommented. [`apps/flutter/ios/OnTaskLiveActivity/OnTaskLiveActivityLiveActivity.swift`]
+- **`formatElapsed` duplicated in `TaskTimerLockScreenView` and `WatchModeLockScreenView`** — Identical implementations; spec intentionally scopes to struct. Extract to a file-level helper when a third struct requires it. [`apps/flutter/ios/OnTaskLiveActivity/OnTaskLiveActivityLiveActivity.swift:33,109`]
+
 ## Deferred from: code review of 12-2-live-activity-task-timer-commitment-countdown (2026-04-02)
 
 - **`endActivity` ignores `finalStatus` parameter** — `live_activities` plugin v1.8.4 `endActivity(activityId:)` has no status parameter; the `finalStatus` argument in `LiveActivitiesRepository.endActivity` is dead code. Doc comment is misleading. Resolve when the plugin exposes a status-aware end method or when a custom platform channel call replaces it. [`apps/flutter/lib/features/live_activities/data/live_activities_repository.dart`]

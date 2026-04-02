@@ -127,6 +127,41 @@ class LiveActivitiesRepository {
     return activityId;
   }
 
+  /// Starts a watch_mode Live Activity.
+  ///
+  /// Watch Mode is iOS-only (UX-DR10). All calls guarded inside this method.
+  /// The activity uses activityStatus: 'watchMode' to distinguish it from
+  /// task_timer in the Swift extension's branching logic.
+  ///
+  /// [taskId] — stored in OnTaskActivityAttributes (static field).
+  /// [taskTitle] — shown in Dynamic Island expanded + Lock Screen.
+  /// [deadlineTimestamp] — optional; set if task has a commitment deadline.
+  /// [stakeAmount] — optional; set if task has a financial stake.
+  /// Returns activityId for later `updateElapsedSeconds` / `endActivity` calls.
+  Future<String?> startWatchModeActivity({
+    required String taskId,
+    required String taskTitle,
+    DateTime? deadlineTimestamp,
+    double? stakeAmount,
+  }) async {
+    if (defaultTargetPlatform != TargetPlatform.iOS) return null;
+    final activityId = await _plugin.createActivity({
+      'taskTitle': taskTitle,
+      'elapsedSeconds': 0,
+      'deadlineTimestamp': deadlineTimestamp?.toIso8601String(),
+      'stakeAmount': stakeAmount,
+      'activityStatus': 'watchMode', // Maps to Status.watchMode in Swift CodingKeys
+    });
+    if (activityId != null) {
+      await registerToken(
+        taskId: taskId,
+        activityType: LiveActivityType.watchMode,
+        pushToken: activityId,
+      );
+    }
+    return activityId;
+  }
+
   /// Updates the elapsed seconds for a running task_timer activity.
   ///
   /// Called periodically from the Flutter timer (not on every second — only on

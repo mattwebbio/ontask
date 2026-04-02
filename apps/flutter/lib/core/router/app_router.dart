@@ -226,6 +226,17 @@ GoRouter appRouter(Ref ref) {
       //     return const SizedBox.shrink();
       //   },
       // ),
+      //
+      // ontask://watchmode/end?taskId=<id> — ends Watch Mode session from Live Activity "End Session" tap.
+      // TODO(impl): Wire to WatchModeSubView end logic when deep link routing is fully connected.
+      // GoRoute(
+      //   path: '/watchmode/end',
+      //   builder: (context, state) {
+      //     final taskId = state.uri.queryParameters['taskId'];
+      //     // TODO(impl): Trigger Watch Mode end for taskId
+      //     return const SizedBox.shrink();
+      //   },
+      // ),
 
       // Chapter Break Screen — top-level route (no shell chrome / tab bar).
       // Shown after significant milestones: task completed, commitment locked,
