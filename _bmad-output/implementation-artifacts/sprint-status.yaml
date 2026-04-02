@@ -198,7 +198,7 @@ development_status:
   # ─────────────────────────────────────────────────────────
   epic-12: in-progress
   12-1-live-activity-extension-foundation-push-token-storage: done
-  12-2-live-activity-task-timer-commitment-countdown: backlog
+  12-2-live-activity-task-timer-commitment-countdown: done
   12-3-live-activity-watch-mode-voiceover-announcements: backlog
   12-4-server-side-live-activity-push-updates: backlog
   12-5-widgetkit-home-screen-widgets: backlog
