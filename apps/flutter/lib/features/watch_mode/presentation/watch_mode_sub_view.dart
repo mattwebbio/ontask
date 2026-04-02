@@ -101,6 +101,11 @@ class _WatchModeSubViewState extends ConsumerState<WatchModeSubView>
   CameraController? _cameraController;
   String? _cameraError;
 
+  // ── Live Activity ───────────────────────────────────────────────────────────
+  /// Live Activity ID for the active watch_mode session.
+  /// Non-null only on iOS when a watch_mode Live Activity is running.
+  String? _liveActivityId;
+
   // ── Session tracking ───────────────────────────────────────────────────────
   DateTime? _startedAt;
   WatchModeSession? _session;
@@ -168,6 +173,11 @@ class _WatchModeSubViewState extends ConsumerState<WatchModeSubView>
     _approvalFadeController.dispose();
     _cameraIndicatorController.dispose();
     _cameraController?.dispose();
+    // End Live Activity on dispose if still running (cleanup guard, iOS only).
+    // TODO(impl): if (_liveActivityId != null) {
+    //   ref.read(liveActivitiesRepositoryProvider)
+    //     .endActivity(activityId: _liveActivityId!, finalStatus: 'completed');
+    // }
     super.dispose();
   }
 
@@ -198,7 +208,25 @@ class _WatchModeSubViewState extends ConsumerState<WatchModeSubView>
       _sessionTimer = Timer.periodic(const Duration(seconds: 1), (_) {
         if (!mounted) return;
         setState(() => _elapsedSeconds++);
+        // Update Live Activity elapsed seconds every 30s to avoid excessive plugin calls.
+        // TODO(impl): if (_elapsedSeconds % 30 == 0 && _liveActivityId != null) {
+        //   ref.read(liveActivitiesRepositoryProvider)
+        //     .updateElapsedSeconds(
+        //       activityId: _liveActivityId!,
+        //       elapsedSeconds: _elapsedSeconds,
+        //     );
+        // }
       });
+      // Start Watch Mode Live Activity (iOS only — guarded inside repository).
+      // TODO(impl): Uncomment when wiring is confirmed working on device.
+      // ref.read(liveActivitiesRepositoryProvider)
+      //   .startWatchModeActivity(
+      //     taskId: widget.taskId,
+      //     taskTitle: widget.taskName,
+      //   )
+      //   .then((id) {
+      //     if (mounted) _liveActivityId = id;
+      //   });
       if (!_reducedMotion) {
         _cameraIndicatorController.repeat(reverse: true);
       }
@@ -254,6 +282,12 @@ class _WatchModeSubViewState extends ConsumerState<WatchModeSubView>
     _sessionTimer?.cancel();
     _framePollingTimer?.cancel();
     _cameraIndicatorController.stop();
+    // End Live Activity on session end (iOS only — guarded inside repository).
+    // TODO(impl): if (_liveActivityId != null) {
+    //   ref.read(liveActivitiesRepositoryProvider)
+    //     .endActivity(activityId: _liveActivityId!, finalStatus: 'completed');
+    //   _liveActivityId = null;
+    // }
     final endedAt = DateTime.now();
     _session = WatchModeSession(
       taskId: widget.taskId,

@@ -232,6 +232,102 @@ void main() {
     });
   });
 
+  // ── startWatchModeActivity ─────────────────────────────────────────────────
+
+  group('startWatchModeActivity', () {
+    test('returns null on non-iOS', () async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.android;
+      final result = await repo.startWatchModeActivity(
+        taskId: 'task-1',
+        taskTitle: 'Write report',
+      );
+      expect(result, isNull);
+      verifyNever(() => mockPlugin.createActivity(any()));
+      debugDefaultTargetPlatformOverride = null;
+    });
+
+    test('calls createActivity with watchMode activityStatus on iOS', () async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      _stubApiClientNoOp(mockApiClient, mockDio);
+      when(() => mockPlugin.createActivity(any()))
+          .thenAnswer((_) async => 'activity-watch-1');
+
+      final result = await repo.startWatchModeActivity(
+        taskId: 'task-1',
+        taskTitle: 'Write report',
+      );
+
+      expect(result, equals('activity-watch-1'));
+      final captured = verify(() => mockPlugin.createActivity(captureAny())).captured;
+      final data = captured.first as Map<String, dynamic>;
+      expect(data['activityStatus'], equals('watchMode'));
+      expect(data['elapsedSeconds'], equals(0));
+      expect(data['taskTitle'], equals('Write report'));
+      debugDefaultTargetPlatformOverride = null;
+    });
+
+    test('passes deadlineTimestamp as ISO 8601 string when provided', () async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      _stubApiClientNoOp(mockApiClient, mockDio);
+      when(() => mockPlugin.createActivity(any()))
+          .thenAnswer((_) async => 'activity-watch-2');
+      final deadline = DateTime(2026, 5, 1, 14, 0, 0);
+
+      await repo.startWatchModeActivity(
+        taskId: 'task-2',
+        taskTitle: 'Study session',
+        deadlineTimestamp: deadline,
+      );
+
+      final captured = verify(() => mockPlugin.createActivity(captureAny())).captured;
+      final data = captured.first as Map<String, dynamic>;
+      expect(data['deadlineTimestamp'], equals(deadline.toIso8601String()));
+      debugDefaultTargetPlatformOverride = null;
+    });
+
+    test('passes null deadlineTimestamp when not provided', () async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      _stubApiClientNoOp(mockApiClient, mockDio);
+      when(() => mockPlugin.createActivity(any()))
+          .thenAnswer((_) async => 'activity-watch-3');
+
+      await repo.startWatchModeActivity(
+        taskId: 'task-3',
+        taskTitle: 'Focus work',
+      );
+
+      final captured = verify(() => mockPlugin.createActivity(captureAny())).captured;
+      final data = captured.first as Map<String, dynamic>;
+      expect(data['deadlineTimestamp'], isNull);
+      debugDefaultTargetPlatformOverride = null;
+    });
+
+    test('registers token with watchMode activityType after createActivity', () async {
+      debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+      _stubApiClientNoOp(mockApiClient, mockDio);
+      when(() => mockPlugin.createActivity(any()))
+          .thenAnswer((_) async => 'activity-watch-4');
+
+      await repo.startWatchModeActivity(
+        taskId: 'task-4',
+        taskTitle: 'Deep work',
+      );
+
+      verify(
+        () => mockDio.post<void>(
+          '/v1/live-activities/token',
+          data: any(
+            named: 'data',
+            that: predicate<Map<String, dynamic>>(
+              (d) => d['activityType'] == 'watch_mode',
+            ),
+          ),
+        ),
+      ).called(1);
+      debugDefaultTargetPlatformOverride = null;
+    });
+  });
+
   // ── Platform guard — all methods ──────────────────────────────────────────
 
   group('Platform guards', () {
@@ -248,6 +344,10 @@ void main() {
           taskTitle: 'Task',
           deadlineTimestamp: DateTime.now().add(const Duration(hours: 1)),
         ),
+        completion(isNull),
+      );
+      await expectLater(
+        repo.startWatchModeActivity(taskId: 't', taskTitle: 'Task'),
         completion(isNull),
       );
       await expectLater(
