@@ -1315,7 +1315,7 @@ class AppStrings {
   static const String paywallTierIndividualName = 'Individual';
 
   /// Individual tier price — approximate; exact price TBD at launch.
-  static const String paywallTierIndividualPrice = '~\$10 / month';
+  static const String paywallTierIndividualPrice = r'~$10 / month';
 
   /// Individual tier one-line feature description.
   static const String paywallTierIndividualFeature =
@@ -1332,7 +1332,7 @@ class AppStrings {
       'Shared lists and commitments for two';
 
   /// Family & Friends tier name.
-  static const String paywallTierFamilyName = 'Family \u0026 Friends';
+  static const String paywallTierFamilyName = 'Family & Friends';
 
   /// Family & Friends tier price — placeholder; exact pricing TBD.
   static const String paywallTierFamilyPrice = 'Coming soon';

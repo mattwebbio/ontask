@@ -159,7 +159,7 @@ GoRouter appRouter(Ref ref) {
       //   context.push('/chapter-break', extra: {'taskTitle': ..., 'stakeAmount': ...})
       // [onContinue] calls context.go('/now') for a clean stack.
       //
-      // TODO(v1.1-ipad): When implementing two-column iPad layout, add a
+      // v1.1-ipad: When implementing two-column iPad layout, add a
       // LayoutBuilder breakpoint check at 600pt logical width in AppShell.
       // Below 600pt → phone layout (current). Above 600pt → two-column:
       // sidebar (240pt fixed) + content (fills). Touch-optimised — not macOS
