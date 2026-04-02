@@ -277,3 +277,55 @@ body {
     text-align: center;
   }
 }
+
+/* ─── Prose (Privacy Policy, Legal Pages) ───────────────────────── */
+.prose {
+  max-width: 720px;
+  margin: 48px auto 80px;
+  padding: 0 16px;
+}
+
+.prose h1 {
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+}
+
+.prose-meta {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 40px;
+}
+
+.prose h2 {
+  font-size: 20px;
+  font-weight: 600;
+  margin-top: 36px;
+  margin-bottom: 12px;
+  color: var(--text-primary);
+}
+
+.prose p {
+  margin-bottom: 16px;
+  color: var(--text-primary);
+}
+
+.prose ul {
+  margin-bottom: 16px;
+  padding-left: 20px;
+}
+
+.prose ul li {
+  margin-bottom: 8px;
+  line-height: 1.6;
+}
+
+.prose a {
+  color: var(--accent);
+}
+
+.prose a:hover {
+  color: var(--accent-dark);
+}
