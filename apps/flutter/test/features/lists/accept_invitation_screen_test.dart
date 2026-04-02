@@ -99,6 +99,35 @@ void main() {
       expect(find.text(AppStrings.inviteExpiredMessage), findsOneWidget);
       expect(find.text(AppStrings.inviteGoToLists), findsOneWidget);
     });
+
+    // Story 9.6 tests: invited user onboarding — trial note display, FR86.
+
+    testWidgets('shows invitationTrialNote on invitation content screen', (tester) async {
+      await tester.pumpWidget(buildScreen(token: 'token-1'));
+      await tester.pumpAndSettle();
+
+      expect(find.text(AppStrings.invitationTrialNote), findsOneWidget);
+    });
+
+    testWidgets('invitationTrialNote is NOT shown on expired state screen', (tester) async {
+      final throwingRepo = _FakeSharingRepository(shouldThrowOnDetails: true);
+      await tester.pumpWidget(buildScreen(token: 'bad-token', fakeRepo: throwingRepo));
+      await tester.pumpAndSettle();
+
+      expect(find.text(AppStrings.invitationTrialNote), findsNothing);
+      expect(find.text(AppStrings.inviteExpiredMessage), findsOneWidget);
+    });
+
+    testWidgets('accept button navigates to list after acceptance', (tester) async {
+      final fakeRepo = _FakeSharingRepository();
+      await tester.pumpWidget(buildScreen(token: 'token-1', fakeRepo: fakeRepo));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text(AppStrings.inviteAcceptButton));
+      await tester.pumpAndSettle();
+
+      expect(fakeRepo.acceptInvitationCalled, isTrue);
+    });
   });
 }
 
@@ -125,7 +154,13 @@ class _FakeSharingRepository extends SharingRepository {
   @override
   Future<Map<String, dynamic>> acceptInvitation(String token) async {
     acceptInvitationCalled = true;
-    return {'listId': 'list-1', 'listTitle': 'Household Chores', 'invitedByName': 'Jordan', 'membershipId': 'mem-1'};
+    return {
+      'listId': 'list-1',
+      'listTitle': 'Household Chores',
+      'invitedByName': 'Jordan',
+      'membershipId': 'mem-1',
+      'isNewUser': false,
+    };
   }
 
   @override

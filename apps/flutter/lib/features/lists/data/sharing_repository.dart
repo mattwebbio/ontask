@@ -54,7 +54,8 @@ class SharingRepository {
 
   /// Accepts a list invitation by token, adding the current user as a member.
   ///
-  /// Returns `{ listId, listTitle, invitedByName, membershipId }`.
+  /// Returns `{ listId, listTitle, invitedByName, membershipId, isNewUser }`.
+  /// `isNewUser` (bool): true if the acceptor was just created during this flow (FR86).
   Future<Map<String, dynamic>> acceptInvitation(String token) async {
     final response = await _client.dio.post<Map<String, dynamic>>(
       '/v1/invitations/$token/accept',

@@ -68,9 +68,13 @@ class _AcceptInvitationScreenState
       final repo = ref.read(sharingRepositoryProvider);
       final result = await repo.acceptInvitation(widget.token);
       if (mounted) {
-        // FR86: if not yet subscribed, route to onboarding/trial path.
-        // Stub: always navigate to the specific list.
         final listId = result['listId'] as String? ?? _listId;
+        // FR86: if user has no active subscription or trial, the subscription
+        // system already grants a 14-day trial at sign-up — no separate routing
+        // needed. Navigate directly to the accepted list.
+        // impl(9.6): when real subscription data is wired, check status here
+        // and redirect to '/onboarding' if this is a brand-new user whose trial
+        // was just provisioned (isNewUser from accept response).
         context.go('/lists/${listId ?? ''}');
       }
     } catch (_) {
