@@ -344,7 +344,7 @@ const deleteListRoute = createRoute({
   description:
     'Permanently removes a list and cascade-deletes its tasks. ' +
     'Prefer DELETE /v1/lists/{id}/archive for soft-delete (reversible). ' +
-    'Stub; real implementation cascades via Drizzle.',
+    'Story 10.1 stub — TODO(impl): cascade-delete tasks, verify ownership from JWT.',
   request: {
     params: z.object({ id: z.string().uuid() }),
   },

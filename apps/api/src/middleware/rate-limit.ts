@@ -10,9 +10,9 @@ export function applyRateLimitHeaders(app: OpenAPIHono<{ Bindings: CloudflareBin
   app.use('*', async (c, next) => {
     await next()
     // Stub: fixed values until real counters land in Story 10.2
-    const resetTs = Math.ceil(Date.now() / 3_600_000) * 3_600 // top of next hour (Unix seconds)
+    const resetUnixSec = Math.ceil(Date.now() / 3_600_000) * 3_600 // top of next hour (Unix seconds)
     c.res.headers.set('X-RateLimit-Limit', '1000')
-    c.res.headers.set('X-RateLimit-Remaining', '999')
-    c.res.headers.set('X-RateLimit-Reset', String(resetTs))
+    c.res.headers.set('X-RateLimit-Remaining', '1000') // stub: no real counter yet (Story 10.2)
+    c.res.headers.set('X-RateLimit-Reset', String(resetUnixSec))
   })
 }
