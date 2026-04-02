@@ -1,5 +1,12 @@
 # Deferred Work
 
+## Deferred from: code review of 13-1-aasa-file-payment-setup-page (2026-04-02)
+
+- **`stripePost`/`stripeGet` helpers duplicated across route files** — Identical helper functions defined in both `apps/api/src/routes/commitment-contracts.ts` and `apps/api/src/routes/subscriptions.ts`. Should be extracted to `apps/api/src/services/stripe.ts` but involves refactoring across both files. Extract when both files are stable and the Drizzle TS2345 incompatibility in `subscriptions.ts` is resolved.
+- **Webhook HMAC verification uses re-serialized JSON body instead of raw bytes** — `stripeWebhookRoute` calls `JSON.stringify(c.req.valid('json'))` as the HMAC payload instead of `c.req.text()`. Acknowledged in code comment as a known `@hono/zod-openapi` trade-off. Fix requires registering the webhook as a raw (non-OpenAPI) Hono route. [`apps/api/src/routes/subscriptions.ts` webhook handler]
+- **`POST /v1/subscriptions/checkout-session` creates Stripe Checkout without customer linkage** — Each call creates an anonymous Stripe customer in Checkout; no `customer` field is passed because the DB lookup is blocked by a TS2345 Drizzle type incompatibility in `subscriptions.ts`. Fix when the TS2345 issue is resolved — look up `stripeCustomerId` from `commitment_contracts` and pass it to `stripe.checkout.sessions.create`. [`apps/api/src/routes/subscriptions.ts:245-248`]
+- **Webhook DB writes for `customer.subscription.updated` and `customer.subscription.deleted` not implemented** — Task 9 story marks the webhook handler as `[x]` complete (signature verification works, handler registered), but DB writes for subscription status updates are left as TODO stubs. Decision: accepted as done per Option 3 — handler wiring counts as done, DB writes explicitly deferred. Implement DB writes when subscription status storage is needed (Epic 9 end-to-end). [`apps/api/src/routes/subscriptions.ts:510-517`]
+
 ## Deferred from: code review of 12-5-widgetkit-home-screen-widgets (2026-04-02)
 
 - **Sequential UUIDs in `project.pbxproj` risk collision** — All new `OnTaskWidget` target UUIDs follow the pattern `A1B2C3D4E5F601234567890A–21`. They are syntactically valid and brace-balanced, but non-random. If a future story uses the same sequential increment it will collide. Use truly random 24-char hex UUIDs in future `project.pbxproj` edits. [`apps/flutter/ios/Runner.xcodeproj/project.pbxproj`]
@@ -142,7 +149,7 @@ To fix: add an #else clause using UIApplication.shared.open(url) via Button for 
 
 ## Deferred from: code review of 6-1-payment-method-setup (2026-04-01)
 
-- **Manual "Tap to confirm setup" stub button absent** — Dev Notes for Story 6.1 suggest a manual confirm button in `PaymentSettingsScreen` so testers can invoke `confirmSetup()` before Story 13.1 deep links are live. Screen omits this. Revisit in Story 13.1 or add as a debug-only affordance before Epic 6 QA.
+- ~~**Manual "Tap to confirm setup" stub button absent**~~ — **Resolved in Story 13.1**: Real Universal Link deep link handler (`PaymentSetupCompleteScreen`) wired in `app_router.dart`; manual button not needed.
 - **`catch (_)` in `_removePaymentMethod` gives generic error on 422** — If cached `hasActiveStakes` is stale, a server-side 422 `ACTIVE_STAKES_PREVENT_REMOVAL` is swallowed into the generic `paymentSetupError` dialog. Add 422-specific error handling when Epic 6 real Stripe integration lands.
 - **Widget test missing `onPressed == null` assertion for disabled Remove button** — `payment_settings_screen_test.dart` verifies the blocked-by-stakes note text but does not assert `CupertinoButton.onPressed == null`. Add explicit assertion when the screen is hardened in Epic 6.
 
@@ -265,7 +272,7 @@ To fix: add an #else clause using UIApplication.shared.open(url) via Button for 
 
 ## Deferred from: code review of 6-5-automated-charge-processing-charity-disbursement (2026-04-01)
 
-- **`verifyWebhookSignature` stub permanently returns `false`** — All real Stripe webhooks to `POST /v1/webhooks/stripe` will receive HTTP 400 until the `TODO(impl)` in `apps/api/src/services/stripe.ts` is replaced with real HMAC-SHA256 verification. Tests document the expected behavior once implemented.
+- ~~**`verifyWebhookSignature` stub permanently returns `false`**~~ — **Resolved in Story 13.1**: Replaced with real `async Promise<boolean>` HMAC-SHA256 implementation using `crypto.subtle` (Cloudflare Workers Web Crypto) with 300-second timestamp tolerance.
 - **`disburseDonation` stub permanently returns `{ success: false }`** — Every.org consumer will throw on every disbursement message until `TODO(impl)` in `apps/api/src/services/every-org.ts` is replaced with the real Partner Funds API call.
 - **`triggerOverdueCharges` is a full no-op stub** — No tasks will ever be enqueued for charging until the DB query + `CHARGE_TRIGGER_QUEUE.send()` loop in `apps/api/src/lib/charge-scheduler.ts` is implemented. SQL query is fully spec'd in comments.
 - **No test file for `everyOrgConsumer`** — The throw-on-failure path (NFR-R4 critical path) is untested. Recommend adding `apps/api/src/queues/every-org-consumer.test.ts` covering: idempotency ack when status=`disbursed`, update to `disbursement_failed` + throw on failure, and success path update to `disbursed`.

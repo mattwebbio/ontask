@@ -1,12 +1,48 @@
 import { OpenAPIHono, createRoute } from '@hono/zod-openapi'
 import { z } from 'zod'
+import { eq, and, gt } from 'drizzle-orm'
 import { ok, err } from '../lib/response.js'
 import { verifyWebhookSignature } from '../services/stripe.js'
+import { createDb } from '../db/index.js'
+import { commitmentContractsTable } from '@ontask/core'
 
 // ── Commitment contracts router ───────────────────────────────────────────────
 // Payment method setup endpoints for commitment stakes (Epic 6, FR23, FR64).
-// All Stripe API calls are stubs with TODO(impl) markers — stub story (6.1).
-// Real Stripe integration deferred until Story 13.1 (AASA + payment pages) is deployed.
+// Real Stripe integration implemented in Story 13.1 (AASA + payment pages).
+
+// ── Stripe API helper ─────────────────────────────────────────────────────────
+// Stripe SDK is NOT in dependencies — use raw fetch to Stripe REST API.
+
+async function stripePost(path: string, body: Record<string, string>, secretKey: string): Promise<unknown> {
+  const formBody = Object.entries(body)
+    .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+    .join('&')
+  const response = await fetch(`https://api.stripe.com${path}`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${secretKey}`,
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: formBody,
+  })
+  if (!response.ok) {
+    const error = await response.json() as { error?: { message?: string } }
+    throw new Error(`Stripe error: ${error?.error?.message ?? response.statusText}`)
+  }
+  return response.json()
+}
+
+async function stripeGet(path: string, secretKey: string): Promise<unknown> {
+  const response = await fetch(`https://api.stripe.com${path}`, {
+    method: 'GET',
+    headers: { 'Authorization': `Bearer ${secretKey}` },
+  })
+  if (!response.ok) {
+    const error = await response.json() as { error?: { message?: string } }
+    throw new Error(`Stripe error: ${error?.error?.message ?? response.statusText}`)
+  }
+  return response.json()
+}
 
 const app = new OpenAPIHono<{ Bindings: CloudflareBindings }>()
 
@@ -101,15 +137,72 @@ const createSetupSessionRoute = createRoute({
 })
 
 app.openapi(createSetupSessionRoute, async (c) => {
-  // TODO(impl): generate cryptographically random token, store in commitment_contracts.setupSessionToken
-  //             with 5-minute expiry, build real URL
-  return c.json(
-    ok({
-      setupUrl: 'https://ontaskhq.com/setup?sessionToken=stub-token',
-      sessionToken: 'stub-token',
-    }),
-    201,
-  )
+  // TODO(impl): replace with c.get('jwtPayload').sub once JWT middleware is wired
+  // on this route. Using x-user-id as a stub consistent with other stub routes;
+  // this must NOT be shipped to production before JWT auth is enforced here,
+  // as any caller could spoof any userId and create Stripe customers on their behalf.
+  const userId = c.req.header('x-user-id') ?? 'stub-user-id'
+  const db = createDb(c.env.DATABASE_URL ?? '')
+
+  // Get or create commitment_contracts record and Stripe customer.
+  const [existing] = await db
+    .select()
+    .from(commitmentContractsTable)
+    .where(eq(commitmentContractsTable.userId, userId))
+    .limit(1)
+
+  let stripeCustomerId = existing?.stripeCustomerId
+
+  if (!stripeCustomerId) {
+    // Create a new Stripe customer for this user.
+    const customer = await stripePost(
+      '/v1/customers',
+      { 'metadata[userId]': userId },
+      c.env.STRIPE_SECRET_KEY ?? ''
+    ) as { id: string }
+    stripeCustomerId = customer.id
+  }
+
+  // Create a Stripe SetupIntent.
+  const setupIntent = await stripePost(
+    '/v1/setup_intents',
+    {
+      customer: stripeCustomerId,
+      'payment_method_types[]': 'card',
+    },
+    c.env.STRIPE_SECRET_KEY ?? ''
+  ) as { id: string; client_secret: string }
+
+  // Generate a cryptographically random session token.
+  const sessionToken = crypto.randomUUID()
+  const expiresAt = new Date(Date.now() + 5 * 60 * 1000) // 5 minutes from now
+
+  if (!existing) {
+    // Insert new record.
+    await db.insert(commitmentContractsTable).values({
+      userId,
+      stripeCustomerId,
+      stripeSetupIntentId: setupIntent.id,
+      setupSessionToken: sessionToken,
+      setupSessionExpiresAt: expiresAt,
+    })
+  } else {
+    // Update existing record.
+    await db
+      .update(commitmentContractsTable)
+      .set({
+        stripeCustomerId,
+        stripeSetupIntentId: setupIntent.id,
+        setupSessionToken: sessionToken,
+        setupSessionExpiresAt: expiresAt,
+        updatedAt: new Date(),
+      })
+      .where(eq(commitmentContractsTable.userId, userId))
+  }
+
+  const setupUrl = `https://ontaskhq.com/setup?sessionToken=${encodeURIComponent(sessionToken)}`
+
+  return c.json(ok({ setupUrl, sessionToken }), 201)
 })
 
 // ── POST /v1/payment-method/confirm ───────────────────────────────────────────
@@ -137,23 +230,151 @@ const confirmSetupRoute = createRoute({
       content: { 'application/json': { schema: ErrorSchema } },
       description: 'Session token not found or expired',
     },
+    422: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'SetupIntent not yet succeeded',
+    },
   },
 })
 
 app.openapi(confirmSetupRoute, async (c) => {
-  // TODO(impl): validate sessionToken against commitment_contracts.setupSessionToken + setupSessionExpiresAt;
-  //             call Stripe API to retrieve PaymentMethod from SetupIntent;
-  //             store stripePaymentMethodId, paymentMethodLast4, paymentMethodBrand
-  const body = c.req.valid('json')
-  void body.sessionToken // consumed by TODO(impl) validation above
+  const { sessionToken } = c.req.valid('json')
+  const db = createDb(c.env.DATABASE_URL ?? '')
+
+  // Validate sessionToken exists and is not expired.
+  const [record] = await db
+    .select()
+    .from(commitmentContractsTable)
+    .where(
+      and(
+        eq(commitmentContractsTable.setupSessionToken, sessionToken),
+        gt(commitmentContractsTable.setupSessionExpiresAt, new Date()),
+      )
+    )
+    .limit(1)
+
+  if (!record) {
+    return c.json(err('SESSION_NOT_FOUND', 'Session token not found or expired'), 404)
+  }
+
+  if (!record.stripeSetupIntentId) {
+    return c.json(err('SETUP_INTENT_MISSING', 'No SetupIntent found for this session'), 422)
+  }
+
+  // Retrieve the SetupIntent from Stripe.
+  const setupIntent = await stripeGet(
+    `/v1/setup_intents/${record.stripeSetupIntentId}`,
+    c.env.STRIPE_SECRET_KEY ?? ''
+  ) as { status: string; payment_method: string | null }
+
+  if (setupIntent.status !== 'succeeded') {
+    return c.json(err('SETUP_INTENT_NOT_SUCCEEDED', 'Payment method setup is not yet complete'), 422)
+  }
+
+  const paymentMethodId = setupIntent.payment_method
+  if (!paymentMethodId) {
+    return c.json(err('PAYMENT_METHOD_MISSING', 'No payment method attached to SetupIntent'), 422)
+  }
+
+  // Retrieve the PaymentMethod to get last4 and brand.
+  const paymentMethod = await stripeGet(
+    `/v1/payment_methods/${paymentMethodId}`,
+    c.env.STRIPE_SECRET_KEY ?? ''
+  ) as { card?: { last4: string; brand: string } }
+
+  const last4 = paymentMethod.card?.last4 ?? null
+  const brand = paymentMethod.card?.brand ?? null
+
+  // Store payment method details and clear session token.
+  await db
+    .update(commitmentContractsTable)
+    .set({
+      stripePaymentMethodId: paymentMethodId,
+      paymentMethodLast4: last4,
+      paymentMethodBrand: brand,
+      setupSessionToken: null,
+      setupSessionExpiresAt: null,
+      updatedAt: new Date(),
+    })
+    .where(eq(commitmentContractsTable.id, record.id))
+
   return c.json(
     ok({
       hasPaymentMethod: true,
-      paymentMethod: { last4: '4242', brand: 'visa' },
-      hasActiveStakes: false,
+      paymentMethod: last4 && brand ? { last4, brand } : null,
+      hasActiveStakes: record.hasActiveStakes,
     }),
     200,
   )
+})
+
+// ── GET /v1/payment-method/setup-intent-client-secret ────────────────────────
+// Called by the browser-based web setup page (ontaskhq.com/setup) to obtain
+// the Stripe SetupIntent client_secret for mounting Stripe Elements.
+// Auth: sessionToken query param (no JWT — called from browser, not Flutter app).
+// CORS: enabled for ontaskhq.com via cors.ts middleware (Story 13.1).
+
+const getSetupIntentClientSecretRoute = createRoute({
+  method: 'get',
+  path: '/v1/payment-method/setup-intent-client-secret',
+  tags: ['PaymentMethod'],
+  summary: 'Get Stripe SetupIntent client_secret for web payment setup page',
+  description:
+    'Returns the Stripe SetupIntent client_secret for the given sessionToken. ' +
+    'Called from browser JavaScript on ontaskhq.com/setup — not from the Flutter app. ' +
+    'The sessionToken is OnTask\'s own short-lived token (5-min TTL) generated by ' +
+    'POST /v1/payment-method/setup-session. Story 13.1.',
+  request: {
+    query: z.object({ sessionToken: z.string() }),
+  },
+  responses: {
+    200: {
+      content: {
+        'application/json': {
+          schema: z.object({ data: z.object({ clientSecret: z.string() }) }),
+        },
+      },
+      description: 'SetupIntent client_secret returned',
+    },
+    404: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Session token not found or expired',
+    },
+  },
+})
+
+app.openapi(getSetupIntentClientSecretRoute, async (c) => {
+  const { sessionToken } = c.req.valid('query')
+
+  if (!sessionToken) {
+    return c.json(err('SESSION_NOT_FOUND', 'sessionToken query param is required'), 404)
+  }
+
+  const db = createDb(c.env.DATABASE_URL ?? '')
+
+  // Validate sessionToken exists and is not expired.
+  const [record] = await db
+    .select()
+    .from(commitmentContractsTable)
+    .where(
+      and(
+        eq(commitmentContractsTable.setupSessionToken, sessionToken),
+        gt(commitmentContractsTable.setupSessionExpiresAt, new Date()),
+      )
+    )
+    .limit(1)
+
+  if (!record || !record.stripeSetupIntentId) {
+    return c.json(err('SESSION_NOT_FOUND', 'Session token not found or expired'), 404)
+  }
+
+  // Retrieve the SetupIntent from Stripe to get the client_secret.
+  const setupIntent = await stripeGet(
+    `/v1/setup_intents/${record.stripeSetupIntentId}`,
+    c.env.STRIPE_SECRET_KEY ?? ''
+  ) as { client_secret: string }
+
+  return c.json(ok({ clientSecret: setupIntent.client_secret }), 200)
 })
 
 // ── DELETE /v1/payment-method ─────────────────────────────────────────────────

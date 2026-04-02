@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Subscribe — OnTask</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- Stripe.js MUST be loaded from Stripe's CDN (PCI DSS SAQ A requirement). Never self-host. -->
+  <script src="https://js.stripe.com/v3/"></script>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h1 class="title">Subscribe to OnTask</h1>
+
+      <div id="loading-state" class="state">
+        <div class="spinner"></div>
+        <p>Preparing your checkout…</p>
+      </div>
+
+      <div id="error-state" class="state hidden">
+        <p class="error-message" id="error-message">Something went wrong. Please return to the app and try again.</p>
+        <a href="https://ontaskhq.com/subscribe" class="btn-secondary" id="retry-btn">Try again</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ── Constants ──────────────────────────────────────────────────────────────
+    // Stripe publishable key — safe to include in client-side code by design.
+    // Replace with actual key before deploying to production.
+    const STRIPE_PUBLISHABLE_KEY = 'pk_live_REPLACE_WITH_ACTUAL_KEY';
+    const API_BASE_URL = 'https://api.ontaskhq.com';
+
+    // Valid tier values. Must match exactly: individual, couple, family.
+    // NOT family_and_friends — the web page uses the shortened form.
+    const VALID_TIERS = ['individual', 'couple', 'family'];
+
+    // ── Helpers ────────────────────────────────────────────────────────────────
+    function getQueryParam(name) {
+      return new URLSearchParams(window.location.search).get(name);
+    }
+
+    function showError(message) {
+      document.getElementById('error-message').textContent =
+        message || 'Something went wrong. Please return to the app and try again.';
+      document.getElementById('loading-state').classList.add('hidden');
+      document.getElementById('error-state').classList.remove('hidden');
+    }
+
+    // ── Main ───────────────────────────────────────────────────────────────────
+    // Note: The /subscribe page is navigated to directly from the app with
+    // ?tier=xxx. However, the API-driven checkout session flow (Task 7/8) is the
+    // preferred path where Flutter calls POST /v1/subscriptions/checkout-session
+    // first and opens the returned Stripe Checkout URL directly.
+    //
+    // This page handles the fallback/legacy case where the app opens this URL
+    // directly. It fetches a checkout session from the API using the sessionToken
+    // query param if present, or displays an error if neither is available.
+    (async function init() {
+      const tier = getQueryParam('tier');
+
+      if (!tier) {
+        showError('No subscription tier selected. Please return to the app and try again.');
+        return;
+      }
+
+      if (!VALID_TIERS.includes(tier)) {
+        showError(`Unknown subscription tier: "${tier}". Please return to the app and try again.`);
+        return;
+      }
+
+      // Fetch a Stripe Checkout session from the API.
+      // SECURITY NOTE: Bearer tokens must never be passed as URL query parameters —
+      // they are logged by servers, CDNs, and browser history. The standard flow
+      // (Task 8) has Flutter call POST /v1/subscriptions/checkout-session directly
+      // from the app using its in-memory auth token, then open the returned
+      // Stripe Checkout URL. This page should not need to call the API at all in
+      // the normal flow; it is a fallback shown only if the app sends the user here
+      // without first obtaining a checkout URL.
+
+      try {
+        // No Authorization header: the /v1/subscriptions/checkout-session endpoint
+        // will use JWT auth from the app's own request in the real implementation.
+        // TODO(impl): Remove this fallback path once all app flows go via the
+        // app-side API call and direct Stripe URL open (Task 8 standard flow).
+        const headers = { 'Content-Type': 'application/json' };
+
+        const response = await fetch(`${API_BASE_URL}/v1/subscriptions/checkout-session`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ tier }),
+        });
+
+        if (!response.ok) {
+          if (response.status === 422) {
+            showError(`Subscription tier "${tier}" is not available. Please return to the app and try again.`);
+          } else if (response.status === 401) {
+            showError('Authentication required. Please return to the app and try again.');
+          } else {
+            showError('Could not start checkout. Please return to the app and try again.');
+          }
+          return;
+        }
+
+        const json = await response.json();
+        const checkoutUrl = json.data.checkoutUrl;
+
+        if (!checkoutUrl) {
+          showError('Invalid checkout response. Please return to the app and try again.');
+          return;
+        }
+
+        // Redirect to Stripe Checkout hosted page.
+        window.location.href = checkoutUrl;
+      } catch (_) {
+        showError('Network error. Please check your connection and try again.');
+      }
+    })();
+  </script>
+</body>
+</html>
