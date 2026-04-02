@@ -529,6 +529,12 @@ claude-sonnet-4-6
 - Added l10n strings in `strings.dart`: `disputeConfirmationTitle`, `disputeConfirmationPoint1/2/3`, `disputeConfirmationDoneCta`, `taskUnderReview`.
 - Tests: 7 new tests in `dispute_confirmation_view_test.dart`, 4 new dispute tests in `photo_capture_sub_view_test.dart`. All 25 new tests pass. Full suite (700+ tests) passes with exit code 0.
 
+### Review Findings
+
+- [ ] [Review][Patch] Dispute button-tap wiring is not integration-tested — `fileDispute` is called directly on the mock rather than via a widget tap on the rejected-state CTA; the actual button→`_onRequestReview`→`DisputeConfirmationView` render path is not exercised [apps/flutter/test/features/proof/photo_capture_sub_view_test.dart]
+- [x] [Review][Defer] `stakeAmountCents` present in `Task` domain model but absent from `TaskDto` and `toDomain()` — field silently lost on API deserialization [apps/flutter/lib/features/tasks/data/task_dto.dart] — deferred, pre-existing
+- [x] [Review][Defer] `catch (_)` in `_parseDaysOfWeek` swallows parse errors silently [apps/flutter/lib/features/tasks/data/task_dto.dart:102] — deferred, pre-existing
+
 ### File List
 
 apps/api/src/routes/proof.ts
