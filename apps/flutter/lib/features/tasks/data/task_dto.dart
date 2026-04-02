@@ -50,6 +50,7 @@ abstract class TaskDto with _$TaskDto {
     @JsonKey(defaultValue: false) @Default(false) bool proofModeIsCustom,
     @JsonKey(defaultValue: null) String? proofMediaUrl,
     @JsonKey(defaultValue: false) @Default(false) bool proofRetained,
+    @JsonKey(name: 'proof_dispute_pending', defaultValue: false) @Default(false) bool proofDisputePending,
     @JsonKey(defaultValue: null) String? completedByName,
   }) = _TaskDto;
 
@@ -90,6 +91,7 @@ abstract class TaskDto with _$TaskDto {
         proofModeIsCustom: proofModeIsCustom,
         proofMediaUrl: proofMediaUrl,
         proofRetained: proofRetained,
+        proofDisputePending: proofDisputePending,
         completedByName: completedByName,
       );
 

@@ -11,6 +11,7 @@ import '../../../core/l10n/strings.dart';
 import '../../../core/motion/motion_tokens.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../disputes/presentation/dispute_confirmation_view.dart';
 import '../../now/presentation/widgets/now_task_card.dart';
 import '../../proof/data/proof_prefs_provider.dart';
 import '../../proof/data/proof_repository.dart';
@@ -31,6 +32,7 @@ enum _WatchModeState {
   approved,
   rejected,
   timeout,
+  disputed,
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -88,6 +90,9 @@ class _WatchModeSubViewState extends ConsumerState<WatchModeSubView>
 
   // ── Submission guard ───────────────────────────────────────────────────────
   bool _isSubmitting = false;
+
+  // ── Dispute submission guard ───────────────────────────────────────────────
+  bool _isDisputeSubmitting = false;
 
   // ── Retention preference ───────────────────────────────────────────────────
   bool _retainProof = true;
@@ -347,9 +352,19 @@ class _WatchModeSubViewState extends ConsumerState<WatchModeSubView>
     Navigator.pop(context, null);
   }
 
-  void _onRequestReview() {
-    // TODO(7.8): wire dispute flow
-    Navigator.pop(context, null);
+  Future<void> _onRequestReview() async {
+    if (_isDisputeSubmitting) return;
+    setState(() => _isDisputeSubmitting = true);
+    try {
+      await widget.proofRepository.fileDispute(widget.taskId);
+      if (!mounted) return;
+      setState(() => _watchState = _WatchModeState.disputed);
+    } catch (e) {
+      debugPrint('WatchModeSubView: fileDispute error: $e');
+      if (!mounted) return;
+      setState(() => _isDisputeSubmitting = false);
+      // Show error inline — reuse existing error pattern (timeout or rejection reason text)
+    }
   }
 
   void _onTryAgain() {
@@ -424,7 +439,15 @@ class _WatchModeSubViewState extends ConsumerState<WatchModeSubView>
         return _buildRejectedState(colors);
       case _WatchModeState.timeout:
         return _buildTimeoutState(colors);
+      case _WatchModeState.disputed:
+        return _buildDisputedState(colors);
     }
+  }
+
+  Widget _buildDisputedState(OnTaskColors colors) {
+    return DisputeConfirmationView(
+      onDone: () => Navigator.pop(context, null),
+    );
   }
 
   // ── Idle state ─────────────────────────────────────────────────────────────
@@ -858,7 +881,6 @@ class _WatchModeSubViewState extends ConsumerState<WatchModeSubView>
             onPressed: _onRequestReview,
             child: Text(
               AppStrings.proofDisputeCta,
-              // TODO(7.8): wire dispute flow
               style: TextStyle(
                 color: colors.surfacePrimary,
                 fontWeight: FontWeight.w600,

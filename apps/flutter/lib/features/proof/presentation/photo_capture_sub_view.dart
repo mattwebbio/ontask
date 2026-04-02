@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/l10n/strings.dart';
 import '../../../core/motion/motion_tokens.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../features/disputes/presentation/dispute_confirmation_view.dart';
 import '../data/proof_prefs_provider.dart';
 import '../data/proof_repository.dart';
 import '../domain/proof_path.dart';
@@ -25,6 +26,7 @@ enum _CaptureState {
   approved,
   rejected,
   timeout,
+  disputed,
 }
 
 // ── Widget ────────────────────────────────────────────────────────────────────
@@ -85,6 +87,9 @@ class _PhotoCaptureSubViewState extends ConsumerState<PhotoCaptureSubView>
 
   // ── Submission guard ───────────────────────────────────────────────────────
   bool _isSubmitting = false;
+
+  // ── Dispute submission guard ───────────────────────────────────────────────
+  bool _isDisputeSubmitting = false;
 
   // ── Verification result ────────────────────────────────────────────────────
   String? _rejectionReason;
@@ -269,9 +274,19 @@ class _PhotoCaptureSubViewState extends ConsumerState<PhotoCaptureSubView>
     Navigator.pop(context, null);
   }
 
-  void _onRequestReview() {
-    // TODO(7.8): wire dispute flow — pop with null for now.
-    Navigator.pop(context, null);
+  Future<void> _onRequestReview() async {
+    if (_isDisputeSubmitting) return;
+    setState(() => _isDisputeSubmitting = true);
+    try {
+      await widget.proofRepository.fileDispute(widget.taskId);
+      if (!mounted) return;
+      setState(() => _captureState = _CaptureState.disputed);
+    } catch (e) {
+      debugPrint('PhotoCaptureSubView: fileDispute error: $e');
+      if (!mounted) return;
+      setState(() => _isDisputeSubmitting = false);
+      // Show error inline — reuse existing error pattern (timeout or rejection reason text)
+    }
   }
 
   // ── Build ──────────────────────────────────────────────────────────────────
@@ -332,7 +347,15 @@ class _PhotoCaptureSubViewState extends ConsumerState<PhotoCaptureSubView>
         return _buildRejectedState(colors);
       case _CaptureState.timeout:
         return _buildTimeoutState(colors);
+      case _CaptureState.disputed:
+        return _buildDisputedState(colors);
     }
+  }
+
+  Widget _buildDisputedState(OnTaskColors colors) {
+    return DisputeConfirmationView(
+      onDone: () => Navigator.pop(context, null),
+    );
   }
 
   // ── Camera state ───────────────────────────────────────────────────────────

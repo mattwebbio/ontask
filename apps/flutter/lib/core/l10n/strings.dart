@@ -1138,4 +1138,27 @@ class AppStrings {
   /// Privacy settings: keep proof toggle subtitle.
   static const String privacyKeepProofSubtitle =
       'Proof photos and files are kept as completion records. Turn off to discard after verification.';
+
+  // ── AI Verification Dispute (FR39, FR40, Story 7.8) ─────────────────────────
+
+  /// Heading on the dispute confirmation screen (UX-DR33).
+  static const String disputeConfirmationTitle = 'Review requested';
+
+  /// Trust-critical point 1 on dispute confirmation (UX-DR33).
+  static const String disputeConfirmationPoint1 =
+      'Your dispute was received and is being reviewed';
+
+  /// Trust-critical point 2 on dispute confirmation (UX-DR33).
+  static const String disputeConfirmationPoint2 =
+      'Your stake will not be charged during review';
+
+  /// Trust-critical point 3 on dispute confirmation (UX-DR33).
+  static const String disputeConfirmationPoint3 =
+      'You\u2019ll have a response within 24 hours';
+
+  /// Done CTA on the dispute confirmation screen.
+  static const String disputeConfirmationDoneCta = 'Done';
+
+  /// "Under review" label on the task card when a dispute is pending.
+  static const String taskUnderReview = 'Under review';
 }
