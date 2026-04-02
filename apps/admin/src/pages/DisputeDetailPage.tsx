@@ -50,7 +50,10 @@ export default function DisputeDetailPage() {
   const [resolved, setResolved] = useState(false)
 
   useEffect(() => {
-    if (!id) return
+    if (!id) {
+      setLoading(false)
+      return
+    }
     async function fetchDispute() {
       try {
         const token = getToken()

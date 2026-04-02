@@ -347,23 +347,28 @@ app.openapi(resolveDisputeRoute, async (c) => {
       return c.json(err('DISPUTE_ALREADY_RESOLVED', 'Dispute already resolved'), 409)
     }
 
-    // Resolve the dispute — use operatorEmail from auth middleware as resolvedByUserId placeholder
+    // Resolve the dispute — use optimistic concurrency via WHERE status='pending' + RETURNING
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const operatorEmail = (c as any).get('operatorEmail') as string | undefined
-    await db
+    const _operatorEmail = (c as any).get('operatorEmail') as string | undefined
+    const updated = await db
       .update(verificationDisputesTable)
       .set({
         status: decision,
         operatorNote,
         resolvedAt,
-        // TODO(impl): resolve resolvedByUserId from operatorEmail via users table lookup
-        // For now store operatorEmail string in resolvedByUserId field as placeholder
-        resolvedByUserId: operatorEmail ?? null,
+        // TODO(impl): resolve resolvedByUserId from users table lookup by _operatorEmail
+        // Cannot store email string in UUID column — null until real operator table available
+        resolvedByUserId: null,
       })
       .where(and(
         eq(verificationDisputesTable.id, id),
         eq(verificationDisputesTable.status, 'pending'),
       ))
+      .returning({ id: verificationDisputesTable.id })
+
+    if (updated.length === 0) {
+      return c.json(err('DISPUTE_ALREADY_RESOLVED', 'Dispute already resolved'), 409)
+    }
 
     // Clear dispute pending flag on task
     await db
