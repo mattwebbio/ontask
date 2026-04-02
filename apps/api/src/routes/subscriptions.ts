@@ -246,4 +246,49 @@ app.openapi(restoreSubscriptionRoute, async (_c) => {
   )
 })
 
+// ── POST /v1/subscriptions/cancel ─────────────────────────────────────────────
+
+const cancelSubscriptionRoute = createRoute({
+  method: 'post',
+  path: '/v1/subscriptions/cancel',
+  tags: ['Subscriptions'],
+  summary: 'Cancel subscription at end of current billing period',
+  description:
+    'Cancels the subscription — access continues until currentPeriodEnd (FR49, FR89). ' +
+    'Active commitment contracts are unaffected by cancellation. ' +
+    'Story 9.4 stub — TODO(impl): call Stripe cancel_at_period_end, update DB status to cancelled.',
+  responses: {
+    200: {
+      content: { 'application/json': { schema: ActivateSubscriptionResponseSchema } },
+      description: 'Subscription cancelled (access continues until period end)',
+    },
+    401: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Unauthenticated',
+    },
+    404: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'No active subscription found',
+    },
+  },
+})
+
+app.openapi(cancelSubscriptionRoute, async (_c) => {
+  // TODO(impl): const db = createDb(c.env.DATABASE_URL)
+  // TODO(impl): const jwtUserId = c.get('jwtPayload').sub
+  // TODO(impl): call Stripe API — stripe.subscriptions.update(subId, { cancel_at_period_end: true })
+  // TODO(impl): update subscription record in DB — set status='cancelled', preserve currentPeriodEnd
+  // TODO(impl): emit 'subscription_cancelled' analytics event (NFR-B1)
+  // Stub: return cancelled status with a future access-until date for testing the client flow.
+  const stubCurrentPeriodEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+  return _c.json(
+    ok({
+      status: 'cancelled' as const,
+      stripeSubscriptionId: 'stub_sub_id',
+      currentPeriodEnd: stubCurrentPeriodEnd,
+    }),
+    200,
+  )
+})
+
 export const subscriptionsRouter = app

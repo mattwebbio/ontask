@@ -28,6 +28,16 @@ class SubscriptionsRepository {
     );
   }
 
+  /// Cancels the user's subscription at end of the current billing period.
+  /// Called from Settings → Subscription cancel CTA (Story 9.4, FR49, FR89).
+  /// Access continues until [SubscriptionStatus.currentPeriodEnd].
+  /// Invalidate [subscriptionStatusProvider] after calling this.
+  Future<void> cancelSubscription() async {
+    await apiClient.dio.post<void>(
+      '/v1/subscriptions/cancel',
+    );
+  }
+
   /// Fetches the current user's subscription status.
   /// AC: 2 — feeds SubscriptionSettingsScreen and trial countdown banner.
   Future<SubscriptionStatus> getSubscriptionStatus() async {

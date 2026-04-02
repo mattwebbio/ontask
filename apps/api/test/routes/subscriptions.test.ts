@@ -185,3 +185,48 @@ describe('POST /v1/subscriptions/restore', () => {
     expect(body.data.status).toBe('active')
   })
 })
+
+// Tests for POST /v1/subscriptions/cancel — Story 9.4 (FR49, FR89, AC: 2)
+// Handler is a stub (real Stripe cancellation deferred) — all valid requests return 200.
+
+describe('POST /v1/subscriptions/cancel', () => {
+  it('returns 200', async () => {
+    const res = await app.request('/v1/subscriptions/cancel', {
+      method: 'POST',
+    })
+    expect(res.status).toBe(200)
+  })
+
+  it('response shape has data object', async () => {
+    const res = await app.request('/v1/subscriptions/cancel', {
+      method: 'POST',
+    })
+    const body = await res.json() as { data: { status: string } }
+    expect(body).toHaveProperty('data')
+  })
+
+  it('response data.status is "cancelled"', async () => {
+    const res = await app.request('/v1/subscriptions/cancel', {
+      method: 'POST',
+    })
+    const body = await res.json() as { data: { status: string } }
+    expect(body.data.status).toBe('cancelled')
+  })
+
+  it('response has data.currentPeriodEnd (non-null — access-until date)', async () => {
+    const res = await app.request('/v1/subscriptions/cancel', {
+      method: 'POST',
+    })
+    const body = await res.json() as { data: { currentPeriodEnd: string | null } }
+    expect(body.data).toHaveProperty('currentPeriodEnd')
+    expect(body.data.currentPeriodEnd).not.toBeNull()
+  })
+
+  it('response has data.stripeSubscriptionId', async () => {
+    const res = await app.request('/v1/subscriptions/cancel', {
+      method: 'POST',
+    })
+    const body = await res.json() as { data: { stripeSubscriptionId: string | null } }
+    expect(body.data).toHaveProperty('stripeSubscriptionId')
+  })
+})
