@@ -211,7 +211,7 @@ development_status:
   # ─────────────────────────────────────────────────────────
   epic-13: in-progress
   13-1-aasa-file-payment-setup-page: done
-  13-2-marketing-site-core-pages: review
+  13-2-marketing-site-core-pages: done
   13-3-privacy-policy-page: backlog
   13-4-app-store-connect-provisioning-configuration: backlog
   13-5-testflight-first-build: backlog
