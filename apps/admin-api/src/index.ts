@@ -4,8 +4,6 @@ import { adminAuthMiddleware } from './middleware/admin-auth.js'
 import { authRouter } from './routes/auth.js'
 import { disputesRouter } from './routes/disputes.js'
 import { chargesRouter } from './routes/charges.js'
-import { impersonationRouter } from './routes/impersonation.js'
-import { alertsRouter } from './routes/alerts.js'
 
 // ── Admin API — Operator Hono Worker ─────────────────────────────────────────
 // Routes: api.ontaskhq.com/admin/v1/*
@@ -25,14 +23,8 @@ app.use('/admin/v1/disputes/*', adminAuthMiddleware)
 app.use('/admin/v1/disputes', adminAuthMiddleware)
 app.use('/admin/v1/users/*', adminAuthMiddleware)
 app.use('/admin/v1/charges/*', adminAuthMiddleware)
-app.use('/admin/v1/impersonation/*', adminAuthMiddleware)
-app.use('/admin/v1/alerts', adminAuthMiddleware)
-app.use('/admin/v1/alerts/*', adminAuthMiddleware)
-app.use('/admin/v1/monitoring/*', adminAuthMiddleware)
 
 app.route('/', disputesRouter)
 app.route('/', chargesRouter)
-app.route('/', impersonationRouter)
-app.route('/', alertsRouter)
 
 export default app

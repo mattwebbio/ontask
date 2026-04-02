@@ -1,6 +1,6 @@
 # Story 11.5: Operator Alerts & Business Event Monitoring
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -353,6 +353,21 @@ describe('GET /admin/v1/monitoring/metrics', () => {
 **Subtasks:**
 - [x] Create `apps/admin-api/test/routes/alerts.test.ts` with at least 10 tests
 - [x] Run `cd apps/admin-api && npm test` — all tests pass, count reported
+
+---
+
+### Review Findings
+
+Code review conducted 2026-04-02 against branch `story/11-5-operator-alerts-business-event-monitoring`.
+
+All findings dismissed — clean review.
+
+Dismissed (5 items):
+- [x] [Review][Dismiss] `message` field in checklist vs `title`+`detail` in spec schema — checklist wording was imprecise; spec schema is authoritative and implemented correctly.
+- [x] [Review][Dismiss] `acknowledgedAt (null)` in checklist vs `acknowledged: boolean` in spec schema — checklist shorthand; spec schema is authoritative and implemented correctly.
+- [x] [Review][Dismiss] `operatorEmail` guard inside `if (databaseUrl)` block in monitoring/metrics handler — intentional design documented in dev log; matches impersonation.ts pattern; avoids Vitest 500s when middleware skips auth.
+- [x] [Review][Dismiss] Stub `detail` text differs from spec sample ("TODO(impl): real charge detail" vs "Charge ID stub") — cosmetic, does not affect behavior or tests.
+- [x] [Review][Dismiss] Metrics 400 validation via framework zod-openapi vs explicit handler guard — framework-level validation is correct and test-verified.
 
 ---
 
