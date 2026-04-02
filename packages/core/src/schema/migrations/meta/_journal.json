@@ -134,6 +134,13 @@
       "when": 1743552000000,
       "tag": "0018_proof_submissions",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1743638400002,
+      "tag": "0019_scheduled_notifications",
+      "breakpoints": true
     }
   ]
 }
