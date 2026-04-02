@@ -147,13 +147,13 @@ void main() {
         routes: [
           GoRoute(
             path: '/payment-setup-complete',
-            builder: (_, __) => const PaymentSetupCompleteScreen(
+            builder: (context, _) => const PaymentSetupCompleteScreen(
               sessionToken: 'valid_token',
             ),
           ),
           GoRoute(
             path: '/settings/payments',
-            builder: (_, __) => const Scaffold(
+            builder: (context, _) => const Scaffold(
               body: Center(child: Text('Payments Settings')),
             ),
           ),
