@@ -1,5 +1,11 @@
 # Deferred Work
 
+## Deferred from: code review of 8-4-social-schedule-change-notifications (2026-04-01)
+
+- **`buildSocialCompletionBody` no guard for empty `taskTitle`** — Passing `""` for taskTitle yields a trailing space (e.g., `"Jordan completed "`). Pre-existing pattern across all pure helpers in this file; none guard against empty inputs. Address when input validation is added to helper functions globally. [`apps/api/src/lib/notification-scheduler.ts:126`]
+- **`triggerScheduleChangeNotifications` has no call site wired** — The function is exported but never called from any cron handler or post-schedule hook. Acceptable for a stub story (matches pattern of `triggerStakeWarningNotifications`). Wire in when schedule snapshot storage is implemented (Epic 3). [`apps/api/src/lib/notification-scheduler.ts`]
+- **Manually faked `.g.dart` hash causes `build_runner` regeneration** — Pre-existing from Story 8.2 code review. `notification_handler.g.dart` uses hard-coded fake hash `a1b2c3d4e5f6...`; local `build_runner build` will regenerate with a real hash, producing a dirty working tree. Acceptable for now per project convention (CI doesn't run build_runner). [`apps/flutter/lib/features/notifications/presentation/notification_handler.g.dart:54`]
+
 ## Deferred from: code review of 8-2-task-reminder-deadline-notifications (2026-04-01)
 
 - **`hoursUntil` unit test boundary may flake at exact 2h** — `hoursUntil` test constructs a date exactly 2 hours in the future and asserts `1 ≤ hours ≤ 2`. Execution time may push the result to 1h. The test uses a tolerance range but at exactly the boundary milliseconds could shift the assertion. Low probability; harden by using `3h` future date and `2..3` range, or by injecting a `now` parameter. [`apps/api/test/lib/notification-scheduler.test.ts:234-240`]
