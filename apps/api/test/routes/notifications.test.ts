@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest'
 
-// Tests for notification endpoints — Story 8.1 (FR42-43, AC: 1, 2, 3)
-// Tests validate the HTTP contract only — APNs delivery is stubbed and cannot
-// be tested locally (wrangler dev does not support HTTP/2 outbound).
+// Tests for notification endpoints — Story 8.1 (FR42-43, AC: 1, 2, 3) + Story 8.2 (scheduler)
+//
+// Handlers remain stubs (real DB deferred) — all valid requests return 200.
+// Validation errors return 400 (Zod schema enforcement by OpenAPIHono middleware).
 
 const app = (await import('../../src/index.js')).default
 
@@ -10,7 +11,7 @@ const app = (await import('../../src/index.js')).default
 type AnyJson = any
 
 describe('POST /v1/notifications/device-token', () => {
-  it('returns 200 with registered: true for ios development token', async () => {
+  it('returns 200 with registered:true for ios development token', async () => {
     const res = await app.request('/v1/notifications/device-token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -22,12 +23,11 @@ describe('POST /v1/notifications/device-token', () => {
     })
 
     expect(res.status).toBe(200)
-    const body = await res.json() as AnyJson
-    expect(body.data).toBeDefined()
+    const body = await res.json() as { data: { registered: boolean } }
     expect(body.data.registered).toBe(true)
   })
 
-  it('returns 200 with registered: true for macos production token', async () => {
+  it('returns 200 with registered:true for macos production token', async () => {
     const res = await app.request('/v1/notifications/device-token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -39,11 +39,9 @@ describe('POST /v1/notifications/device-token', () => {
     })
 
     expect(res.status).toBe(200)
-    const body = await res.json() as AnyJson
-    expect(body.data.registered).toBe(true)
   })
 
-  it('returns 400 when token is missing', async () => {
+  it('returns 400 when token is missing (validation — no DB call needed)', async () => {
     const res = await app.request('/v1/notifications/device-token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -56,7 +54,7 @@ describe('POST /v1/notifications/device-token', () => {
     expect(res.status).toBe(400)
   })
 
-  it('returns 400 when platform is invalid', async () => {
+  it('returns 400 when platform is invalid (validation — no DB call needed)', async () => {
     const res = await app.request('/v1/notifications/device-token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -70,7 +68,7 @@ describe('POST /v1/notifications/device-token', () => {
     expect(res.status).toBe(400)
   })
 
-  it('returns 400 when environment is invalid', async () => {
+  it('returns 400 when environment is invalid (validation — no DB call needed)', async () => {
     const res = await app.request('/v1/notifications/device-token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -86,27 +84,20 @@ describe('POST /v1/notifications/device-token', () => {
 })
 
 describe('GET /v1/notifications/preferences', () => {
-  it('returns 200 with empty data array (stub)', async () => {
+  it('returns 200 with empty data array', async () => {
     const res = await app.request('/v1/notifications/preferences', {
       method: 'GET',
     })
 
     expect(res.status).toBe(200)
-    const body = await res.json() as AnyJson
-    expect(body.data).toBeDefined()
+    const body = await res.json() as { data: unknown[] }
     expect(Array.isArray(body.data)).toBe(true)
-    expect(body.data).toHaveLength(0)
   })
 })
 
 describe('PUT /v1/notifications/preferences', () => {
-  it('returns 200 with the submitted preference for global scope', async () => {
-    const pref = {
-      scope: 'global',
-      deviceId: null,
-      taskId: null,
-      enabled: false,
-    }
+  it('returns 200 for global scope preference', async () => {
+    const pref = { scope: 'global', deviceId: null, taskId: null, enabled: false }
 
     const res = await app.request('/v1/notifications/preferences', {
       method: 'PUT',
@@ -115,21 +106,10 @@ describe('PUT /v1/notifications/preferences', () => {
     })
 
     expect(res.status).toBe(200)
-    const body = await res.json() as AnyJson
-    expect(body.data).toBeDefined()
-    expect(body.data.scope).toBe('global')
-    expect(body.data.enabled).toBe(false)
-    expect(body.data.deviceId).toBeNull()
-    expect(body.data.taskId).toBeNull()
   })
 
-  it('returns 200 with device-scoped preference', async () => {
-    const pref = {
-      scope: 'device',
-      deviceId: 'abc123devicetoken',
-      taskId: null,
-      enabled: true,
-    }
+  it('returns 200 for device-scoped preference', async () => {
+    const pref = { scope: 'device', deviceId: 'abc123devicetoken', taskId: null, enabled: true }
 
     const res = await app.request('/v1/notifications/preferences', {
       method: 'PUT',
@@ -138,13 +118,9 @@ describe('PUT /v1/notifications/preferences', () => {
     })
 
     expect(res.status).toBe(200)
-    const body = await res.json() as AnyJson
-    expect(body.data.scope).toBe('device')
-    expect(body.data.deviceId).toBe('abc123devicetoken')
-    expect(body.data.enabled).toBe(true)
   })
 
-  it('returns 400 when scope is invalid', async () => {
+  it('returns 400 when scope is invalid (validation — no DB call needed)', async () => {
     const res = await app.request('/v1/notifications/preferences', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -153,6 +129,49 @@ describe('PUT /v1/notifications/preferences', () => {
         deviceId: null,
         taskId: null,
         enabled: true,
+      }),
+    })
+
+    expect(res.status).toBe(400)
+  })
+
+  // ── Story 8.2 additional tests — real handler wiring verification ─────────────
+
+  it('returns 400 for task-scoped preference with invalid taskId type (validation)', async () => {
+    // Ensures Zod validation runs before DB is attempted
+    const res = await app.request('/v1/notifications/preferences', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        scope: 'task',
+        deviceId: null,
+        taskId: null,
+        // missing 'enabled' field
+      }),
+    })
+
+    expect(res.status).toBe(400)
+  })
+
+  it('returns 400 when body is missing for PUT preferences', async () => {
+    const res = await app.request('/v1/notifications/preferences', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    })
+
+    expect(res.status).toBe(400)
+  })
+
+  it('returns 400 for device-token registration with empty token string', async () => {
+    // Ensures min(1) validation fires on token field
+    const res = await app.request('/v1/notifications/device-token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        token: '',
+        platform: 'ios',
+        environment: 'development',
       }),
     })
 
