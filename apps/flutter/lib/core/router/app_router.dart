@@ -20,7 +20,10 @@ import '../../features/settings/presentation/delete_account_screen.dart';
 import '../../features/settings/presentation/export_data_screen.dart';
 import '../../features/settings/presentation/farewell_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
+import '../../features/subscriptions/domain/subscription_status.dart';
 import '../../features/subscriptions/presentation/paywall_screen.dart';
+import '../../features/subscriptions/presentation/subscribe_success_screen.dart';
+import '../../features/subscriptions/presentation/subscriptions_provider.dart';
 import '../../features/settings/presentation/two_factor_setup_screen.dart';
 import '../../features/shell/presentation/app_shell.dart';
 import '../../features/today/presentation/task_detail_stub_screen.dart';
@@ -44,10 +47,13 @@ GoRouter appRouter(Ref ref) {
   // AuthStateListenable bridges Riverpod auth state changes to GoRouter's
   // refreshListenable so redirects fire automatically on sign-in / sign-out.
   final authListenable = _AuthRefreshListenable(ref);
+  // SubscriptionRefreshListenable bridges subscription state changes to GoRouter
+  // so the paywall redirect fires/clears when subscription status changes (Story 9.3).
+  final subscriptionListenable = _SubscriptionRefreshListenable(ref);
 
   return GoRouter(
     initialLocation: '/now',
-    refreshListenable: authListenable,
+    refreshListenable: Listenable.merge([authListenable, subscriptionListenable]),
     redirect: (context, state) {
       final authState = ref.read(authStateProvider);
       final isAuthenticated = authState is Authenticated;
@@ -93,11 +99,19 @@ GoRouter appRouter(Ref ref) {
       // Paywall gate — expired trial blocks all authenticated routes (FR88).
       // Reads subscription status synchronously if cached; otherwise defers to
       // subscriptionStatusProvider loading state (no redirect until data available).
-      // impl(9.2): Read subscriptionStatusProvider and redirect to /paywall
-      //   when status.isExpired is true and current route is not /paywall.
-      //   Use ref.read(subscriptionStatusProvider) — do NOT use ref.watch inside redirect.
-      //   Guard: only redirect when subscriptionStatusProvider has data (AsyncData).
-      //   Skip redirect for /settings/* so expired users can reach /settings/subscription.
+      final subscriptionAsync = ref.read(subscriptionStatusProvider);
+      if (subscriptionAsync is AsyncData<SubscriptionStatus>) {
+        final subStatus = subscriptionAsync.value;
+        final isOnPaywallRoute = state.matchedLocation == '/paywall';
+        final isOnSettingsRoute = state.matchedLocation.startsWith('/settings');
+        final isOnSubscribeSuccessRoute = state.matchedLocation.startsWith('/subscribe/success');
+        if (subStatus.isExpired && !isOnPaywallRoute && !isOnSettingsRoute && !isOnSubscribeSuccessRoute) {
+          return '/paywall';
+        }
+        if (!subStatus.isExpired && isOnPaywallRoute) {
+          return '/now';
+        }
+      }
 
       return null;
     },
@@ -140,6 +154,16 @@ GoRouter appRouter(Ref ref) {
       GoRoute(
         path: '/paywall',
         builder: (context, state) => const PaywallScreen(),
+      ),
+
+      // Subscription activation callback — handles Universal Link return from Stripe Checkout.
+      // URL: ontaskhq.com/subscribe/success?session_id=xxx
+      // Registered as a top-level route so no shell chrome renders during processing (Story 9.3, FR83).
+      GoRoute(
+        path: '/subscribe/success',
+        builder: (context, state) => SubscribeSuccessScreen(
+          sessionId: state.uri.queryParameters['session_id'] ?? '',
+        ),
       ),
 
       // Invitation accept screen — top-level route (no shell chrome / tab bar).
@@ -299,6 +323,18 @@ GoRouter appRouter(Ref ref) {
 class _AuthRefreshListenable extends ChangeNotifier {
   _AuthRefreshListenable(Ref ref) {
     ref.listen(authStateProvider, (prev, next) {
+      notifyListeners();
+    });
+  }
+}
+
+/// Bridges [subscriptionStatusProvider] changes to [GoRouter.refreshListenable].
+///
+/// Notifies the router when subscription status changes so the paywall redirect
+/// fires or clears without requiring manual navigation (Story 9.3, FR88).
+class _SubscriptionRefreshListenable extends ChangeNotifier {
+  _SubscriptionRefreshListenable(Ref ref) {
+    ref.listen(subscriptionStatusProvider, (prev, next) {
       notifyListeners();
     });
   }

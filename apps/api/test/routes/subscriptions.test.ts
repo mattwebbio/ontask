@@ -100,3 +100,88 @@ describe('GET /v1/subscriptions/paywall-config', () => {
     expect(individual!.stripePriceId).toBeNull()
   })
 })
+
+// Tests for POST /v1/subscriptions/activate — Story 9.3 (FR83, AC: 2, 3)
+// Handler is a stub (real Stripe validation deferred) — all valid requests return 200.
+
+describe('POST /v1/subscriptions/activate', () => {
+  it('returns 200', async () => {
+    const res = await app.request('/v1/subscriptions/activate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId: 'test_session' }),
+    })
+    expect(res.status).toBe(200)
+  })
+
+  it('response shape has data object', async () => {
+    const res = await app.request('/v1/subscriptions/activate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId: 'test_session' }),
+    })
+    const body = await res.json() as { data: { status: string } }
+    expect(body).toHaveProperty('data')
+  })
+
+  it('response data.status field exists', async () => {
+    const res = await app.request('/v1/subscriptions/activate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId: 'test_session' }),
+    })
+    const body = await res.json() as { data: { status: string } }
+    expect(body.data).toHaveProperty('status')
+  })
+
+  it('response data.status is "active"', async () => {
+    const res = await app.request('/v1/subscriptions/activate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId: 'test_session' }),
+    })
+    const body = await res.json() as { data: { status: string } }
+    expect(body.data.status).toBe('active')
+  })
+
+  it('response has data.stripeSubscriptionId', async () => {
+    const res = await app.request('/v1/subscriptions/activate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId: 'test_session' }),
+    })
+    const body = await res.json() as { data: { stripeSubscriptionId: string | null } }
+    expect(body.data).toHaveProperty('stripeSubscriptionId')
+  })
+
+  it('response has data.currentPeriodEnd (non-null)', async () => {
+    const res = await app.request('/v1/subscriptions/activate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId: 'test_session' }),
+    })
+    const body = await res.json() as { data: { currentPeriodEnd: string | null } }
+    expect(body.data).toHaveProperty('currentPeriodEnd')
+    expect(body.data.currentPeriodEnd).not.toBeNull()
+  })
+})
+
+// Tests for POST /v1/subscriptions/restore — Story 9.3 (AC: 2)
+// Handler is a stub — all valid requests return 200.
+
+describe('POST /v1/subscriptions/restore', () => {
+  it('returns 200', async () => {
+    const res = await app.request('/v1/subscriptions/restore', {
+      method: 'POST',
+    })
+    expect(res.status).toBe(200)
+  })
+
+  it('response data.status is "active"', async () => {
+    const res = await app.request('/v1/subscriptions/restore', {
+      method: 'POST',
+    })
+    const body = await res.json() as { data: { status: string } }
+    expect(body.data.status).toBe('active')
+  })
+})

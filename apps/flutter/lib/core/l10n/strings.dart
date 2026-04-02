@@ -1350,4 +1350,30 @@ class AppStrings {
   /// Cancellation terms shown below tier cards — honest and clear.
   static const String paywallCancellationTerms =
       'Cancel any time. Active commitment contracts continue until their individual deadlines regardless of subscription status.';
+
+  // ── Subscriptions — Activation & Settings (FR83, Story 9.3) ─────────────────
+
+  /// Error shown when subscription restore fails.
+  static const String subscriptionRestoreError =
+      'Couldn\u2019t restore your subscription. Please try again.';
+
+  /// Error shown when subscription activation fails after Stripe Checkout.
+  static const String subscriptionActivationError =
+      'Couldn\u2019t activate your subscription. Please contact support if the issue continues.';
+
+  /// Settings → Subscription section title when subscription is active.
+  static const String subscriptionActiveStatusLabel = 'Active Subscription';
+
+  /// Settings → Subscription renewal date label.
+  /// Usage: AppStrings.subscriptionRenewalDate(date)
+  static String subscriptionRenewalDate(String date) =>
+      'Renews on $date';
+
+  /// Settings → Subscription tier label.
+  /// Usage: AppStrings.subscriptionTierLabel(tierName)
+  static String subscriptionTierLabel(String tierName) =>
+      '$tierName plan';
+
+  /// "Manage subscription" CTA in Settings → Subscription (opens ontaskhq.com/account).
+  static const String subscriptionManageCta = 'Manage subscription';
 }

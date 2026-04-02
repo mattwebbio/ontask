@@ -9,6 +9,25 @@ class SubscriptionsRepository {
   SubscriptionsRepository({required this.apiClient});
   final ApiClient apiClient;
 
+  /// Activates a subscription from a Stripe Checkout session.
+  /// Called when the Universal Link callback is received with session_id (Story 9.3, FR83).
+  /// Invalidate [subscriptionStatusProvider] after calling this.
+  Future<void> activateSubscription(String sessionId) async {
+    await apiClient.dio.post<void>(
+      '/v1/subscriptions/activate',
+      data: {'sessionId': sessionId},
+    );
+  }
+
+  /// Restores a previously purchased subscription.
+  /// Called from the paywall "Restore purchase" CTA (Story 9.3).
+  /// Invalidate [subscriptionStatusProvider] after calling this.
+  Future<void> restoreSubscription() async {
+    await apiClient.dio.post<void>(
+      '/v1/subscriptions/restore',
+    );
+  }
+
   /// Fetches the current user's subscription status.
   /// AC: 2 — feeds SubscriptionSettingsScreen and trial countdown banner.
   Future<SubscriptionStatus> getSubscriptionStatus() async {

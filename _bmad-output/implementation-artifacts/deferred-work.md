@@ -1,5 +1,9 @@
 # Deferred Work
 
+## Deferred from: code review of 9-2-paywall-screen (2026-04-01)
+
+- ~~**`ref.watch(subscriptionStatusProvider)` result ignored with `// ignore: unused_local_variable`**~~ — **Resolved in Story 9.3**: `PaywallScreen` converted to `ConsumerStatefulWidget`, `statusAsync.whenData` used to navigate to `/now` on active state, `// ignore:` comment removed.
+
 ## Deferred from: code review of 9-1-free-trial-launch-status-visibility (2026-04-01)
 
 - **Missing error-state widget test for `SubscriptionSettingsScreen`** — The error branch (showing `subscriptionSettingsLoadError`) is not covered by the 4 existing widget tests. Add a test using a `Completer` that `completeError(...)` to cover this path. [`apps/flutter/test/features/subscriptions/subscription_settings_screen_test.dart`]

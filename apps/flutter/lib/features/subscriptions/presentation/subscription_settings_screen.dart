@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/l10n/strings.dart';
 import '../domain/subscription_status.dart';
@@ -28,8 +29,22 @@ class SubscriptionSettingsScreen extends ConsumerWidget {
             children: [
               const SizedBox(height: 16),
               _StatusSection(status: status),
-              // impl(9.2): Add "Subscribe" CTA here (same tiers as PaywallScreen) — wire
-              //   in Story 9.3 when ontaskhq.com/subscribe Universal Link is available.
+              if (status.isExpired) ...[
+                const SizedBox(height: 16),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: CupertinoButton.filled(
+                      onPressed: () async {
+                        final uri = Uri.parse('https://ontaskhq.com/subscribe');
+                        await launchUrl(uri, mode: LaunchMode.externalApplication);
+                      },
+                      child: Text(AppStrings.paywallSubscribeCta),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
@@ -37,6 +52,9 @@ class SubscriptionSettingsScreen extends ConsumerWidget {
     );
   }
 }
+
+String _formatDate(DateTime dt) =>
+    '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
 
 class _StatusSection extends StatelessWidget {
   const _StatusSection({required this.status});
@@ -69,7 +87,39 @@ class _StatusSection extends StatelessWidget {
         child: Text(AppStrings.subscriptionExpiredLabel),
       );
     }
-    // impl(9.1): active / grace_period states handled in Stories 9.3–9.5.
+    if (status.isActive) {
+      final renewalDate = status.currentPeriodEnd != null
+          ? _formatDate(status.currentPeriodEnd!)
+          : '';
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              AppStrings.subscriptionActiveStatusLabel,
+              style: CupertinoTheme.of(context).textTheme.navTitleTextStyle,
+            ),
+            if (renewalDate.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(AppStrings.subscriptionRenewalDate(renewalDate)),
+            ],
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: CupertinoButton.filled(
+                onPressed: () async {
+                  final uri = Uri.parse('https://ontaskhq.com/account');
+                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                },
+                child: Text(AppStrings.subscriptionManageCta),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    // impl(9.5): grace_period state handled in Story 9.5.
     return const SizedBox.shrink();
   }
 }

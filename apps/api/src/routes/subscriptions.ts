@@ -143,4 +143,107 @@ app.openapi(getPaywallConfigRoute, async (_c) => {
   )
 })
 
+// ── POST /v1/subscriptions/activate ──────────────────────────────────────────
+
+const ActivateSubscriptionRequestSchema = z.object({
+  sessionId: z.string(), // Stripe Checkout session_id from Universal Link callback
+})
+
+const ActivateSubscriptionResponseSchema = z.object({
+  data: z.object({
+    status: z.enum(['trialing', 'active', 'cancelled', 'expired', 'grace_period']),
+    stripeSubscriptionId: z.string().nullable(),
+    currentPeriodEnd: z.string().datetime().nullable(),
+  }),
+})
+
+const activateSubscriptionRoute = createRoute({
+  method: 'post',
+  path: '/v1/subscriptions/activate',
+  tags: ['Subscriptions'],
+  summary: 'Activate subscription from Stripe Checkout session',
+  description:
+    'Called when the app receives the Universal Link callback from Stripe Checkout. ' +
+    'Validates the session_id against Stripe and activates the subscription server-side. ' +
+    'FR83: returns updated subscription status so client can update immediately. ' +
+    'Story 9.3 stub — TODO(impl): validate session with Stripe API, update DB.',
+  request: {
+    body: {
+      content: { 'application/json': { schema: ActivateSubscriptionRequestSchema } },
+    },
+  },
+  responses: {
+    200: {
+      content: { 'application/json': { schema: ActivateSubscriptionResponseSchema } },
+      description: 'Subscription activated',
+    },
+    400: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Invalid session_id',
+    },
+    401: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Unauthenticated',
+    },
+  },
+})
+
+app.openapi(activateSubscriptionRoute, async (_c) => {
+  // TODO(impl): const db = createDb(c.env.DATABASE_URL)
+  // TODO(impl): const jwtUserId = c.get('jwtPayload').sub
+  // TODO(impl): validate _c.req.valid('json').sessionId against Stripe
+  // TODO(impl): update subscription record in DB — set status='active', store stripeSubscriptionId, currentPeriodEnd
+  // TODO(impl): emit 'subscription_activated' analytics event (NFR-B1)
+  // Stub: return active status for testing the client flow.
+  const stubCurrentPeriodEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+  return _c.json(
+    ok({
+      status: 'active' as const,
+      stripeSubscriptionId: 'stub_sub_id',
+      currentPeriodEnd: stubCurrentPeriodEnd,
+    }),
+    200,
+  )
+})
+
+// ── POST /v1/subscriptions/restore ───────────────────────────────────────────
+
+const restoreSubscriptionRoute = createRoute({
+  method: 'post',
+  path: '/v1/subscriptions/restore',
+  tags: ['Subscriptions'],
+  summary: 'Restore a previously purchased subscription',
+  description:
+    'Attempts to restore a subscription by looking up existing Stripe subscriptions for the user. ' +
+    'Story 9.3 stub — TODO(impl): query Stripe for existing subscriptions by customer ID.',
+  responses: {
+    200: {
+      content: { 'application/json': { schema: ActivateSubscriptionResponseSchema } },
+      description: 'Subscription restored or already active',
+    },
+    404: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'No subscription found to restore',
+    },
+    401: {
+      content: { 'application/json': { schema: ErrorSchema } },
+      description: 'Unauthenticated',
+    },
+  },
+})
+
+app.openapi(restoreSubscriptionRoute, async (_c) => {
+  // TODO(impl): query Stripe for subscriptions by customer ID
+  // Stub: return active for testing restore flow
+  const stubCurrentPeriodEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+  return _c.json(
+    ok({
+      status: 'active' as const,
+      stripeSubscriptionId: 'stub_sub_id',
+      currentPeriodEnd: stubCurrentPeriodEnd,
+    }),
+    200,
+  )
+})
+
 export const subscriptionsRouter = app

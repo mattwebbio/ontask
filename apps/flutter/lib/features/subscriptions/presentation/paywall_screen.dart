@@ -1,7 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/l10n/strings.dart';
+import '../data/subscriptions_repository.dart';
+import '../domain/subscription_status.dart';
 import 'subscriptions_provider.dart';
 
 /// Paywall Screen — full-screen route shown when a user's trial has expired.
@@ -10,16 +14,28 @@ import 'subscriptions_provider.dart';
 /// so no shell chrome or tab bar renders over it (FR88, Epic 9, Story 9.2).
 ///
 /// Copy is benefit-focused — no countdown timers, no artificial urgency (FR88).
-class PaywallScreen extends ConsumerWidget {
+class PaywallScreen extends ConsumerStatefulWidget {
   const PaywallScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    // Read subscription status to confirm expired state (may be AsyncLoading on
-    // first render — handled gracefully below).
-    // impl(9.2): context.go('/now') after subscription activation — wired in Story 9.3.
-    // ignore: unused_local_variable
-    final statusAsync = ref.watch(subscriptionStatusProvider);
+  ConsumerState<PaywallScreen> createState() => _PaywallScreenState();
+}
+
+class _PaywallScreenState extends ConsumerState<PaywallScreen> {
+  bool _isRestoring = false;
+
+  @override
+  Widget build(BuildContext context) {
+    // Listen to subscription status — when it becomes active post-payment, navigate away.
+    // ref.listen is used (not statusAsync.whenData in build) so navigation fires after
+    // the build phase completes, avoiding GoRouter assertions during build (P2, Story 9.3).
+    ref.listen<AsyncValue<SubscriptionStatus>>(subscriptionStatusProvider, (_, next) {
+      next.whenData((status) {
+        if (status.isActive && mounted) {
+          context.go('/now');
+        }
+      });
+    });
 
     return CupertinoPageScaffold(
       // No CupertinoNavigationBar — full-screen standalone paywall experience.
@@ -58,13 +74,13 @@ class PaywallScreen extends ConsumerWidget {
             // Restore purchase — plain/borderless style.
             CupertinoButton(
               padding: EdgeInsets.zero,
-              onPressed: () {
-                // impl(9.2): Wire restore purchase — deferred to Story 9.3.
-              },
-              child: Text(
-                AppStrings.paywallRestorePurchase,
-                style: const TextStyle(fontSize: 15),
-              ),
+              onPressed: _isRestoring ? null : _onRestorePurchase,
+              child: _isRestoring
+                  ? const CupertinoActivityIndicator()
+                  : Text(
+                      AppStrings.paywallRestorePurchase,
+                      style: const TextStyle(fontSize: 15),
+                    ),
             ),
             const SizedBox(height: 8),
             // Cancellation terms — honest and clearly readable (FR88).
@@ -82,6 +98,35 @@ class PaywallScreen extends ConsumerWidget {
       ),
     );
   }
+
+  Future<void> _onRestorePurchase() async {
+    setState(() => _isRestoring = true);
+    try {
+      final repo = ref.read(subscriptionsRepositoryProvider);
+      await repo.restoreSubscription();
+      ref.invalidate(subscriptionStatusProvider);
+      if (mounted) context.go('/now');
+    } catch (_) {
+      if (mounted) {
+        await showCupertinoDialog<void>(
+          context: context,
+          builder: (_) => CupertinoAlertDialog(
+            title: const Text('Restore Failed'),
+            content: Text(AppStrings.subscriptionRestoreError),
+            actions: [
+              CupertinoDialogAction(
+                isDefaultAction: true,
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isRestoring = false);
+    }
+  }
 }
 
 /// Subscription tier — UI-only enum local to this file.
@@ -92,7 +137,22 @@ enum SubscriptionTier {
   individual,
   couple,
   familyAndFriends;
+
+  /// Whether this tier is currently available for purchase.
+  bool get available => switch (this) {
+    SubscriptionTier.individual => true,
+    SubscriptionTier.couple => false,
+    SubscriptionTier.familyAndFriends => false,
+  };
 }
+
+/// Maps [SubscriptionTier] to the query param value accepted by ontaskhq.com/subscribe.
+/// Values: individual, couple, family (NOT family_and_friends — web uses shortened form).
+String _tierQueryParam(SubscriptionTier tier) => switch (tier) {
+  SubscriptionTier.individual => 'individual',
+  SubscriptionTier.couple => 'couple',
+  SubscriptionTier.familyAndFriends => 'family',
+};
 
 /// Private tier card widget displayed on the paywall screen.
 ///
@@ -181,11 +241,14 @@ class _TierCard extends StatelessWidget {
             width: double.infinity,
             child: CupertinoButton.filled(
               padding: const EdgeInsets.symmetric(vertical: 12),
-              onPressed: () {
-                // impl(9.2): context.push to ontaskhq.com/subscribe?tier=... via
-                //   url_launcher — wired in Story 9.3 when Universal Links are live
-                //   (Epic 13 Story 13.1).
-              },
+              onPressed: tier.available
+                  ? () async {
+                      final uri = Uri.parse(
+                        'https://ontaskhq.com/subscribe?tier=${_tierQueryParam(tier)}',
+                      );
+                      await launchUrl(uri, mode: LaunchMode.externalApplication);
+                    }
+                  : null,
               child: Text(AppStrings.paywallSubscribeCta),
             ),
           ),
