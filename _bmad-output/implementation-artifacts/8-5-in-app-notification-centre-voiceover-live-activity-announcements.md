@@ -692,6 +692,17 @@ Notification centre display strings must not use punitive language. The `Notific
 - `.g.dart` files are committed; manually add new generated blocks
 - Swift VoiceOver placeholder in `apps/flutter/ios/Runner/` — executable implementation deferred to Story 12.1/12.3
 
+### Review Findings
+
+- [ ] [Review][Decision] `.g.dart` class-based pattern vs spec-prescribed `AutoDisposeFutureProvider.internal()` + missing `typedef NotificationHistoryRef` — The spec (Task 4) prescribes `AutoDisposeFutureProvider<NotificationHistoryResult>.internal(...)` with a `typedef NotificationHistoryRef = AutoDisposeFutureProviderRef<NotificationHistoryResult>`. The implementation uses `final class NotificationHistoryProvider extends $FunctionalProvider<...>` matching the existing `RegisterDeviceTokenProvider` (Riverpod 3.x generated style). The typedef is absent. Decision: is the class-based Riverpod 3.x pattern acceptable (consistent with codebase), or should it match the spec literally? [`apps/flutter/lib/features/notifications/presentation/notifications_provider.g.dart`]
+- [ ] [Review][Patch] `import UIKit` in `LiveActivityVoiceOver.swift` is an executable statement, not a comment [`apps/flutter/ios/Runner/LiveActivityVoiceOver.swift:48`]
+- [ ] [Review][Patch] `_formatTimestamp` calls `.hour`/`.minute` on a potentially UTC `DateTime` — missing `.toLocal()` call [`apps/flutter/lib/features/notifications/presentation/notification_centre_screen.dart`]
+- [ ] [Review][Patch] Test 1 (`renders navigation bar title`) uses `await tester.pump()` instead of `await tester.pumpAndSettle()` — may be flaky when async provider resolves [`apps/flutter/test/features/notifications/notification_centre_screen_test.dart:25`]
+- [x] [Review][Defer] Missing blank line before `@riverpod` annotation for `notificationHistory` (cosmetic style inconsistency) [`apps/flutter/lib/features/notifications/presentation/notifications_provider.dart`] — deferred, pre-existing convention
+- [x] [Review][Defer] `response.data!` null-assertion in `getNotificationHistory` gives opaque crash on unexpected server response [`apps/flutter/lib/features/notifications/data/notifications_repository.dart`] — deferred, pre-existing pattern consistent with other repository methods
+- [x] [Review][Defer] `markAllRead()` typed as `<void>` discards server response body — callers cannot read `markedRead` count [`apps/flutter/lib/features/notifications/data/notifications_repository.dart`] — deferred, intentional for stub phase
+- [x] [Review][Defer] `deferred-work.md` has a pre-existing uncommitted modification unrelated to Story 8.5 — deferred, pre-existing
+
 ## Dev Agent Record
 
 ### Agent Model Used
