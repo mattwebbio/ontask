@@ -45,7 +45,7 @@
 //   - Story 12.1: Live Activity Extension Foundation
 //   - Story 12.3: Live Activity — Watch Mode & VoiceOver Announcements (full impl)
 
-import UIKit
+// import UIKit  — impl(8.5): uncomment when wiring in OnTaskLiveActivity extension (Story 12.1)
 
 // impl(8.5): Placeholder — no executable code here. Announcement logic lands
 // in the OnTaskLiveActivity extension in Story 12.1 / Story 12.3.

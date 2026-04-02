@@ -22,7 +22,7 @@ void main() {
           child: const CupertinoApp(home: NotificationCentreScreen()),
         ),
       );
-      await tester.pump();
+      await tester.pumpAndSettle();
       expect(find.text(AppStrings.notificationCentreTitle), findsOneWidget);
     });
 

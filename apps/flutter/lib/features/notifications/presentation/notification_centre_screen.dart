@@ -76,8 +76,9 @@ class _NotificationRow extends StatelessWidget {
     // impl(8.5): Use relative time (e.g. "2h ago", "Yesterday") when
     //            time_format.dart utility is created (deferred from Stories 2.7/2.8).
     //            For now, format as HH:mm.
-    final h = createdAt.hour.toString().padLeft(2, '0');
-    final m = createdAt.minute.toString().padLeft(2, '0');
+    final local = createdAt.toLocal();
+    final h = local.hour.toString().padLeft(2, '0');
+    final m = local.minute.toString().padLeft(2, '0');
     return '$h:$m';
   }
 }
