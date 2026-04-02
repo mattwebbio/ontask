@@ -1,5 +1,12 @@
 # Deferred Work
 
+## Deferred from: code review of 11-2-dispute-review-resolution (2026-04-02)
+
+- **AC1 queue shows userId not userEmail** — GET /admin/v1/disputes returns userId (UUID) where AC1 asks for user email. Spec explicitly accepts userId as a placeholder; patch when users table is queryable in admin-api context. [`apps/admin-api/src/routes/disputes.ts`, `apps/admin/src/pages/DisputesPage.tsx`]
+- **AC3 Stripe charge cancellation/confirmation not implemented** — resolve handler has TODO(impl) stubs for Stripe PaymentIntent cancel (approved) and confirm (rejected). Explicitly deferred by story spec; implement when Stripe integration is wired into admin-api. [`apps/admin-api/src/routes/disputes.ts`]
+- **SLA threshold: AC says 24h trigger, code uses 18h/22h** — Intentional early-warning design decision documented in Dev Notes. Revisit AC wording vs implementation if the product intent changes. [`apps/admin-api/src/routes/disputes.ts`]
+- **`(c as any).get('operatorEmail')` type cast** — Pre-existing OpenAPIHono Variables typing limitation. Resolve when admin-api adds typed Hono context variables. [`apps/admin-api/src/routes/disputes.ts`]
+
 ## Deferred from: code review of 10-4-mcp-server-oauth-authentication-token-scoping (2026-04-02)
 
 - **`sha256Hex` function duplicated across `internal.ts` and `mcp-tokens.ts`** — identical implementation copied into both API route files. Extract to `apps/api/src/lib/crypto.ts` when the opportunity arises; no correctness impact now. [`apps/api/src/routes/internal.ts:17-24`, `apps/api/src/routes/mcp-tokens.ts:28-35`]
