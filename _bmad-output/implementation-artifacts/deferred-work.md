@@ -1,5 +1,21 @@
 # Deferred Work
 
+## Deferred from: code review of 12-2-live-activity-task-timer-commitment-countdown (2026-04-02)
+
+- **`endActivity` ignores `finalStatus` parameter** — `live_activities` plugin v1.8.4 `endActivity(activityId:)` has no status parameter; the `finalStatus` argument in `LiveActivitiesRepository.endActivity` is dead code. Doc comment is misleading. Resolve when the plugin exposes a status-aware end method or when a custom platform channel call replaces it. [`apps/flutter/lib/features/live_activities/data/live_activities_repository.dart`]
+- **`registerToken` called with activityId instead of ActivityKit push token** — `startTaskTimerActivity` and `startCommitmentCountdownActivity` pass the `activityId` returned by `createActivity` as the `pushToken` to `registerToken`. The real push token arrives asynchronously via `activityUpdateStream`. This stores the wrong value in `live_activity_tokens`. Pre-existing from Story 12.1 pattern; resolve when the `activityUpdateStream` listener is wired in `init()`. [`apps/flutter/lib/features/live_activities/data/live_activities_repository.dart`]
+- **`updateElapsedSeconds` has no call site stub in NowScreen** — The method is implemented and tested but no periodic call site is stubbed in `now_screen.dart` or `timer_provider.dart`. Add a call site TODO stub alongside the other Live Activity stubs when activating in Story 12.4. [`apps/flutter/lib/features/now/presentation/now_screen.dart`]
+
+## Story 12.2: iOS 16.x Dynamic Island button fallback
+The Done/Pause/Watch Mode Link buttons in the Dynamic Island expanded view require iOS 17.0+.
+Users on iOS 16.1-16.9 see no interactive buttons in the expanded Dynamic Island.
+To fix: add an #else clause using UIApplication.shared.open(url) via Button for iOS 16.x compatibility.
+
+## Deferred from: code review of 12-1-live-activity-extension-foundation-push-token-storage (2026-04-02)
+
+- **`expiresAt` accepted from client without server-side cap** — the `POST /v1/live-activities/token` route accepts any ISO datetime for `expiresAt` from the client; a malicious caller could supply an arbitrarily far-future expiry keeping a stale token alive. Low risk at stub stage. Resolve when real DB upsert is implemented by computing `NOW() + INTERVAL '8 hours'` server-side. [`apps/api/src/routes/live-activities.ts`]
+- **No FK constraints on `userId → users` or `taskId → tasks` in `live_activity_tokens` migration** — `0020_live_activity_tokens.sql` omits `REFERENCES` clauses on both FK columns. Consistent with existing codebase pattern but leaves referential integrity unenforced at the DB level. Add when FK enforcement is standardised across the schema. [`packages/core/src/schema/migrations/0020_live_activity_tokens.sql`]
+
 ## Deferred from: code review of 11-2-dispute-review-resolution (2026-04-02)
 
 - **AC1 queue shows userId not userEmail** — GET /admin/v1/disputes returns userId (UUID) where AC1 asks for user email. Spec explicitly accepts userId as a placeholder; patch when users table is queryable in admin-api context. [`apps/admin-api/src/routes/disputes.ts`, `apps/admin/src/pages/DisputesPage.tsx`]

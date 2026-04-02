@@ -63,6 +63,8 @@ class TaskTimer extends _$TaskTimer {
     _startDisplayTimer();
 
     // TODO(impl): emit 'task_started' event for notification system (Epic 8)
+    // TODO(12.2): Live Activity start is triggered from NowScreen.onStart callback
+    //   (not here) to keep this notifier free of UI/platform dependencies.
   }
 
   /// Pauses the timer for a task. Calls the pause API endpoint.
