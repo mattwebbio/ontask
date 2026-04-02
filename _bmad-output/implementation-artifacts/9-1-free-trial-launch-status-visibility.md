@@ -1,6 +1,6 @@
 # Story 9.1: Free Trial — Launch Status & Visibility
 
-Status: review
+Status: in-progress
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -840,6 +840,14 @@ claude-sonnet-4-6
 - `apps/flutter/lib/core/router/app_router.dart`
 - `apps/flutter/lib/features/shell/presentation/app_shell.dart`
 - `_bmad-output/implementation-artifacts/sprint-status.yaml`
+
+### Review Findings
+
+- [ ] [Review][Patch] `trialCountdownBannerText(1)` shows "Your free trial ends today" but trialDaysRemaining=1 means one full day remains (expires tomorrow, not today) — semantically incorrect per spec: "trialDaysRemaining=0 means the trial expires today" [`apps/flutter/lib/core/l10n/strings.dart:1297`]
+- [ ] [Review][Patch] `trialCountdownBannerText(0)` returns "0 days left in your free trial — subscribe to keep access" — banner is shown when daysRemaining <= 3 which includes 0; "0 days left" is poor UX copy and should use the "ends today" message instead [`apps/flutter/lib/core/l10n/strings.dart:1296-1299`]
+- [ ] [Review][Patch] `subscriptionTrialDaysRemaining(0)` returns "0 days remaining in your free trial" — grammatically/semantically odd for the day-of-expiry case; should handle days==0 separately [`apps/flutter/lib/core/l10n/strings.dart:1286-1289`]
+- [ ] [Review][Patch] `TrialCountdownBanner` tap handler is a no-op stub comment `// impl(9.1): context.push(...)` but `/settings/subscription` GoRoute is now registered in this story — the push should be wired up [`apps/flutter/lib/features/subscriptions/presentation/trial_countdown_banner.dart:27-29`]
+- [x] [Review][Defer] Missing error-state widget test for `SubscriptionSettingsScreen` — the error branch (showing `subscriptionSettingsLoadError`) is not covered by the 4 existing widget tests [`apps/flutter/test/features/subscriptions/subscription_settings_screen_test.dart`] — deferred, pre-existing gap in test pattern
 
 ## Change Log
 
