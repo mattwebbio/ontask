@@ -306,6 +306,54 @@ export async function triggerStakeWarningNotifications(env: CloudflareBindings):
 }
 
 /**
+ * Send Live Activity push updates for tasks nearing their commitment deadline (within 30 min).
+ * Runs on every cron tick (every 5 minutes) with a 25–35 minute look-ahead window.
+ * (AC: 2, Story 12.4, ARCH-28)
+ */
+export async function triggerDeadlineLiveActivityUpdates(env: CloudflareBindings): Promise<void> {
+  // TODO(impl): const db = createDb(env.DATABASE_URL)
+  // TODO(impl): Query tasks WHERE:
+  //   dueDate BETWEEN NOW() + INTERVAL '25 minutes' AND NOW() + INTERVAL '35 minutes'
+  //   AND completedAt IS NULL
+  //   JOIN live_activity_tokens lat ON lat.taskId = tasks.id
+  //     AND lat.activityType IN ('task_timer', 'commitment_countdown')
+  //     AND lat.expiresAt > NOW()
+  //
+  // TODO(impl): For each matching task + token:
+  //   const { sendLiveActivityUpdate } = await import('../services/live-activity.js')
+  //   const result = await sendLiveActivityUpdate({
+  //     pushToken: lat.pushToken,
+  //     expiresAt: lat.expiresAt,
+  //     event: 'update',
+  //     contentState: {
+  //       taskTitle: task.title,
+  //       deadlineTimestamp: Math.floor(task.dueDate.getTime() / 1000),
+  //       stakeAmount: task.stakeAmountCents ? task.stakeAmountCents / 100 : undefined,
+  //       activityStatus: 'active',
+  //     },
+  //     dismissalDate: Math.floor(task.dueDate.getTime() / 1000),
+  //   }, env)
+  //   If result.tokenExpired → DELETE FROM live_activity_tokens WHERE id = lat.id
+  void env
+}
+
+/**
+ * Delete Live Activity tokens past their expiresAt timestamp.
+ * Belt-and-suspenders cleanup — client-side activity end handles most cases,
+ * but this catches any tokens left behind when the activity ends unexpectedly.
+ * ActivityKit tokens expire with the activity (iOS max 8 hours).
+ * Runs on every cron tick (every 5 minutes).
+ * (AC: 3, Story 12.4)
+ */
+export async function cleanupExpiredLiveActivityTokens(env: CloudflareBindings): Promise<void> {
+  // TODO(impl): const db = createDb(env.DATABASE_URL)
+  // TODO(impl): DELETE FROM live_activity_tokens WHERE expiresAt < NOW()
+  // ActivityKit tokens expire with the activity (max 8h iOS limit).
+  // This cleanup runs on every cron tick to prune stale rows.
+  void env
+}
+
+/**
  * Trigger schedule change notifications when scheduling engine detects ≥ 2 task moves.
  * Called from the scheduling cron / runScheduleForUser post-run hook.
  * (AC: 2, FR42, Story 8.4)

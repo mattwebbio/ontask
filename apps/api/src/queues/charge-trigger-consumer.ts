@@ -14,6 +14,7 @@ import { trackBusinessEvent } from '../services/analytics.js'
 type ChargeTriggerPayload = {
   taskId: string
   userId: string
+  taskTitle: string           // Used for Live Activity push on charge (Story 12.4)
   stakeAmountCents: number
   stripeCustomerId: string
   stripePaymentMethodId: string
@@ -167,6 +168,29 @@ export async function chargeTriggerConsumer(
           updatedAt: new Date(),
         })
         .where(eq(chargeEventsTable.idempotencyKey, idempotencyKey))
+
+      // ── Step 6b: Live Activity 'end' push — stake charged (Story 12.4) ─
+      // TODO(impl): Look up live_activity_tokens WHERE userId = payload.userId AND taskId = payload.taskId
+      // TODO(impl): const { sendLiveActivityUpdate } = await import('../services/live-activity.js')
+      // TODO(impl): const latRows = await db.select().from(liveActivityTokensTable)
+      //   .where(and(
+      //     eq(liveActivityTokensTable.userId, payload.userId),
+      //     eq(liveActivityTokensTable.taskId, payload.taskId),
+      //   ))
+      //   .limit(1)
+      // TODO(impl): if (latRows.length > 0) {
+      //   const result = await sendLiveActivityUpdate({
+      //     pushToken: latRows[0].pushToken,
+      //     expiresAt: latRows[0].expiresAt,
+      //     event: 'end',
+      //     contentState: {
+      //       taskTitle: payload.taskTitle,
+      //       stakeAmount: payload.stakeAmountCents / 100,
+      //       activityStatus: 'failed',
+      //     },
+      //   }, env)
+      //   if (result.tokenExpired) { DELETE FROM live_activity_tokens WHERE id = latRows[0].id }
+      // }
 
       // ── Step 7: Enqueue Every.org disbursement (AC: 2) ──────────────────
       // Look up the charge_events row id for the disbursement idempotency key
