@@ -157,10 +157,22 @@ String _tierQueryParam(SubscriptionTier tier) => switch (tier) {
 /// Private tier card widget displayed on the paywall screen.
 ///
 /// Shows tier name, price, a one-line feature description, and a Subscribe CTA.
-class _TierCard extends StatelessWidget {
+/// On press: calls POST /v1/subscriptions/checkout-session via [SubscriptionsRepository]
+/// to get the Stripe Checkout URL, then opens it via [launchUrl].
+/// Story 13.1 — replaces the direct URL launch from Story 9.3.
+class _TierCard extends ConsumerStatefulWidget {
   const _TierCard({required this.tier});
 
   final SubscriptionTier tier;
+
+  @override
+  ConsumerState<_TierCard> createState() => _TierCardState();
+}
+
+class _TierCardState extends ConsumerState<_TierCard> {
+  bool _isLoading = false;
+
+  SubscriptionTier get tier => widget.tier;
 
   String get _name {
     switch (tier) {
@@ -192,6 +204,39 @@ class _TierCard extends StatelessWidget {
         return AppStrings.paywallTierCoupleFeature;
       case SubscriptionTier.familyAndFriends:
         return AppStrings.paywallTierFamilyFeature;
+    }
+  }
+
+  Future<void> _onSubscribeTapped() async {
+    if (_isLoading) return;
+    setState(() => _isLoading = true);
+    try {
+      // 1. Call API to create Stripe Checkout session.
+      final checkoutUrl = await ref
+          .read(subscriptionsRepositoryProvider)
+          .createCheckoutSession(tier: _tierQueryParam(tier));
+      // 2. Open Stripe Checkout hosted page.
+      final uri = Uri.parse(checkoutUrl);
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      if (mounted) {
+        await showCupertinoDialog<void>(
+          context: context,
+          builder: (_) => CupertinoAlertDialog(
+            title: const Text('Checkout Failed'),
+            content: Text(AppStrings.subscriptionCheckoutError),
+            actions: [
+              CupertinoDialogAction(
+                isDefaultAction: true,
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -241,15 +286,10 @@ class _TierCard extends StatelessWidget {
             width: double.infinity,
             child: CupertinoButton.filled(
               padding: const EdgeInsets.symmetric(vertical: 12),
-              onPressed: tier.available
-                  ? () async {
-                      final uri = Uri.parse(
-                        'https://ontaskhq.com/subscribe?tier=${_tierQueryParam(tier)}',
-                      );
-                      await launchUrl(uri, mode: LaunchMode.externalApplication);
-                    }
-                  : null,
-              child: Text(AppStrings.paywallSubscribeCta),
+              onPressed: tier.available ? _onSubscribeTapped : null,
+              child: _isLoading
+                  ? const CupertinoActivityIndicator()
+                  : Text(AppStrings.paywallSubscribeCta),
             ),
           ),
         ],

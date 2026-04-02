@@ -56,7 +56,14 @@
     // Set via `wrangler secret put APNS_KEY_ID` — 10-char Key ID from Apple Developer portal.
     "APNS_KEY_ID": "",
     // Set via `wrangler secret put APNS_TEAM_ID` — 10-char Team ID from Apple Developer portal.
-    "APNS_TEAM_ID": ""
+    "APNS_TEAM_ID": "",
+    // Stripe Price IDs for subscription tiers (Story 13.1).
+    // Set via `wrangler secret put STRIPE_PRICE_ID_INDIVIDUAL` — never committed.
+    "STRIPE_PRICE_ID_INDIVIDUAL": "",
+    // Set via `wrangler secret put STRIPE_PRICE_ID_COUPLE` — never committed.
+    "STRIPE_PRICE_ID_COUPLE": "",
+    // Set via `wrangler secret put STRIPE_PRICE_ID_FAMILY` — never committed.
+    "STRIPE_PRICE_ID_FAMILY": ""
   },
 
   // ── Queues ─────────────────────────────────────────────────────────────────

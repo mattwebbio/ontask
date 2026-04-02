@@ -36,6 +36,12 @@ declare namespace Cloudflare {
 		APNS_KEY_ID?: string;
 		/** APNs 10-character Team ID from Apple Developer portal (Story 8.1). Set via `wrangler secret put APNS_TEAM_ID`. */
 		APNS_TEAM_ID?: string;
+		/** Stripe Price ID for Individual subscription tier (Story 13.1). Set via `wrangler secret put STRIPE_PRICE_ID_INDIVIDUAL`. */
+		STRIPE_PRICE_ID_INDIVIDUAL?: string;
+		/** Stripe Price ID for Couple subscription tier (Story 13.1). Set via `wrangler secret put STRIPE_PRICE_ID_COUPLE`. */
+		STRIPE_PRICE_ID_COUPLE?: string;
+		/** Stripe Price ID for Family subscription tier (Story 13.1). Set via `wrangler secret put STRIPE_PRICE_ID_FAMILY`. */
+		STRIPE_PRICE_ID_FAMILY?: string;
 		/** Cloudflare Queue binding for charge trigger messages (Story 6.5). */
 		CHARGE_TRIGGER_QUEUE: Queue;
 		/** Cloudflare Queue binding for Every.org disbursement messages (Story 6.5). */

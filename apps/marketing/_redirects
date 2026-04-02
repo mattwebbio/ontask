@@ -1,0 +1,2 @@
+# Explicit passthrough — no redirect for AASA file
+/.well-known/apple-app-site-association /.well-known/apple-app-site-association 200

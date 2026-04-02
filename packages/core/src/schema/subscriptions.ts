@@ -8,9 +8,11 @@ export const subscriptionsTable = pgTable('subscriptions', {
   status: text('status').notNull(),                               // 'trialing' | 'active' | 'cancelled' | 'expired' | 'grace_period'
   trialStartedAt: timestamp('trial_started_at', { withTimezone: true }).notNull(),
   trialEndsAt: timestamp('trial_ends_at', { withTimezone: true }).notNull(),
-  // Populated on subscription activation (Story 9.3):
+  // Populated on subscription activation (Story 9.3 / 13.1):
+  stripeCustomerId: text('stripe_customer_id'),              // Stripe customer ID (may mirror commitment_contracts)
   stripeSubscriptionId: text('stripe_subscription_id'),
   stripePriceId: text('stripe_price_id'),
+  tier: text('tier'),                                        // 'individual' | 'couple' | 'family'
   currentPeriodStart: timestamp('current_period_start', { withTimezone: true }),
   currentPeriodEnd: timestamp('current_period_end', { withTimezone: true }),
   cancelledAt: timestamp('cancelled_at', { withTimezone: true }),

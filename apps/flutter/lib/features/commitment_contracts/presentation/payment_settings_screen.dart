@@ -9,14 +9,12 @@ import '../data/commitment_contracts_repository.dart';
 import '../domain/commitment_payment_status.dart';
 import 'billing_history_screen.dart';
 
-// TODO(impl): register ontaskhq.com/payment-setup-complete deep link handler in AppRouter.
-// Architecture note: Universal Link https://ontaskhq.com/payment-setup-complete?sessionToken=xxx
-// and fallback URL scheme ontaskhq://payment-setup-complete?sessionToken=xxx are already
-// registered in Info.plist and Runner.entitlements (architecture.md Gap 1 resolved).
-// The AppRouter deep link handler that intercepts this URL and calls confirmSetup(sessionToken)
-// is deferred to when AASA is deployed (Story 13.1).
-// TODO(impl): when deep link received, extract sessionToken from URI query params,
-// call commitmentContractsRepository.confirmSetup(sessionToken), navigate to PaymentSettingsScreen.
+// Deep link handler note (Story 13.1):
+// The Universal Link https://ontaskhq.com/payment-setup-complete?sessionToken=xxx is
+// registered in AppRouter (/payment-setup-complete route → PaymentSetupCompleteScreen).
+// When Stripe SetupIntent completes on web, iOS intercepts the Universal Link and
+// the app navigates to PaymentSetupCompleteScreen, which calls confirmSetup(sessionToken)
+// and then navigates back to /settings/payments.
 
 /// Settings screen for managing the stored payment method.
 ///
@@ -73,10 +71,9 @@ class _PaymentSettingsScreenState extends ConsumerState<PaymentSettingsScreen> {
       final repository = ref.read(commitmentContractsRepositoryProvider);
       final session = await repository.createSetupSession();
       final setupUrl = session['setupUrl'] as String;
-      // TODO(impl): replace with automatic deep link handler (Story 13.1).
       // After Stripe SetupIntent completes on web, the AASA-registered Universal Link
-      // https://ontaskhq.com/payment-setup-complete?sessionToken=xxx will return to the app.
-      // AppRouter will intercept it and call confirmSetup(sessionToken) automatically.
+      // https://ontaskhq.com/payment-setup-complete?sessionToken=xxx returns to the app.
+      // AppRouter intercepts it → PaymentSetupCompleteScreen calls confirmSetup(sessionToken).
       await launchUrl(
         Uri.parse(setupUrl),
         mode: LaunchMode.externalApplication,

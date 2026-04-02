@@ -10,3 +10,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: echo "Staging deploy implemented in Story 1.2"
+
+  deploy-marketing-staging:
+    runs-on: ubuntu-latest
+    needs: []
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy marketing site to Cloudflare Pages (staging)
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy apps/marketing --project-name ontask-marketing-staging

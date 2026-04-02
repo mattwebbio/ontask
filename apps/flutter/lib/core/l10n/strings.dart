@@ -820,6 +820,18 @@ class AppStrings {
   /// Section label above the stored payment method display row.
   static const String paymentMethodDisplay = 'Payment method';
 
+  // ── Payment setup deep link callback (Story 13.1) ─────────────────────────
+
+  /// Error shown when confirming a payment method setup via Universal Link fails.
+  static const String paymentSetupConfirmError =
+      'Could not confirm your payment method. Please try again or contact support.';
+
+  /// Loading message shown on the payment setup complete transitional screen.
+  static const String paymentSetupConfirming = 'Confirming payment method\u2026';
+
+  /// Success message after payment method is saved (for accessibility/snackbar use).
+  static const String paymentSetupConfirmed = 'Payment method saved successfully.';
+
   // ── Stake setting UI (FR22, FR28, UX-DR7) ─────────────────────────────────
   static const String stakeAddButton = 'Add stake';
   static const String stakeSliderTitle = 'Set your stake';
@@ -1360,6 +1372,10 @@ class AppStrings {
   /// Error shown when subscription activation fails after Stripe Checkout.
   static const String subscriptionActivationError =
       'Couldn\u2019t activate your subscription. Please contact support if the issue continues.';
+
+  /// Error shown when creating a Stripe Checkout session fails (Story 13.1).
+  static const String subscriptionCheckoutError =
+      'Couldn\u2019t start checkout. Please try again.';
 
   /// Settings → Subscription section title when subscription is active.
   static const String subscriptionActiveStatusLabel = 'Active Subscription';

@@ -11,6 +11,7 @@ export const commitmentContractsTable = pgTable('commitment_contracts', {
   userId: uuid().notNull(),
   stripeCustomerId: text(),
   stripePaymentMethodId: text(),
+  stripeSetupIntentId: text(), // Stored during setup session so confirm step can retrieve it
   paymentMethodLast4: text(),
   paymentMethodBrand: text(),
   hasActiveStakes: boolean().default(false).notNull(),
