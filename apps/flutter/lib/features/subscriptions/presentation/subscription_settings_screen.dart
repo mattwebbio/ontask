@@ -228,7 +228,40 @@ class _StatusSection extends StatelessWidget {
         ),
       );
     }
-    // impl(9.5): grace_period state handled in Story 9.5.
+    if (status.isGracePeriod) {
+      final accessUntilDate = status.currentPeriodEnd != null
+          ? _formatDate(status.currentPeriodEnd!)
+          : '';
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              AppStrings.subscriptionGracePeriodStatusLabel,
+              style: CupertinoTheme.of(context).textTheme.navTitleTextStyle,
+            ),
+            const SizedBox(height: 8),
+            Text(AppStrings.subscriptionGracePeriodBody),
+            if (accessUntilDate.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(AppStrings.subscriptionGracePeriodAccessUntil(accessUntilDate)),
+            ],
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: CupertinoButton.filled(
+                onPressed: () async {
+                  final uri = Uri.parse('https://ontaskhq.com/account');
+                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                },
+                child: Text(AppStrings.subscriptionGracePeriodUpdateCta),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
     return const SizedBox.shrink();
   }
 }

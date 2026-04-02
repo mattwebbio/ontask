@@ -1407,4 +1407,25 @@ class AppStrings {
   /// Error shown when cancellation fails.
   static const String subscriptionCancelError =
       'Couldn\u2019t cancel your subscription. Please try again or visit ontaskhq.com/account.';
+
+  // ── Subscriptions — Grace Period (FR90, Story 9.5) ────────────────────────
+
+  /// Settings → Subscription section title when subscription is in grace period.
+  static const String subscriptionGracePeriodStatusLabel = 'Payment Failed';
+
+  /// Body text shown in Settings → Subscription during grace period.
+  static const String subscriptionGracePeriodBody =
+      'Your payment didn\'t go through. Update your payment method to keep access.';
+
+  /// Access-until date shown in Settings → Subscription during grace period.
+  /// Usage: AppStrings.subscriptionGracePeriodAccessUntil(date)
+  static String subscriptionGracePeriodAccessUntil(String date) =>
+      'Access continues until $date';
+
+  /// CTA in Settings → Subscription during grace period (opens ontaskhq.com/account).
+  static const String subscriptionGracePeriodUpdateCta = 'Update payment method';
+
+  /// Persistent in-app banner shown during grace period (AC: 1, FR90).
+  static const String gracePeriodBannerText =
+      'Your payment didn\'t go through — update your payment method to keep access';
 }

@@ -230,3 +230,61 @@ describe('POST /v1/subscriptions/cancel', () => {
     expect(body.data).toHaveProperty('stripeSubscriptionId')
   })
 })
+
+// Tests for POST /v1/subscriptions/webhook/stripe — Story 9.5 (FR90, AC: 1–3)
+// Handler is a stub — all valid requests return 200 with { data: { received: true } }.
+
+describe('POST /v1/subscriptions/webhook/stripe', () => {
+  const webhookPayload = {
+    type: 'invoice.payment_failed',
+    data: { object: { id: 'in_stub_123' } },
+  }
+
+  it('returns 200 for invoice.payment_failed event', async () => {
+    const res = await app.request('/v1/subscriptions/webhook/stripe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(webhookPayload),
+    })
+    expect(res.status).toBe(200)
+  })
+
+  it('returns 200 for invoice.payment_succeeded event', async () => {
+    const res = await app.request('/v1/subscriptions/webhook/stripe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'invoice.payment_succeeded', data: { object: {} } }),
+    })
+    expect(res.status).toBe(200)
+  })
+
+  it('response shape has data.received boolean', async () => {
+    const res = await app.request('/v1/subscriptions/webhook/stripe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(webhookPayload),
+    })
+    const body = await res.json() as { data: { received: boolean } }
+    expect(body).toHaveProperty('data')
+    expect(body.data).toHaveProperty('received')
+  })
+
+  it('response data.received is true', async () => {
+    const res = await app.request('/v1/subscriptions/webhook/stripe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(webhookPayload),
+    })
+    const body = await res.json() as { data: { received: boolean } }
+    expect(body.data.received).toBe(true)
+  })
+
+  it('returns 200 for unknown event type (stub accepts all)', async () => {
+    const res = await app.request('/v1/subscriptions/webhook/stripe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'customer.subscription.updated', data: { object: {} } }),
+    })
+    expect(res.status).toBe(200)
+  })
+})
