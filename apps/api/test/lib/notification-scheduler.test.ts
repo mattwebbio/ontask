@@ -263,6 +263,7 @@ describe('buildChargeNotificationBody — affirming tone, UX-DR36 (AC: 1)', () =
     expect(body).not.toContain('failed')
     expect(body).not.toContain('owe')
     expect(body).not.toContain('penalty')
+    expect(body).not.toContain('violation')
   })
 })
 
@@ -280,6 +281,7 @@ describe('buildVerificationApprovedBody — stake safe (AC: 2)', () => {
     expect(body).not.toContain('failed')
     expect(body).not.toContain('owe')
     expect(body).not.toContain('penalty')
+    expect(body).not.toContain('violation')
     expect(body).not.toContain('charged')
   })
 })
@@ -290,6 +292,14 @@ describe('buildDisputeFiledBody — stake on hold (AC: 3)', () => {
     expect(body).toContain('Write chapter 3')
     expect(body).toContain('dispute filed')
     expect(body).toContain('on hold')
+  })
+
+  it('does NOT contain punitive language (UX-DR36)', () => {
+    const body = buildDisputeFiledBody('Write chapter 3')
+    expect(body).not.toContain('failed')
+    expect(body).not.toContain('owe')
+    expect(body).not.toContain('penalty')
+    expect(body).not.toContain('violation')
   })
 })
 
@@ -315,5 +325,14 @@ describe('buildDisputeResolvedBody — both outcomes, affirming tone, UX-DR36 (A
     expect(body).not.toContain('owe')
     expect(body).not.toContain('penalty')
     expect(body).not.toContain('rejected')
+    expect(body).not.toContain('violation')
+  })
+
+  it('approved=true — does NOT contain punitive language (UX-DR36)', () => {
+    const body = buildDisputeResolvedBody('Submit report', true, 3000, 'Doctors Without Borders', 1500)
+    expect(body).not.toContain('failed')
+    expect(body).not.toContain('owe')
+    expect(body).not.toContain('penalty')
+    expect(body).not.toContain('violation')
   })
 })

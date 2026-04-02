@@ -1212,7 +1212,7 @@ class AppStrings {
   /// Stake warning notification body template.
   /// Usage: '$stakeAmount staked, deadline in ${hours}h. $charityName gets half if it\'s not done.'
   static String notificationStakeWarningBody(String stakeAmount, int hours, String charityName) =>
-      '\$stakeAmount staked, deadline in ${hours}h. $charityName gets half if it\'s not done.';
+      '$stakeAmount staked, deadline in ${hours}h. $charityName gets half if it\'s not done.';
 
   // ── Commitment, Charge & Verification Notifications (FR42, Story 8.3) ────────
 
