@@ -101,7 +101,6 @@ void main() {
           .captured
           .first as Map<String, dynamic>;
 
-      expect(captured['taskId'], equals('task-1'));
       expect(captured['taskTitle'], equals('Write tests'));
       expect(captured['elapsedSeconds'], equals(30));
       expect(captured['deadlineTimestamp'], isNull);

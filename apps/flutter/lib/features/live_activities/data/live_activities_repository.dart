@@ -83,7 +83,6 @@ class LiveActivitiesRepository {
     // ContentState fields mirror OnTaskActivityAttributes.ContentState in Swift.
     // Field names are camelCase to match Swift CodingKeys exactly.
     final activityId = await _plugin.createActivity({
-      'taskId': taskId,
       'taskTitle': taskTitle,
       'elapsedSeconds': elapsedSeconds,
       'deadlineTimestamp': null,
@@ -112,7 +111,6 @@ class LiveActivitiesRepository {
   }) async {
     if (defaultTargetPlatform != TargetPlatform.iOS) return null;
     final activityId = await _plugin.createActivity({
-      'taskId': taskId,
       'taskTitle': taskTitle,
       'elapsedSeconds': null,
       'deadlineTimestamp': deadlineTimestamp.toIso8601String(),
