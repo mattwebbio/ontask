@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { createTask } from '../../src/tools/create-task.js'
 import { listTasks } from '../../src/tools/list-tasks.js'
 import { updateTask } from '../../src/tools/update-task.js'
