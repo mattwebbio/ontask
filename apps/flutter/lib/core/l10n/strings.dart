@@ -1301,4 +1301,53 @@ class AppStrings {
           : days == 1
               ? '1 day left in your free trial \u2014 subscribe to keep access'
               : '$days days left in your free trial \u2014 subscribe to keep access';
+
+  // ── Subscriptions — Paywall Screen (FR88, Story 9.2) ─────────────────────────
+
+  /// Main headline — benefit-focused, not urgency-driven.
+  static const String paywallHeadline = 'Continue doing your best work';
+
+  /// Subheadline — describes the value proposition briefly.
+  static const String paywallSubheadline =
+      'Choose a plan to keep full access to scheduling, shared lists, and commitment contracts.';
+
+  /// Individual tier name.
+  static const String paywallTierIndividualName = 'Individual';
+
+  /// Individual tier price — approximate; exact price TBD at launch.
+  static const String paywallTierIndividualPrice = r'~$10 / month';
+
+  /// Individual tier one-line feature description.
+  static const String paywallTierIndividualFeature =
+      'Full access for one person';
+
+  /// Couple tier name.
+  static const String paywallTierCoupleName = 'Couple';
+
+  /// Couple tier price — placeholder; exact pricing TBD.
+  static const String paywallTierCouplePrice = 'Coming soon';
+
+  /// Couple tier one-line feature description.
+  static const String paywallTierCoupleFeature =
+      'Shared lists and commitments for two';
+
+  /// Family & Friends tier name.
+  static const String paywallTierFamilyName = 'Family & Friends';
+
+  /// Family & Friends tier price — placeholder; exact pricing TBD.
+  static const String paywallTierFamilyPrice = 'Coming soon';
+
+  /// Family & Friends tier one-line feature description.
+  static const String paywallTierFamilyFeature =
+      'Up to five people, shared accountability';
+
+  /// "Subscribe" button label on tier cards.
+  static const String paywallSubscribeCta = 'Subscribe';
+
+  /// "Restore purchase" button label.
+  static const String paywallRestorePurchase = 'Restore purchase';
+
+  /// Cancellation terms shown below tier cards — honest and clear.
+  static const String paywallCancellationTerms =
+      'Cancel any time. Active commitment contracts continue until their individual deadlines regardless of subscription status.';
 }

@@ -28,7 +28,8 @@ class SubscriptionSettingsScreen extends ConsumerWidget {
             children: [
               const SizedBox(height: 16),
               _StatusSection(status: status),
-              // impl(9.1): Add subscription tier selection CTA when Story 9.2 paywall lands.
+              // impl(9.2): Add "Subscribe" CTA here (same tiers as PaywallScreen) — wire
+              //   in Story 9.3 when ontaskhq.com/subscribe Universal Link is available.
             ],
           ),
         ),

@@ -76,4 +76,71 @@ app.openapi(getSubscriptionMeRoute, async (_c) => {
   )
 })
 
+// ── GET /v1/subscriptions/paywall-config ─────────────────────────────────────
+
+const TierSchema = z.object({
+  tier: z.enum(['individual', 'couple', 'family_and_friends']),
+  displayName: z.string(),
+  priceDisplay: z.string(),       // e.g. "~$10 / month" — localised display string
+  stripePriceId: z.string().nullable(), // null until Story 9.3 wires real Price IDs
+  available: z.boolean(),         // false = "coming soon" (couple, family for now)
+})
+
+const PaywallConfigResponseSchema = z.object({
+  data: z.object({
+    tiers: z.array(TierSchema),
+  }),
+})
+
+const getPaywallConfigRoute = createRoute({
+  method: 'get',
+  path: '/v1/subscriptions/paywall-config',
+  tags: ['Subscriptions'],
+  summary: 'Get paywall tier configuration',
+  description:
+    'Returns tier display configuration for the paywall screen. ' +
+    'stripePriceId is null until Story 9.3 wires real Stripe Price IDs. ' +
+    'available=false means the tier is shown as "coming soon". ' +
+    'FR88, FR83: used to populate PaywallScreen tier cards.',
+  responses: {
+    200: {
+      content: { 'application/json': { schema: PaywallConfigResponseSchema } },
+      description: 'Paywall tier configuration',
+    },
+  },
+})
+
+app.openapi(getPaywallConfigRoute, async (_c) => {
+  // TODO(impl): In future, fetch dynamic pricing from Stripe or config store.
+  // For now: static stub — exact prices TBD at launch per product brief (~$10/mo Individual).
+  return _c.json(
+    ok({
+      tiers: [
+        {
+          tier: 'individual' as const,
+          displayName: 'Individual',
+          priceDisplay: '~$10 / month',
+          stripePriceId: null,
+          available: true,
+        },
+        {
+          tier: 'couple' as const,
+          displayName: 'Couple',
+          priceDisplay: 'Coming soon',
+          stripePriceId: null,
+          available: false,
+        },
+        {
+          tier: 'family_and_friends' as const,
+          displayName: 'Family & Friends',
+          priceDisplay: 'Coming soon',
+          stripePriceId: null,
+          available: false,
+        },
+      ],
+    }),
+    200,
+  )
+})
+
 export const subscriptionsRouter = app
