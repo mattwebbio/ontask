@@ -325,7 +325,7 @@ export async function triggerScheduleChangeNotifications(env: CloudflareBindings
   //   1. Query device_tokens WHERE userId = userId
   //   2. Query notification_preferences WHERE userId = userId
   //   3. For each device token: enforce preferences using shouldSendNotification()
-  //      (no taskId for schedule-change notifications — pass '' or null; preference
+  //      (no taskId for schedule-change notifications — pass null; preference
   //       check at global + device levels only, no per-task level applies here)
   //   4. await sendPush({
   //        deviceToken: token.token,
