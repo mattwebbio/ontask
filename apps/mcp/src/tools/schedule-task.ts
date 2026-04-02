@@ -2,7 +2,7 @@
 //
 // Tool name: schedule_task
 // Description: Trigger the scheduling engine for a task and return the resulting scheduled time block.
-// Input: { id, userId? }
+// Input: { id }
 // Output: MCP content format — { content: [{ type: 'text', text: JSON.stringify(scheduledBlock) }] }
 //
 // Proxies to POST /v1/tasks/:id/schedule on the API Worker via Service Binding.
@@ -10,15 +10,13 @@
 // CRITICAL: Always uses the `apiBinding` Service Binding — NEVER calls api.ontaskhq.com directly.
 // CRITICAL: Never calls the scheduling engine directly — always goes through the API Worker.
 //
-// TODO(impl): wire OAuth per-client scoping (FR93) — deferred to Story 10.4.
+// userId is provided by the OAuth middleware (FR93, Story 10.4) — not caller-supplied.
 
 import type { McpResult } from './create-task.js'
 
 export interface ScheduleTaskInput {
   /** UUID of the task to schedule */
   id: string
-  /** User ID stub — OAuth per-client scoping deferred to Story 10.4 */
-  userId?: string
 }
 
 /**
@@ -32,8 +30,8 @@ export async function scheduleTask(
   input: ScheduleTaskInput,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   apiBinding: { fetch: (...args: any[]) => Promise<any> },
+  userId: string,
 ): Promise<McpResult> {
-  const userId = input.userId ?? 'stub-user-id'
 
   if (!input.id) {
     return {

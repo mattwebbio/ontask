@@ -10,7 +10,7 @@
 // Uses Cloudflare Service Binding (env.API) to call GET /v1/contracts/:id/status
 // on the API Worker — NEVER makes HTTP calls to the public API URL.
 //
-// TODO(impl): wire OAuth per-client scoping (FR93) — this is a stub that uses Service Binding
+// userId is provided by the OAuth middleware (FR93, Story 10.4) — not caller-supplied.
 
 export interface GetCommitmentStatusInput {
   id: string
@@ -38,11 +38,8 @@ export async function getCommitmentStatus(
   input: GetCommitmentStatusInput,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   apiBinding: { fetch: (...args: any[]) => Promise<any> },
+  userId: string,
 ): Promise<GetCommitmentStatusOutput> {
-  // TODO(impl): pass JWT from the authenticated MCP session context when OAuth
-  //             per-client scoping (FR93, Story 10.4) is implemented.
-  //             Currently returns stub data from the API stub endpoint.
-
   // Cloudflare Service Bindings accept a URL string + init object (fetch-compatible)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const response: any = await apiBinding.fetch(
@@ -51,6 +48,7 @@ export async function getCommitmentStatus(
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'x-user-id': userId,
       },
     },
   )

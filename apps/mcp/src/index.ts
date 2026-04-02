@@ -5,14 +5,13 @@ import { listTasks } from './tools/list-tasks.js'
 import { updateTask } from './tools/update-task.js'
 import { scheduleTask } from './tools/schedule-task.js'
 import { completeTask } from './tools/complete-task.js'
+import { applyOauthMiddleware, requireScope } from './middleware/oauth.js'
 
 // ── OnTask MCP Server ─────────────────────────────────────────────────────────
 // Cloudflare Worker hosting the On Task MCP server.
 // All tools proxy to the API Worker via the env.API Service Binding.
 //
 // CRITICAL: Never make HTTP calls to api.ontaskhq.com — always use env.API.
-// CRITICAL: OAuth per-client scoping (FR93) is deferred to Story 10.4.
-//           This story uses the x-user-id stub header for user identity.
 //
 // Tool manifest (FR45):
 //   create_task, list_tasks, update_task, schedule_task, complete_task
@@ -20,6 +19,9 @@ import { completeTask } from './tools/complete-task.js'
 // Transport: HTTP routing pattern with MCP-structured results.
 //   Each tool is exposed as a POST /tools/<tool-name> endpoint.
 //   The MCP tool manifest is available at GET /tools (discovery endpoint).
+//
+// Auth: OAuth Bearer token middleware (FR93, Story 10.4) protects /tools/* routes.
+//   Token validation delegates to the API Worker via Service Binding.
 //
 // TODO(impl): Replace HTTP routing with MCP SDK SSE transport (Story 10.3 follow-up)
 //             when bundle size constraints are resolved for Cloudflare Workers.
@@ -33,6 +35,11 @@ interface Env {
 }
 
 const app = new Hono<{ Bindings: Env }>()
+
+// ── OAuth middleware (FR93) ────────────────────────────────────────────────────
+// IMPORTANT: Must be applied BEFORE tool routes are registered.
+// Protects all /tools/* routes. GET /tools and GET / remain unauthenticated.
+applyOauthMiddleware(app)
 
 // ── MCP tool manifest ─────────────────────────────────────────────────────────
 // GET /tools — returns the full tool manifest for AI client discovery (AC: 2).
@@ -75,10 +82,6 @@ const toolManifest = {
             type: 'string',
             description: 'Optional task notes',
           },
-          userId: {
-            type: 'string',
-            description: 'User ID (stub — OAuth per-client scoping deferred to Story 10.4)',
-          },
         },
       },
     },
@@ -100,10 +103,6 @@ const toolManifest = {
           cursor: {
             type: 'string',
             description: 'Cursor for pagination (ARCH-14: cursor-based pagination)',
-          },
-          userId: {
-            type: 'string',
-            description: 'User ID (stub — OAuth per-client scoping deferred to Story 10.4)',
           },
         },
       },
@@ -140,10 +139,6 @@ const toolManifest = {
             enum: ['normal', 'high', 'critical'],
             description: 'Task priority level',
           },
-          userId: {
-            type: 'string',
-            description: 'User ID (stub — OAuth per-client scoping deferred to Story 10.4)',
-          },
         },
       },
     },
@@ -158,10 +153,6 @@ const toolManifest = {
             type: 'string',
             description: 'UUID of the task to schedule',
           },
-          userId: {
-            type: 'string',
-            description: 'User ID (stub — OAuth per-client scoping deferred to Story 10.4)',
-          },
         },
       },
     },
@@ -175,10 +166,6 @@ const toolManifest = {
           id: {
             type: 'string',
             description: 'UUID of the task to complete',
-          },
-          userId: {
-            type: 'string',
-            description: 'User ID (stub — OAuth per-client scoping deferred to Story 10.4)',
           },
         },
       },
@@ -203,8 +190,7 @@ app.get('/tools', (c) => {
 // Reads the status of a commitment contract by its ID.
 // Returns status (active/charged/cancelled/disputed), stake amount, and
 // charge timestamp if charged. Scoped to authenticated user's contracts only.
-//
-// TODO(impl): wire OAuth per-client scoping (FR93) — deferred to Story 10.4.
+// Required scope: contracts:read
 
 app.get('/tools/get-commitment-status', async (c) => {
   const id = c.req.query('id')
@@ -217,8 +203,17 @@ app.get('/tools/get-commitment-status', async (c) => {
     return c.json({ error: { code: 'SERVICE_BINDING_UNAVAILABLE', message: 'API service binding is not configured' } }, 503)
   }
 
+  const { userId, scopes } = c.get('mcpAuth')
+
+  if (!requireScope(scopes, 'contracts:read')) {
+    return c.json(
+      { content: [{ type: 'text', text: JSON.stringify({ error: { code: 'FORBIDDEN', message: 'contracts:read scope required' } }) }], isError: true },
+      403,
+    )
+  }
+
   try {
-    const result = await getCommitmentStatus({ id }, apiBinding)
+    const result = await getCommitmentStatus({ id }, apiBinding, userId)
     return c.json({ data: result }, 200)
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e)
@@ -228,9 +223,8 @@ app.get('/tools/get-commitment-status', async (c) => {
 
 // ── Tool: create_task ─────────────────────────────────────────────────────────
 // POST /tools/create-task
-// Body: { input?, title?, listId?, dueDate?, durationMinutes?, priority?, notes?, userId? }
-//
-// TODO(impl): wire OAuth per-client scoping (FR93) — deferred to Story 10.4.
+// Body: { input?, title?, listId?, dueDate?, durationMinutes?, priority?, notes? }
+// Required scope: tasks:write
 
 app.post('/tools/create-task', async (c) => {
   const apiBinding = c.env.API
@@ -238,6 +232,15 @@ app.post('/tools/create-task', async (c) => {
     return c.json(
       { content: [{ type: 'text', text: JSON.stringify({ error: { code: 'SERVICE_BINDING_UNAVAILABLE', message: 'API service binding is not configured' } }) }], isError: true },
       503,
+    )
+  }
+
+  const { userId, scopes } = c.get('mcpAuth')
+
+  if (!requireScope(scopes, 'tasks:write')) {
+    return c.json(
+      { content: [{ type: 'text', text: JSON.stringify({ error: { code: 'FORBIDDEN', message: 'tasks:write scope required' } }) }], isError: true },
+      403,
     )
   }
 
@@ -252,15 +255,14 @@ app.post('/tools/create-task', async (c) => {
     )
   }
 
-  const result = await createTask(body, apiBinding)
+  const result = await createTask(body, apiBinding, userId)
   return c.json(result)
 })
 
 // ── Tool: list_tasks ──────────────────────────────────────────────────────────
 // POST /tools/list-tasks
-// Body: { listId?, completed?, cursor?, userId? }
-//
-// TODO(impl): wire OAuth per-client scoping (FR93) — deferred to Story 10.4.
+// Body: { listId?, completed?, cursor? }
+// Required scope: tasks:read
 
 app.post('/tools/list-tasks', async (c) => {
   const apiBinding = c.env.API
@@ -268,6 +270,15 @@ app.post('/tools/list-tasks', async (c) => {
     return c.json(
       { content: [{ type: 'text', text: JSON.stringify({ error: { code: 'SERVICE_BINDING_UNAVAILABLE', message: 'API service binding is not configured' } }) }], isError: true },
       503,
+    )
+  }
+
+  const { userId, scopes } = c.get('mcpAuth')
+
+  if (!requireScope(scopes, 'tasks:read')) {
+    return c.json(
+      { content: [{ type: 'text', text: JSON.stringify({ error: { code: 'FORBIDDEN', message: 'tasks:read scope required' } }) }], isError: true },
+      403,
     )
   }
 
@@ -279,15 +290,14 @@ app.post('/tools/list-tasks', async (c) => {
     // Body is optional for list_tasks — continue with empty object
   }
 
-  const result = await listTasks(body, apiBinding)
+  const result = await listTasks(body, apiBinding, userId)
   return c.json(result)
 })
 
 // ── Tool: update_task ─────────────────────────────────────────────────────────
 // POST /tools/update-task
-// Body: { id, title?, notes?, dueDate?, listId?, priority?, userId? }
-//
-// TODO(impl): wire OAuth per-client scoping (FR93) — deferred to Story 10.4.
+// Body: { id, title?, notes?, dueDate?, listId?, priority? }
+// Required scope: tasks:write
 
 app.post('/tools/update-task', async (c) => {
   const apiBinding = c.env.API
@@ -298,6 +308,15 @@ app.post('/tools/update-task', async (c) => {
     )
   }
 
+  const { userId, scopes } = c.get('mcpAuth')
+
+  if (!requireScope(scopes, 'tasks:write')) {
+    return c.json(
+      { content: [{ type: 'text', text: JSON.stringify({ error: { code: 'FORBIDDEN', message: 'tasks:write scope required' } }) }], isError: true },
+      403,
+    )
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let body: any
   try {
@@ -309,15 +328,14 @@ app.post('/tools/update-task', async (c) => {
     )
   }
 
-  const result = await updateTask(body, apiBinding)
+  const result = await updateTask(body, apiBinding, userId)
   return c.json(result)
 })
 
 // ── Tool: schedule_task ───────────────────────────────────────────────────────
 // POST /tools/schedule-task
-// Body: { id, userId? }
-//
-// TODO(impl): wire OAuth per-client scoping (FR93) — deferred to Story 10.4.
+// Body: { id }
+// Required scope: tasks:write
 
 app.post('/tools/schedule-task', async (c) => {
   const apiBinding = c.env.API
@@ -328,6 +346,15 @@ app.post('/tools/schedule-task', async (c) => {
     )
   }
 
+  const { userId, scopes } = c.get('mcpAuth')
+
+  if (!requireScope(scopes, 'tasks:write')) {
+    return c.json(
+      { content: [{ type: 'text', text: JSON.stringify({ error: { code: 'FORBIDDEN', message: 'tasks:write scope required' } }) }], isError: true },
+      403,
+    )
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let body: any
   try {
@@ -339,15 +366,14 @@ app.post('/tools/schedule-task', async (c) => {
     )
   }
 
-  const result = await scheduleTask(body, apiBinding)
+  const result = await scheduleTask(body, apiBinding, userId)
   return c.json(result)
 })
 
 // ── Tool: complete_task ───────────────────────────────────────────────────────
 // POST /tools/complete-task
-// Body: { id, userId? }
-//
-// TODO(impl): wire OAuth per-client scoping (FR93) — deferred to Story 10.4.
+// Body: { id }
+// Required scope: tasks:write
 
 app.post('/tools/complete-task', async (c) => {
   const apiBinding = c.env.API
@@ -358,6 +384,15 @@ app.post('/tools/complete-task', async (c) => {
     )
   }
 
+  const { userId, scopes } = c.get('mcpAuth')
+
+  if (!requireScope(scopes, 'tasks:write')) {
+    return c.json(
+      { content: [{ type: 'text', text: JSON.stringify({ error: { code: 'FORBIDDEN', message: 'tasks:write scope required' } }) }], isError: true },
+      403,
+    )
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let body: any
   try {
@@ -369,7 +404,7 @@ app.post('/tools/complete-task', async (c) => {
     )
   }
 
-  const result = await completeTask(body, apiBinding)
+  const result = await completeTask(body, apiBinding, userId)
   return c.json(result)
 })
 

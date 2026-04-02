@@ -3,13 +3,13 @@
 // Tool name: list_tasks
 // Description: List tasks for the current user. Supports filtering by list ID,
 //              completion status, and scheduling status.
-// Input: { listId?, completed?, cursor?, userId? }
+// Input: { listId?, completed?, cursor? }
 // Output: MCP content format — { content: [{ type: 'text', text: JSON.stringify(data) }] }
 //
 // Proxies to GET /v1/tasks on the API Worker via Service Binding.
 // CRITICAL: Always uses the `apiBinding` Service Binding — NEVER calls api.ontaskhq.com directly.
 //
-// TODO(impl): wire OAuth per-client scoping (FR93) — deferred to Story 10.4.
+// userId is provided by the OAuth middleware (FR93, Story 10.4) — not caller-supplied.
 
 import type { McpResult } from './create-task.js'
 
@@ -20,8 +20,6 @@ export interface ListTasksInput {
   completed?: boolean
   /** Cursor for pagination (ARCH-14: cursor-based pagination only) */
   cursor?: string
-  /** User ID stub — OAuth per-client scoping deferred to Story 10.4 */
-  userId?: string
 }
 
 /**
@@ -33,8 +31,8 @@ export async function listTasks(
   input: ListTasksInput,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   apiBinding: { fetch: (...args: any[]) => Promise<any> },
+  userId: string,
 ): Promise<McpResult> {
-  const userId = input.userId ?? 'stub-user-id'
 
   try {
     // Build query params

@@ -2,7 +2,7 @@
 //
 // Tool name: complete_task
 // Description: Mark a task as complete.
-// Input: { id, userId? }
+// Input: { id }
 // Output: MCP content format — { content: [{ type: 'text', text: JSON.stringify(result) }] }
 //
 // Proxies to POST /v1/tasks/:id/complete on the API Worker via Service Binding.
@@ -12,15 +12,13 @@
 // Note: The API has a dedicated POST /v1/tasks/:id/complete endpoint (not PATCH /v1/tasks/:id).
 //       This endpoint returns { completedTask, nextInstance } for recurring tasks.
 //
-// TODO(impl): wire OAuth per-client scoping (FR93) — deferred to Story 10.4.
+// userId is provided by the OAuth middleware (FR93, Story 10.4) — not caller-supplied.
 
 import type { McpResult } from './create-task.js'
 
 export interface CompleteTaskInput {
   /** UUID of the task to complete */
   id: string
-  /** User ID stub — OAuth per-client scoping deferred to Story 10.4 */
-  userId?: string
 }
 
 /**
@@ -33,8 +31,8 @@ export async function completeTask(
   input: CompleteTaskInput,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   apiBinding: { fetch: (...args: any[]) => Promise<any> },
+  userId: string,
 ): Promise<McpResult> {
-  const userId = input.userId ?? 'stub-user-id'
 
   if (!input.id) {
     return {

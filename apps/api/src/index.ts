@@ -17,6 +17,8 @@ import { commitmentContractsRouter } from './routes/commitment-contracts.js'
 import { proofRouter } from './routes/proof.js'
 import { notificationsRouter } from './routes/notifications.js'
 import { subscriptionsRouter } from './routes/subscriptions.js'
+import { mcpTokensRouter } from './routes/mcp-tokens.js'
+import { internalRouter } from './routes/internal.js'
 import { chargeTriggerConsumer } from './queues/charge-trigger-consumer.js'
 import { everyOrgConsumer } from './queues/every-org-consumer.js'
 import { triggerOverdueCharges } from './lib/charge-scheduler.js'
@@ -82,6 +84,9 @@ app.route('/', commitmentContractsRouter)
 app.route('/', proofRouter)
 app.route('/', notificationsRouter)
 app.route('/', subscriptionsRouter)
+app.route('/', mcpTokensRouter)
+// ── Internal routes (Service Binding only — NOT public API) ───────────────
+app.route('/', internalRouter)
 
 // ── OpenAPI documentation ──────────────────────────────────────────────────
 app.doc('/v1/doc', {

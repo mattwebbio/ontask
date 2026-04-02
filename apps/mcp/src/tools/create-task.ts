@@ -3,14 +3,14 @@
 // Tool name: create_task
 // Description: Create a new task. Accepts structured properties or a natural
 //              language description that is parsed by an LLM before creating.
-// Input: { input?, title?, listId?, dueDate?, durationMinutes?, priority?, notes?, userId? }
+// Input: { input?, title?, listId?, dueDate?, durationMinutes?, priority?, notes? }
 // Output: MCP content format — { content: [{ type: 'text', text: JSON.stringify(task) }] }
 //
 // Uses Cloudflare Service Binding (env.API) — NEVER makes HTTP calls to the public API URL.
 // NLP path: if `input` is provided, calls POST /v1/tasks/parse via Service Binding,
 //           then creates the task with parsed fields.
 //
-// TODO(impl): wire OAuth per-client scoping (FR93) — deferred to Story 10.4.
+// userId is provided by the OAuth middleware (FR93, Story 10.4) — not caller-supplied.
 
 export interface CreateTaskInput {
   /** Natural language description (triggers NLP parse via POST /v1/tasks/parse) */
@@ -27,8 +27,6 @@ export interface CreateTaskInput {
   priority?: 'normal' | 'high' | 'critical'
   /** Optional notes */
   notes?: string
-  /** User ID stub — OAuth per-client scoping deferred to Story 10.4 */
-  userId?: string
 }
 
 export interface McpContent {
@@ -54,8 +52,8 @@ export async function createTask(
   input: CreateTaskInput,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   apiBinding: { fetch: (...args: any[]) => Promise<any> },
+  userId: string,
 ): Promise<McpResult> {
-  const userId = input.userId ?? 'stub-user-id'
 
   // Validate: either input (NLP) or title (structured) must be provided
   if (!input.input && !input.title) {

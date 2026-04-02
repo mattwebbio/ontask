@@ -2,13 +2,13 @@
 //
 // Tool name: update_task
 // Description: Update an existing task's properties (title, due date, duration, priority, etc.).
-// Input: { id, title?, notes?, dueDate?, listId?, priority?, userId? }
+// Input: { id, title?, notes?, dueDate?, listId?, priority? }
 // Output: MCP content format — { content: [{ type: 'text', text: JSON.stringify(task) }] }
 //
 // Proxies to PATCH /v1/tasks/:id on the API Worker via Service Binding.
 // CRITICAL: Always uses the `apiBinding` Service Binding — NEVER calls api.ontaskhq.com directly.
 //
-// TODO(impl): wire OAuth per-client scoping (FR93) — deferred to Story 10.4.
+// userId is provided by the OAuth middleware (FR93, Story 10.4) — not caller-supplied.
 
 import type { McpResult } from './create-task.js'
 
@@ -25,8 +25,6 @@ export interface UpdateTaskInput {
   listId?: string | null
   /** Task priority level */
   priority?: 'normal' | 'high' | 'critical'
-  /** User ID stub — OAuth per-client scoping deferred to Story 10.4 */
-  userId?: string
 }
 
 /**
@@ -38,8 +36,8 @@ export async function updateTask(
   input: UpdateTaskInput,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   apiBinding: { fetch: (...args: any[]) => Promise<any> },
+  userId: string,
 ): Promise<McpResult> {
-  const userId = input.userId ?? 'stub-user-id'
 
   if (!input.id) {
     return {
